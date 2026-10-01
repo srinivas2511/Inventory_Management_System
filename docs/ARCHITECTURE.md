@@ -888,7 +888,7 @@ The mapping is data (a Flyway migration) and editable by Admin through the roles
 | Resource | Key endpoints | Required permission |
 |---|---|---|
 | `/api/auth` | `POST login`, `change-password`, `refresh`, `logout`, `forgot-password`, `reset-password`; `GET me` (profile + permissions) | public / authenticated |
-| `/api/users`, `/api/roles`, `/api/permissions` | CRUD, `PUT /users/{id}/roles`, `PUT /roles/{id}/permissions` | USER_*, ROLE_MANAGE |
+| `/api/users`, `/api/roles`, `/api/permissions` | users: list/get/create/update, `PUT /users/{id}/roles`, `POST /users/{id}/reset-password`, `POST /users/{id}/activate`, `DELETE` = deactivate; roles: CRUD, `PUT /roles/{id}/permissions`; permissions: read-only catalogue | USER_VIEW/CREATE/UPDATE/DELETE, ROLE_MANAGE (roles also readable with USER_VIEW), PERMISSION_MANAGE or ROLE_MANAGE (catalogue) |
 | `/api/materials` | CRUD, `GET /{id}/stock` | MASTERDATA / INVENTORY_VIEW |
 | `/api/products` | CRUD, `GET /{id}/bom`, `/spring-types/{type}/attributes` | PRODUCT_* |
 | `/api/boms` | CRUD, `POST /{id}/submit`, `/approve`, `/activate`, `GET /{id}/revisions` | BOM_* |

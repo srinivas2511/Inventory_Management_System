@@ -43,6 +43,7 @@ public class AuthService {
     private final JwtService jwt;
     private final RefreshTokenService refreshTokens;
     private final PasswordResetTokenRepository resetTokens;
+    private final UserAccessService userAccess;
     private final SecuritySettings settings;
     private final ImsSecurityProperties properties;
     private final Clock clock;
@@ -51,7 +52,8 @@ public class AuthService {
     private final String decoyHash;
 
     AuthService(UserRepository users, PasswordEncoder encoder, PasswordService passwords, JwtService jwt,
-            RefreshTokenService refreshTokens, PasswordResetTokenRepository resetTokens, SecuritySettings settings,
+            RefreshTokenService refreshTokens, PasswordResetTokenRepository resetTokens, UserAccessService userAccess,
+            SecuritySettings settings,
             ImsSecurityProperties properties, Clock clock, ApplicationEventPublisher events) {
         this.users = users;
         this.encoder = encoder;
@@ -59,6 +61,7 @@ public class AuthService {
         this.jwt = jwt;
         this.refreshTokens = refreshTokens;
         this.resetTokens = resetTokens;
+        this.userAccess = userAccess;
         this.settings = settings;
         this.properties = properties;
         this.clock = clock;
@@ -210,6 +213,16 @@ public class AuthService {
         token.markUsed(now);
         refreshTokens.revokeAllForUser(user.getId(), now);
         publish(AuthEvent.Type.PASSWORD_RESET_COMPLETED, user, client, null);
+    }
+
+    // ---------------------------------------------------------------------------------------------- profile
+
+    /** The signed-in user's profile and permissions, from the same server-side source the filter uses. */
+    AuthDtos.UserSummary me(long userId) {
+        UserAccess user = userAccess.find(userId).filter(UserAccess::active)
+                .orElseThrow(AuthService::notAuthenticated);
+        return new AuthDtos.UserSummary(user.userId(), user.username(), user.fullName(), user.roles(),
+                user.authorities().stream().sorted().toList(), primaryDashboard(user.roles()));
     }
 
     // ---------------------------------------------------------------------------------------------- helpers

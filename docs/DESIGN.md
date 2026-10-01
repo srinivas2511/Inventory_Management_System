@@ -644,9 +644,14 @@ For each module: key operations, validations and events. (Field lists are in §2
 | Refresh | rotate; the successor keeps the family's absolute expiry (7 days from sign-in); reuse of a revoked token ⇒ revoke the whole family (every device must sign in again). `POST /api/auth/refresh` returns the same body as login so the SPA can restore the user after a reload |
 | Forgot / reset password | `POST /api/auth/forgot-password {email}` always answers 202. For an active account it stores a hashed single-use token (30 min), voids earlier ones and e-mails `<base>/reset-password/<token>` after commit. `POST /api/auth/reset-password {token, newPassword}`: invalid/used/expired token ⇒ 400 with field `token`; a weak password ⇒ 400 with field `newPassword` and the token stays usable. Success unlocks the account and revokes all its refresh tokens |
 | Throttling | `/api/auth/**` per client IP: 30/min (login, refresh, logout, change-password), 5 per 15 min (forgot/reset). Over the limit ⇒ 429 `RATE_LIMITED` + `Retry-After` |
-| Create/Update user | unique username/email; password policy; cannot remove the last ADMIN; changing roles bumps `permission_version` |
-| Assign roles/permissions | Admin only; system roles' permission sets editable but not deletable; audit old/new |
-| Deactivate user | no delete; active=false; refresh tokens revoked |
+| Create/Update user | unique username/email (case-insensitive) and employee code; the Admin sets a temporary password (policy applies) and the user must change it at first sign-in; `PUT` carries the row `version` (409 `VERSION_CONFLICT` if stale); username never changes; cannot remove the last ADMIN; changing roles bumps `permission_version` |
+| Assign roles/permissions | `PUT /api/users/{id}/roles` and `PUT /api/roles/{id}/permissions`: Admin only; at least one role per user; system roles' permission sets editable but not deletable; the ADMIN role must keep `ROLE_MANAGE`, `USER_VIEW`, `USER_UPDATE` (422 `ROLE_PROTECTED`); changing a role's permissions bumps `permission_version` of every holder; audit old/new + optional reason |
+| Deactivate user | `DELETE /api/users/{id}` = deactivate (users are never deleted): active=false, `permission_version` bumped, refresh tokens revoked, cache evicted so the user is cut off at once; idempotent; refused for the last active Admin (422 `LAST_ADMIN_REQUIRED`); `POST /api/users/{id}/activate` reverses it |
+| Admin password reset | `POST /api/users/{id}/reset-password {temporaryPassword}`: sets a temporary password, forces a change at next sign-in, lifts any lock, ends all sessions |
+| Custom roles | `POST /api/roles` (code `A-Z0-9_`), `PUT /api/roles/{id}` (name/description, versioned), `DELETE` only for non-system roles nobody holds (422 `ROLE_PROTECTED`) |
+| Permission catalogue | `GET /api/permissions` is read-only: codes are created by migrations because only code can check them |
+| Profile | `GET /api/auth/me` returns `{id, username, fullName, roles, permissions, primaryDashboard}` from the server-side cache |
+| Last-Admin guard | removing ADMIN from, or deactivating, the last active Admin is refused; the ADMIN role row is locked so concurrent changes cannot both pass |
 | Password policy | ≥12 chars, upper/lower/digit/symbol, not in last 5, not containing username |
 
 ### 5.2 Master data
@@ -743,6 +748,7 @@ Response graph: `{ nodes:[{id, type, label, status, date}], edges:[{from,to,qty}
 | 422 | `INSUFFICIENT_STOCK`, `NEGATIVE_STOCK_NOT_ALLOWED`, `BATCH_NOT_AVAILABLE`, `QUARANTINE_NOT_ISSUABLE`, `REJECTED_NOT_USABLE` | stock rules 1–4 |
 | 422 | `OVER_CONSUMPTION`, `ISSUE_EXCEEDS_PLAN`, `OPERATION_QTY_EXCEEDS_INPUT` | production rules |
 | 422 | `FG_NOT_APPROVED`, `DISPATCH_EXCEEDS_STOCK`, `ORDER_LOCKED`, `ILLEGAL_STATE_TRANSITION`, `BOM_NOT_ACTIVE`, `SEGREGATION_OF_DUTIES`, `APPROVAL_REQUIRED`, `INSPECTION_INCOMPLETE` | other business rules |
+| 422 | `LAST_ADMIN_REQUIRED`, `ROLE_PROTECTED` | administration safeguards |
 | 423 | `ACCOUNT_LOCKED` | lockout |
 | 429 | `RATE_LIMITED` | auth throttling |
 | 500 | `INTERNAL_ERROR` | no internals leaked; `traceId` only |
@@ -1171,7 +1177,7 @@ Loaded by `DemoDataLoader` only when `ims.demo.load-data=true`; it uses the real
 Roles (13), permissions (catalogue in §7.1), role-permission map, UOMs, spring attribute definitions per type, rejection reasons (the nine from the requirements), standard operations (Wire Drawing, Coiling, Cutting, Grinding, Heat Treatment, Shot Peening, Surface Treatment, Inspection, Packaging), default settings, one warehouse `MAIN-WH` with locations `RM-01, RM-02, WIP-01, FG-01, SCRAP-01` plus `QRN-01` (quarantine) and `FGQ-01` (FG quality pending).
 
 ### 11.2 Demo users (dev/demo only)
-Initial password for all demo users: `Demo@123456!` (forced change on first login; **never loaded in prod**).
+Initial password for all demo users: `Demo@123456!` (forced change on first login; **never loaded in prod**). Loaded by `DemoUserLoader` when `ims.demo.load-data=true` (set by the `dev` profile; the application refuses to start with it under `prod`); existing users are never touched. A production install gets its first Admin from `ims.bootstrap.admin.*` (env `IMS_BOOTSTRAP_ADMIN_EMAIL` / `_PASSWORD`, optional `_USERNAME`, `_FULL_NAME`) only while the `users` table is empty; unset them after the first start.
 | Username | Role | Notes |
 |---|---|---|
 | `admin` | ADMIN | |

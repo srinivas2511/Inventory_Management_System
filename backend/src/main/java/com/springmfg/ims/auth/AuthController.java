@@ -7,7 +7,9 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.CookieValue;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -16,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.springmfg.ims.config.ImsSecurityProperties;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
@@ -91,6 +94,14 @@ public class AuthController {
             HttpServletRequest http) {
         auth.resetPassword(request, client(http));
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/me")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Profile and permissions of the signed-in user")
+    @SecurityRequirement(name = "bearerAuth")
+    public AuthDtos.UserSummary me() {
+        return auth.me(CurrentUser.id().orElseThrow(() -> new AccessDeniedException("Not authenticated")));
     }
 
     private ResponseEntity<AuthDtos.LoginResponse> respond(AuthResult result) {

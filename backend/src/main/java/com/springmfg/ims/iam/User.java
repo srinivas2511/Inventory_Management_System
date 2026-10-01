@@ -59,6 +59,7 @@ public class User extends BaseEntity {
     private Instant lastLoginAt;
 
     @ManyToMany(fetch = FetchType.LAZY)
+    @org.hibernate.annotations.BatchSize(size = 50)
     @JoinTable(name = "user_roles",
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "role_id"))
@@ -123,6 +124,19 @@ public class User extends BaseEntity {
         this.mustChangePassword = true;
         this.failedAttempts = 0;
         this.lockedUntil = null;
+    }
+
+    public void updateProfile(String fullName, String email, String phone, String employeeCode) {
+        this.fullName = fullName;
+        this.email = email;
+        this.phone = phone;
+        this.employeeCode = employeeCode;
+    }
+
+    /** Replaces the role set. The caller bumps the permission version and evicts the access cache. */
+    public void replaceRoles(java.util.Collection<Role> newRoles) {
+        roles.clear();
+        roles.addAll(newRoles);
     }
 
     public void bumpPermissionVersion() {

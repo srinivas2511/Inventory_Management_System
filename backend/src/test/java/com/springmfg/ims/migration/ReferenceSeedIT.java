@@ -79,7 +79,8 @@ class ReferenceSeedIT extends AbstractIntegrationTest {
         Map<String, Set<String>> actual = new java.util.HashMap<>();
         jdbc.query("""
                 SELECT r.code AS role, p.code AS permission FROM ims.role_permissions rp
-                JOIN ims.roles r ON r.id = rp.role_id JOIN ims.permissions p ON p.id = rp.permission_id""",
+                JOIN ims.roles r ON r.id = rp.role_id JOIN ims.permissions p ON p.id = rp.permission_id
+                WHERE r.system_role""",
                 rs -> {
                     actual.computeIfAbsent(rs.getString("role"), k -> new HashSet<>()).add(rs.getString("permission"));
                 });

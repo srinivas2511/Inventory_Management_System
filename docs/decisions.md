@@ -63,3 +63,18 @@ Choices made where DESIGN/ARCHITECTURE left room; change by editing the setting 
 | Cache | permissions are cached 60 s (`ims.security.access-cache-ttl`); task 1.5's admin APIs must evict (see DESIGN §7.4) so role changes and deactivation apply at once |
 | Auditing columns | `created_by`/`updated_by` are now filled from the signed-in user; empty for login, scheduled and seed work |
 | Matrix coverage | `PermissionMatrixIT` is generic but only the test probe and the six public auth endpoints exist today, so its value grows as 1.5–1.11 add protected endpoints |
+
+## Phase 1 — administration decisions (task 1.5)
+| Point | Behaviour |
+|---|---|
+| Package | `admin` (users, roles, permissions controllers and services) sits above `iam` (entities) and `auth`; avoids a package cycle |
+| Reset password | not named in PLAN 1.5 but added: without it an Admin cannot recover a user who forgot their password when e-mail is unavailable |
+| Deactivate | `DELETE /api/users/{id}` (the ARCHITECTURE §12.1 convention) plus `POST .../activate`; both bump `permission_version` and end sessions/evict the cache after commit |
+| Role permissions | the permission catalogue is read-only over the API; `PERMISSION_MANAGE` therefore only gates reading it (together with `ROLE_MANAGE`) |
+| ADMIN safeguards | the last active Admin cannot be demoted or deactivated; the ADMIN role must keep `ROLE_MANAGE`, `USER_VIEW`, `USER_UPDATE` |
+| Users cannot deactivate themselves? | allowed unless they are the last Admin (no extra rule invented) |
+| Reasons | optional on role changes, permission changes, password reset and deactivation; stored in the audit record |
+| Audit | services publish `AuditCommand` events in their transaction; the persisting listener and `GET /api/audit-logs` are task 1.6. Until then these events (and the 1.3 `AuthEvent`s) are produced but not stored |
+| First Admin | `IMS_BOOTSTRAP_ADMIN_EMAIL` + `IMS_BOOTSTRAP_ADMIN_PASSWORD` create it only on an empty `users` table. If every Admin is ever lost, recover with SQL (assign the ADMIN role) rather than an environment variable that could silently re-create accounts |
+| Demo users | 14 users from DESIGN §11.2, created by `DemoUserLoader` (dev profile); `storeop1`'s MAIN-WH restriction arrives with warehouses in Phase 2 |
+| Paging | `size` is capped at 100 for every list endpoint (`spring.data.web.pageable.max-page-size`); sort properties are whitelisted per endpoint |

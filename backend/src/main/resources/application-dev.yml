@@ -1,4 +1,6 @@
 ims:
+  demo:
+    load-data: true                     # one demo user per role, password in DESIGN.md 11.2 (dev only)
   security:
     jwt-secret: ${JWT_SECRET:dev-only-secret-change-me-dev-only-secret}
     cookie-secure: false                # plain http on localhost

@@ -5,6 +5,8 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import com.github.benmanes.caffeine.cache.Cache;
@@ -46,12 +48,37 @@ public class UserAccessService {
         cache.invalidateAll();
     }
 
+    /**
+     * Evicts once the surrounding transaction has committed (immediately if there is none). Evicting before the
+     * commit would let a concurrent request re-cache the old state for a full TTL.
+     */
+    public void evictAfterCommit(long userId) {
+        afterCommit(() -> evict(userId));
+    }
+
+    public void evictAllAfterCommit() {
+        afterCommit(this::evictAll);
+    }
+
+    private static void afterCommit(Runnable action) {
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    action.run();
+                }
+            });
+        } else {
+            action.run();
+        }
+    }
+
     private Optional<UserAccess> load(long userId) {
         return users.findById(userId).map(UserAccessService::toAccess);
     }
 
     private static UserAccess toAccess(User user) {
-        return new UserAccess(user.getId(), user.getUsername(), user.isActive(), user.isMustChangePassword(),
+        return new UserAccess(user.getId(), user.getUsername(), user.getFullName(), user.getEmail(), user.isActive(), user.isMustChangePassword(),
                 user.getPermissionVersion(), List.copyOf(user.roleCodes().stream().sorted().toList()),
                 Set.copyOf(user.permissionCodes()));
     }

@@ -15,6 +15,10 @@ services:
       CORS_ORIGINS: ${CORS_ORIGINS:?CORS_ORIGINS must be set}
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set (at least 32 characters)}
       APP_BASE_URL: ${APP_BASE_URL:?APP_BASE_URL must be set (public URL used in password-reset e-mails)}
+      # first Admin; only used while the users table is empty (leave empty afterwards)
+      IMS_BOOTSTRAP_ADMIN_USERNAME: ${BOOTSTRAP_ADMIN_USERNAME:-admin}
+      IMS_BOOTSTRAP_ADMIN_EMAIL: ${BOOTSTRAP_ADMIN_EMAIL:-}
+      IMS_BOOTSTRAP_ADMIN_PASSWORD: ${BOOTSTRAP_ADMIN_PASSWORD:-}
       SPRING_MAIL_HOST: ${SMTP_HOST:?SMTP_HOST must be set (password reset is sent by e-mail)}
       SPRING_MAIL_PORT: ${SMTP_PORT:-587}
       SPRING_MAIL_USERNAME: ${SMTP_USER:-}

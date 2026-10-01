@@ -38,7 +38,7 @@ import com.springmfg.ims.auth.RateLimitFilter;
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
-@EnableConfigurationProperties({ ImsSecurityProperties.class, ImsMailProperties.class })
+@EnableConfigurationProperties({ ImsSecurityProperties.class, ImsMailProperties.class, BootstrapAdminProperties.class })
 public class SecurityConfig {
 
     private static final String[] PUBLIC_ENDPOINTS = {

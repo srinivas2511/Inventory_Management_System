@@ -47,6 +47,10 @@ public enum ErrorCode {
     APPROVAL_REQUIRED(HttpStatus.UNPROCESSABLE_ENTITY, "Approval required"),
     INSPECTION_INCOMPLETE(HttpStatus.UNPROCESSABLE_ENTITY, "Inspection incomplete"),
 
+    // 422 - administration
+    LAST_ADMIN_REQUIRED(HttpStatus.UNPROCESSABLE_ENTITY, "At least one active Admin is required"),
+    ROLE_PROTECTED(HttpStatus.UNPROCESSABLE_ENTITY, "Role is protected"),
+
     // 500
     INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "Internal error");
 

@@ -92,13 +92,13 @@ public class PasswordService {
 
     /**
      * Stores a password set by someone else (new account or admin reset): validated like any other, but the user
-     * must choose their own at next login.
+     * must choose their own at next login. {@code field} names the request field in validation errors.
      */
-    public void setTemporaryPassword(User user, String temporaryPassword) {
+    public void setTemporaryPassword(User user, String temporaryPassword, String field) {
         List<String> problems = violations(temporaryPassword, user.getUsername());
         if (!problems.isEmpty()) {
             throw new ValidationFailedException(
-                    problems.stream().map(m -> new Problems.FieldError("password", m)).toList());
+                    problems.stream().map(m -> new Problems.FieldError(field, m)).toList());
         }
         Instant now = clock.instant();
         String hash = encoder.encode(temporaryPassword);
