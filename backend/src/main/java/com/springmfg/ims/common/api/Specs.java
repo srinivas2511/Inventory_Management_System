@@ -5,6 +5,9 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 
+import jakarta.persistence.criteria.From;
+import jakarta.persistence.criteria.JoinType;
+import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import jakarta.persistence.criteria.Subquery;
@@ -31,6 +34,26 @@ public final class Specs<T> {
 
     private final List<Specification<T>> parts = new ArrayList<>();
 
+    /**
+     * Resolves {@code "name"} or a dotted path through single-valued associations such as {@code "supplier.name"}.
+     * Intermediate steps are LEFT joins, so rows without the association are kept for {@code eq}/{@code in}/
+     * {@code between} on the association's id ({@code "supplier.id"} needs no join at all); a {@code search} on a
+     * property of a missing association simply does not match that row. Collections are not navigable this way:
+     * use {@link #anyOf}.
+     */
+    static <X> Path<X> path(From<?, ?> from, String attribute) {
+        String[] steps = attribute.split("\\.");
+        Path<?> current = from;
+        for (int i = 0; i < steps.length; i++) {
+            boolean last = i == steps.length - 1;
+            boolean beforeIdLeaf = i == steps.length - 2 && "id".equals(steps[i + 1]); // the foreign key needs no join
+            current = last || beforeIdLeaf ? current.get(steps[i]) : ((From<?, ?>) current).join(steps[i], JoinType.LEFT);
+        }
+        @SuppressWarnings("unchecked")
+        Path<X> result = (Path<X>) current;
+        return result;
+    }
+
     private Specs() {
     }
 
@@ -47,7 +70,7 @@ public final class Specs<T> {
         parts.add((root, query, cb) -> {
             List<Predicate> any = new ArrayList<>();
             for (String attribute : attributes) {
-                any.add(cb.like(cb.lower(cb.coalesce(root.<String>get(attribute), "")), like, '\\'));
+                any.add(cb.like(cb.lower(cb.coalesce(Specs.<String>path(root, attribute), "")), like, '\\'));
             }
             return cb.or(any.toArray(Predicate[]::new));
         });
@@ -56,14 +79,14 @@ public final class Specs<T> {
 
     public Specs<T> eq(String attribute, Object value) {
         if (value != null && !(value instanceof CharSequence text && text.toString().isBlank())) {
-            parts.add((root, query, cb) -> cb.equal(root.get(attribute), value));
+            parts.add((root, query, cb) -> cb.equal(Specs.path(root, attribute), value));
         }
         return this;
     }
 
     public Specs<T> in(String attribute, Collection<?> values) {
         if (values != null && !values.isEmpty()) {
-            parts.add((root, query, cb) -> root.get(attribute).in(values));
+            parts.add((root, query, cb) -> Specs.path(root, attribute).in(values));
         }
         return this;
     }
@@ -71,10 +94,10 @@ public final class Specs<T> {
     /** Inclusive range; either end may be null (open). */
     public <C extends Comparable<? super C>> Specs<T> between(String attribute, C from, C to) {
         if (from != null) {
-            parts.add((root, query, cb) -> cb.greaterThanOrEqualTo(root.<C>get(attribute), from));
+            parts.add((root, query, cb) -> cb.greaterThanOrEqualTo(Specs.<C>path(root, attribute), from));
         }
         if (to != null) {
-            parts.add((root, query, cb) -> cb.lessThanOrEqualTo(root.<C>get(attribute), to));
+            parts.add((root, query, cb) -> cb.lessThanOrEqualTo(Specs.<C>path(root, attribute), to));
         }
         return this;
     }

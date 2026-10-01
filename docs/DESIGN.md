@@ -663,11 +663,13 @@ For each module: key operations, validations and events. (Field lists are in §2
 ### 5.2 Master data
 | Entity | Special rules |
 |---|---|
-| Material | code unique; cannot deactivate if open POs or stock > 0 (warn → require flag); `min ≤ reorder ≤ max` |
+| Material | code unique (`A-Z0-9._-`, 2-30, immutable); cannot deactivate if open POs or stock > 0 (warn → require flag): `DELETE /api/materials/{id}` answers 422 `DEACTIVATION_BLOCKED` listing why, and succeeds with `?force=true` (the warnings go into the audit entry). In use is decided by `MaterialUsageCheck` beans: Phase 1 knows "primary material of an active product"; Phase 2 adds stock, Phase 3 open POs, Phase 4 active BOMs. `min ≤ reorder ≤ max` (equality allowed); unit of measure must exist in `uoms` and cannot change while a check reports blockers (422 `UNIT_CHANGE_BLOCKED`); a preferred supplier must exist and be active when chosen (an already chosen one may stay after it becomes inactive); quantities ≤ 3 decimals, cost ≤ 4 |
 | Product | spring-type attributes validated against `spring_attribute_definitions`; editing an ACTIVE product's technical fields requires Engineer and creates an audit entry; drawing revision change when BOM active ⇒ warning to review BOM |
-| Supplier/Customer | GST format validated (`^\d{2}[A-Z]{5}\d{4}[A-Z]\d[Z][A-Z\d]$`); deactivation blocks new documents only |
+| Supplier/Customer | GST format validated (`^\d{2}[A-Z]{5}\d{4}[A-Z]\d[Z][A-Z\d]$`, optional); code unique and immutable; e-mail stored lower-case; deactivation blocks new documents only (`DELETE` = deactivate, `POST .../activate` reverses; `status` mirrors `active`) |
 | Warehouse/Location | location types enumerated; at least one RAW_MATERIAL, WIP, FINISHED, QUARANTINE, QUALITY_PENDING, SCRAP location per active warehouse (checked at startup, reported in Admin screen) |
 | Operation | standard/setup time ≥ 0 |
+
+**Master-data API conventions** (suppliers, customers, materials; products follow in 1.9): `GET` list takes `q` (case-insensitive contains over code, name and a few text fields; `%` and `_` are literal), `active`, resource-specific filters (materials: `materialType`, `supplierId`, `uom`), `page`, `size` (≤ 100) and `sort` (whitelisted: `code`, `name`, ...; unknown field is 400). `PUT` replaces the editable fields (omitted optional fields are cleared), carries the row `version` (409 `VERSION_CONFLICT`), never changes the code, and returns the new state. Create is 201 with `Location`; duplicate code is 409 `DUPLICATE_KEY`; field problems are 400 with `fieldErrors`. Every change is audited (`SUPPLIER_CREATED`, `MATERIAL_DEACTIVATED`, ...). Read access: materials `MATERIAL_VIEW` or `MASTERDATA_MANAGE`; suppliers `SUPPLIER_MANAGE` or `PURCHASE_VIEW`; customers `CUSTOMER_MANAGE` or `SALES_VIEW`; writes need `MASTERDATA_MANAGE` / `SUPPLIER_MANAGE` / `CUSTOMER_MANAGE`. `GET /api/uoms` lists units of measure for any signed-in user. `GET /api/materials/{id}/stock` arrives with the inventory module.
 
 ### 5.3 BOM / routing
 - **Create revision:** copies an APPROVED/ACTIVE BOM into a new DRAFT with next revision letter.

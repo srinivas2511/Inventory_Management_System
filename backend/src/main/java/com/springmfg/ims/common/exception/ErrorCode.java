@@ -52,6 +52,10 @@ public enum ErrorCode {
     LAST_ADMIN_REQUIRED(HttpStatus.UNPROCESSABLE_ENTITY, "At least one active Admin is required"),
     ROLE_PROTECTED(HttpStatus.UNPROCESSABLE_ENTITY, "Role is protected"),
 
+    // 422 - master data
+    DEACTIVATION_BLOCKED(HttpStatus.UNPROCESSABLE_ENTITY, "Item is in use; confirm to deactivate"),
+    UNIT_CHANGE_BLOCKED(HttpStatus.UNPROCESSABLE_ENTITY, "Unit of measure cannot change while the material is in use"),
+
     // 500
     INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "Internal error");
 
