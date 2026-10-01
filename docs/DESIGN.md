@@ -1157,7 +1157,7 @@ Loaded by `DemoDataLoader` only when `ims.demo.load-data=true`; it uses the real
 Roles (13), permissions (catalogue in §7.1), role-permission map, UOMs, spring attribute definitions per type, rejection reasons (the nine from the requirements), standard operations (Wire Drawing, Coiling, Cutting, Grinding, Heat Treatment, Shot Peening, Surface Treatment, Inspection, Packaging), default settings, one warehouse `MAIN-WH` with locations `RM-01, RM-02, WIP-01, FG-01, SCRAP-01` plus `QRN-01` (quarantine) and `FGQ-01` (FG quality pending).
 
 ### 11.2 Demo users (dev/demo only)
-Initial password for all demo users: `Demo@12345!` (forced change on first login; **never loaded in prod**).
+Initial password for all demo users: `Demo@123456!` (forced change on first login; **never loaded in prod**).
 | Username | Role | Notes |
 |---|---|---|
 | `admin` | ADMIN | |
