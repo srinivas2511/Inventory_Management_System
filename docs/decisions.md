@@ -21,3 +21,20 @@ Source: DESIGN.md §14, PLAN.md §14.
 ## Phase 0 technical notes
 - Java: the project targets Java 17 (`<release>17`); it also builds on newer JDKs.
 - Fonts and icons are self-hosted from npm (`@fontsource/roboto`, `material-icons`) so builds and the running app work without internet access (ADR-15).
+
+## Phase 1 — role/permission seed interpretation (task 1.2)
+`V3_1__reference_seed.sql` expands ARCHITECTURE §10.3 into concrete permission codes from DESIGN §7.1 (75 codes, 13 roles, 142 grants). Where §10.3 is silent or abbreviated, the seed follows REQUIREMENTS §3.3. Roles can be changed from the roles screen (`PUT /api/roles/{id}/permissions`); the test `ReferenceSeedIT` holds the expected matrix.
+
+| Point | What the seed does | Why |
+|---|---|---|
+| ADMIN `USER_*`, "all `*_VIEW`" | all four USER codes and every `*_VIEW`, `INVENTORY_VIEW_ALL`, `REPORT_VIEW`, `DASHBOARD_VIEW`, `TRACEABILITY_VIEW`, `AUDIT_VIEW` | literal reading |
+| ADMIN approvals | also holds `PURCHASE_APPROVE` (decision #3, demo), `DISPATCH_APPROVE`, `ADJUST_APPROVE` (besides `ADJUST_APPROVE_ADMIN`) | `DISPATCH_APPROVE` would otherwise have no holder; Admin must be able to approve small adjustments too. Requester ≠ approver is enforced in services |
+| ADMIN master data | all `*_MANAGE` master-data codes (`SUPPLIER_`, `CUSTOMER_`, `LOCATION_`, `OPERATION_`, `REJECTION_REASON_`) | §10.3 lists only some, but REQUIREMENTS §3.3 gives Admin all master data |
+| MANAGEMENT `*_VIEW` | every `*_VIEW` **except** `USER_VIEW` and `AUDIT_VIEW`; plus `EXPORT_DATA` | management is read-only on business data, not on people or the audit log |
+| `INVENTORY_VIEW_ALL` | held by every role with `INVENTORY_VIEW` except STORE_OPERATOR | Store Operator is the only warehouse-scoped role (§10.2) |
+| Extra view codes | `MATERIAL_VIEW`, `PRODUCT_VIEW`, `BOM_VIEW`, `QUALITY_VIEW`, `SALES_VIEW`, `DISPATCH_VIEW`, `MAINTENANCE_VIEW`, `VALUATION_VIEW`, `TRACEABILITY_VIEW` given to roles whose REQUIREMENTS §3.3 duties need them | §10.3 omits them |
+| `PRODUCTION_VIEW` | PRODUCTION_MANAGER, ADMIN, MANAGEMENT only | DESIGN §4.10: holders see **all** orders; Supervisor and Operator are scoped to assigned orders |
+| Other catalogue codes | `BOM_REVIEW`→ENGINEER; `PRODUCTION_APPROVE`, `PRODUCTION_REOPEN`→PRODUCTION_MANAGER; `INVENTORY_RETURN`→STORE_MANAGER, STORE_OPERATOR; `PROBLEM_REPORT`→SUPERVISOR too | in DESIGN §7.1 but not in §10.3 |
+| Not seeded | `PURCHASE_APPROVE` for PURCHASE_MANAGER | §10.3: "only if granted" |
+
+Additive settings: `security.lockout.minutes` = 15 (lockout duration; DESIGN §10.1 lists only the attempt count). Token lifetimes stay application properties (`access-ttl` 15m, `refresh-ttl` 7d). The `MAIN-WH` warehouse and locations (DESIGN §11.1) are not in this seed: warehouses arrive with Phase 2, and spring attribute definitions with task 1.9.
