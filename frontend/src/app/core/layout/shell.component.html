@@ -1,0 +1,29 @@
+<mat-toolbar color="primary" class="topbar">
+  <button mat-icon-button type="button" aria-label="Toggle navigation" (click)="nav.toggle()">
+    <mat-icon>menu</mat-icon>
+  </button>
+  <span class="app-name">{{ appName }}</span>
+  <span class="spacer"></span>
+  <span class="user" data-testid="session-state">Not signed in</span>
+</mat-toolbar>
+@if (loading()) {
+  <mat-progress-bar mode="indeterminate" class="progress" />
+}
+<mat-sidenav-container class="container">
+  <mat-sidenav #nav [mode]="isCompact() ? 'over' : 'side'" [opened]="!isCompact()" class="sidenav">
+    @for (group of groups; track group.label) {
+      <div mat-subheader>{{ group.label }}</div>
+      <mat-nav-list>
+        @for (item of group.items; track item.route) {
+          <a mat-list-item [routerLink]="item.route" routerLinkActive="active" (click)="isCompact() && nav.close()">
+            <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
+            <span matListItemTitle>{{ item.label }}</span>
+          </a>
+        }
+      </mat-nav-list>
+    }
+  </mat-sidenav>
+  <mat-sidenav-content class="content">
+    <router-outlet />
+  </mat-sidenav-content>
+</mat-sidenav-container>

@@ -1,0 +1,5 @@
+# Production: everything sensitive comes from the environment; Swagger stays off unless SWAGGER_ENABLED=true.
+logging:
+  level:
+    root: INFO
+    com.springmfg.ims: INFO

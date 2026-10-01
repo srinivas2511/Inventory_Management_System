@@ -1,0 +1,56 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.topbar {
+  position: relative;
+  z-index: 2;
+  flex: 0 0 auto;
+}
+
+.app-name {
+  margin-left: 8px;
+  font-weight: 500;
+}
+
+.spacer {
+  flex: 1 1 auto;
+}
+
+.user {
+  font-size: 0.875rem;
+  opacity: 0.9;
+}
+
+.progress {
+  position: absolute;
+  top: 64px;
+  left: 0;
+  right: 0;
+  z-index: 3;
+}
+
+.container {
+  flex: 1 1 auto;
+}
+
+.sidenav {
+  width: 260px;
+}
+
+.content {
+  padding: 24px;
+  background: var(--mat-sys-surface-container-lowest, #fafafa);
+}
+
+a.active {
+  font-weight: 600;
+}
+
+@media (max-width: 767.98px) {
+  .content {
+    padding: 12px;
+  }
+}

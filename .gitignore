@@ -1,0 +1,25 @@
+# Build output
+**/target/
+**/dist/
+**/.angular/
+**/coverage/
+**/node_modules/
+*.log
+
+# IDE
+.idea/
+*.iml
+.vscode/*
+!.vscode/extensions.json
+.classpath
+.project
+.settings/
+
+# Environment and secrets
+docker/.env
+*.env
+!*.env.example
+
+# OS
+.DS_Store
+Thumbs.db

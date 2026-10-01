@@ -1,0 +1,28 @@
+# Production overrides: nothing exposed except the web port; secrets are REQUIRED from the environment.
+services:
+  postgres:
+    environment:
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set}
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+
+  backend:
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set}
+      CORS_ORIGINS: ${CORS_ORIGINS:?CORS_ORIGINS must be set}
+      SWAGGER_ENABLED: "false"
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+
+  frontend:
+    ports:
+      - "${WEB_PORT:-80}:80"
+    deploy:
+      resources:
+        limits:
+          memory: 128m

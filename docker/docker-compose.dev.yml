@@ -1,0 +1,32 @@
+# Development overrides: exposed ports, dev profile (Swagger on), mail catcher, optional pgAdmin.
+services:
+  postgres:
+    ports:
+      - "5432:5432"
+
+  backend:
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SWAGGER_ENABLED: "true"
+      CORS_ORIGINS: http://localhost:8081,http://localhost:4200
+    ports:
+      - "8080:8080"
+
+  frontend:
+    ports:
+      - "8081:80"
+
+  mailhog:
+    image: mailhog/mailhog:v1.0.1
+    ports:
+      - "1025:1025"   # SMTP
+      - "8025:8025"   # web UI
+
+  pgadmin:
+    image: dpage/pgadmin4:8
+    profiles: ["tools"]
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@ims.local
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"

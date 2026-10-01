@@ -1,0 +1,11 @@
+spring:
+  jpa:
+    show-sql: false
+logging:
+  level:
+    com.springmfg.ims: DEBUG
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
