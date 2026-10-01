@@ -35,6 +35,11 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return respond(Problems.of(ex.getCode(), ex.getMessage()));
     }
 
+    @ExceptionHandler(ValidationFailedException.class)
+    ResponseEntity<ProblemDetail> handleValidationFailed(ValidationFailedException ex) {
+        return respond(Problems.of(ErrorCode.VALIDATION_FAILED, ex.getMessage(), ex.getFieldErrors()));
+    }
+
     @ExceptionHandler(NotFoundException.class)
     ResponseEntity<ProblemDetail> handleNotFound(NotFoundException ex) {
         return respond(Problems.of(ErrorCode.NOT_FOUND, ex.getMessage()));

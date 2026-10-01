@@ -38,3 +38,18 @@ Source: DESIGN.md §14, PLAN.md §14.
 | Not seeded | `PURCHASE_APPROVE` for PURCHASE_MANAGER | §10.3: "only if granted" |
 
 Additive settings: `security.lockout.minutes` = 15 (lockout duration; DESIGN §10.1 lists only the attempt count). Token lifetimes stay application properties (`access-ttl` 15m, `refresh-ttl` 7d). The `MAIN-WH` warehouse and locations (DESIGN §11.1) are not in this seed: warehouses arrive with Phase 2, and spring attribute definitions with task 1.9.
+
+## Phase 1 — authentication decisions (task 1.3)
+Choices made where DESIGN/ARCHITECTURE left room; change by editing the setting or the named property.
+
+| Point | Behaviour | Where to change |
+|---|---|---|
+| Password minimum | 12 characters (also upper, lower, digit, symbol; at most 72 bytes because BCrypt truncates beyond that) | `security.password.min_length` |
+| Lockout | 5 failed logins ⇒ 15-minute fixed lock, answered with 423 `ACCOUNT_LOCKED` (DESIGN §6.2) rather than a generic 401, so the user knows to wait | `security.lockout.attempts`, `security.lockout.minutes` |
+| First login | no token is issued until the password is changed (DESIGN §5.1) | — |
+| Token lifetimes | access 15 min; refresh 7 days **absolute** from sign-in (rotation does not extend it) | `ims.security.access-ttl`, `refresh-ttl` |
+| Refresh reuse | strict: replaying a rotated token revokes the family. Two tabs refreshing with the same cookie at the same instant can therefore sign the user out; the SPA must refresh single-flight (DESIGN §8.5 `AuthInterceptor`) | — |
+| Reset link | 30 minutes, single use, hashed; e-mail sent after commit and off the request thread | `ims.security.reset-token-ttl`, `ims.mail.*`, `APP_BASE_URL` |
+| Audit | every outcome is published as an `AuthEvent`; persisting them to `audit_logs` is task 1.6 | — |
+| Not in 1.3 | bootstrap Admin account and demo users (need the user service, task 1.5); bearer-token filter and permission cache (task 1.4) | — |
+| Secrets | `JWT_SECRET` (≥ 32 characters) has no default: the application will not start without it (dev and test profiles carry throw-away values) | environment |

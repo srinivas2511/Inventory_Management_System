@@ -13,6 +13,14 @@ services:
       SPRING_PROFILES_ACTIVE: prod
       DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set}
       CORS_ORIGINS: ${CORS_ORIGINS:?CORS_ORIGINS must be set}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set (at least 32 characters)}
+      APP_BASE_URL: ${APP_BASE_URL:?APP_BASE_URL must be set (public URL used in password-reset e-mails)}
+      SPRING_MAIL_HOST: ${SMTP_HOST:?SMTP_HOST must be set (password reset is sent by e-mail)}
+      SPRING_MAIL_PORT: ${SMTP_PORT:-587}
+      SPRING_MAIL_USERNAME: ${SMTP_USER:-}
+      SPRING_MAIL_PASSWORD: ${SMTP_PASSWORD:-}
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH: ${SMTP_AUTH:-false}
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE: ${SMTP_STARTTLS:-false}
       SWAGGER_ENABLED: "false"
     deploy:
       resources:

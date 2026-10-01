@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -18,31 +19,38 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.springmfg.ims.auth.RateLimitFilter;
+
 /**
- * Phase 0 security baseline: stateless, deny-by-default, uniform 401/403 problem responses, strict CORS.
- * <p>
- * JWT authentication, the permission cache and user storage arrive in Phase 1 (PLAN.md tasks 1.3-1.5);
- * until then nothing except the explicitly listed public endpoints can be called.
+ * Security baseline: stateless, deny-by-default, uniform 401/403 problem responses, strict CORS, throttled
+ * authentication endpoints. Bearer-token authentication of other endpoints is added by task 1.4; until then
+ * nothing except the explicitly listed public endpoints can be called.
  */
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
+@EnableConfigurationProperties({ ImsSecurityProperties.class, ImsMailProperties.class })
 public class SecurityConfig {
 
     private static final String[] PUBLIC_ENDPOINTS = {
             "/actuator/health", "/actuator/health/**", "/actuator/info",
             "/api/system/ping",
+            "/api/auth/login", "/api/auth/refresh", "/api/auth/logout", "/api/auth/change-password",
+            "/api/auth/forgot-password", "/api/auth/reset-password",
             "/v3/api-docs", "/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**"
     };
 
     @Bean
-    SecurityFilterChain securityFilterChain(HttpSecurity http, ProblemDetailSecurityHandlers problemHandlers)
-            throws Exception {
+    SecurityFilterChain securityFilterChain(HttpSecurity http, ProblemDetailSecurityHandlers problemHandlers,
+            ImsSecurityProperties securityProperties, ObjectMapper objectMapper) throws Exception {
         http
+                .addFilterBefore(new RateLimitFilter(securityProperties, objectMapper), BasicAuthenticationFilter.class)
                 .csrf(AbstractHttpConfigurer::disable) // stateless token API, no cookies for auth on /api
                 .cors(Customizer.withDefaults())
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -62,11 +70,11 @@ public class SecurityConfig {
         return http.build();
     }
 
-    /** No users exist until Phase 1; this also stops Spring Boot generating a default user/password. */
+    /** Authentication is token-based; this stops Spring Boot generating a default user/password. */
     @Bean
     UserDetailsService userDetailsService() {
         return username -> {
-            throw new UsernameNotFoundException("User store not available yet");
+            throw new UsernameNotFoundException("Form/basic login is not supported");
         };
     }
 

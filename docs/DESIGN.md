@@ -639,8 +639,11 @@ For each module: key operations, validations and events. (Field lists are in §2
 ### 5.1 Auth / IAM
 | Operation | Rules |
 |---|---|
-| Login | username/password; lockout after 5 failures for 15 min; `must_change_password` forces change flow; audit success/failure |
-| Refresh | rotate; reuse of revoked token ⇒ revoke family |
+| Login | username (case-insensitive) / password; wrong password or unknown/inactive user ⇒ 401 `UNAUTHENTICATED` with one generic message; lockout after 5 failures for 15 min ⇒ 423 `ACCOUNT_LOCKED` (fixed window, correct password also refused while locked; settings `security.lockout.attempts` / `security.lockout.minutes`); audit success/failure |
+| Forced password change | if `must_change_password`, login returns `{ "mustChangePassword": true }` and opens **no** session (no token, no cookie). The client calls `POST /api/auth/change-password` `{username, currentPassword, newPassword}`, which verifies the current password (failures count towards lockout), applies the policy and history, revokes the user's other sessions and signs the user in (same response as login). The same endpoint serves a voluntary change |
+| Refresh | rotate; the successor keeps the family's absolute expiry (7 days from sign-in); reuse of a revoked token ⇒ revoke the whole family (every device must sign in again). `POST /api/auth/refresh` returns the same body as login so the SPA can restore the user after a reload |
+| Forgot / reset password | `POST /api/auth/forgot-password {email}` always answers 202. For an active account it stores a hashed single-use token (30 min), voids earlier ones and e-mails `<base>/reset-password/<token>` after commit. `POST /api/auth/reset-password {token, newPassword}`: invalid/used/expired token ⇒ 400 with field `token`; a weak password ⇒ 400 with field `newPassword` and the token stays usable. Success unlocks the account and revokes all its refresh tokens |
+| Throttling | `/api/auth/**` per client IP: 30/min (login, refresh, logout, change-password), 5 per 15 min (forgot/reset). Over the limit ⇒ 429 `RATE_LIMITED` + `Retry-After` |
 | Create/Update user | unique username/email; password policy; cannot remove the last ADMIN; changing roles bumps `permission_version` |
 | Assign roles/permissions | Admin only; system roles' permission sets editable but not deletable; audit old/new |
 | Deactivate user | no delete; active=false; refresh tokens revoked |
@@ -750,7 +753,9 @@ Response graph: `{ nodes:[{id, type, label, status, date}], edges:[{from,to,qty}
 ```json
 // request
 { "username": "operator1", "password": "••••••••" }
-// 200
+// 200 when a password change is required (no token, no cookie); the client then calls POST /api/auth/change-password
+{ "mustChangePassword": true }
+// 200 otherwise (also sets the HttpOnly refresh cookie)
 { "accessToken": "eyJ…", "expiresIn": 900, "mustChangePassword": false,
   "user": { "id": 12, "username": "operator1", "fullName": "Ravi Kumar", "roles": ["OPERATOR"],
             "permissions": ["PRODUCTION_EXECUTE","PROBLEM_REPORT"], "primaryDashboard": "OPERATOR" } }

@@ -9,6 +9,9 @@ services:
       SPRING_PROFILES_ACTIVE: dev
       SWAGGER_ENABLED: "true"
       CORS_ORIGINS: http://localhost:8081,http://localhost:4200
+      APP_BASE_URL: http://localhost:8081
+      SPRING_MAIL_HOST: mailhog          # password-reset e-mails land in MailHog (web UI on :8026)
+      SPRING_MAIL_PORT: "1025"
     ports:
       - "8080:8080"
 

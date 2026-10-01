@@ -5,6 +5,8 @@ spring:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/ims}
     username: ${DB_USER:ims}
     password: ${DB_PASSWORD:ims}
+    hikari:
+      schema: ims                 # plain JDBC (JdbcTemplate) resolves unqualified names in the ims schema, like JPA
   jpa:
     open-in-view: false
     hibernate:
@@ -33,6 +35,7 @@ spring:
 server:
   port: 8080
   shutdown: graceful
+  forward-headers-strategy: native      # real client IP behind nginx (only trusted internal proxies are honoured)
   error:
     include-message: never
     include-stacktrace: never
@@ -61,5 +64,17 @@ springdoc:
 ims:
   security:
     cors-origins: ${CORS_ORIGINS:http://localhost:4200}
+    jwt-secret: ${JWT_SECRET:}          # required: >= 32 characters, from the environment. No default on purpose.
+    access-ttl: 15m
+    refresh-ttl: 7d                     # absolute, counted from sign-in; rotation does not extend it
+    reset-token-ttl: 30m
+    cookie-secure: true                 # refresh cookie is Secure; dev profile relaxes it for plain http
+    rate-limit:
+      auth-per-minute: 30               # per client IP: login, refresh, logout, change-password
+      reset-per-window: 5               # per client IP: forgot-password, reset-password
+      reset-window: 15m
+  mail:
+    from: no-reply@springmfg.local
+    reset-url-base: ${APP_BASE_URL:http://localhost:8081}
   demo:
     load-data: false           # true only under the dev/demo profile (Phase 8 loader)

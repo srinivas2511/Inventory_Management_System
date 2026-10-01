@@ -1,3 +1,7 @@
+ims:
+  security:
+    jwt-secret: ${JWT_SECRET:dev-only-secret-change-me-dev-only-secret}
+    cookie-secure: false                # plain http on localhost
 spring:
   jpa:
     show-sql: false

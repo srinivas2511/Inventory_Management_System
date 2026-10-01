@@ -1,3 +1,10 @@
+ims:
+  security:
+    jwt-secret: test-only-secret-test-only-secret-0123456789
+    cookie-secure: false
+    rate-limit:
+      auth-per-minute: 1000
+      reset-per-window: 1000
 logging:
   level:
     root: WARN

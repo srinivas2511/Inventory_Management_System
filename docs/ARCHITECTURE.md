@@ -799,8 +799,8 @@ sequenceDiagram
 ```
 
 - Passwords hashed with **BCrypt (strength 12)**; policy enforced server-side (≥ 12 chars, mixed classes, not equal to username, history of last 5, expiry configurable).
-- Account lockout after repeated failures; login attempts audited.
-- Refresh tokens stored **hashed** in `refresh_tokens`; reuse of a revoked token revokes the whole family.
+- Account lockout after 5 failed logins for 15 minutes (fixed window, both configurable in `system_settings`); login attempts audited.
+- Refresh tokens stored **hashed** in `refresh_tokens`; each one expires 7 days after the sign-in that started its family (rotation does not extend it); reuse of a revoked token revokes the whole family.
 - Forgot password: single-use, short-lived, hashed token delivered by e-mail; generic response to avoid user enumeration.
 - Token carries `sub`, `roles`, and a `permission_version`; the authoritative permission set is resolved server-side from a Caffeine cache, so role changes take effect within seconds and a deactivated user is cut off immediately.
 
@@ -887,7 +887,7 @@ The mapping is data (a Flyway migration) and editable by Admin through the roles
 
 | Resource | Key endpoints | Required permission |
 |---|---|---|
-| `/api/auth` | `POST login`, `refresh`, `logout`, `forgot-password`, `reset-password`; `GET me` (profile + permissions) | public / authenticated |
+| `/api/auth` | `POST login`, `change-password`, `refresh`, `logout`, `forgot-password`, `reset-password`; `GET me` (profile + permissions) | public / authenticated |
 | `/api/users`, `/api/roles`, `/api/permissions` | CRUD, `PUT /users/{id}/roles`, `PUT /roles/{id}/permissions` | USER_*, ROLE_MANAGE |
 | `/api/materials` | CRUD, `GET /{id}/stock` | MASTERDATA / INVENTORY_VIEW |
 | `/api/products` | CRUD, `GET /{id}/bom`, `/spring-types/{type}/attributes` | PRODUCT_* |
