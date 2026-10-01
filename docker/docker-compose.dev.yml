@@ -20,7 +20,7 @@ services:
     image: mailhog/mailhog:v1.0.1
     ports:
       - "1025:1025"   # SMTP
-      - "8025:8025"   # web UI
+      - "8026:8025"   # web UI (8025 is taken by Docker Desktop backend on Windows)
 
   pgadmin:
     image: dpage/pgadmin4:8
