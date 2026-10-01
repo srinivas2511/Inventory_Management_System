@@ -13,8 +13,7 @@ Stack: Java 17+ / Spring Boot 3 / PostgreSQL / Angular 18+ (Angular Material) / 
 Before any task: read the DESIGN/ARCHITECTURE sections the PLAN task references. If code and docs disagree, stop and flag it rather than guessing.
 
 ## Current status
-- **Phase:** 0 — Foundations: skeleton delivered; **gate M0 pending** until `mvn verify` and `docker compose up` are confirmed green on a machine with Maven Central and Docker access
-- Verified so far (frontend): lint, 19 unit tests, production build. Backend and Docker images are written but not yet built.
+- **Phase:** 0 — Foundations: **complete; gate M0 passed.** Phase 1 (Identity, Security and Master Data) is next.
 - Update this line at every milestone gate (M0…M8).
 
 ## Non-negotiable rules
