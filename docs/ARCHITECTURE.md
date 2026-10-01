@@ -798,7 +798,7 @@ sequenceDiagram
     U->>A: POST /api/auth/refresh (cookie) → new pair, old refresh revoked
 ```
 
-- Passwords hashed with **BCrypt (strength 12)**; policy enforced server-side (≥ 10 chars, mixed classes, not equal to username, history of last 5, expiry configurable).
+- Passwords hashed with **BCrypt (strength 12)**; policy enforced server-side (≥ 12 chars, mixed classes, not equal to username, history of last 5, expiry configurable).
 - Account lockout after repeated failures; login attempts audited.
 - Refresh tokens stored **hashed** in `refresh_tokens`; reuse of a revoked token revokes the whole family.
 - Forgot password: single-use, short-lived, hashed token delivered by e-mail; generic response to avoid user enumeration.

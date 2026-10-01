@@ -644,7 +644,7 @@ For each module: key operations, validations and events. (Field lists are in §2
 | Create/Update user | unique username/email; password policy; cannot remove the last ADMIN; changing roles bumps `permission_version` |
 | Assign roles/permissions | Admin only; system roles' permission sets editable but not deletable; audit old/new |
 | Deactivate user | no delete; active=false; refresh tokens revoked |
-| Password policy | ≥10 chars, upper/lower/digit/symbol, not in last 5, not containing username |
+| Password policy | ≥12 chars, upper/lower/digit/symbol, not in last 5, not containing username |
 
 ### 5.2 Master data
 | Entity | Special rules |
@@ -1131,7 +1131,7 @@ Alert example text: `LOW STOCK — RM-SS-001 SS304 Wire 2.5 mm: current 120 KG, 
 | `quality.pending_hours` | INTEGER | 24 | pending inspection alert |
 | `quality.trace_granularity` | STRING | ORDER | ORDER / BATCH |
 | `sales.reservation.max_days` | INTEGER | 14 | auto-release stale reservations |
-| `security.password.min_length` | INTEGER | 10 | policy |
+| `security.password.min_length` | INTEGER | 12 | policy |
 | `security.lockout.attempts` | INTEGER | 5 | lockout |
 
 ### 10.2 Application properties (environment)
