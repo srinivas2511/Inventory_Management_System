@@ -615,7 +615,13 @@ Set<Long> warehousesFor(User u) { return u.has("INVENTORY_VIEW_ALL") ? ALL : use
 Repository queries for operator/supervisor lists add the same predicate in SQL (not post-filtering in memory).
 
 ### 4.11 Audit aspect
-`@Audited(action, entity)` around service methods returns/accepts a `Auditable` result containing `oldValue`/`newValue`; the aspect pulls user, roles, IP and correlation id from the request context and calls `AuditService.record()` in the same transaction. Sensitive explicit audits (quantity corrections, adjustments, overrides) supply `reason` (validated `@NotBlank`).
+Two ways to write an audit row, both in the **caller's transaction** (a failed audit write rolls the business change back):
+- **`@Audited(action, entity)`** on a service method. The method returns an `Auditable` whose `auditChange()` gives `{entityId, oldValue, newValue, reason}`; the `AuditAspect` records it after the method returns and before the transaction commits (the transaction interceptor is ordered outside the aspect, see `TransactionConfig`). A method that is `@Audited` but returns anything else fails loudly and rolls back; a method that throws records nothing.
+- **Events** for actions that do not fit "one method, one result": publish an `AuditCommand` (administration services do) or an `AuthEvent` (authentication). `AuditEventListener` turns them into rows synchronously.
+
+`AuditService` takes the user, **roles at the time**, IP address and correlation id from the request context (`system` when nobody is signed in) and writes `audit_logs` with JSONB old/new values. Keys that look secret (`password*`, `*Hash`, `*Token`, `*Secret`, ...) are masked as `***` at any depth. Over-long text is truncated, never failing the operation. Sensitive explicit audits (quantity corrections, adjustments, overrides) supply `reason` (validated `@NotBlank` by their command objects). A failed sign-in for an unknown name that does not look like a username (`[A-Za-z0-9._-]{1,50}`) is stored as `(invalid)`: it may be a password typed in the wrong field.
+
+`GET /api/audit-logs` (`AUDIT_VIEW`): filters `userId`, `username`, `entity`, `entityId`, `action`, `from`, `to` (ISO-8601 instants, inclusive); newest first (`sort=occurredAt,asc` reverses); `size` ≤ 100. Export is part of the reporting work (Phase 7).
 
 ### 4.12 Scheduled jobs
 | Job | Schedule | Action |
@@ -624,11 +630,11 @@ Repository queries for operator/supervisor lists add the same predicate in SQL (
 | `StockAlertListener` | on `StockPosted` | low/overstock/shortage per affected item |
 | `LedgerReconciliationJob` | nightly 02:00 | compares Σledger to balances; raises LEDGER_MISMATCH |
 | `ReservationExpiryJob` | nightly | releases stale reservations |
-| `PartitionMaintenanceJob` | monthly | creates future audit partitions |
+| `PartitionMaintenanceJob` | monthly (02:15 on the 1st) and once at startup | keeps `audit_logs` partitions for the current month and the next 12 via `ensure_audit_partition()`; rows beyond the last partition still land in the default partition |
 | `IdempotencyPurgeJob` | hourly | deletes keys older than 48 h |
 | `TokenPurgeJob` | daily | removes expired refresh/reset tokens |
 
-All use ShedLock for single execution when multiple instances run.
+All use ShedLock for single execution when multiple instances run (not yet added: there is a single backend instance today; add it before scaling out).
 
 ---
 

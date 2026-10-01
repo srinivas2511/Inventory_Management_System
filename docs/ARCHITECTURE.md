@@ -862,7 +862,7 @@ The mapping is data (a Flyway migration) and editable by Admin through the roles
 
 ## 11. Audit Architecture
 
-- **Declarative:** services mark audited operations with `@Audited(action = "STOCK_ADJUSTMENT", entity = "StockAdjustment")`; an aspect captures user, **role(s) at the time**, action, entity, entity id, **old value**, **new value**, reason, timestamp, IP address, correlation id.
+- **Declarative:** services mark audited operations with `@Audited(action = "STOCK_ADJUSTMENT", entity = "StockAdjustment")` (returning an `Auditable`), or publish an `AuditCommand` event; an aspect captures user, **role(s) at the time**, action, entity, entity id, **old value**, **new value**, reason, timestamp, IP address, correlation id.
 - **Explicit for quantities:** operations that change business numbers (e.g. `PRODUCTION_QUANTITY_UPDATE`, `STOCK_ADJUSTMENT`) call `AuditService.record(…)` with before/after snapshots and the mandatory reason (`@NotBlank` for those commands).
 - **Same transaction** as the business change: if the audit insert fails, the business change rolls back.
 - **Storage:** `audit_logs` is append-only (trigger from 8.4), JSONB for `old_value`/`new_value`, partitioned by month, retained according to policy.

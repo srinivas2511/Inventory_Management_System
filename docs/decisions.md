@@ -78,3 +78,17 @@ Choices made where DESIGN/ARCHITECTURE left room; change by editing the setting 
 | First Admin | `IMS_BOOTSTRAP_ADMIN_EMAIL` + `IMS_BOOTSTRAP_ADMIN_PASSWORD` create it only on an empty `users` table. If every Admin is ever lost, recover with SQL (assign the ADMIN role) rather than an environment variable that could silently re-create accounts |
 | Demo users | 14 users from DESIGN §11.2, created by `DemoUserLoader` (dev profile); `storeop1`'s MAIN-WH restriction arrives with warehouses in Phase 2 |
 | Paging | `size` is capped at 100 for every list endpoint (`spring.data.web.pageable.max-page-size`); sort properties are whitelisted per endpoint |
+
+## Phase 1 — audit decisions (task 1.6)
+| Point | Behaviour |
+|---|---|
+| Two entry points | `@Audited` + `Auditable` for one-method-one-change; `AuditCommand`/`AuthEvent` events otherwise. Both end in `AuditService.record`, in the caller's transaction |
+| Fail closed | if the audit insert fails, the operation fails (also for failed sign-ins: the response becomes a 500 rather than an unaudited 401) |
+| Unknown usernames | stored only if they look like a username; otherwise `(invalid)` (could be a password typed in the wrong field). A password made only of letters, digits, dot, underscore and hyphen would still be stored, which the policy's mandatory symbol makes unlikely but not impossible |
+| Masking | by key name (see DESIGN §4.11), not by value; do not put secrets in free-text `reason` |
+| Truncation | `reason` 500, `username` 50, `roles` 200 characters etc.; never an error |
+| Read API | plain SQL with bound parameters; counts scan every partition unless `from`/`to` narrow it; add keyset paging if the log grows into tens of millions of rows |
+| Export | not in 1.6: ARCHITECTURE §12.2 lists `GET /api/audit-logs/export`; it belongs with the report/export work and must itself be audited |
+| Retention | rows are kept permanently (REQUIREMENTS §7); no purge exists or is planned |
+| ShedLock | not added; single instance today (DESIGN §4.12 note) |
+| Gaps | master-data edits (1.8, 1.9) and setting changes (1.7) must use `@Audited`/`AuditCommand` when those tasks are built |

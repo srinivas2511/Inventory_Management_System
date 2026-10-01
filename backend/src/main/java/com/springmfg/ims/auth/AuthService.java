@@ -154,7 +154,9 @@ public class AuthService {
         if (token.isRevoked()) {
             refreshTokens.revokeFamily(token.getFamilyId(), now);
             events.publishEvent(new AuthEvent(AuthEvent.Type.TOKEN_REUSE_DETECTED, token.getUserId(),
-                    owner.map(User::getUsername).orElse(null), client.ip(), "revoked refresh token presented again"));
+                    owner.map(User::getUsername).orElse(null),
+                    owner.map(u -> u.roleCodes().stream().sorted().toList()).orElse(List.of()), client.ip(),
+                    "revoked refresh token presented again"));
             log.warn("Refresh token reuse detected for user id {}; token family revoked", token.getUserId());
             throw notAuthenticated();
         }
@@ -247,7 +249,8 @@ public class AuthService {
     }
 
     private void publish(AuthEvent.Type type, User user, String username, ClientInfo client, String detail) {
-        events.publishEvent(new AuthEvent(type, user == null ? null : user.getId(), username, client.ip(), detail));
+        List<String> roles = user == null ? List.of() : user.roleCodes().stream().sorted().toList();
+        events.publishEvent(new AuthEvent(type, user == null ? null : user.getId(), username, roles, client.ip(), detail));
         log.info("auth event {} user={} ip={}{}", type, sanitize(username), client.ip(),
                 detail == null ? "" : " (" + detail + ")");
     }

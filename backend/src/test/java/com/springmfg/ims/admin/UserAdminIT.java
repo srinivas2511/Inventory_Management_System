@@ -154,7 +154,7 @@ class UserAdminIT extends AbstractIntegrationTest {
 
         Map<String, Object> badName = body("a b", "SALES");
         send(post("/api/users"), token, badName).andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.fieldErrors[0].field").value("username"));
+                .andExpect(jsonPath("$.fieldErrors[?(@.field == 'username')]").exists()); // order of errors is not guaranteed
 
         Map<String, Object> weak = body(newName("weak"), "SALES");
         weak.put("temporaryPassword", "short");
