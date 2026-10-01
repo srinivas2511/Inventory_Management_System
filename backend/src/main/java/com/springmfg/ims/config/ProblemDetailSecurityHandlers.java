@@ -14,6 +14,7 @@ import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.springmfg.ims.auth.JwtAuthenticationFilter;
 import com.springmfg.ims.common.exception.ErrorCode;
 import com.springmfg.ims.common.exception.Problems;
 
@@ -33,7 +34,13 @@ public class ProblemDetailSecurityHandlers implements AuthenticationEntryPoint, 
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response,
             AuthenticationException authException) throws IOException {
-        write(response, Problems.of(ErrorCode.UNAUTHENTICATED, "Authentication is required."));
+        // the JWT filter records why a presented token was refused (e.g. TOKEN_EXPIRED -> the client refreshes)
+        Object reason = request.getAttribute(JwtAuthenticationFilter.ERROR_ATTRIBUTE);
+        if (reason == ErrorCode.TOKEN_EXPIRED) {
+            write(response, Problems.of(ErrorCode.TOKEN_EXPIRED, "Your access token has expired. Refresh it."));
+        } else {
+            write(response, Problems.of(ErrorCode.UNAUTHENTICATED, "Authentication is required."));
+        }
     }
 
     @Override

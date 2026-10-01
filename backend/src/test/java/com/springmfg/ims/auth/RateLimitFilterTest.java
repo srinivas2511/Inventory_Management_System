@@ -15,7 +15,7 @@ import com.springmfg.ims.config.ImsSecurityProperties;
 class RateLimitFilterTest {
 
     private final RateLimitFilter filter = new RateLimitFilter(new ImsSecurityProperties("x".repeat(32),
-            Duration.ofMinutes(15), Duration.ofDays(7), Duration.ofMinutes(30), true,
+            Duration.ofMinutes(15), Duration.ofDays(7), Duration.ofMinutes(30), Duration.ofSeconds(60), true,
             new ImsSecurityProperties.RateLimit(3, 2, Duration.ofMinutes(15))), new ObjectMapper());
 
     private MockHttpServletResponse call(String method, String uri, String ip) throws Exception {

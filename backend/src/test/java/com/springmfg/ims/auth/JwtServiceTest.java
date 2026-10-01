@@ -27,7 +27,7 @@ class JwtServiceTest {
 
     private static ImsSecurityProperties props(String secret) {
         return new ImsSecurityProperties(secret, Duration.ofMinutes(15), Duration.ofDays(7), Duration.ofMinutes(30),
-                true, new ImsSecurityProperties.RateLimit(30, 5, Duration.ofMinutes(15)));
+                Duration.ofSeconds(60), true, new ImsSecurityProperties.RateLimit(30, 5, Duration.ofMinutes(15)));
     }
 
     private static JwtService service(String secret, Instant now) {
@@ -63,7 +63,7 @@ class JwtServiceTest {
         String token = service(SECRET, T0).issue(user()).value();
         assertThat(service(SECRET, T0.plus(Duration.ofMinutes(14))).parse(token)).isNotNull();
         assertThatThrownBy(() -> service(SECRET, T0.plus(Duration.ofMinutes(15)).plusSeconds(1)).parse(token))
-                .isInstanceOf(JwtException.class);
+                .isInstanceOf(JwtService.ExpiredAccessTokenException.class); // genuine but expired: client refreshes
     }
 
     @Test
@@ -74,7 +74,7 @@ class JwtServiceTest {
         String forged = Base64.getUrlEncoder().withoutPadding()
                 .encodeToString(payload.replace("\"pv\":3", "\"pv\":9").replace("OPERATOR", "ADMIN").getBytes());
         assertThatThrownBy(() -> service(SECRET, T0).parse(parts[0] + "." + forged + "." + parts[2]))
-                .isInstanceOf(JwtException.class);
+                .isInstanceOf(JwtException.class).isNotInstanceOf(JwtService.ExpiredAccessTokenException.class);
     }
 
     @Test

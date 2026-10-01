@@ -68,6 +68,7 @@ ims:
     access-ttl: 15m
     refresh-ttl: 7d                     # absolute, counted from sign-in; rotation does not extend it
     reset-token-ttl: 30m
+    access-cache-ttl: 60s               # permission cache; admin changes evict it immediately
     cookie-secure: true                 # refresh cookie is Secure; dev profile relaxes it for plain http
     rate-limit:
       auth-per-minute: 30               # per client IP: login, refresh, logout, change-password

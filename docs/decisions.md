@@ -53,3 +53,13 @@ Choices made where DESIGN/ARCHITECTURE left room; change by editing the setting 
 | Audit | every outcome is published as an `AuthEvent`; persisting them to `audit_logs` is task 1.6 | — |
 | Not in 1.3 | bootstrap Admin account and demo users (need the user service, task 1.5); bearer-token filter and permission cache (task 1.4) | — |
 | Secrets | `JWT_SECRET` (≥ 32 characters) has no default: the application will not start without it (dev and test profiles carry throw-away values) | environment |
+
+## Phase 1 — authorization plumbing decisions (task 1.4)
+| Point | Behaviour |
+|---|---|
+| 401 codes | genuine but expired token, or `pv` older than the user's current `permission_version` ⇒ `TOKEN_EXPIRED` (the client refreshes silently); malformed, tampered, unknown or inactive user ⇒ `UNAUTHENTICATED` |
+| Stale token on public endpoints | login, refresh, ping etc. ignore an expired or broken `Authorization` header instead of failing, so a client holding a stale token can still sign in |
+| Forced password change | a user flagged `must_change_password` is refused even with a valid token (e.g. after an admin reset) |
+| Cache | permissions are cached 60 s (`ims.security.access-cache-ttl`); task 1.5's admin APIs must evict (see DESIGN §7.4) so role changes and deactivation apply at once |
+| Auditing columns | `created_by`/`updated_by` are now filled from the signed-in user; empty for login, scheduled and seed work |
+| Matrix coverage | `PermissionMatrixIT` is generic but only the test probe and the six public auth endpoints exist today, so its value grows as 1.5–1.11 add protected endpoints |

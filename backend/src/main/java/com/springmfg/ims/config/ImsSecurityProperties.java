@@ -13,6 +13,7 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
  * @param accessTtl     access-token lifetime
  * @param refreshTtl    absolute refresh-token lifetime, counted from login (rotation does not extend it)
  * @param resetTokenTtl password-reset link lifetime
+ * @param accessCacheTtl how long a user's permissions are cached between requests; admin changes evict at once
  * @param cookieSecure  set the {@code Secure} flag on the refresh cookie (only false for plain-http development)
  * @param rateLimit     throttling of {@code /api/auth/**}
  */
@@ -22,6 +23,7 @@ public record ImsSecurityProperties(
         @DefaultValue("15m") Duration accessTtl,
         @DefaultValue("7d") Duration refreshTtl,
         @DefaultValue("30m") Duration resetTokenTtl,
+        @DefaultValue("60s") Duration accessCacheTtl,
         @DefaultValue("true") boolean cookieSecure,
         @DefaultValue RateLimit rateLimit) {
 

@@ -13,6 +13,7 @@ import javax.crypto.spec.SecretKeySpec;
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
 
 import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
+import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
@@ -21,6 +22,7 @@ import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.security.oauth2.jwt.JwtIssuerValidator;
+import org.springframework.security.oauth2.jwt.JwtValidationException;
 import org.springframework.security.oauth2.jwt.JwtTimestampValidator;
 import org.springframework.security.oauth2.jwt.JwsHeader;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
@@ -40,6 +42,13 @@ public class JwtService {
 
     public static final String ISSUER = "ims";
     static final int MIN_SECRET_LENGTH = 32;
+
+    /** The token is genuine but past its expiry: the client should refresh rather than sign in again. */
+    public static class ExpiredAccessTokenException extends JwtException {
+        public ExpiredAccessTokenException(String message, Throwable cause) {
+            super(message, cause);
+        }
+    }
 
     /** What a verified token says. */
     public record AccessClaims(long userId, String username, List<String> roles, int permissionVersion,
@@ -92,10 +101,18 @@ public class JwtService {
     /**
      * Verifies signature, algorithm, issuer and expiry.
      *
-     * @throws JwtException if the token is malformed, tampered with, expired or from another issuer
+     * @throws ExpiredAccessTokenException if the token is genuine but expired
+     * @throws JwtException                 if the token is malformed, tampered with or from another issuer
      */
     public AccessClaims parse(String token) {
-        Jwt jwt = decoder.decode(token);
+        Jwt jwt;
+        try {
+            jwt = decoder.decode(token);
+        } catch (JwtValidationException e) {
+            boolean expired = e.getErrors().stream().map(OAuth2Error::getDescription)
+                    .anyMatch(d -> d != null && d.contains("expired"));
+            throw expired ? new ExpiredAccessTokenException("Access token expired", e) : e;
+        }
         try {
             List<String> roles = jwt.getClaimAsStringList("roles");
             Long pv = jwt.getClaim("pv") instanceof Number n ? n.longValue() : null;

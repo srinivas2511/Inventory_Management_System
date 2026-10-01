@@ -3,6 +3,7 @@ package com.springmfg.ims.config;
 import java.util.Arrays;
 import java.util.List;
 
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -25,12 +26,14 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.springmfg.ims.auth.JwtAuthenticationFilter;
 import com.springmfg.ims.auth.RateLimitFilter;
 
 /**
  * Security baseline: stateless, deny-by-default, uniform 401/403 problem responses, strict CORS, throttled
- * authentication endpoints. Bearer-token authentication of other endpoints is added by task 1.4; until then
- * nothing except the explicitly listed public endpoints can be called.
+ * authentication endpoints. Everything except the explicitly listed public endpoints needs a valid bearer token
+ * ({@code JwtAuthenticationFilter}); what an authenticated user may do is decided per endpoint by
+ * {@code @PreAuthorize} (see DESIGN.md section 7.4).
  */
 @Configuration
 @EnableWebSecurity
@@ -48,7 +51,10 @@ public class SecurityConfig {
 
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http, ProblemDetailSecurityHandlers problemHandlers,
-            ImsSecurityProperties securityProperties, ObjectMapper objectMapper) throws Exception {
+            ImsSecurityProperties securityProperties, ObjectMapper objectMapper,
+            ObjectProvider<JwtAuthenticationFilter> jwtFilter) throws Exception {
+        // filter order (DESIGN 7.3): correlation id -> rate limit -> JWT -> method security in the controllers
+        jwtFilter.ifAvailable(filter -> http.addFilterBefore(filter, BasicAuthenticationFilter.class));
         http
                 .addFilterBefore(new RateLimitFilter(securityProperties, objectMapper), BasicAuthenticationFilter.class)
                 .csrf(AbstractHttpConfigurer::disable) // stateless token API, no cookies for auth on /api

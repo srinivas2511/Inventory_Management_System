@@ -877,6 +877,15 @@ class ProductController {
 ```
 A security test iterates over all mappings in the Spring `RequestMappingHandlerMapping`, asserts each has `@PreAuthorize` (or is explicitly whitelisted), and generates role × endpoint cases from the seeded permission matrix.
 
+**Conventions (enforced by `PreAuthorizeConventionTest`, `ArchitectureTest`, `PermissionMatrixIT`)**
+- Every `@GetMapping`/`@PostMapping`/… method has `@PreAuthorize`; public endpoints say `permitAll()` explicitly.
+- Only these forms are allowed: `permitAll()`, `isAuthenticated()`, `hasAuthority('CODE')`, `hasAnyAuthority('A', 'B')`. No `hasRole`, no SpEL logic. State, data-scope and segregation-of-duties rules live in services (§4.10, ARCHITECTURE §10.2), not in annotations.
+- Every `CODE` must exist in the seeded catalogue (§7.1), so a typo fails the build.
+- Authorities are permission codes only (never `ROLE_*`). The JWT carries identity and `pv`; authorities always come from the server-side cache `UserAccessService`.
+- `PermissionMatrixIT` evaluates every endpoint's expression against each of the 13 roles' seeded permissions, so new endpoints join the matrix automatically. Each endpoint additionally needs its own HTTP-level 403 test with a valid payload (request binding runs before method security, so an invalid body can answer 400 first).
+
+**Cache invalidation contract.** Code that changes a user's roles, a role's permissions or a user's `active` flag bumps `permission_version` where relevant and calls `UserAccessService.evict(userId)` / `evictAll()` after commit; otherwise the change applies when the 60-second cache entry expires.
+
 ### 7.5 Sensitive-data handling
 Passwords never logged or returned; `password_hash` excluded from all DTOs; refresh token only in HttpOnly cookie (`Path=/api/auth`, `SameSite=Strict`, `Secure`); audit values mask secret fields; error responses never contain stack traces.
 
