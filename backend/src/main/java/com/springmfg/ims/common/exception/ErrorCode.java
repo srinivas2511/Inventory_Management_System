@@ -24,6 +24,7 @@ public enum ErrorCode {
     VERSION_CONFLICT(HttpStatus.CONFLICT, "Version conflict"),
     DUPLICATE_KEY(HttpStatus.CONFLICT, "Duplicate value"),
     IDEMPOTENCY_REPLAY_MISMATCH(HttpStatus.CONFLICT, "Idempotency key reused with a different request"),
+    IDEMPOTENCY_IN_PROGRESS(HttpStatus.CONFLICT, "A request with this idempotency key is still being processed"),
 
     // 422 - stock rules
     INSUFFICIENT_STOCK(HttpStatus.UNPROCESSABLE_ENTITY, "Insufficient stock"),

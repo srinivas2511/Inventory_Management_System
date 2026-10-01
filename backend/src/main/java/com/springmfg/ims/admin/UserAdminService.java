@@ -8,10 +8,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jakarta.persistence.criteria.Join;
-import jakarta.persistence.criteria.Predicate;
-import jakarta.persistence.criteria.Root;
-import jakarta.persistence.criteria.Subquery;
 
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Pageable;
@@ -26,6 +22,7 @@ import com.springmfg.ims.auth.SessionService;
 import com.springmfg.ims.auth.UserAccessService;
 import com.springmfg.ims.common.api.PageRequests;
 import com.springmfg.ims.common.api.PageResponse;
+import com.springmfg.ims.common.api.Specs;
 import com.springmfg.ims.common.exception.BusinessRuleException;
 import com.springmfg.ims.common.exception.ConflictException;
 import com.springmfg.ims.common.exception.ErrorCode;
@@ -80,29 +77,8 @@ public class UserAdminService {
     }
 
     private static Specification<User> filter(String q, Boolean active, String role) {
-        return (root, query, cb) -> {
-            List<Predicate> all = new ArrayList<>();
-            if (q != null && !q.isBlank()) {
-                String like = "%" + q.trim().toLowerCase(Locale.ROOT).replace("\\", "\\\\").replace("%", "\\%")
-                        .replace("_", "\\_") + "%";
-                all.add(cb.or(
-                        cb.like(cb.lower(root.get("username")), like, '\\'),
-                        cb.like(cb.lower(root.get("fullName")), like, '\\'),
-                        cb.like(cb.lower(root.get("email")), like, '\\'),
-                        cb.like(cb.lower(cb.coalesce(root.get("employeeCode"), "")), like, '\\')));
-            }
-            if (active != null) {
-                all.add(cb.equal(root.get("active"), active));
-            }
-            if (role != null && !role.isBlank()) {
-                Subquery<Long> sub = query.subquery(Long.class);
-                Root<User> other = sub.from(User.class);
-                Join<User, Role> r = other.join("roles");
-                sub.select(other.get("id")).where(cb.equal(other.get("id"), root.get("id")), cb.equal(r.get("code"), role));
-                all.add(cb.exists(sub));
-            }
-            return cb.and(all.toArray(Predicate[]::new));
-        };
+        return Specs.<User>of().search(q, "username", "fullName", "email", "employeeCode").eq("active", active)
+                .anyOf("roles", "code", role).build();
     }
 
     // ---------------------------------------------------------------------------------------------- commands

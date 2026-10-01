@@ -205,7 +205,7 @@ ims-backend/
     │   │   ├── domain/              # BaseEntity (id, createdAt/By, updatedAt/By, @Version), Money, Quantity
     │   │   ├── exception/           # BusinessRuleException, NotFoundException, ConflictException, GlobalExceptionHandler
     │   │   ├── numbering/           # DocumentNumberService
-    │   │   ├── settings/            # SystemSettingService
+    │   │   ├── settings/            # SystemSettingService (implemented as package `settings`, it needs audit and auth)
     │   │   ├── approval/            # ApprovalService (generic workflow engine)
     │   │   └── idempotency/         # IdempotencyKeyFilter
     │   ├── iam/                     # users, roles, permissions, user_roles, role_permissions

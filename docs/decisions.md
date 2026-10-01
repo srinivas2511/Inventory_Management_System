@@ -92,3 +92,18 @@ Choices made where DESIGN/ARCHITECTURE left room; change by editing the setting 
 | Retention | rows are kept permanently (REQUIREMENTS §7); no purge exists or is planned |
 | ShedLock | not added; single instance today (DESIGN §4.12 note) |
 | Gaps | master-data edits (1.8, 1.9) and setting changes (1.7) must use `@Audited`/`AuditCommand` when those tasks are built |
+
+## Phase 1 — common services decisions (task 1.7)
+| Point | Behaviour |
+|---|---|
+| Document numbers | taken with an atomic upsert in the caller's transaction (`MANDATORY`). Same-type creators serialise until commit; fine at this volume, revisit if a document type becomes hot (a gap-free guarantee and unlimited concurrency are incompatible) |
+| Business year | numbering periods follow `ims.business-zone` (Asia/Kolkata), not UTC, so a document made at 00:30 on 1 January IST belongs to the new year |
+| Settings package | `settings` (not `common/settings` as drawn in ARCHITECTURE §3): it depends on `audit` and `auth`, and `common` must not |
+| Settings API | not named in PLAN 1.7 but added (`GET /api/settings`, `PUT /api/settings/{key}`, `SETTINGS_MANAGE`): the permission and the audit rule already existed and changes need a safe path. No settings screen is planned in Phase 1's frontend tasks |
+| Unknown settings | cannot be changed through the API (no code reads them) but are listed read-only |
+| Idempotency scope | success-only: a 4xx/5xx releases the key, so the client may fix and retry with it. Chosen over Stripe-style "store every response" because business-rule failures (insufficient stock) are state-dependent |
+| Idempotency and permissions | see DESIGN §6.1: replay returns the caller's own earlier success even after losing a permission |
+| Idempotent bodies | JSON up to 1 MiB; form posts and downloads are not supported (stream consumed to fingerprint it) |
+| Filter order | corrected to rate limit -> JWT -> idempotency (task 1.4 had registered JWT first) |
+| Spec builder | `Specs` covers search, equals, in, range and collection-element filters. Dotted paths through associations are deliberately not supported yet: add them with the first entity that needs one (task 1.8/1.9) |
+| ShedLock | still not added (single instance); the purge job is idempotent so a double run is harmless |

@@ -28,6 +28,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.springmfg.ims.auth.JwtAuthenticationFilter;
 import com.springmfg.ims.auth.RateLimitFilter;
+import com.springmfg.ims.common.idempotency.IdempotencyFilter;
 
 /**
  * Security baseline: stateless, deny-by-default, uniform 401/403 problem responses, strict CORS, throttled
@@ -52,11 +53,14 @@ public class SecurityConfig {
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http, ProblemDetailSecurityHandlers problemHandlers,
             ImsSecurityProperties securityProperties, ObjectMapper objectMapper,
-            ObjectProvider<JwtAuthenticationFilter> jwtFilter) throws Exception {
-        // filter order (DESIGN 7.3): correlation id -> rate limit -> JWT -> method security in the controllers
+            ObjectProvider<JwtAuthenticationFilter> jwtFilter, ObjectProvider<IdempotencyFilter> idempotencyFilter)
+            throws Exception {
+        // filter order (DESIGN 7.3): correlation id -> rate limit -> JWT -> idempotency -> method security in the
+        // controllers. Filters added before the same anchor run in the order they are added here.
+        http.addFilterBefore(new RateLimitFilter(securityProperties, objectMapper), BasicAuthenticationFilter.class);
         jwtFilter.ifAvailable(filter -> http.addFilterBefore(filter, BasicAuthenticationFilter.class));
+        idempotencyFilter.ifAvailable(filter -> http.addFilterBefore(filter, BasicAuthenticationFilter.class));
         http
-                .addFilterBefore(new RateLimitFilter(securityProperties, objectMapper), BasicAuthenticationFilter.class)
                 .csrf(AbstractHttpConfigurer::disable) // stateless token API, no cookies for auth on /api
                 .cors(Customizer.withDefaults())
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -96,7 +100,7 @@ public class SecurityConfig {
         config.setAllowedOrigins(allowed); // explicit allow-list; never "*" together with credentials
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("Authorization", "Content-Type", "Idempotency-Key", "X-Correlation-Id"));
-        config.setExposedHeaders(List.of("X-Correlation-Id", "Location"));
+        config.setExposedHeaders(List.of("X-Correlation-Id", "Location", "Idempotent-Replayed", "Retry-After"));
         config.setAllowCredentials(true);
         config.setMaxAge(3600L);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

@@ -1,51 +1,34 @@
 package com.springmfg.ims.auth;
 
 import java.time.Duration;
-import java.util.List;
 
-import org.springframework.dao.DataAccessException;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
+import com.springmfg.ims.settings.SettingKey;
+import com.springmfg.ims.settings.SystemSettingService;
+
 /**
- * Runtime security policy from {@code system_settings} (DESIGN.md section 10.1). Read on use, so an Admin change
- * takes effect immediately. Falls back to the documented defaults if a row is missing or malformed.
+ * Runtime security policy (DESIGN.md section 10.1) read from the settings service, so an Admin change applies
+ * on the next sign-in without a restart.
  */
 @Component
 class SecuritySettings {
 
-    static final int DEFAULT_MIN_PASSWORD_LENGTH = 12;
-    static final int DEFAULT_LOCKOUT_ATTEMPTS = 5;
-    static final int DEFAULT_LOCKOUT_MINUTES = 15;
+    private final SystemSettingService settings;
 
-    private final JdbcTemplate jdbc;
-
-    SecuritySettings(JdbcTemplate jdbc) {
-        this.jdbc = jdbc;
+    SecuritySettings(SystemSettingService settings) {
+        this.settings = settings;
     }
 
     int minPasswordLength() {
-        return intSetting("security.password.min_length", DEFAULT_MIN_PASSWORD_LENGTH);
+        return settings.getInt(SettingKey.SECURITY_PASSWORD_MIN_LENGTH);
     }
 
     int lockoutAttempts() {
-        return intSetting("security.lockout.attempts", DEFAULT_LOCKOUT_ATTEMPTS);
+        return settings.getInt(SettingKey.SECURITY_LOCKOUT_ATTEMPTS);
     }
 
     Duration lockoutDuration() {
-        return Duration.ofMinutes(intSetting("security.lockout.minutes", DEFAULT_LOCKOUT_MINUTES));
-    }
-
-    private int intSetting(String key, int fallback) {
-        try {
-            List<String> values = jdbc.queryForList("SELECT value FROM system_settings WHERE key = ?", String.class, key);
-            if (values.isEmpty()) {
-                return fallback;
-            }
-            int parsed = Integer.parseInt(values.get(0).trim());
-            return parsed > 0 ? parsed : fallback;
-        } catch (NumberFormatException | DataAccessException e) {
-            return fallback;
-        }
+        return Duration.ofMinutes(settings.getInt(SettingKey.SECURITY_LOCKOUT_MINUTES));
     }
 }

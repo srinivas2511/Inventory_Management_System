@@ -5,12 +5,11 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import com.springmfg.ims.common.tx.AfterCommit;
 import com.springmfg.ims.config.ImsSecurityProperties;
 import com.springmfg.ims.iam.User;
 import com.springmfg.ims.iam.UserRepository;
@@ -53,24 +52,11 @@ public class UserAccessService {
      * commit would let a concurrent request re-cache the old state for a full TTL.
      */
     public void evictAfterCommit(long userId) {
-        afterCommit(() -> evict(userId));
+        AfterCommit.run(() -> evict(userId));
     }
 
     public void evictAllAfterCommit() {
-        afterCommit(this::evictAll);
-    }
-
-    private static void afterCommit(Runnable action) {
-        if (TransactionSynchronizationManager.isSynchronizationActive()) {
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-                @Override
-                public void afterCommit() {
-                    action.run();
-                }
-            });
-        } else {
-            action.run();
-        }
+        AfterCommit.run(this::evictAll);
     }
 
     private Optional<UserAccess> load(long userId) {
