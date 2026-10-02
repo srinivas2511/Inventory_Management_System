@@ -664,7 +664,7 @@ For each module: key operations, validations and events. (Field lists are in §2
 | Entity | Special rules |
 |---|---|
 | Material | code unique (`A-Z0-9._-`, 2-30, immutable); cannot deactivate if open POs or stock > 0 (warn → require flag): `DELETE /api/materials/{id}` answers 422 `DEACTIVATION_BLOCKED` listing why, and succeeds with `?force=true` (the warnings go into the audit entry). In use is decided by `MaterialUsageCheck` beans: Phase 1 knows "primary material of an active product"; Phase 2 adds stock, Phase 3 open POs, Phase 4 active BOMs. `min ≤ reorder ≤ max` (equality allowed); unit of measure must exist in `uoms` and cannot change while a check reports blockers (422 `UNIT_CHANGE_BLOCKED`); a preferred supplier must exist and be active when chosen (an already chosen one may stay after it becomes inactive); quantities ≤ 3 decimals, cost ≤ 4 |
-| Product | spring-type attributes validated against `spring_attribute_definitions`; editing an ACTIVE product's technical fields requires Engineer and creates an audit entry; drawing revision change when BOM active ⇒ warning to review BOM |
+| Product | spring-type attributes validated against `spring_attribute_definitions` (see §6.3: catalogue-driven, required attributes at activation); editing an ACTIVE product requires `PRODUCT_UPDATE` (Engineer) and is always audited with old/new values including specifications; drawing revision change when BOM active ⇒ warning to review BOM (Phase 4, with the BOM module) |
 | Supplier/Customer | GST format validated (`^\d{2}[A-Z]{5}\d{4}[A-Z]\d[Z][A-Z\d]$`, optional); code unique and immutable; e-mail stored lower-case; deactivation blocks new documents only (`DELETE` = deactivate, `POST .../activate` reverses; `status` mirrors `active`) |
 | Warehouse/Location | location types enumerated; at least one RAW_MATERIAL, WIP, FINISHED, QUARANTINE, QUALITY_PENDING, SCRAP location per active warehouse (checked at startup, reported in Admin screen) |
 | Operation | standard/setup time ≥ 0 |
@@ -791,10 +791,14 @@ Response graph: `{ nodes:[{id, type, label, status, date}], edges:[{from,to,qty}
   "endType": "CLOSED_GROUND", "surfaceTreatment": "ZINC_PLATING", "heatTreatment": "STRESS_RELIEF",
   "tolerance": "±0.5 mm", "unitWeightKg": 0.045, "uom": "PCS", "drawingNumber": "DRG-1001", "drawingRevision": "A",
   "customerId": 3,
-  "specifications": { "endType": "CLOSED_GROUND", "coilDirection": "RIGHT" } }
-// 201 Location: /api/products/17  → ProductResponse (with allowedActions)
+  "specifications": { "coilDirection": "RIGHT" } }
+// 201 Location: /api/products/17  → ProductResponse (status DRAFT, with allowedActions)
 ```
-Validation: `specifications` checked against attribute definitions for `COMPRESSION` (required keys present, numeric ranges, enum membership); unknown keys rejected.
+*Corrected in task 1.9:* the earlier example repeated `endType` inside `specifications`. An attribute whose code is a product column (`wireDiameter, outerDiameter, innerDiameter, freeLength, numberOfCoils, activeCoils, springRate, maxLoad, minLoad, workingLength, solidHeight, endType`) is a **top-level field**; `specifications` holds only the type-specific attributes that have no column (sending a column name there is a 400).
+
+Validation against `spring_attribute_definitions` (the catalogue, served by `GET /api/spring-types/{type}/attributes`, each entry with `storage: CORE | SPECIFICATIONS`): numbers are numbers within `min/max`, enums are permitted values, text ≤ 200 characters, **unknown keys are rejected**; a `CUSTOM` spring has no fixed attributes and takes free-form scalar keys (`[a-zA-Z][a-zA-Z0-9_]{0,39}`, ≤ 30 entries). **Required attributes are enforced when the product is activated and whenever an ACTIVE product is edited**; a DRAFT may be saved unfinished so an engineer can "save draft" mid-entry. Errors name the field (`wireDiameter`, `specifications.legAngle`).
+
+**Product lifecycle** (`status`, never set through the body): `DRAFT → ACTIVE ↔ OBSOLETE`. `POST /api/products/{id}/activate` (DRAFT or OBSOLETE → ACTIVE, only if complete), `DELETE /api/products/{id}` (→ OBSOLETE, idempotent, never deletes). `PUT` replaces the editable fields (versioned, 409 on a stale edit); it cannot change `productCode`, cannot change `springType` unless the product is a DRAFT, and is refused for OBSOLETE products (422 `ILLEGAL_STATE_TRANSITION`). `allowedActions` is `[EDIT, ACTIVATE]` for a draft, `[EDIT, OBSOLETE]` when active, `[ACTIVATE]` when obsolete, and empty for a caller without `PRODUCT_UPDATE`. `active` is true unless obsolete. Extra rules for every type: `innerDiameter < outerDiameter`, `activeCoils ≤ numberOfCoils`, `minLoad ≤ maxLoad`; a chosen material or customer must exist and be active.
 
 **Goods receipt** — `POST /api/goods-receipts`
 ```json

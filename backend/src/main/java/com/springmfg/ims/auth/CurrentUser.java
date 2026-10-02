@@ -19,6 +19,13 @@ public final class CurrentUser {
         return Optional.empty();
     }
 
+    /** True if the signed-in user holds the permission (for building {@code allowedActions} in responses). */
+    public static boolean hasAuthority(String permission) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return authentication instanceof JwtAuthentication jwt
+                && jwt.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals(permission));
+    }
+
     public static Optional<Long> id() {
         return get().map(AuthenticatedUser::id);
     }

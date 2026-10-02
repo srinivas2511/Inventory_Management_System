@@ -890,7 +890,7 @@ The mapping is data (a Flyway migration) and editable by Admin through the roles
 | `/api/auth` | `POST login`, `change-password`, `refresh`, `logout`, `forgot-password`, `reset-password`; `GET me` (profile + permissions) | public / authenticated |
 | `/api/users`, `/api/roles`, `/api/permissions` | users: list/get/create/update, `PUT /users/{id}/roles`, `POST /users/{id}/reset-password`, `POST /users/{id}/activate`, `DELETE` = deactivate; roles: CRUD, `PUT /roles/{id}/permissions`; permissions: read-only catalogue | USER_VIEW/CREATE/UPDATE/DELETE, ROLE_MANAGE (roles also readable with USER_VIEW), PERMISSION_MANAGE or ROLE_MANAGE (catalogue) |
 | `/api/materials`, `/api/uoms` | list/get (MATERIAL_VIEW or MASTERDATA_MANAGE), create/update/activate/deactivate (MASTERDATA_MANAGE), `GET /{id}/stock` (Phase 2); `GET /api/uoms` any signed-in user | MASTERDATA / MATERIAL_VIEW |
-| `/api/products` | CRUD, `GET /{id}/bom`, `/spring-types/{type}/attributes` | PRODUCT_* |
+| `/api/products`, `/api/spring-types` | list/get (PRODUCT_VIEW), create (PRODUCT_CREATE), update/activate/obsolete=`DELETE` (PRODUCT_UPDATE), `GET /{id}/bom` (Phase 4); `GET /api/spring-types` and `/{type}/attributes` (PRODUCT_VIEW) | PRODUCT_* |
 | `/api/boms` | CRUD, `POST /{id}/submit`, `/approve`, `/activate`, `GET /{id}/revisions` | BOM_* |
 | `/api/routings`, `/api/operations`, `/api/machines`, `/api/warehouses` | CRUD | ROUTING_MANAGE / MASTERDATA / MACHINE_MANAGE |
 | `/api/suppliers`, `/api/customers` | CRUD | SUPPLIER_MANAGE / CUSTOMER_MANAGE |

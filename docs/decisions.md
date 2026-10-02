@@ -118,5 +118,20 @@ Choices made where DESIGN/ARCHITECTURE left room; change by editing the setting 
 | Supplier/customer read access | no `*_VIEW` permission exists for them, so reads use `SUPPLIER_MANAGE` or `PURCHASE_VIEW`, `CUSTOMER_MANAGE` or `SALES_VIEW`. Store Manager and Store Operator cannot read suppliers, which goods receipt (Phase 3) will need: grant `PURCHASE_VIEW` then |
 | Who writes materials | only `MASTERDATA_MANAGE` (Admin) per ARCHITECTURE §10.3. Engineers and Store Managers see materials but cannot create them; revisit with the business if that is too strict |
 | `status` column | suppliers and customers keep both `status` (DESIGN §2.3) and `active` (standard master-data column); the service keeps them equal |
-| Customer-specific product specs | `customer_product_specs` (table exists) is handled with products in task 1.9 |
+| Customer-specific product specs | `customer_product_specs` (table exists) is not part of PLAN task 1.9 and is not built; add it when sales and dispatch need customer part numbers (Phase 5) |
 | List performance | materials load the preferred supplier in the list query (entity graph); other lists have no associations |
+
+## Phase 1 — product master decisions (task 1.9)
+| Point | Behaviour |
+|---|---|
+| DESIGN §6.3 conflict | the create example put `endType` both as a column and in `specifications`, while the product form (§8.3) shows spring rate, max load and end type as catalogue-driven fields. Resolved: **the catalogue describes every attribute; where its code is a product column the value lives in the column (`storage: CORE`), otherwise in `specifications`**. The example is corrected |
+| Draft vs active | required attributes are enforced at activation and when editing an ACTIVE product, not on create, so "Save draft" works. Everything else (types, ranges, enums, unknown keys, references) is checked on every save |
+| Attribute sets assumed | Compression/Extension/Torsion come from REQUIREMENTS §4.2. Belleville uses decision #11's default (outer/inner diameter, thickness, free height, load at flat, stack count and arrangement). **Conical and Wire form are not specified anywhere and were assumed** (conical adds a small-end diameter; wire form has developed length, bends and a description): please have Engineering confirm. They are plain catalogue rows, so changing them needs a migration only |
+| Custom springs | free-form scalar attributes (see DESIGN §6.3); definitions added later for CUSTOM still apply |
+| Editing the catalogue | adding or changing definition rows is done with SQL or a migration; there is no admin API or screen for it yet (not in PLAN). Definitions are read on every product write and list, never cached, so a change applies at once |
+| Number fidelity | type-specific numbers are stored in JSONB as the exact decimals sent (not binary floats); they are read back as JSON numbers |
+| Relabelling | a definition may relabel a column for its type (extension: "Body outer diameter"; Belleville: "Free height" for `freeLength`) |
+| Status | `DRAFT → ACTIVE ↔ OBSOLETE` through `activate` and `DELETE` only. Obsoleting does not yet check BOMs or open orders: Phase 4 must add a product-usage check like `MaterialUsageCheck` |
+| Who | only `ENGINEER` holds `PRODUCT_CREATE`/`PRODUCT_UPDATE`; Admin can view but not edit products (ARCHITECTURE §10.3) |
+| Frontend note (task 1.11) | the product form needs a customer dropdown, but Engineers hold neither `CUSTOMER_MANAGE` nor `SALES_VIEW`, so `GET /api/customers` is 403 for them. Decide in 1.11: grant Engineers `SALES_VIEW`, or add a lookup endpoint for active customers |
+| Lists | products load material and customer in the list query; the summary omits the specifications |
