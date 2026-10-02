@@ -24,6 +24,8 @@ import com.springmfg.ims.production.repository.ProductionOrderMaterialRepository
 import com.springmfg.ims.production.repository.ProductionOrderRepository;
 import com.springmfg.ims.production.service.ProductionOrderService;
 import com.springmfg.ims.support.AbstractIntegrationTest;
+import com.springmfg.ims.support.TestData;
+import org.junit.jupiter.api.BeforeEach;
 
 /**
  * Integration tests for Phase 4 — Manufacturing (PLAN task 4.10).
@@ -36,6 +38,18 @@ class ProductionIT extends AbstractIntegrationTest {
     @Autowired ProductionOrderMaterialRepository pomRepo;
     @Autowired BomRepository bomRepo;
     @Autowired FgBatchRepository fgBatchRepo;
+    @Autowired TestData td;
+
+    private Long productId;
+    private Long materialId;
+    private Long bomId;
+
+    @BeforeEach
+    void fixtures() {
+        productId = td.product().getId();
+        materialId = td.material().getId();
+        bomId = td.draftBom(productId).getId();
+    }
 
     @Test
     void revised_bom_does_not_change_released_order() {
@@ -63,9 +77,9 @@ class ProductionIT extends AbstractIntegrationTest {
         // Since full setup is complex, we test through the service layer with a synthetic order
 
         ProductionOrder order = new ProductionOrder();
-        order.setOrderNumber("TEST-CLOSE-" + System.currentTimeMillis());
-        order.setProductId(1L);
-        order.setBomId(1L);
+        order.setOrderNumber(td.code("TC"));
+        order.setProductId(productId);
+        order.setBomId(bomId);
         order.setPlannedQty(BigDecimal.TEN);
         order.setStatus("COMPLETED");
         order = orderRepo.save(order);
@@ -73,7 +87,7 @@ class ProductionIT extends AbstractIntegrationTest {
         // Add a material with remaining qty > 0 (simulate issued but not consumed)
         ProductionOrderMaterial pom = new ProductionOrderMaterial();
         pom.setProductionOrderId(order.getId());
-        pom.setMaterialId(1L);
+        pom.setMaterialId(materialId);
         pom.setPlannedQty(BigDecimal.TEN);
         pom.setIssuedQty(BigDecimal.TEN);
         pom.setConsumedQty(BigDecimal.ZERO);
@@ -92,9 +106,9 @@ class ProductionIT extends AbstractIntegrationTest {
     @Test
     void close_with_all_material_consumed_succeeds() {
         ProductionOrder order = new ProductionOrder();
-        order.setOrderNumber("TEST-CLOSE-OK-" + System.currentTimeMillis());
-        order.setProductId(1L);
-        order.setBomId(1L);
+        order.setOrderNumber(td.code("TO"));
+        order.setProductId(productId);
+        order.setBomId(bomId);
         order.setPlannedQty(BigDecimal.TEN);
         order.setStatus("COMPLETED");
         order = orderRepo.save(order);
@@ -102,7 +116,7 @@ class ProductionIT extends AbstractIntegrationTest {
         // Material fully consumed
         ProductionOrderMaterial pom = new ProductionOrderMaterial();
         pom.setProductionOrderId(order.getId());
-        pom.setMaterialId(1L);
+        pom.setMaterialId(materialId);
         pom.setPlannedQty(BigDecimal.TEN);
         pom.setIssuedQty(BigDecimal.TEN);
         pom.setConsumedQty(BigDecimal.TEN); // fully consumed
@@ -119,15 +133,15 @@ class ProductionIT extends AbstractIntegrationTest {
     void bom_release_requires_active_status() {
         // Create order referencing a DRAFT BOM — release should throw BOM_NOT_ACTIVE
         Bom draftBom = new Bom();
-        draftBom.setBomNumber("BOM-DRAFT-" + System.currentTimeMillis());
-        draftBom.setProductId(1L);
+        draftBom.setBomNumber(td.code("BD"));
+        draftBom.setProductId(productId);
         draftBom.setStatus("DRAFT");
         draftBom.setBaseQuantity(BigDecimal.ONE);
         draftBom = bomRepo.save(draftBom);
 
         ProductionOrder order = new ProductionOrder();
-        order.setOrderNumber("TEST-REL-" + System.currentTimeMillis());
-        order.setProductId(1L);
+        order.setOrderNumber(td.code("TR"));
+        order.setProductId(productId);
         order.setBomId(draftBom.getId());
         order.setPlannedQty(BigDecimal.TEN);
         order.setStatus("APPROVED");

@@ -18,6 +18,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -75,6 +76,8 @@ public class JournalService {
         return toDto(header);
     }
 
+    /** Called from an AFTER_COMMIT listener: the originating transaction is already committed, so this must start its own. */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public JournalHeaderDto postAutoJournal(AutoJournalRequest req) {
         FiscalPeriod period = findOpenPeriod(req.postingDate());
 

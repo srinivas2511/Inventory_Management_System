@@ -79,7 +79,7 @@ CREATE TABLE user_warehouse_access (
 CREATE TABLE refresh_tokens (
   id          BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   user_id     BIGINT       NOT NULL REFERENCES users(id),
-  token_hash  CHAR(64)     NOT NULL,
+  token_hash  VARCHAR(64)     NOT NULL,
   family_id   UUID         NOT NULL,
   expires_at  TIMESTAMPTZ  NOT NULL,
   revoked_at  TIMESTAMPTZ,
@@ -93,13 +93,14 @@ CREATE TABLE refresh_tokens (
 CREATE TABLE password_reset_tokens (
   id         BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   user_id    BIGINT      NOT NULL REFERENCES users(id),
-  token_hash CHAR(64)    NOT NULL,
+  token_hash VARCHAR(64)    NOT NULL,
   expires_at TIMESTAMPTZ NOT NULL,
   used_at    TIMESTAMPTZ,
   CONSTRAINT uq_pwd_reset_token_hash UNIQUE (token_hash)
 );
 
 CREATE TABLE password_history (
+  id            BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   user_id       BIGINT      NOT NULL REFERENCES users(id),
   password_hash VARCHAR(100) NOT NULL,
   changed_at    TIMESTAMPTZ  NOT NULL DEFAULT now()
@@ -187,7 +188,7 @@ CREATE INDEX ix_approval_doc ON approval_requests(document_type, document_id);
 CREATE TABLE idempotency_keys (
   key             VARCHAR(80) PRIMARY KEY,
   user_id         BIGINT      NOT NULL,
-  request_hash    CHAR(64)    NOT NULL,
+  request_hash    VARCHAR(64)    NOT NULL,
   response_status INT,
   response_body   JSONB,
   created_at      TIMESTAMPTZ NOT NULL DEFAULT now()

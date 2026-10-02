@@ -11,9 +11,12 @@ import com.springmfg.ims.finance.gl.dto.JournalCreateRequest;
 import com.springmfg.ims.finance.gl.dto.JournalHeaderDto;
 import com.springmfg.ims.finance.gl.dto.JournalLineRequest;
 import com.springmfg.ims.finance.gl.repository.FiscalPeriodRepository;
+import com.springmfg.ims.finance.gl.repository.GlAccountRepository;
 import com.springmfg.ims.finance.gl.repository.JournalHeaderRepository;
 import com.springmfg.ims.finance.gl.service.FiscalPeriodService;
 import com.springmfg.ims.finance.gl.service.JournalService;
+import com.springmfg.ims.partner.domain.Supplier;
+import com.springmfg.ims.partner.repository.SupplierRepository;
 import com.springmfg.ims.support.AbstractIntegrationTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -37,6 +40,13 @@ class FinanceIT extends AbstractIntegrationTest {
     @Autowired FiscalPeriodRepository periodRepo;
     @Autowired JournalHeaderRepository journalHeaderRepo;
     @Autowired ApService apService;
+    @Autowired GlAccountRepository glAccountRepo;
+    @Autowired SupplierRepository supplierRepo;
+
+    private Long acct(String code) {
+        return glAccountRepo.findByAccountCode(code).orElseThrow(
+                () -> new AssertionError("GL account " + code + " missing from seed")).getId();
+    }
 
     @Test
     @DisplayName("Business Rule 16: Journal entry must balance (Dr = Cr)")
@@ -49,8 +59,8 @@ class FinanceIT extends AbstractIntegrationTest {
                 "Unbalanced test entry",
                 "INR",
                 List.of(
-                        new JournalLineRequest(1401L, new BigDecimal("1000.00"), BigDecimal.ZERO, "Dr"),
-                        new JournalLineRequest(2401L, BigDecimal.ZERO, new BigDecimal("500.00"), "Cr")
+                        new JournalLineRequest(acct("1401"), new BigDecimal("1000.00"), BigDecimal.ZERO, "Dr"),
+                        new JournalLineRequest(acct("2401"), BigDecimal.ZERO, new BigDecimal("500.00"), "Cr")
                 )
         );
 
@@ -71,8 +81,8 @@ class FinanceIT extends AbstractIntegrationTest {
                 "Test balanced entry",
                 "INR",
                 List.of(
-                        new JournalLineRequest(1401L, amount, BigDecimal.ZERO, "Dr RM Stock"),
-                        new JournalLineRequest(2401L, BigDecimal.ZERO, amount, "Cr AP Control")
+                        new JournalLineRequest(acct("1401"), amount, BigDecimal.ZERO, "Dr RM Stock"),
+                        new JournalLineRequest(acct("2401"), BigDecimal.ZERO, amount, "Cr AP Control")
                 )
         );
 
@@ -91,8 +101,7 @@ class FinanceIT extends AbstractIntegrationTest {
     void closedPeriodBlocksPosting() {
         // Find and close a period
         FiscalPeriod period = periodRepo.findOpenPeriodForDate(LocalDate.of(2026, 4, 15))
-                .orElse(null);
-        if (period == null) return; // skip if no seeded period
+                .orElseThrow(() -> new AssertionError("Seeded period APR-2026 must be OPEN"));
 
         Long periodId = period.getId();
         periodService.initiatePeriodClose(periodId);
@@ -105,8 +114,8 @@ class FinanceIT extends AbstractIntegrationTest {
                 "Post to closed period",
                 "INR",
                 List.of(
-                        new JournalLineRequest(1401L, new BigDecimal("100.0000"), BigDecimal.ZERO, "Dr"),
-                        new JournalLineRequest(2401L, BigDecimal.ZERO, new BigDecimal("100.0000"), "Cr")
+                        new JournalLineRequest(acct("1401"), new BigDecimal("100.0000"), BigDecimal.ZERO, "Dr"),
+                        new JournalLineRequest(acct("2401"), BigDecimal.ZERO, new BigDecimal("100.0000"), "Cr")
                 )
         );
 
@@ -120,14 +129,17 @@ class FinanceIT extends AbstractIntegrationTest {
     @DisplayName("Business Rule 19: AP invoice creation generates valid DRAFT invoice")
     @Transactional
     void apInvoiceCreationGeneratesDraft() {
-        // Partner seed must exist; use supplierId=1 from V2 seed
         LocalDate today = LocalDate.of(2026, 4, 15);
-        periodRepo.findOpenPeriodForDate(today).orElse(null); // ensure period exists
+        assertThat(periodRepo.findOpenPeriodForDate(today)).as("seeded period APR-2026 must be OPEN").isPresent();
 
-        if (periodRepo.findOpenPeriodForDate(today).isEmpty()) return;
+        Supplier supplier = new Supplier();
+        supplier.setSupplierCode("SUP-FIN-IT");
+        supplier.setName("Finance IT Supplier");
+        supplier.setStatus("ACTIVE");
+        supplier = supplierRepo.save(supplier);
 
         var req = new ApInvoiceCreateRequest(
-                1L,
+                supplier.getId(),
                 "SUP-INV-001",
                 today,
                 today.plusDays(30),

@@ -320,7 +320,7 @@ public class FinalInspectionService {
         insp.setInspectedAt(Instant.now());
         insp.setDecisionBy(currentUserId());
         insp.setDecisionAt(Instant.now());
-        insp.setStatus(anyUnresolvedFail ? "FAILED" : (hold.compareTo(BigDecimal.ZERO) > 0 ? "HOLD" : "PASSED"));
+        insp.setStatus(anyUnresolvedFail ? "REJECTED" : (hold.compareTo(BigDecimal.ZERO) > 0 ? "HOLD" : "APPROVED"));
         if (req.remarks() != null) insp.setRemarks(req.remarks());
         insp = inspectionRepo.save(insp);
 

@@ -12,6 +12,7 @@ import com.springmfg.ims.finance.bank.dto.BankStatementLineDto;
 import com.springmfg.ims.finance.bank.repository.BankStatementLineRepository;
 import com.springmfg.ims.finance.bank.repository.BankStatementRepository;
 import com.springmfg.ims.finance.gl.repository.FiscalPeriodRepository;
+import com.springmfg.ims.finance.gl.repository.GlAccountRepository;
 import com.springmfg.ims.finance.gl.repository.JournalLineRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -30,6 +31,7 @@ public class BankReconciliationService {
     private final BankStatementRepository statementRepo;
     private final BankStatementLineRepository lineRepo;
     private final FiscalPeriodRepository periodRepo;
+    private final GlAccountRepository glAccountRepo;
     private final JournalLineRepository journalLineRepo;
     private final DocumentNumberService numberService;
     private final AuditService auditService;
@@ -37,12 +39,14 @@ public class BankReconciliationService {
     public BankReconciliationService(BankStatementRepository statementRepo,
                                      BankStatementLineRepository lineRepo,
                                      FiscalPeriodRepository periodRepo,
+                                     GlAccountRepository glAccountRepo,
                                      JournalLineRepository journalLineRepo,
                                      DocumentNumberService numberService,
                                      AuditService auditService) {
         this.statementRepo = statementRepo;
         this.lineRepo = lineRepo;
         this.periodRepo = periodRepo;
+        this.glAccountRepo = glAccountRepo;
         this.journalLineRepo = journalLineRepo;
         this.numberService = numberService;
         this.auditService = auditService;
@@ -57,17 +61,22 @@ public class BankReconciliationService {
 
         BankStatement stmt = new BankStatement();
         stmt.setStatementNumber(numberService.next("BKST"));
+        stmt.setBankAccountCode(glAccountRepo.findById(glAccountId)
+                .orElseThrow(() -> new NotFoundException("GlAccount", glAccountId)).getAccountCode());
         stmt.setGlAccountId(glAccountId);
         stmt.setStatementDate(statementDate);
         stmt.setPeriodId(period.getId());
         stmt.setOpeningBalance(openingBalance);
         stmt.setClosingBalance(closingBalance);
-        stmt.setStatus("OPEN");
+        stmt.setStatus("IMPORTED");
         stmt = statementRepo.save(stmt);
 
         final Long stmtId = stmt.getId();
+        int lineNo = 1;
         for (BankStatementLine l : importedLines) {
             l.setBankStatementId(stmtId);
+            l.setLineNumber(lineNo++);
+            if (l.getTransactionDate() == null) l.setTransactionDate(l.getValueDate());
             l.setMatchStatus("UNMATCHED");
             lineRepo.save(l);
         }
@@ -79,8 +88,8 @@ public class BankReconciliationService {
 
     public BankStatementDto autoMatch(Long statementId) {
         BankStatement stmt = findStatement(statementId);
-        List<BankStatementLine> unmatched = lineRepo.findByBankStatementIdAndMatchStatus(
-                statementId, "UNMATCHED");
+        List<BankStatementLine> unmatched = lineRepo.findByBankStatementIdAndReconciled(
+                statementId, false);
 
         for (BankStatementLine line : unmatched) {
             // Auto-match: find journal lines with matching amount within ±3 days

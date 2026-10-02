@@ -1,6 +1,8 @@
 package com.springmfg.ims.enterprise.domain;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(name = "companies", schema = "ims")
@@ -31,6 +33,7 @@ public class Company {
     @Column(name = "currency_code", nullable = false, length = 3)
     private String currencyCode = "INR";
 
+    @JdbcTypeCode(SqlTypes.SMALLINT)
     @Column(name = "fiscal_year_start_month", nullable = false)
     private Integer fiscalYearStartMonth = 4;
 

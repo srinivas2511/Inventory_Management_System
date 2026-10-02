@@ -144,7 +144,6 @@ public class ArService {
         ArReceipt receipt = new ArReceipt();
         receipt.setReceiptNumber(numberService.next("ARRCT"));
         receipt.setArInvoiceId(invoiceId);
-        receipt.setCustomerId(inv.getCustomerId());
         receipt.setReceiptDate(req.receiptDate());
         receipt.setAmount(req.amount());
         receipt.setPaymentMode(req.paymentMode() != null ? req.paymentMode() : "BANK_TRANSFER");

@@ -22,6 +22,8 @@ import com.springmfg.ims.procurement.service.GoodsReceiptService;
 import com.springmfg.ims.procurement.service.PurchaseOrderService;
 import com.springmfg.ims.quality.repository.QualityInspectionRepository;
 import com.springmfg.ims.support.AbstractIntegrationTest;
+import com.springmfg.ims.support.TestData;
+import org.junit.jupiter.api.BeforeEach;
 
 @Transactional
 class ProcurementIT extends AbstractIntegrationTest {
@@ -32,11 +34,19 @@ class ProcurementIT extends AbstractIntegrationTest {
     @Autowired MaterialBatchRepository batchRepo;
     @Autowired QualityInspectionRepository inspectionRepo;
 
-    // These seed IDs must exist in the test DB (dev seed data)
-    private static final Long SUPPLIER_ID  = 1L;
-    private static final Long MATERIAL_ID  = 1L;
+    @Autowired TestData td;
+
+    // Warehouse 1 / location 1 are seeded by migration V2; supplier and material are created per test.
     private static final Long WAREHOUSE_ID = 1L;
     private static final Long LOCATION_ID  = 1L;
+    private Long SUPPLIER_ID;
+    private Long MATERIAL_ID;
+
+    @BeforeEach
+    void fixtures() {
+        SUPPLIER_ID = td.supplier().getId();
+        MATERIAL_ID = td.material().getId();
+    }
 
     @Test
     @WithMockUser(authorities = {"PURCHASE_CREATE", "PURCHASE_APPROVE", "GOODS_RECEIVE"})
@@ -75,7 +85,7 @@ class ProcurementIT extends AbstractIntegrationTest {
                         "HEAT-001", "CERT-001", null, true)));
 
         var gr = grService.receive(grReq);
-        assertThat(gr.grNumber()).startsWith("GR-");
+        assertThat(gr.grNumber()).startsWith("GR/");
         assertThat(gr.items()).hasSize(1);
 
         // Batch should exist with QUARANTINE status

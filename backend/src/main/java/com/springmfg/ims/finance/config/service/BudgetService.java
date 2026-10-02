@@ -25,14 +25,14 @@ public class BudgetService {
     }
 
     public BudgetDto saveBudget(BudgetRequest req) {
-        Budget budget = budgetRepo.findByGlAccountIdAndFiscalYearAndPeriodNumber(
-                req.glAccountId(), req.fiscalYear(), req.periodNumber())
+        Budget budget = budgetRepo.findByGlAccountIdAndFiscalYearAndPeriodId(
+                req.glAccountId(), req.fiscalYear(), req.periodId())
                 .orElseGet(Budget::new);
         budget.setGlAccountId(req.glAccountId());
         budget.setFiscalYear(req.fiscalYear());
-        budget.setPeriodNumber(req.periodNumber());
+        budget.setPeriodId(req.periodId());
         budget.setBudgetedAmount(req.budgetedAmount());
-        budget.setCostCenter(req.costCenter());
+        budget.setBudgetName(req.budgetName() != null ? req.budgetName() : "FY" + req.fiscalYear() + " budget");
         return toDto(budgetRepo.save(budget));
     }
 
@@ -46,6 +46,6 @@ public class BudgetService {
         return new BudgetDto(b.getId(), b.getGlAccountId(),
                 acc != null ? acc.getAccountCode() : "",
                 acc != null ? acc.getName() : "",
-                b.getFiscalYear(), b.getPeriodNumber(), b.getBudgetedAmount(), b.getCostCenter());
+                b.getFiscalYear(), b.getPeriodId(), b.getBudgetedAmount(), b.getBudgetName());
     }
 }

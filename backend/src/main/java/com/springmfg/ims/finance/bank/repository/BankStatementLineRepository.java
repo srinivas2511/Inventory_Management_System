@@ -7,5 +7,5 @@ import java.util.List;
 
 public interface BankStatementLineRepository extends JpaRepository<BankStatementLine, Long> {
     List<BankStatementLine> findByBankStatementId(Long bankStatementId);
-    List<BankStatementLine> findByBankStatementIdAndMatchStatus(Long bankStatementId, String matchStatus);
+    List<BankStatementLine> findByBankStatementIdAndReconciled(Long bankStatementId, boolean reconciled);
 }

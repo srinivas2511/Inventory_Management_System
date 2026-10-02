@@ -33,6 +33,7 @@ import com.springmfg.ims.sales.repository.SalesOrderRepository;
 import com.springmfg.ims.sales.service.DispatchService;
 import com.springmfg.ims.sales.service.SalesOrderService;
 import com.springmfg.ims.support.AbstractIntegrationTest;
+import com.springmfg.ims.support.TestData;
 import com.springmfg.ims.warehouse.domain.Warehouse;
 import com.springmfg.ims.warehouse.domain.WarehouseLocation;
 import com.springmfg.ims.warehouse.repository.WarehouseLocationRepository;
@@ -53,6 +54,7 @@ class SalesDispatchIT extends AbstractIntegrationTest {
     @Autowired ProductRepository productRepo;
     @Autowired WarehouseRepository warehouseRepo;
     @Autowired WarehouseLocationRepository locationRepo;
+    @Autowired TestData td;
 
     private Long customerId;
     private Long productId;
@@ -63,15 +65,10 @@ class SalesDispatchIT extends AbstractIntegrationTest {
     @BeforeEach
     void setup() {
         // Customer
-        Customer customer = new Customer();
-        customer.setCustomerCode("C-IT-" + System.nanoTime());
-        customer.setName("IT Customer");
-        customer.setStatus("ACTIVE");
-        customerId = customerRepo.save(customer).getId();
+        customerId = td.customer().getId();
 
         // Product — reuse first product from seed data
-        Product product = productRepo.findAll().stream().findFirst()
-                .orElseThrow(() -> new IllegalStateException("No product in test DB"));
+        Product product = td.product();
         productId = product.getId();
 
         // Warehouse and FG location
@@ -110,7 +107,7 @@ class SalesDispatchIT extends AbstractIntegrationTest {
                 .orElseGet(() -> {
                     WarehouseLocation loc = new WarehouseLocation();
                     loc.setWarehouse(wh);
-                    loc.setLocationCode(locType + "-" + System.nanoTime());
+                    loc.setLocationCode(td.code("L"));
                     loc.setName(locType);
                     loc.setLocationType(locType);
                     loc.setActive(true);

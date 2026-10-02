@@ -8,6 +8,6 @@ import java.util.Optional;
 
 public interface BudgetRepository extends JpaRepository<Budget, Long> {
     List<Budget> findByFiscalYear(Integer fiscalYear);
-    Optional<Budget> findByGlAccountIdAndFiscalYearAndPeriodNumber(
-            Long glAccountId, Integer fiscalYear, Short periodNumber);
+    Optional<Budget> findByGlAccountIdAndFiscalYearAndPeriodId(
+            Long glAccountId, Integer fiscalYear, Long periodId);
 }

@@ -4,6 +4,8 @@ import java.time.Instant;
 import java.time.LocalDate;
 
 import jakarta.persistence.Column;
+import org.hibernate.type.SqlTypes;
+import org.hibernate.annotations.JdbcTypeCode;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 
@@ -22,6 +24,7 @@ public class MaintenanceRequest extends BaseEntity {
     @Column(name = "request_type", nullable = false, length = 20)
     private String requestType = "CORRECTIVE";
 
+    @JdbcTypeCode(SqlTypes.SMALLINT)
     @Column(nullable = false)
     private int priority = 3;
 

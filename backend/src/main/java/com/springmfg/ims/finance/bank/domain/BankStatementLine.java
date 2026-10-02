@@ -12,7 +12,13 @@ public class BankStatementLine extends BaseEntity {
     @Column(name = "bank_statement_id", nullable = false)
     private Long bankStatementId;
 
-    @Column(name = "value_date", nullable = false)
+    @Column(name = "line_number", nullable = false)
+    private Integer lineNumber;
+
+    @Column(name = "transaction_date", nullable = false)
+    private LocalDate transactionDate;
+
+    @Column(name = "value_date")
     private LocalDate valueDate;
 
     @Column(length = 200)
@@ -24,14 +30,14 @@ public class BankStatementLine extends BaseEntity {
     @Column(name = "credit_amount", nullable = false, precision = 18, scale = 4)
     private BigDecimal creditAmount = BigDecimal.ZERO;
 
-    @Column(name = "reference_number", length = 40)
+    @Column(name = "bank_reference", length = 60)
     private String referenceNumber;
 
     @Column(name = "matched_journal_line_id")
     private Long matchedJournalLineId;
 
-    @Column(name = "match_status", nullable = false, length = 15)
-    private String matchStatus = "UNMATCHED";
+    @Column(name = "reconciled", nullable = false)
+    private boolean reconciled = false;
 
     public Long getBankStatementId() { return bankStatementId; }
     public LocalDate getValueDate() { return valueDate; }
@@ -40,7 +46,18 @@ public class BankStatementLine extends BaseEntity {
     public BigDecimal getCreditAmount() { return creditAmount; }
     public String getReferenceNumber() { return referenceNumber; }
     public Long getMatchedJournalLineId() { return matchedJournalLineId; }
-    public String getMatchStatus() { return matchStatus; }
+    public Integer getLineNumber() { return lineNumber; }
+    public LocalDate getTransactionDate() { return transactionDate; }
+    public boolean isReconciled() { return reconciled; }
+    public void setLineNumber(Integer lineNumber) { this.lineNumber = lineNumber; }
+    public void setTransactionDate(LocalDate transactionDate) { this.transactionDate = transactionDate; }
+    public void setReconciled(boolean reconciled) { this.reconciled = reconciled; }
+
+    /** Derived from DESIGN columns: UNMATCHED (not reconciled), MATCHED (linked to a journal line), AUTO_MATCHED. */
+    public String getMatchStatus() {
+        if (!reconciled) return "UNMATCHED";
+        return matchedJournalLineId != null ? "MATCHED" : "AUTO_MATCHED";
+    }
 
     public void setBankStatementId(Long bankStatementId) { this.bankStatementId = bankStatementId; }
     public void setValueDate(LocalDate valueDate) { this.valueDate = valueDate; }
@@ -49,5 +66,5 @@ public class BankStatementLine extends BaseEntity {
     public void setCreditAmount(BigDecimal creditAmount) { this.creditAmount = creditAmount; }
     public void setReferenceNumber(String referenceNumber) { this.referenceNumber = referenceNumber; }
     public void setMatchedJournalLineId(Long matchedJournalLineId) { this.matchedJournalLineId = matchedJournalLineId; }
-    public void setMatchStatus(String matchStatus) { this.matchStatus = matchStatus; }
+    public void setMatchStatus(String matchStatus) { this.reconciled = !"UNMATCHED".equals(matchStatus); }
 }

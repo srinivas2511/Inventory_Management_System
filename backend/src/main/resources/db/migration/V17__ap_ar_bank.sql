@@ -127,3 +127,22 @@ CREATE INDEX ix_ap_invoices_status     ON ap_invoices(status);
 CREATE INDEX ix_ar_invoices_customer   ON ar_invoices(customer_id);
 CREATE INDEX ix_ar_invoices_status     ON ar_invoices(status);
 CREATE INDEX ix_ar_invoices_dispatch   ON ar_invoices(dispatch_id);
+
+-- DESIGN section 1.1 standard columns for tables whose entities extend BaseEntity.
+ALTER TABLE ap_payments
+    ADD COLUMN company_id BIGINT      NOT NULL DEFAULT 1,
+    ADD COLUMN updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    ADD COLUMN updated_by BIGINT,
+    ADD COLUMN version    BIGINT      NOT NULL DEFAULT 0;
+ALTER TABLE ar_receipts
+    ADD COLUMN company_id BIGINT      NOT NULL DEFAULT 1,
+    ADD COLUMN updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    ADD COLUMN updated_by BIGINT,
+    ADD COLUMN version    BIGINT      NOT NULL DEFAULT 0;
+ALTER TABLE bank_statement_lines
+    ADD COLUMN company_id BIGINT      NOT NULL DEFAULT 1,
+    ADD COLUMN created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    ADD COLUMN created_by BIGINT,
+    ADD COLUMN updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    ADD COLUMN updated_by BIGINT,
+    ADD COLUMN version    BIGINT      NOT NULL DEFAULT 0;

@@ -144,6 +144,8 @@ CREATE TABLE inspection_plan_parameters (
     mandatory       BOOLEAN      NOT NULL DEFAULT TRUE,
     created_at      TIMESTAMPTZ  NOT NULL DEFAULT now(),
     created_by      BIGINT,
+    updated_at      TIMESTAMPTZ  NOT NULL DEFAULT now(),
+    updated_by      BIGINT,
     version         BIGINT       NOT NULL DEFAULT 0,
     company_id      BIGINT       NOT NULL DEFAULT 1
 );
@@ -197,6 +199,8 @@ CREATE TABLE quality_inspection_items (
     mandatory       BOOLEAN      NOT NULL DEFAULT TRUE,
     created_at      TIMESTAMPTZ  NOT NULL DEFAULT now(),
     created_by      BIGINT,
+    updated_at      TIMESTAMPTZ  NOT NULL DEFAULT now(),
+    updated_by      BIGINT,
     version         BIGINT       NOT NULL DEFAULT 0,
     company_id      BIGINT       NOT NULL DEFAULT 1,
     UNIQUE (inspection_id, seq)

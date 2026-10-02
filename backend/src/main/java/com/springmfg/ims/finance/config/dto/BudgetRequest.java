@@ -7,7 +7,7 @@ import java.math.BigDecimal;
 public record BudgetRequest(
         @NotNull Long glAccountId,
         @NotNull Integer fiscalYear,
-        @NotNull Short periodNumber,
+        @NotNull Long periodId,
         @NotNull @PositiveOrZero BigDecimal budgetedAmount,
-        String costCenter
+        String budgetName
 ) {}

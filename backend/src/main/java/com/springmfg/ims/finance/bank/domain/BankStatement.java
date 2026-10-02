@@ -9,8 +9,11 @@ import java.time.LocalDate;
 @Table(name = "bank_statements", schema = "ims")
 public class BankStatement extends BaseEntity {
 
-    @Column(name = "statement_number", nullable = false, unique = true, length = 25)
+    @Column(name = "statement_reference", nullable = false, unique = true, length = 30)
     private String statementNumber;
+
+    @Column(name = "bank_account_code", nullable = false, length = 20)
+    private String bankAccountCode;
 
     @Column(name = "gl_account_id", nullable = false)
     private Long glAccountId;
@@ -28,9 +31,10 @@ public class BankStatement extends BaseEntity {
     private BigDecimal closingBalance = BigDecimal.ZERO;
 
     @Column(nullable = false, length = 15)
-    private String status = "OPEN";
+    private String status = "IMPORTED";
 
     public String getStatementNumber() { return statementNumber; }
+    public String getBankAccountCode() { return bankAccountCode; }
     public Long getGlAccountId() { return glAccountId; }
     public LocalDate getStatementDate() { return statementDate; }
     public Long getPeriodId() { return periodId; }
@@ -39,6 +43,7 @@ public class BankStatement extends BaseEntity {
     public String getStatus() { return status; }
 
     public void setStatementNumber(String statementNumber) { this.statementNumber = statementNumber; }
+    public void setBankAccountCode(String bankAccountCode) { this.bankAccountCode = bankAccountCode; }
     public void setGlAccountId(Long glAccountId) { this.glAccountId = glAccountId; }
     public void setStatementDate(LocalDate statementDate) { this.statementDate = statementDate; }
     public void setPeriodId(Long periodId) { this.periodId = periodId; }

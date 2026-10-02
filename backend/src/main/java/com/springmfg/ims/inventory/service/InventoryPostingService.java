@@ -31,6 +31,7 @@ import com.springmfg.ims.inventory.repository.InventoryBalanceRepository;
 import com.springmfg.ims.inventory.repository.InventoryTransactionRepository;
 import com.springmfg.ims.inventory.repository.MaterialBatchRepository;
 import com.springmfg.ims.material.repository.MaterialRepository;
+import com.springmfg.ims.product.repository.ProductRepository;
 import com.springmfg.ims.warehouse.repository.WarehouseLocationRepository;
 
 /**
@@ -45,6 +46,7 @@ public class InventoryPostingService {
     private final InventoryTransactionRepository txRepo;
     private final MaterialBatchRepository batchRepo;
     private final MaterialRepository materialRepo;
+    private final ProductRepository productRepo;
     private final WarehouseLocationRepository locationRepo;
     private final DocumentNumberService numberService;
     private final SystemSettingService settingService;
@@ -56,6 +58,7 @@ public class InventoryPostingService {
             InventoryTransactionRepository txRepo,
             MaterialBatchRepository batchRepo,
             MaterialRepository materialRepo,
+            ProductRepository productRepo,
             WarehouseLocationRepository locationRepo,
             DocumentNumberService numberService,
             SystemSettingService settingService,
@@ -65,6 +68,7 @@ public class InventoryPostingService {
         this.txRepo = txRepo;
         this.batchRepo = batchRepo;
         this.materialRepo = materialRepo;
+        this.productRepo = productRepo;
         this.locationRepo = locationRepo;
         this.numberService = numberService;
         this.settingService = settingService;
@@ -139,8 +143,10 @@ public class InventoryPostingService {
 
         validateCommand(outCmd);
 
-        InventoryBalance outBal = lockOrCreate(outFirst ? outCmd : inCmd);
-        InventoryBalance inBal  = lockOrCreate(outFirst ? inCmd  : outCmd);
+        InventoryBalance firstLocked  = lockOrCreate(outFirst ? outCmd : inCmd);
+        InventoryBalance secondLocked = lockOrCreate(outFirst ? inCmd  : outCmd);
+        InventoryBalance outBal = outFirst ? firstLocked  : secondLocked;
+        InventoryBalance inBal  = outFirst ? secondLocked : firstLocked;
 
         // Enforce the out-leg rules
         enforceOutRules(outCmd, outBal);
@@ -369,7 +375,7 @@ public class InventoryPostingService {
         tx.setLocationId(cmd.locationId());
         tx.setStockStatus(cmd.stockStatus());
         tx.setQuantity(signedQty);
-        tx.setUom(cmd.uom());
+        tx.setUom(resolveUom(cmd));
         tx.setUnitCost(unitCost != null ? unitCost : BigDecimal.ZERO);
         tx.setTotalCost(unitCost != null ? signedQty.abs().multiply(unitCost).setScale(4, RoundingMode.HALF_UP) : BigDecimal.ZERO);
         tx.setReferenceType(cmd.referenceType());
@@ -379,6 +385,20 @@ public class InventoryPostingService {
         tx.setRemarks(cmd.remarks());
         tx.setCreatedBy(resolveCurrentUserId());
         return tx;
+    }
+
+    /** The ledger's uom is mandatory; callers may omit it and the item master supplies it. */
+    private String resolveUom(PostingCommand cmd) {
+        if (cmd.uom() != null) {
+            return cmd.uom();
+        }
+        if (cmd.materialId() != null) {
+            return materialRepo.findById(cmd.materialId()).map(m -> m.getUom()).orElse(null);
+        }
+        if (cmd.productId() != null) {
+            return productRepo.findById(cmd.productId()).map(p -> p.getUom()).orElse(null);
+        }
+        return null;
     }
 
     private Long resolveCurrentUserId() {

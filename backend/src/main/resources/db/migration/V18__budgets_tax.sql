@@ -56,3 +56,9 @@ INSERT INTO tax_codes (tax_code, description, tax_type, rate_pct, company_id) VA
 ('IGST12', 'IGST @ 12%',  'IGST',  12.00, 1),
 ('IGST5',  'IGST @ 5%',   'IGST',   5.00, 1),
 ('EXEMPT', 'GST Exempt',  'EXEMPT',  0.00, 1);
+
+-- DESIGN section 1.1 standard columns (entity extends BaseEntity).
+ALTER TABLE exchange_rates
+    ADD COLUMN updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    ADD COLUMN updated_by BIGINT,
+    ADD COLUMN version    BIGINT      NOT NULL DEFAULT 0;

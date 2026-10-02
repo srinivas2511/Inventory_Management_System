@@ -85,7 +85,7 @@ public class PurchaseOrderService {
             BigDecimal base = line.orderedQty().multiply(line.rate()).setScale(4, RoundingMode.HALF_UP);
             BigDecimal tax  = base.multiply(taxPct).divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP);
             item.setLineTotal(base.add(tax));
-            poItemRepo.save(item);
+            po.getItems().add(poItemRepo.save(item));
             subtotal = subtotal.add(base);
             taxTotal = taxTotal.add(tax);
         }

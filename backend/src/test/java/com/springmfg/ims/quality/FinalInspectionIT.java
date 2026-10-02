@@ -24,7 +24,10 @@ import com.springmfg.ims.quality.dto.QualityInspectionDto;
 import com.springmfg.ims.quality.repository.QualityInspectionItemRepository;
 import com.springmfg.ims.quality.repository.QualityInspectionRepository;
 import com.springmfg.ims.quality.service.FinalInspectionService;
+import com.springmfg.ims.inventory.dto.PostingCommand;
+import com.springmfg.ims.inventory.service.InventoryPostingService;
 import com.springmfg.ims.support.AbstractIntegrationTest;
+import com.springmfg.ims.support.TestData;
 import com.springmfg.ims.warehouse.domain.Warehouse;
 import com.springmfg.ims.warehouse.domain.WarehouseLocation;
 import com.springmfg.ims.warehouse.repository.WarehouseLocationRepository;
@@ -40,19 +43,21 @@ class FinalInspectionIT extends AbstractIntegrationTest {
     @Autowired QualityInspectionRepository inspectionRepo;
     @Autowired QualityInspectionItemRepository itemRepo;
     @Autowired ProductRepository productRepo;
+    @Autowired TestData td;
+    @Autowired InventoryPostingService postingService;
     @Autowired WarehouseRepository warehouseRepo;
     @Autowired WarehouseLocationRepository locationRepo;
 
     // ── helpers ───────────────────────────────────────────────────────────────
 
     private FgBatch createTestBatch(String batchNo) {
-        Product product = productRepo.findAll().stream().findFirst()
-                .orElseThrow(() -> new IllegalStateException("No product in test database"));
-        Warehouse wh = warehouseRepo.findAll().stream().findFirst()
-                .orElseThrow(() -> new IllegalStateException("No warehouse in test database"));
+        Product product = td.product();
+        // FinalInspectionService moves stock in the default warehouse (id 1, seeded by V2).
+        Warehouse wh = warehouseRepo.findById(1L)
+                .orElseThrow(() -> new IllegalStateException("Seeded default warehouse missing"));
 
         // Ensure QUALITY_PENDING and FINISHED locations exist
-        ensureLocation(wh, "QUALITY_PENDING");
+        WarehouseLocation qualityPendingLoc = ensureLocation(wh, "QUALITY_PENDING");
         ensureLocation(wh, "FINISHED");
         ensureLocation(wh, "SCRAP");
 
@@ -64,26 +69,37 @@ class FinalInspectionIT extends AbstractIntegrationTest {
         batch.setProducedOn(LocalDate.now());
         batch.setQualityStatus("QUALITY_PENDING");
         batch.setUnitCost(new BigDecimal("50.0000"));
-        return fgBatchRepo.save(batch);
+        FgBatch saved = fgBatchRepo.save(batch);
+
+        // The batch's produced stock sits at the QUALITY_PENDING location awaiting the final decision.
+        postingService.post(new PostingCommand(
+                "PRODUCTION_RECEIPT", "PRODUCT",
+                null, product.getId(), null, saved.getId(),
+                wh.getId(), qualityPendingLoc.getId(), "QUALITY_PENDING",
+                new BigDecimal("100.000"), product.getUom(),
+                new BigDecimal("50.0000"),
+                "FG_BATCH", saved.getId(), batchNo, "IT setup"));
+        return saved;
     }
 
-    private void ensureLocation(Warehouse wh, String locType) {
-        boolean exists = locationRepo.findByWarehouseIdAndActiveTrue(wh.getId()).stream()
-                .anyMatch(l -> locType.equals(l.getLocationType()));
-        if (!exists) {
-            WarehouseLocation loc = new WarehouseLocation();
-            loc.setWarehouse(wh);
-            loc.setLocationCode(locType + "-IT");
-            loc.setName(locType);
-            loc.setLocationType(locType);
-            loc.setActive(true);
-            locationRepo.save(loc);
+    private WarehouseLocation ensureLocation(Warehouse wh, String locType) {
+        var existing = locationRepo.findByWarehouseIdAndActiveTrue(wh.getId()).stream()
+                .filter(l -> locType.equals(l.getLocationType())).findFirst();
+        if (existing.isPresent()) {
+            return existing.get();
         }
+        WarehouseLocation loc = new WarehouseLocation();
+        loc.setWarehouse(wh);
+        loc.setLocationCode(locType + "-IT");
+        loc.setName(locType);
+        loc.setLocationType(locType);
+        loc.setActive(true);
+        return locationRepo.save(loc);
     }
 
     private QualityInspection createPendingFinalInspection(FgBatch batch) {
         QualityInspection insp = new QualityInspection();
-        insp.setInspectionNumber("QI-TEST-" + System.nanoTime());
+        insp.setInspectionNumber(td.code("QI"));
         insp.setInspectionType("FINAL");
         insp.setStatus("PENDING");
         insp.setFgBatchId(batch.getId());
@@ -106,7 +122,7 @@ class FinalInspectionIT extends AbstractIntegrationTest {
 
         QualityInspectionDto dto = finalService.completeFinalInspection(insp.getId(), req);
 
-        assertThat(dto.status()).isEqualTo("PASSED");
+        assertThat(dto.status()).isEqualTo("APPROVED");
         FgBatch updated = fgBatchRepo.findById(batch.getId()).orElseThrow();
         assertThat(updated.getQualityStatus()).isEqualTo("APPROVED");
         assertThat(updated.getApprovedQty()).isEqualByComparingTo("100.000");
@@ -127,7 +143,7 @@ class FinalInspectionIT extends AbstractIntegrationTest {
 
         QualityInspectionDto dto = finalService.completeFinalInspection(insp.getId(), req);
 
-        assertThat(dto.status()).isEqualTo("PASSED");
+        assertThat(dto.status()).isEqualTo("APPROVED");
         FgBatch updated = fgBatchRepo.findById(batch.getId()).orElseThrow();
         assertThat(updated.getQualityStatus()).isEqualTo("PARTIALLY_APPROVED");
         assertThat(updated.getApprovedQty()).isEqualByComparingTo("80.000");

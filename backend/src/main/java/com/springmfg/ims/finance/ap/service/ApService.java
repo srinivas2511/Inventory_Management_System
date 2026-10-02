@@ -147,7 +147,6 @@ public class ApService {
         ApPayment payment = new ApPayment();
         payment.setPaymentNumber(numberService.next("APPMT"));
         payment.setApInvoiceId(invoiceId);
-        payment.setSupplierId(inv.getSupplierId());
         payment.setPaymentDate(req.paymentDate());
         payment.setAmount(req.amount());
         payment.setPaymentMode(req.paymentMode() != null ? req.paymentMode() : "BANK_TRANSFER");

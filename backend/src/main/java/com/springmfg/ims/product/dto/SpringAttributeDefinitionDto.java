@@ -1,5 +1,7 @@
 package com.springmfg.ims.product.dto;
 
+import java.math.BigDecimal;
+
 import com.springmfg.ims.product.domain.SpringAttributeDefinition;
 
 public record SpringAttributeDefinitionDto(
@@ -8,14 +10,17 @@ public record SpringAttributeDefinitionDto(
         String attributeCode,
         String label,
         String dataType,
-        String inputType,
-        String options,
+        String unit,
         boolean required,
-        int sortOrder) {
+        BigDecimal minValue,
+        BigDecimal maxValue,
+        String enumValues,
+        int displayOrder) {
 
     public static SpringAttributeDefinitionDto from(SpringAttributeDefinition d) {
         return new SpringAttributeDefinitionDto(
             d.getId(), d.getSpringType(), d.getAttributeCode(), d.getLabel(),
-            d.getDataType(), d.getInputType(), d.getOptions(), d.isRequired(), d.getSortOrder());
+            d.getDataType(), d.getUnit(), d.isRequired(), d.getMinValue(), d.getMaxValue(),
+            d.getEnumValues(), d.getDisplayOrder());
     }
 }

@@ -27,7 +27,7 @@ public interface QualityInspectionRepository extends JpaRepository<QualityInspec
     Optional<QualityInspection> findOpenIncomingByBatch(@Param("batchId") Long batchId);
 
     @Query("SELECT q FROM QualityInspection q WHERE q.inspectionType = 'FINAL' " +
-           "AND q.fgBatchId = :fgBatchId AND q.status NOT IN ('PASSED','FAILED','HOLD')")
+           "AND q.fgBatchId = :fgBatchId AND q.status NOT IN ('APPROVED','REJECTED','HOLD')")
     Optional<QualityInspection> findOpenFinalByFgBatch(@Param("fgBatchId") Long fgBatchId);
 
     @Query("SELECT q FROM QualityInspection q WHERE (:type IS NULL OR q.inspectionType = :type) " +
@@ -45,8 +45,8 @@ public interface QualityInspectionRepository extends JpaRepository<QualityInspec
             Long productionOrderId, String inspectionType, String status);
 
     @Query("SELECT CASE WHEN COUNT(q) = 0 THEN CAST(0.0 AS java.math.BigDecimal) " +
-           "ELSE CAST((SUM(CASE WHEN q.status IN ('PASSED','APPROVED') THEN 1.0 ELSE 0.0 END) / COUNT(q)) * 100 AS java.math.BigDecimal) END " +
-           "FROM QualityInspection q WHERE q.status IN ('PASSED','APPROVED','FAILED','REJECTED') " +
+           "ELSE CAST((SUM(CASE WHEN q.status = 'APPROVED' THEN 1.0 ELSE 0.0 END) / COUNT(q)) * 100 AS java.math.BigDecimal) END " +
+           "FROM QualityInspection q WHERE q.status IN ('APPROVED','REJECTED') " +
            "AND FUNCTION('MONTH', q.createdAt) = FUNCTION('MONTH', CURRENT_DATE) " +
            "AND FUNCTION('YEAR', q.createdAt) = FUNCTION('YEAR', CURRENT_DATE)")
     java.math.BigDecimal passRateThisMonth();

@@ -9,14 +9,11 @@ import java.time.LocalDate;
 @Table(name = "ap_payments", schema = "ims")
 public class ApPayment extends BaseEntity {
 
-    @Column(name = "payment_number", nullable = false, unique = true, length = 25)
+    @Column(name = "payment_reference", nullable = false, unique = true, length = 25)
     private String paymentNumber;
 
     @Column(name = "ap_invoice_id", nullable = false)
     private Long apInvoiceId;
-
-    @Column(name = "supplier_id", nullable = false)
-    private Long supplierId;
 
     @Column(name = "payment_date", nullable = false)
     private LocalDate paymentDate;
@@ -24,10 +21,10 @@ public class ApPayment extends BaseEntity {
     @Column(name = "amount", nullable = false, precision = 18, scale = 4)
     private BigDecimal amount;
 
-    @Column(name = "payment_mode", nullable = false, length = 20)
+    @Column(name = "payment_method", nullable = false, length = 20)
     private String paymentMode = "BANK_TRANSFER";
 
-    @Column(name = "reference_number", length = 40)
+    @Column(name = "bank_reference", length = 60)
     private String referenceNumber;
 
     @Column(name = "journal_header_id")
@@ -35,7 +32,6 @@ public class ApPayment extends BaseEntity {
 
     public String getPaymentNumber() { return paymentNumber; }
     public Long getApInvoiceId() { return apInvoiceId; }
-    public Long getSupplierId() { return supplierId; }
     public LocalDate getPaymentDate() { return paymentDate; }
     public BigDecimal getAmount() { return amount; }
     public String getPaymentMode() { return paymentMode; }
@@ -44,7 +40,6 @@ public class ApPayment extends BaseEntity {
 
     public void setPaymentNumber(String paymentNumber) { this.paymentNumber = paymentNumber; }
     public void setApInvoiceId(Long apInvoiceId) { this.apInvoiceId = apInvoiceId; }
-    public void setSupplierId(Long supplierId) { this.supplierId = supplierId; }
     public void setPaymentDate(LocalDate paymentDate) { this.paymentDate = paymentDate; }
     public void setAmount(BigDecimal amount) { this.amount = amount; }
     public void setPaymentMode(String paymentMode) { this.paymentMode = paymentMode; }

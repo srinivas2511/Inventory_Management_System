@@ -8,7 +8,7 @@ public record BudgetDto(
         String accountCode,
         String accountName,
         Integer fiscalYear,
-        Short periodNumber,
+        Long periodId,
         BigDecimal budgetedAmount,
-        String costCenter
+        String budgetName
 ) {}

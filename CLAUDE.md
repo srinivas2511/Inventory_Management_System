@@ -14,10 +14,10 @@ Stack: Java 17+ / Spring Boot 3 / PostgreSQL / Angular 18+ (Angular Material) / 
 Before any task: read the DESIGN/ARCHITECTURE sections the PLAN task references. If code and docs disagree, stop and flag it rather than guessing.
 
 ## Current status
-- **R1–R9 code-complete, but gates M3–M9 were verified by unit/ArchUnit tests only. Integration tests had NEVER run (all skipped: Docker undetected) and the app context never started against real PostgreSQL. Treat M3–M9 as UNVERIFIED until all *IT pass with Skipped: 0.**
+- **R1–R9 code-complete. Gates M3–M9 were originally verified by unit/ArchUnit tests only (integration tests had never run). Baseline repaired 2026-10-02: `mvn verify` now runs 27 unit/ArchUnit + 35 integration tests (7 IT classes) against real PostgreSQL, 0 skipped, 0 failed.**
 - **Docs: v2.0 — expanded to SAP-class ERP platform scope (R9–R20 planned, 2026-10-02).**
-- Backend: 27/27 unit+arch tests pass. ITs (35 tests, 7 classes) now execute but all fail at context startup: entity↔schema drift (Hibernate `validate`) across R1–R9 tables — baseline repair in progress; see docs/decisions.md "Baseline repair". Migration chain V0.1–V18 now replays cleanly on PostgreSQL 16. Frontend: 27/27 unit tests, lint clean, format clean, prod build green.
-- Migrations: V1–V18 (never successfully applied before the baseline repair; fixed in place, see decisions.md). R10 work is paused/stashed until ITs are green.
+- IT counts: FinanceIT 4, InventoryPostingIT 11, ProcurementIT 2, ProductionIT 4, FinalInspectionIT 5, SalesDispatchIT 6, SystemControllerIT 3. Frontend: 27/27 unit tests, lint clean, format clean, prod build green (not re-run; no frontend change in the baseline repair).
+- Migrations: V1–V18 (fixed in place during the baseline repair, see docs/decisions.md). R10 work is stashed/uncommitted until restored on top of this baseline.
 - Update this line at every milestone gate (M0…M20).
 
 ## Non-negotiable rules

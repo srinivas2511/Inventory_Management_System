@@ -2,6 +2,7 @@ package com.springmfg.ims.audit.service;
 
 import java.time.Instant;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.MDC;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -22,6 +23,8 @@ import jakarta.servlet.http.HttpServletRequest;
 
 @Service
 public class AuditService {
+
+    private static final ObjectMapper JSON = new ObjectMapper();
 
     private final AuditLogRepository repository;
 
@@ -62,6 +65,23 @@ public class AuditService {
         }
 
         repository.save(new AuditLog(userId, username, roles, action, entity, entityId,
-            oldValue, newValue, reason, ip, correlationId));
+            asJson(oldValue), asJson(newValue), reason, ip, correlationId));
+    }
+
+    /** old_value/new_value are JSONB: pass valid JSON through, wrap plain text (e.g. a status) as a JSON string. */
+    private static String asJson(String value) {
+        if (value == null) {
+            return null;
+        }
+        try {
+            JSON.readTree(value);
+            return value;
+        } catch (Exception notJson) {
+            try {
+                return JSON.writeValueAsString(value);
+            } catch (Exception e) {
+                throw new IllegalStateException(e);
+            }
+        }
     }
 }
