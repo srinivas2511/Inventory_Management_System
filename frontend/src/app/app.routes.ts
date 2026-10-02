@@ -114,6 +114,32 @@ export const routes: Routes = [
           import('./features/procurement/goods-receipt-list.component').then((m) => m.GoodsReceiptListComponent),
       },
       {
+        path: 'engineering/bom',
+        title: 'Bill of Materials',
+        canActivate: [permissionGuard('BOM_VIEW')],
+        loadComponent: () => import('./features/engineering/bom-list.component').then((m) => m.BomListComponent),
+      },
+      {
+        path: 'engineering/routing',
+        title: 'Product Routing',
+        canActivate: [permissionGuard('ROUTING_VIEW')],
+        loadComponent: () =>
+          import('./features/engineering/routing-editor.component').then((m) => m.RoutingEditorComponent),
+      },
+      {
+        path: 'production/orders',
+        title: 'Production Orders',
+        canActivate: [permissionGuard('PRODUCTION_VIEW')],
+        loadComponent: () =>
+          import('./features/production/production-order-list.component').then((m) => m.ProductionOrderListComponent),
+      },
+      {
+        path: 'production/my-work',
+        title: 'My Work',
+        canActivate: [permissionGuard('PRODUCTION_EXECUTE')],
+        loadComponent: () => import('./features/production/my-work.component').then((m) => m.MyWorkComponent),
+      },
+      {
         path: 'quality/inspections',
         title: 'Quality Inspections',
         canActivate: [permissionGuard('QUALITY_VIEW')],

@@ -106,6 +106,38 @@ export const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
+    label: 'Engineering',
+    items: [
+      { label: 'Bill of Materials', icon: 'schema', route: '/engineering/bom', permission: 'BOM_VIEW', enabled: true },
+      {
+        label: 'Product Routing',
+        icon: 'route',
+        route: '/engineering/routing',
+        permission: 'ROUTING_VIEW',
+        enabled: true,
+      },
+    ],
+  },
+  {
+    label: 'Production',
+    items: [
+      {
+        label: 'Production Orders',
+        icon: 'precision_manufacturing',
+        route: '/production/orders',
+        permission: 'PRODUCTION_VIEW',
+        enabled: true,
+      },
+      {
+        label: 'My Work',
+        icon: 'assignment_ind',
+        route: '/production/my-work',
+        permission: 'PRODUCTION_EXECUTE',
+        enabled: true,
+      },
+    ],
+  },
+  {
     label: 'Quality',
     items: [
       {

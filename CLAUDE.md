@@ -13,8 +13,8 @@ Stack: Java 17+ / Spring Boot 3 / PostgreSQL / Angular 18+ (Angular Material) / 
 Before any task: read the DESIGN/ARCHITECTURE sections the PLAN task references. If code and docs disagree, stop and flag it rather than guessing.
 
 ## Current status
-- **Phase:** 3 — Procurement and Incoming Quality: **complete (tasks 3.1–3.7); gate M3 passed** (`mvn verify` green, 19/19 frontend tests, lint clean, format clean, prod build green).
-- Backend: 19/19 unit+arch tests pass, ProcurementIT skips without Docker. Frontend: 19/19 unit tests pass, lint clean, format clean, prod build green.
+- **Phase:** 4 — Manufacturing: **complete (tasks 4.1–4.10); gate M4 passed** (`mvn verify` green, 19/19 frontend tests, lint clean, format clean, prod build green).
+- Backend: 23/23 unit+arch tests pass, ProductionIT and ProcurementIT skip without Docker. Frontend: 19/19 unit tests pass, lint clean, format clean, prod build green.
 - Update this line at every milestone gate (M0…M8).
 
 ## Non-negotiable rules
@@ -55,9 +55,9 @@ cd frontend && npm start                                    # :4200, proxies /ap
 ```
 
 ## Decisions in force (defaults until confirmed — see PLAN §14)
-- BOM wire quantity: 0.045 kg per piece (`base_quantity` supported)
+- BOM quantity basis: **configurable per BOM** via `bom.base_quantity` column (exposed in UI); system setting `bom.default_base_quantity=1` is the default for new BOMs; demo seed uses 0.045 kg/pc for spring products
+- Traceability granularity: **configurable via system setting** `quality.trace_granularity` (ORDER / BATCH); default ORDER; task 4.5 reads this setting to decide whether to populate `fg_batch_material_sources`
 - Stock-adjustment Admin threshold: variance value ₹10,000 (setting `inventory.adjustment.admin_threshold`)
 - PO approval: any user holding `PURCHASE_APPROVE`
 - Belleville/Custom spring attributes: per DESIGN §14 item 11
-- Traceability: order-level by default, batch-level optional
 - Demo users and demo data load only in the `dev`/`demo` profile, never production

@@ -1210,6 +1210,7 @@ Alert example text: `LOW STOCK — RM-SS-001 SS304 Wire 2.5 mm: current 120 KG, 
 | `inventory.aging_days` | INTEGER | 180 | aging alert |
 | `inventory.expiry_warning_days` | INTEGER | 30 | expiry alert |
 | `purchase.over_receipt_pct` | DECIMAL | 5 | over-receipt tolerance |
+| `bom.default_base_quantity` | DECIMAL | 1.000 | default `base_quantity` for new BOMs (1 = per piece; change per industry — e.g. 100 for "per 100 pcs") |
 | `production.release.require_material` | BOOLEAN | false | block release on shortage |
 | `production.issue.tolerance_pct` | DECIMAL | 5 | over-issue tolerance |
 | `production.auto_backflush` | BOOLEAN | true | auto MATERIAL_CONSUMPTION from output |
