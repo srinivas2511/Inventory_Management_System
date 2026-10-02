@@ -1,11 +1,24 @@
 spring:
   jpa:
     show-sql: false
+  mail:
+    host: localhost
+    port: 1025
+    properties:
+      mail.smtp.auth: false
+      mail.smtp.starttls.enable: false
+
 logging:
   level:
     com.springmfg.ims: DEBUG
+
 springdoc:
   api-docs:
     enabled: true
   swagger-ui:
     enabled: true
+
+ims:
+  security:
+    jwt:
+      secret: dev-secret-key-change-in-production-must-be-at-least-32-chars

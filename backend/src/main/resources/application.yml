@@ -29,6 +29,14 @@ spring:
   mvc:
     problemdetails:
       enabled: true
+  mail:
+    host: ${SMTP_HOST:localhost}
+    port: ${SMTP_PORT:1025}
+    username: ${SMTP_USER:}
+    password: ${SMTP_PASSWORD:}
+    properties:
+      mail.smtp.auth: false
+      mail.smtp.starttls.enable: false
 
 server:
   port: 8080
@@ -61,5 +69,10 @@ springdoc:
 ims:
   security:
     cors-origins: ${CORS_ORIGINS:http://localhost:4200}
+    jwt:
+      secret: ${JWT_SECRET:change-me-in-production-must-be-at-least-32-chars!!}
+      access-token-minutes: 15
+      refresh-token-days: 7
+  frontend-url: ${FRONTEND_URL:http://localhost:4200}
   demo:
     load-data: false           # true only under the dev/demo profile (Phase 8 loader)

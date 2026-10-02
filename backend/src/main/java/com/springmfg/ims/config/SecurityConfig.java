@@ -13,11 +13,10 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -36,14 +35,17 @@ public class SecurityConfig {
     private static final String[] PUBLIC_ENDPOINTS = {
             "/actuator/health", "/actuator/health/**", "/actuator/info",
             "/api/system/ping",
+            "/api/auth/login", "/api/auth/refresh", "/api/auth/forgot-password", "/api/auth/reset-password",
             "/v3/api-docs", "/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**"
     };
 
     @Bean
-    SecurityFilterChain securityFilterChain(HttpSecurity http, ProblemDetailSecurityHandlers problemHandlers)
+    SecurityFilterChain securityFilterChain(HttpSecurity http,
+                                            ProblemDetailSecurityHandlers problemHandlers,
+                                            JwtAuthenticationFilter jwtFilter)
             throws Exception {
         http
-                .csrf(AbstractHttpConfigurer::disable) // stateless token API, no cookies for auth on /api
+                .csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(a -> a
@@ -58,16 +60,9 @@ public class SecurityConfig {
                         .frameOptions(f -> f.deny())
                         .referrerPolicy(r -> r.policy(
                                 org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter
-                                        .ReferrerPolicy.NO_REFERRER)));
+                                        .ReferrerPolicy.NO_REFERRER)))
+                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
-    }
-
-    /** No users exist until Phase 1; this also stops Spring Boot generating a default user/password. */
-    @Bean
-    UserDetailsService userDetailsService() {
-        return username -> {
-            throw new UsernameNotFoundException("User store not available yet");
-        };
     }
 
     @Bean

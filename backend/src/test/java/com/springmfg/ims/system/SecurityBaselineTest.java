@@ -1,5 +1,7 @@
 package com.springmfg.ims.system;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
@@ -7,9 +9,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import jakarta.servlet.FilterChain;
+
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -22,7 +28,9 @@ import org.springframework.web.bind.annotation.RestController;
 import com.springmfg.ims.common.exception.BusinessRuleException;
 import com.springmfg.ims.common.exception.ErrorCode;
 import com.springmfg.ims.common.exception.GlobalExceptionHandler;
+import com.springmfg.ims.common.idempotency.IdempotencyKeyRepository;
 import com.springmfg.ims.config.CorrelationIdFilter;
+import com.springmfg.ims.config.JwtAuthenticationFilter;
 import com.springmfg.ims.config.ProblemDetailSecurityHandlers;
 import com.springmfg.ims.config.SecurityConfig;
 
@@ -57,8 +65,23 @@ class SecurityBaselineTest {
         }
     }
 
+    @MockBean
+    JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    @MockBean
+    IdempotencyKeyRepository idempotencyKeyRepository;
+
     @Autowired
     MockMvc mvc;
+
+    @BeforeEach
+    void stubJwtFilterAsPassThrough() throws Exception {
+        doAnswer(inv -> {
+            FilterChain chain = inv.getArgument(2);
+            chain.doFilter(inv.getArgument(0), inv.getArgument(1));
+            return null;
+        }).when(jwtAuthenticationFilter).doFilter(any(), any(), any());
+    }
 
     @Test
     void publicPingNeedsNoToken() throws Exception {

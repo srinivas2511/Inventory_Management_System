@@ -14,11 +14,19 @@ public enum ErrorCode {
     // 401 / 403 / 404 / 423 / 429
     UNAUTHENTICATED(HttpStatus.UNAUTHORIZED, "Authentication required"),
     TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED, "Token expired"),
+    INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "Invalid or expired token"),
+    INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "Invalid credentials"),
     ACCESS_DENIED(HttpStatus.FORBIDDEN, "Access denied"),
     OUT_OF_SCOPE(HttpStatus.FORBIDDEN, "Outside your data scope"),
     NOT_FOUND(HttpStatus.NOT_FOUND, "Not found"),
     ACCOUNT_LOCKED(HttpStatus.LOCKED, "Account locked"),
+    ACCOUNT_DISABLED(HttpStatus.FORBIDDEN, "Account is disabled"),
     RATE_LIMITED(HttpStatus.TOO_MANY_REQUESTS, "Too many requests"),
+
+    // 400 - business rule
+    PASSWORD_POLICY(HttpStatus.BAD_REQUEST, "Password does not meet policy requirements"),
+    LAST_ADMIN(HttpStatus.BAD_REQUEST, "Cannot remove the last active administrator"),
+    DEACTIVATION_BLOCKED(HttpStatus.BAD_REQUEST, "Cannot deactivate — active references exist"),
 
     // 409
     VERSION_CONFLICT(HttpStatus.CONFLICT, "Version conflict"),
