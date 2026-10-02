@@ -4,16 +4,18 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
+import { MatMenuModule } from '@angular/material/menu';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { map } from 'rxjs';
+import { AuthService } from '../auth/auth.service';
+import { SessionStore } from '../auth/session.store';
 import { AppConfigService } from '../config/app-config.service';
 import { LoadingService } from '../http/loading.service';
 import { visibleGroups } from './nav.config';
 
-/** Application shell: top bar, collapsible left sidebar, progress bar, routed content (desktop and tablet). */
 @Component({
   selector: 'app-shell',
   standalone: true,
@@ -26,6 +28,7 @@ import { visibleGroups } from './nav.config';
     MatListModule,
     MatIconModule,
     MatButtonModule,
+    MatMenuModule,
     MatProgressBarModule,
   ],
   templateUrl: './shell.component.html',
@@ -34,13 +37,19 @@ import { visibleGroups } from './nav.config';
 export class ShellComponent {
   protected readonly appName = inject(AppConfigService).appName;
   protected readonly loading = inject(LoadingService).isLoading;
-  protected readonly groups = visibleGroups();
+  protected readonly session = inject(SessionStore);
+  protected readonly groups = visibleGroups(undefined, this.session);
 
-  /** Below 1024px (tablet portrait and smaller) the sidebar becomes an overlay drawer. */
+  private readonly authService = inject(AuthService);
+
   protected readonly isCompact = toSignal(
     inject(BreakpointObserver)
       .observe('(max-width: 1023.98px)')
       .pipe(map((state) => state.matches)),
     { initialValue: false },
   );
+
+  protected logout(): void {
+    this.authService.logout();
+  }
 }

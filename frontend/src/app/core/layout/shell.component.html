@@ -4,7 +4,20 @@
   </button>
   <span class="app-name">{{ appName }}</span>
   <span class="spacer"></span>
-  <span class="user" data-testid="session-state">Not signed in</span>
+  @if (session.isLoggedIn()) {
+    <button mat-button [matMenuTriggerFor]="userMenu" data-testid="user-menu-trigger">
+      <mat-icon>account_circle</mat-icon>
+      <span class="user-name">{{ session.user()?.fullName }}</span>
+      <mat-icon>arrow_drop_down</mat-icon>
+    </button>
+    <mat-menu #userMenu>
+      <button mat-menu-item (click)="logout()" data-testid="logout-btn">
+        <mat-icon>logout</mat-icon> Sign out
+      </button>
+    </mat-menu>
+  } @else {
+    <span class="user" data-testid="session-state">Not signed in</span>
+  }
 </mat-toolbar>
 @if (loading()) {
   <mat-progress-bar mode="indeterminate" class="progress" />

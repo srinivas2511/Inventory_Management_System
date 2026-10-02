@@ -1,6 +1,7 @@
 import { HttpClient, HttpContext, provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { TokenStore } from '../auth/token.store';
 import { AppConfigService } from '../config/app-config.service';
 import { ToastService } from '../notification/toast.service';
@@ -19,6 +20,7 @@ describe('HTTP interceptors', () => {
     toast = jasmine.createSpyObj<ToastService>('ToastService', ['error', 'success', 'info']);
     TestBed.configureTestingModule({
       providers: [
+        provideRouter([]),
         provideHttpClient(
           withInterceptors([loadingInterceptor, authInterceptor, idempotencyInterceptor, errorInterceptor]),
         ),

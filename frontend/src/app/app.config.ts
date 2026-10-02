@@ -6,6 +6,7 @@ import { provideAnimationsAsync } from '@angular/platform-browser/animations/asy
 import { routes } from './app.routes';
 import { AppConfigService } from './core/config/app-config.service';
 import { authInterceptor } from './core/http/auth.interceptor';
+import { correlationInterceptor } from './core/http/correlation.interceptor';
 import { errorInterceptor } from './core/http/error.interceptor';
 import { idempotencyInterceptor } from './core/http/idempotency.interceptor';
 import { loadingInterceptor } from './core/http/loading.interceptor';
@@ -17,7 +18,7 @@ export const appConfig: ApplicationConfig = {
     provideAnimationsAsync(),
     // Order matters: loading wraps everything, errors are mapped last on the way back.
     provideHttpClient(
-      withInterceptors([loadingInterceptor, authInterceptor, idempotencyInterceptor, errorInterceptor]),
+      withInterceptors([loadingInterceptor, correlationInterceptor, authInterceptor, idempotencyInterceptor, errorInterceptor]),
     ),
     {
       provide: APP_INITIALIZER,

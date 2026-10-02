@@ -1,12 +1,9 @@
-/**
- * Navigation model. Each group appears only when it has at least one enabled item; from Phase 1 items are also
- * filtered by `permission` (UX only - the backend enforces access). Items are enabled phase by phase.
- */
+import { SessionStore } from '../auth/session.store';
+
 export interface NavItem {
   label: string;
   icon: string;
   route: string;
-  /** Permission code required to see the item (checked from Phase 1). */
   permission?: string;
   enabled: boolean;
 }
@@ -24,40 +21,49 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     label: 'Master Data',
     items: [
-      { label: 'Materials', icon: 'category', route: '/master/materials', permission: 'MATERIAL_VIEW', enabled: false },
+      { label: 'Materials', icon: 'category', route: '/master/materials', permission: 'MATERIAL_VIEW', enabled: true },
       {
         label: 'Spring Products',
         icon: 'settings_input_component',
         route: '/master/products',
         permission: 'PRODUCT_VIEW',
-        enabled: false,
+        enabled: true,
       },
       {
         label: 'Suppliers',
         icon: 'local_shipping',
         route: '/master/suppliers',
         permission: 'SUPPLIER_MANAGE',
-        enabled: false,
+        enabled: true,
       },
-      { label: 'Customers', icon: 'groups', route: '/master/customers', permission: 'CUSTOMER_MANAGE', enabled: false },
+      { label: 'Customers', icon: 'groups', route: '/master/customers', permission: 'CUSTOMER_MANAGE', enabled: true },
     ],
   },
   {
     label: 'Administration',
     items: [
-      { label: 'Users', icon: 'manage_accounts', route: '/admin/users', permission: 'USER_VIEW', enabled: false },
+      { label: 'Users', icon: 'manage_accounts', route: '/admin/users', permission: 'IAM_USER_MANAGE', enabled: true },
       {
         label: 'Roles',
         icon: 'admin_panel_settings',
         route: '/admin/roles',
-        permission: 'ROLE_MANAGE',
-        enabled: false,
+        permission: 'IAM_USER_MANAGE',
+        enabled: true,
       },
-      { label: 'Audit Logs', icon: 'history', route: '/admin/audit-logs', permission: 'AUDIT_VIEW', enabled: false },
+      { label: 'Audit Logs', icon: 'history', route: '/admin/audit-logs', permission: 'IAM_AUDIT_VIEW', enabled: true },
     ],
   },
 ];
 
-export function visibleGroups(groups: NavGroup[] = NAV_GROUPS): NavGroup[] {
-  return groups.map((g) => ({ ...g, items: g.items.filter((i) => i.enabled) })).filter((g) => g.items.length > 0);
+export function visibleGroups(groups: NavGroup[] = NAV_GROUPS, session?: SessionStore): NavGroup[] {
+  return groups
+    .map((g) => ({
+      ...g,
+      items: g.items.filter((i) => {
+        if (!i.enabled) return false;
+        if (!i.permission) return true;
+        return session ? session.hasPermission(i.permission) : false;
+      }),
+    }))
+    .filter((g) => g.items.length > 0);
 }
