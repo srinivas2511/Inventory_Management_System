@@ -16,6 +16,7 @@ import com.springmfg.ims.common.exception.BusinessRuleException;
 import com.springmfg.ims.common.exception.ErrorCode;
 import com.springmfg.ims.common.exception.NotFoundException;
 import com.springmfg.ims.common.numbering.DocumentNumberService;
+import com.springmfg.ims.finance.ar.service.ArService;
 import com.springmfg.ims.inventory.domain.FgBatch;
 import com.springmfg.ims.inventory.dto.PostingCommand;
 import com.springmfg.ims.inventory.repository.FgBatchRepository;
@@ -57,6 +58,7 @@ public class DispatchService {
     private final InventoryPostingService postingService;
     private final DocumentNumberService numberService;
     private final AuditService auditService;
+    private final ArService arService;
 
     public DispatchService(DispatchRepository dispatchRepo,
                            DispatchItemRepository dispatchItemRepo,
@@ -69,7 +71,8 @@ public class DispatchService {
                            CustomerProductSpecRepository specRepo,
                            InventoryPostingService postingService,
                            DocumentNumberService numberService,
-                           AuditService auditService) {
+                           AuditService auditService,
+                           ArService arService) {
         this.dispatchRepo = dispatchRepo;
         this.dispatchItemRepo = dispatchItemRepo;
         this.orderRepo = orderRepo;
@@ -82,6 +85,7 @@ public class DispatchService {
         this.postingService = postingService;
         this.numberService = numberService;
         this.auditService = auditService;
+        this.arService = arService;
     }
 
     public DispatchDto create(CreateDispatchRequest req) {
@@ -185,6 +189,15 @@ public class DispatchService {
 
         auditService.record("DISPATCH_CREATED", "DISPATCH", null, "DISPATCHED",
                 dispatch.getDispatchNumber(), null);
+
+        try {
+            arService.autoCreateFromDispatch(dispatch.getId());
+        } catch (Exception e) {
+            // AR invoice creation is best-effort; dispatch has already succeeded
+            org.slf4j.LoggerFactory.getLogger(DispatchService.class)
+                    .error("AR invoice creation failed for dispatch {}: {}",
+                            dispatch.getDispatchNumber(), e.getMessage(), e);
+        }
 
         return toDto(dispatch, savedItems);
     }

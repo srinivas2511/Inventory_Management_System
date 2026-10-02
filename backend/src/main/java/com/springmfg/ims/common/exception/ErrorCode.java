@@ -59,6 +59,10 @@ public enum ErrorCode {
     APPROVAL_REQUIRED(HttpStatus.UNPROCESSABLE_ENTITY, "Approval required"),
     INSPECTION_INCOMPLETE(HttpStatus.UNPROCESSABLE_ENTITY, "Inspection incomplete"),
 
+    // 422 - finance rules (R9+)
+    PERIOD_CLOSED(HttpStatus.UNPROCESSABLE_ENTITY, "Fiscal period is closed"),
+    JOURNAL_NOT_BALANCED(HttpStatus.UNPROCESSABLE_ENTITY, "Journal entry does not balance (Dr ≠ Cr)"),
+
     // 500
     INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "Internal error");
 

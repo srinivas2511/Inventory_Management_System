@@ -1,0 +1,53 @@
+package com.springmfg.ims.finance.ar.domain;
+
+import com.springmfg.ims.common.domain.BaseEntity;
+import jakarta.persistence.*;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+
+@Entity
+@Table(name = "ar_receipts", schema = "ims")
+public class ArReceipt extends BaseEntity {
+
+    @Column(name = "receipt_number", nullable = false, unique = true, length = 25)
+    private String receiptNumber;
+
+    @Column(name = "ar_invoice_id", nullable = false)
+    private Long arInvoiceId;
+
+    @Column(name = "customer_id", nullable = false)
+    private Long customerId;
+
+    @Column(name = "receipt_date", nullable = false)
+    private LocalDate receiptDate;
+
+    @Column(nullable = false, precision = 18, scale = 4)
+    private BigDecimal amount;
+
+    @Column(name = "payment_mode", nullable = false, length = 20)
+    private String paymentMode = "BANK_TRANSFER";
+
+    @Column(name = "reference_number", length = 40)
+    private String referenceNumber;
+
+    @Column(name = "journal_header_id")
+    private Long journalHeaderId;
+
+    public String getReceiptNumber() { return receiptNumber; }
+    public Long getArInvoiceId() { return arInvoiceId; }
+    public Long getCustomerId() { return customerId; }
+    public LocalDate getReceiptDate() { return receiptDate; }
+    public BigDecimal getAmount() { return amount; }
+    public String getPaymentMode() { return paymentMode; }
+    public String getReferenceNumber() { return referenceNumber; }
+    public Long getJournalHeaderId() { return journalHeaderId; }
+
+    public void setReceiptNumber(String receiptNumber) { this.receiptNumber = receiptNumber; }
+    public void setArInvoiceId(Long arInvoiceId) { this.arInvoiceId = arInvoiceId; }
+    public void setCustomerId(Long customerId) { this.customerId = customerId; }
+    public void setReceiptDate(LocalDate receiptDate) { this.receiptDate = receiptDate; }
+    public void setAmount(BigDecimal amount) { this.amount = amount; }
+    public void setPaymentMode(String paymentMode) { this.paymentMode = paymentMode; }
+    public void setReferenceNumber(String referenceNumber) { this.referenceNumber = referenceNumber; }
+    public void setJournalHeaderId(Long journalHeaderId) { this.journalHeaderId = journalHeaderId; }
+}

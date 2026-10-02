@@ -198,6 +198,51 @@ export const routes: Routes = [
           import('./features/maintenance/maintenance-list.component').then((m) => m.MaintenanceListComponent),
       },
       {
+        path: 'finance/dashboard',
+        title: 'Finance Dashboard',
+        canActivate: [permissionGuard('FINANCE_REPORT')],
+        loadComponent: () =>
+          import('./features/finance/finance-dashboard.component').then((m) => m.FinanceDashboardComponent),
+      },
+      {
+        path: 'finance/journals',
+        title: 'Journal Entries',
+        canActivate: [permissionGuard('GL_VIEW')],
+        loadComponent: () => import('./features/finance/journal-list.component').then((m) => m.JournalListComponent),
+      },
+      {
+        path: 'finance/journals/:id',
+        title: 'Journal Detail',
+        canActivate: [permissionGuard('GL_VIEW')],
+        loadComponent: () =>
+          import('./features/finance/journal-detail.component').then((m) => m.JournalDetailComponent),
+      },
+      {
+        path: 'finance/periods',
+        title: 'Fiscal Periods',
+        canActivate: [permissionGuard('GL_VIEW')],
+        loadComponent: () => import('./features/finance/period-list.component').then((m) => m.PeriodListComponent),
+      },
+      {
+        path: 'finance/ap',
+        title: 'Accounts Payable',
+        canActivate: [permissionGuard('AP_MANAGE')],
+        loadComponent: () => import('./features/finance/ap-list.component').then((m) => m.ApListComponent),
+      },
+      {
+        path: 'finance/ar',
+        title: 'Accounts Receivable',
+        canActivate: [permissionGuard('AR_MANAGE')],
+        loadComponent: () => import('./features/finance/ar-list.component').then((m) => m.ArListComponent),
+      },
+      {
+        path: 'finance/bank',
+        title: 'Bank Reconciliation',
+        canActivate: [permissionGuard('BANK_RECONCILE')],
+        loadComponent: () =>
+          import('./features/finance/bank-reconciliation.component').then((m) => m.BankReconciliationComponent),
+      },
+      {
         path: 'admin/users',
         title: 'Users',
         canActivate: [permissionGuard('IAM_USER_MANAGE')],

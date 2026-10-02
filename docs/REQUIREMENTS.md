@@ -1,264 +1,689 @@
-# Manufacturing ERP Platform — Requirements
-## Spring Configuration (v1)
+# REQUIREMENTS.md — Configurable Manufacturing ERP Platform
 
-**Version:** 1.1  **Date:** 2026-10-02  **Updated:** multi-industry platform framing added
-**Sources:** Attachment 1 (system specification), Attachment 2 (RBAC specification)
+**Version:** 2.0  **Date:** 2026-10-02  **Status:** Living specification
+**Sources:** v1.1 (Spring Manufacturing IMS), SAP-class platform expansion (2026-10-02)
 
 ---
 
-## 0. Platform Architecture
+## 0. Document Map
 
-This system is a **Manufacturing ERP Platform** designed to be deployed across multiple industries by changing only the Industry Configuration layer. Three universal layers are identical regardless of the industry vertical:
+| Document | Purpose |
+|---|---|
+| **REQUIREMENTS.md** | *What* to build — module catalogue, functional requirements with IDs, RBAC |
+| ARCHITECTURE.md | *How* it is structured — principles, layering, key components |
+| DESIGN.md | *Exactly how* each part works — schemas, algorithms, API contracts |
+| PLAN.md | *When* it is built — releases R1–R20, task IDs, exit gates |
+
+---
+
+## 1. Platform Vision
+
+The **Configurable Manufacturing ERP Platform** is a production-grade, modular ERP system targeting small-to-mid-sized manufacturers across multiple industries. It covers the complete business cycle from raw-material procurement through finished-goods dispatch, and extends to finance, cost accounting, HR, CRM, advanced analytics, and AI services.
+
+**Design imperatives:**
+- **Configurable, not customised.** Adding a new industry vertical (Automotive, Furniture, Electronics) requires only a seed data migration — zero code changes.
+- **Modular adoption.** Customers activate only the modules they need; inactive modules do not appear in the UI and their tables carry no data.
+- **Single codebase.** One Spring Boot application, one Angular SPA, one PostgreSQL schema. No separate deployments per vertical.
+- **Ledger-first correctness.** Every business number flows from an append-only event ledger. No black-box totals.
+- **Enterprise security.** Every endpoint is authorised; every sensitive action is audited; every secret is injected from the environment.
+
+---
+
+## 2. Module Catalogue
+
+### 2.1 Platform Modules (always active)
+
+| Code | Module | Status |
+|---|---|---|
+| ENT | Enterprise Structure | R9 |
+| IAM | Identity and Access Management | **[Implemented R1–R8]** |
+| CFG | System Configuration | **[Implemented R1–R8]** |
+| MDM | Master Data Management | **[Implemented R1–R8]** |
+| WKF | Workflow Engine | **[Implemented R1–R8]** |
+| NTF | Notification Engine | R17 |
+| DOC | Document Management | R17 |
+| AUD | Audit Trail | **[Implemented R1–R8]** |
+| SEC | Security and Compliance | **[Implemented R1–R8]** |
+
+### 2.2 Operations Modules
+
+| Code | Module | Status |
+|---|---|---|
+| INV | Inventory Management | **[Implemented R1–R8]** |
+| WMS | Warehouse Management System | R14 |
+| PUR | Procurement | **[Implemented R1–R8]** |
+| MFG | Manufacturing | **[Implemented R1–R8]** |
+| PLM | Product Lifecycle Management | R15 |
+| MRP | Materials Requirements Planning | R11 |
+| QMS | Quality Management System | **[Implemented R1–R8]** |
+| MNT | Maintenance Management | **[Partial R1–R8]**, complete R18 |
+
+### 2.3 Commercial Modules
+
+| Code | Module | Status |
+|---|---|---|
+| SAL | Sales Management | **[Implemented R1–R8]** |
+| CRM | Customer Relationship Management | R12 |
+
+### 2.4 Financial Modules
+
+| Code | Module | Status |
+|---|---|---|
+| FIN | Financial Accounting | R9 |
+| CTR | Controlling / Cost Accounting | R10 |
+| HRM | Human Resource Management | R13 |
+
+### 2.5 Intelligence Modules
+
+| Code | Module | Status |
+|---|---|---|
+| RPT | Reporting and Exports | **[Implemented R1–R8]** |
+| ANA | Advanced Analytics and BI | R19 |
+| INT | Integration Platform | R19 |
+
+---
+
+## 3. Industry Configuration Architecture
+
+The platform uses a **3-layer architecture**:
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
 │                  INDUSTRY CONFIGURATION LAYER                    │
 │  Springs (v1)  │  Automotive  │  Furniture  │  Electronics  │ … │
+│  (data-only seed migrations — no code changes between verticals) │
 └──────────────────────────────────────────────────────────────────┘
 ┌──────────────────────────────────────────────────────────────────┐
 │                    UNIVERSAL PLATFORM LAYERS                     │
 │  Core ERP: Inventory · Purchase · Sales · Warehouses · Master   │
-│  Manufacturing: BOM · Production · WIP · Quality · MRP-ready    │
-│  Common Services: IAM · Audit · Workflow · Reports · Alerts      │
+│  Manufacturing: BOM · Production · WIP · Quality · MRP          │
+│  Common Services: IAM · Audit · Workflow · Reports · Alerts     │
+│  Enterprise: Finance · Controlling · HR · CRM · PLM · WMS      │
 └──────────────────────────────────────────────────────────────────┘
 ```
 
-**Universal layers** (code — unchanged per industry):
-- **Core ERP** — inventory ledger, purchase orders, goods receipts, sales orders, warehouses, materials, suppliers, customers
-- **Manufacturing** — BOM, production orders, material issue, operations/routing, WIP, quality inspections, FG batches
-- **Common Services** — IAM (users/roles/permissions), audit trail, approval workflow, document numbering, reports, notifications, system settings
+**Industry Configuration artefacts (data, not code):**
 
-**Industry Configuration layer** (data only — the only thing that changes per vertical):
-| Configuration artefact | Spring (v1) example | Generic mechanism |
+| Artefact | Mechanism | Spring v1 example |
 |---|---|---|
-| Product attribute model | Wire diameter, outer Ø, spring rate, end type… | `product_attributes JSONB` + `attribute_definitions` metadata catalogue |
-| Material types | SPRING_STEEL, HIGH_CARBON, MUSIC_WIRE… | seed rows in `materials.material_type` |
-| Standard operations | Wire Drawing, Coiling, Grinding, Heat Treatment… | seed rows in `operations` |
-| Inspection parameters | Diameter tolerance, load, free length… | `inspection_plan_parameters` (data rows) |
-| Rejection reasons | Coiling defect, Surface defect… | seed rows in `rejection_reasons` |
-| BOM / routing templates | 0.045 kg wire/pc, 9 operations | seed data through services |
-| Reference data | Spring types, attribute definitions | Flyway seed migration |
-
-The Spring Manufacturing configuration (v1) is the **first deployed vertical**. Deploying "Automotive" would mean a new seed migration with automotive product attributes, material types, operations and inspection parameters — no code change. See ARCHITECTURE §0 and DESIGN §0 for implementation details.
+| Product attribute model | `product_attribute_definitions` JSONB metadata | `wire_diameter`, `spring_rate`, `end_type` |
+| Material types | `materials.material_type` seed rows | SPRING_STEEL, MUSIC_WIRE |
+| Standard operations | `operations` seed rows | Wire Drawing, Coiling, Grinding |
+| Inspection parameters | `inspection_plan_parameters` seed rows | Diameter ± 0.03 mm, spring rate limits |
+| Rejection reasons | `rejection_reasons` seed rows | Coiling defect, Surface defect |
+| Chart of accounts | `gl_accounts` seed rows | Industry-standard account codes |
+| Cost centres | `cost_centres` seed rows | Production, Quality, Sales |
 
 ---
 
-## 1. Purpose and Scope
-
-A production-ready inventory and manufacturing-material system for a spring manufacturer. It covers the full lifecycle:
-
-**Raw material procurement → Inventory → Production → WIP → Quality inspection → Finished goods → Customer order → Dispatch**
-
-Spring types: Compression, Extension/Tension, Torsion, Conical, Disc/Belleville, Wire Forms, Custom.
-
-**Objectives**
-1. Raw-material inventory and spring/product master data
-2. Raw-material usage tracking, production orders, material consumption, WIP, finished-goods output
-3. Quality inspection; rejected/scrapped material tracking
-4. Finished-goods inventory, customer orders, dispatch
-5. Suppliers and purchase orders
-6. Complete stock-movement history, dashboards, reports, audit trail
-7. Architecture that can later grow into a full ERP/MRP
-
-**Core principle:** this is a manufacturing inventory system, not simple CRUD. Every stock movement is tied to a business document and is fully traceable.
-
----
-
-## 2. Technology Stack
+## 4. Technology Stack
 
 | Layer | Choice |
 |---|---|
-| Backend | Java 17+, Spring Boot 3.x, Spring Web, Spring Data JPA, Hibernate, Spring Security, JWT, Bean Validation, Maven |
-| Database | PostgreSQL (normalized; FKs, indexes, constraints; migration scripts) |
-| Frontend | Angular 18+, TypeScript, Angular Material, Reactive Forms, RxJS |
-| API docs | OpenAPI / Swagger |
-| Packaging | Docker configuration |
+| Backend | Java 17+ (21 LTS recommended), Spring Boot 3.x, Spring Web, Spring Data JPA, Spring Security |
+| Database | PostgreSQL 16+ (normalised; FKs, indexes, constraints; Flyway migrations) |
+| Frontend | Angular 18+, TypeScript, Angular Material, Reactive Forms, RxJS, signals |
+| API docs | OpenAPI 3 / Swagger UI |
+| Packaging | Docker (multi-stage builds), Docker Compose |
+| Testing | JUnit 5, Testcontainers PostgreSQL, ArchUnit, Playwright |
 
-**Architecture:** Controller → Service → Repository → Database. DTOs only; JPA entities are never exposed through REST.
+**Architecture:** Controller → Service → Repository → Database. DTOs (Java records) only across the API boundary. Entities never leave the service layer. MapStruct for mapping.
 
 ---
 
-## 3. Roles and Access Control (RBAC)
+## 5. Roles and Access Control (RBAC)
 
-### 3.1 Model
-- Permissions are managed **centrally by the backend**, never hard-coded in the frontend.
-- A user has one or more roles; a role has many permissions.
+### 5.1 Model [Implemented R1–R8]
+
+- Permissions managed centrally by the backend, never hard-coded in the frontend.
+- A user has one or more roles; a role has many permissions; permissions are the union.
+- **Every backend API verifies authorization.** UI guards are UX only; backend returns 403.
 - Tables: `users`, `roles`, `permissions`, `user_roles`, `role_permissions`.
-- **Every backend API verifies authorization.** Hidden buttons, hidden menus and Angular route guards are not security. Example: an Operator calling `PUT /api/products/{id}` directly must receive **HTTP 403**.
 
-### 3.2 Role reconciliation
-Attachment 1 defines 7 roles; Attachment 2 defines 13 and is more detailed. **The 13-role model below is the baseline.** Attachment 1's roles map as follows:
+### 5.2 Core Roles [Implemented R1–R8]
 
-| Attachment 1 role | Mapped to |
+| Role | Key Capabilities |
 |---|---|
-| ADMIN | ADMIN |
-| INVENTORY_MANAGER | INVENTORY / STORE MANAGER |
-| PRODUCTION_MANAGER | PRODUCTION MANAGER |
-| QUALITY_MANAGER | QUALITY ENGINEER / QUALITY MANAGER |
-| PURCHASE_MANAGER | PURCHASE MANAGER |
-| SALES_MANAGER | SALES / CUSTOMER SERVICE |
-| OPERATOR | OPERATOR |
+| **ADMIN** | System configuration, user/role management, all modules, authorized adjustments, audit logs |
+| **ENGINEER** | Products, BOMs, routing, drawings, specs, tolerances |
+| **PRODUCTION_MANAGER** | Production orders, scheduling, WIP monitoring, production reports |
+| **SUPERVISOR** | Assigned orders, operations, operator assignment, downtime, material requests |
+| **OPERATOR** | Own work orders, operations (start/pause/complete), simple tablet UI |
+| **QUALITY_MANAGER** | Inspections (incoming/in-process/final), approvals, rejections, QMS |
+| **STORE_MANAGER** | Inventory receive/issue/transfer/adjust, locations, batches, stock counts |
+| **PURCHASE_MANAGER** | Suppliers, requisitions, POs, goods receipt tracking |
+| **SALES** | Customers, sales orders, FG availability, reservations, dispatch requests |
+| **DISPATCH** | Approved sales orders, FG dispatch, transport, dispatch documents |
+| **MAINTENANCE** | Machine master, breakdowns, maintenance requests, PM schedules |
+| **STORE_OPERATOR** | Scoped to assigned warehouses: receive, scan, move, issue, count |
+| **MANAGEMENT** | Read-only dashboards and reports across all modules |
 
-New in Attachment 2: ENGINEER, SUPERVISOR, DISPATCH / LOGISTICS, MAINTENANCE ENGINEER, STORE OPERATOR, MANAGEMENT (read-only).
+### 5.3 Extended Roles (R9–R13)
 
-### 3.3 Roles and capabilities
-
-| Role | Can | Must NOT |
+| Role | Module | Key Capabilities |
 |---|---|---|
-| **ADMIN** | Manage users/roles/permissions, system config, master data, warehouses, machines; view all inventory, production, quality, purchase, sales; authorized stock adjustments; audit logs; all reports | Silently delete historical transactions |
-| **ENGINEER** | Create/edit spring products, specs, dimensions, tolerances, drawing numbers/revisions; create/modify/revise/approve (if authorized) BOMs, view BOM history; define routing (operations, sequence, standard time, machines, inspection points); manage technical data (wire/spring diameter, free length, coils, rate, load, heat/surface treatment) | Modify inventory quantities |
-| **PRODUCTION MANAGER** | Create/modify/release/close production orders; assign lines, machines, supervisors; schedule; view material availability; monitor WIP and progress; production reports | Modify stock except through approved production transactions |
-| **SUPERVISOR** | View assigned orders; start/complete operations; assign operators and machines; record quantities, rejects, scrap, downtime, machine issues, WIP movement; request additional material; view instructions and specs | Modify product master data or BOMs |
-| **OPERATOR** | View assigned work, order, instructions, required quantity; start/pause/complete operation; enter produced, rejected, scrap quantities; report machine and material problems. Interface must be extremely simple and fast | Modify inventory, BOM, product specs, production orders; approve inspections; modify historical production records |
-| **QUALITY ENGINEER / MANAGER** | Incoming, in-process and final inspection; record measurements and deviations; approve/reject/HOLD raw-material batches; approve/reject WIP; approve/reject/release finished batches; manage rejection reasons | — |
-| **INVENTORY / STORE MANAGER** | Receive material, create goods receipts, view stock and ledger and valuation, manage locations and batches, issue/return/transfer, stock counts, request adjustments, inventory reports | Post large adjustments alone: adjustments above a **configurable threshold require Admin approval** |
-| **PURCHASE MANAGER** | Manage suppliers; purchase requisitions and orders; modify POs; submit for approval; track deliveries; purchase history; supplier performance; pending POs | Alter inventory directly (only via Goods Receipt) |
-| **SALES / CUSTOMER SERVICE** | Manage customers; create/modify sales orders; view FG availability; reserve FG; track orders; create dispatch requests; view dispatch status | Reduce inventory directly (only via Dispatch) |
-| **DISPATCH / LOGISTICS** | View approved sales orders and available FG; create dispatch; select FG batch; record quantity and transport; print dispatch documents; view history | Dispatch more than available stock |
-| **MAINTENANCE ENGINEER** | Manage machine master; view status; record breakdowns, maintenance, spare-part use, downtime; create maintenance requests; schedule preventive maintenance; view machine history | — |
-| **STORE OPERATOR** | Restricted to assigned warehouse: receive, scan material/batch, move between locations, issue against approved requests, record returns, stock counting | Access system configuration or modify master data |
-| **MANAGEMENT** | Read-only dashboards and reports (inventory value, RM/WIP/FG, production, efficiency, rejection %, scrap %, pending orders and POs, low stock, machine downtime, sales/dispatch) | Modify any transaction |
+| **ACCOUNTANT** | FIN | Journal entries, GL, AP/AR, bank reconciliation, period-end |
+| **FINANCE_MANAGER** | FIN | Financial reports, period close, chart of accounts, approvals |
+| **COST_CONTROLLER** | CTR | Cost centres, product costing, variance analysis, profit centre reporting |
+| **HR_MANAGER** | HRM | Employee master, payroll, attendance, leave management |
+| **CRM_AGENT** | CRM | Leads, opportunities, contacts, customer activities, quotations |
+| **PLANNER** | MRP | Demand planning, MRP runs, purchase and production proposals |
+| **WAREHOUSE_MANAGER** | WMS | Bin management, put-away, picking, wave planning, cycle counts |
+| **PLM_ENGINEER** | PLM | ECOs, drawing revisions, specification changes, approval workflows |
 
-### 3.4 Permission codes (minimum set)
+### 5.4 Permission Codes
+
 ```
+-- Platform
 USER_CREATE USER_UPDATE USER_DELETE USER_VIEW
-PRODUCT_CREATE PRODUCT_UPDATE PRODUCT_VIEW
+ROLE_MANAGE PERMISSION_MANAGE SETTINGS_MANAGE
+AUDIT_VIEW REPORT_VIEW DASHBOARD_VIEW
+
+-- Master Data
+MASTERDATA_MANAGE PRODUCT_CREATE PRODUCT_UPDATE PRODUCT_VIEW
 BOM_CREATE BOM_UPDATE BOM_APPROVE BOM_VIEW
+SUPPLIER_MANAGE CUSTOMER_MANAGE MACHINE_MANAGE
+
+-- Inventory / Warehouse
 INVENTORY_VIEW INVENTORY_RECEIVE INVENTORY_ISSUE INVENTORY_TRANSFER INVENTORY_ADJUST
+STOCK_COUNT LOCATION_MANAGE WAREHOUSE_MANAGE BATCH_MANAGE
+
+-- Procurement
+PURCHASE_CREATE PURCHASE_APPROVE PURCHASE_VIEW REQUISITION_CREATE
+
+-- Manufacturing
 PRODUCTION_CREATE PRODUCTION_UPDATE PRODUCTION_RELEASE PRODUCTION_EXECUTE PRODUCTION_CLOSE
-QUALITY_INSPECT QUALITY_APPROVE QUALITY_REJECT
-PURCHASE_CREATE PURCHASE_APPROVE PURCHASE_VIEW
-SALES_CREATE SALES_UPDATE SALES_VIEW
-DISPATCH_CREATE DISPATCH_APPROVE
-REPORT_VIEW AUDIT_VIEW
+PRODUCTION_SCHEDULE DOWNTIME_RECORD MATERIAL_REQUEST ROUTING_MANAGE
+
+-- Quality
+QUALITY_INSPECT QUALITY_APPROVE QUALITY_REJECT QUALITY_HOLD
+REJECTION_REASON_MANAGE INSPECTION_PLAN_MANAGE
+
+-- Sales / Dispatch
+SALES_CREATE SALES_UPDATE SALES_VIEW RESERVE_FG DISPATCH_CREATE DISPATCH_APPROVE
+
+-- Finance (R9)
+GL_POST GL_VIEW JOURNAL_CREATE JOURNAL_APPROVE PERIOD_CLOSE
+AP_MANAGE AR_MANAGE BANK_RECONCILE FINANCIAL_REPORT
+
+-- Controlling (R10)
+COST_CENTRE_MANAGE PRODUCT_COSTING VARIANCE_ANALYSIS PROFIT_CENTRE_REPORT
+
+-- HR (R13)
+EMPLOYEE_MANAGE PAYROLL_RUN ATTENDANCE_MANAGE LEAVE_APPROVE
+
+-- CRM (R12)
+LEAD_MANAGE OPPORTUNITY_MANAGE QUOTATION_CREATE CUSTOMER_ACTIVITY
+
+-- Maintenance
+MAINTENANCE_MANAGE PM_SCHEDULE SPARE_PART_MANAGE
+
+-- MRP (R11)
+MRP_RUN DEMAND_PLAN PRODUCTION_PROPOSAL PURCHASE_PROPOSAL
+
+-- WMS (R14)
+BIN_MANAGE PUTAWAY_MANAGE PICKING_MANAGE WAVE_MANAGE
+
+-- PLM (R15)
+ECO_CREATE ECO_APPROVE DRAWING_MANAGE SPECIFICATION_MANAGE
 ```
-Additional codes will be needed for the roles above (e.g. machine/maintenance, downtime, stock count, requisition); add them additively.
-
-### 3.5 Role-based dashboards
-Each role gets its own dashboard, not a shared one.
-
-| Role | Content |
-|---|---|
-| Admin | System-wide information |
-| Engineer | Products under development, BOM revisions, engineering changes, pending approvals |
-| Production Manager | Today's production, orders, WIP, machine utilization, delays |
-| Supervisor | Current shift, assigned machines/operators, targets, completed, rejections |
-| Operator | My work orders, current operation, target/completed/rejected quantity, Start/Pause/Complete buttons only |
-| Quality | Pending and failed inspections, rejection rate, quality trends |
-| Store Manager | Current and low stock, incoming materials, material issues, stock movements |
-| Management | High-level KPIs and reports |
 
 ---
 
-## 4. Master Data
+## 6. Enterprise Structure Requirements (ENT — R9)
 
-### 4.1 Raw Material Master
-Examples: Spring Steel, Stainless Steel, High Carbon Steel, Alloy Steel, Phosphor Bronze, Music Wire.
-Fields: Material Code (e.g. `RM-SS-001`), Name, Type, Grade (e.g. SS304), Diameter, UOM, Supplier, Minimum / Reorder / Maximum Stock Level, Standard Cost, Active flag, Description.
+**ENT-001:** The system shall support a hierarchical enterprise structure: Company → Plant → Storage Location → Cost Centre.
 
-### 4.2 Spring Product Master
-Unique product code (e.g. `SPR-COMP-001`).
-Common fields: Product Code, Name, Spring Type, Material, Wire Diameter, Outer Diameter, Inner Diameter, Free Length, Number of Coils, Active Coils, Spring Rate, Max/Min Load, Working Length, Solid Height, End Type, Surface Treatment, Heat Treatment, Tolerance, Unit Weight, UOM, Drawing Number, Revision Number, Customer, Status.
+**ENT-002:** Every transacting document shall reference a Plant. All inventory, production, purchasing, and sales transactions shall be plant-scoped.
 
-**Type-specific attributes** — do not force one field set on every type:
-- **Compression:** wire diameter, outer diameter, free length, coil count, spring rate, load, solid height, end type
-- **Extension:** wire diameter, body diameter, free length, coil count, hook type, hook length, spring rate
-- **Torsion:** wire diameter, coil diameter, number of coils, leg length, leg angle, torque
+**ENT-003:** The system shall support multiple plants under a single company sharing master data (materials, products, suppliers, customers, chart of accounts).
 
-Schema must allow new spring-specific specifications to be added later (`spring_specifications`, extensible design).
+**ENT-004:** Users shall be assignable to one or more plants; cross-plant data visibility shall be configurable per role.
 
-### 4.3 Other master data
-- **Suppliers:** code, name, contact person, phone, email, address, GST number, payment terms, status
-- **Customers:** code, name, contact person, email, phone, address, GST number, payment terms, status; customer-specific product specifications supported
-- **Operations:** code, name, description, machine, standard time, setup time, active flag
-- **Warehouses/Locations:** e.g. `MAIN-WH` with `RM-01` Raw Material, `RM-02` Stainless Steel, `WIP-01`, `FG-01`, `SCRAP-01`
-- **Machines:** machine master (also managed by Maintenance Engineer)
-- **Rejection reasons:** Incorrect Dimension, Wrong Wire Diameter, Surface Defect, Crack, Incorrect Spring Rate, Heat Treatment Failure, Coiling Defect, Grinding Defect, Customer Specification Failure
+**ENT-005:** Plant-level settings shall override company-level defaults for: default warehouse, timezone, production calendar, costing method.
 
 ---
 
-## 5. Functional Requirements
+## 7. Master Data Requirements (MDM)
 
-### 5.1 Bill of Materials (BOM)
-- Defines raw materials and processes per product (e.g. SPR-COMP-001: wire 2.5 mm 0.45 kg, heat treatment, zinc plating, packaging 100 pcs/carton).
-- Fields: BOM Number, Product, Revision, Material, Required Quantity, Scrap %, UOM, Operation, Effective Date, Status.
-- Revisions (BOM-001 Rev A, Rev B) are preserved; **only one revision active for production at a time**.
-- Workflow: Draft → Engineering Review → Approved → Active.
+### 7.1 Material Master [Implemented R1–R8]
 
-### 5.2 Inventory and stock ledger
-- Track raw-material inventory (opening, purchased, consumed, rejected, available) and finished-goods inventory (opening, produced, dispatched, rejected, available).
-- Inventory is tracked by **Warehouse + Location + Material/Product + Batch**.
-- **No single "current stock" value.** Every movement creates a ledger transaction, and stock is calculable from the ledger.
-- Transaction types: `OPENING_BALANCE`, `PURCHASE_RECEIPT`, `MATERIAL_ISSUE`, `MATERIAL_RETURN`, `PRODUCTION_RECEIPT`, `PRODUCTION_REJECTION`, `SALES_DISPATCH`, `STOCK_ADJUSTMENT`, `STOCK_TRANSFER`, `SCRAP`, `CUSTOMER_RETURN`.
-- Ledger fields: Transaction ID, Number, Date, Material/Product, Batch/Lot, Type, Quantity, UOM, Unit Cost, Total Cost, Warehouse, Location, Reference Document, User, Remarks, Created Date.
+**MDM-001:** Materials shall have a unique Material Code, Name, Type, Grade, UOM, standard cost, reorder/min/max levels, and active flag.
 
-### 5.3 Batch / lot management
-- Fields: Batch Number (e.g. `RM-BATCH-2026-001`), Material, Supplier, Purchase Order, Manufacturing Date, Received Date, Quantity, Remaining Quantity, Heat Number, Certificate Number, Status.
-- Statuses: `AVAILABLE`, `QUARANTINE`, `REJECTED`, `CONSUMED`, `EXPIRED` (plus `HOLD` from the quality workflow).
+**MDM-002:** Material types shall be configurable via seed data (not hard-coded enums).
 
-### 5.4 Purchasing
-- **Purchase Order** fields: PO Number, Supplier, PO Date, Expected Delivery, Material, Quantity, Rate, Tax, Total, Status.
-- PO status: `DRAFT`, `APPROVED`, `PARTIALLY_RECEIVED`, `RECEIVED`, `CANCELLED`. Approval flow: Draft → Submitted → Approved → Sent to Supplier.
-- Purchase requisitions supported.
-- **Goods Receipt:** PO → Goods Receipt → Quality Inspection → Accepted / Rejected stock. Received material sits in `QUARANTINE` until inspection completes; inventory updates automatically on acceptance.
+**MDM-003:** The system shall support alternative UOMs with conversion factors (e.g., kg ↔ pcs ↔ coils).
 
-### 5.5 Production
-- **Production Order** fields: Number (e.g. `PO-2026-00125`), Product, BOM, Planned Quantity, Start Date, Expected Completion, Actual Start/Completion, Production Line, Machine, Supervisor, Status.
-- Status flow: `DRAFT → APPROVED → RELEASED → IN_PROGRESS → COMPLETED → CLOSED` (or `CANCELLED`).
-- **Material issue** against a production order, in multiple issues (e.g. 400 kg then 50 kg). Track planned, issued, consumed, returned, scrap and remaining quantities.
-- **Operations and routing:** operation master plus per-product routing; not every spring uses every operation (wire drawing, coiling, cutting, grinding, heat treatment, shot peening, surface treatment, inspection, packaging).
-- **Production output per operation:** production order, operation, input / good / rejected / scrap quantity, operator, machine, start/end time, remarks. **WIP updates automatically** and shows where the remaining quantity is.
-- Operator actions: start, pause, complete.
-- Downtime and machine/material problem reporting.
+**MDM-004:** Material masters shall support purchasing info (preferred supplier, purchasing UOM, tax code) and costing data (standard cost, cost estimate).
 
-### 5.6 Quality control
-- Inspection types: **Incoming** (raw material), **In-Process**, **Final**.
-- Parameters per inspection: Specification, Lower Limit, Upper Limit, Actual Value, Pass/Fail. Examples: wire diameter, outer diameter, free length, coil count, spring rate, load, surface condition/finish, hardness, dimensional tolerance (e.g. Free Length 50 ± 0.5 mm, actual 49.8 → PASS).
-- Quality outcomes: Pending Inspection → Approved / Rejected / Hold.
-- FG flow: `PRODUCTION_COMPLETED → QUALITY_PENDING → APPROVED` or `REJECTED`. Approved quantity moves to FG inventory; rejected quantity moves to rejection/scrap inventory.
-- **Rejection management:** record reasons, quantity and rejection %. Dashboard shows total production, good, rejected, rejection %, scrap.
+### 7.2 Product Master [Implemented R1–R8]
 
-### 5.7 Sales and dispatch
-- **Sales Order:** Ordered → Allocated → Packed → Dispatched; FG reservation supported.
-- **Dispatch** fields: Number, Customer, Sales Order, Product, Batch, Quantity, Date, Vehicle/Transport, Delivery Address, Invoice Reference. Dispatch automatically reduces FG inventory; printable dispatch documents.
-- Returns: customer returns via `CUSTOMER_RETURN`.
+**MDM-010:** Products shall have a unique Product Code and common fields (name, type, material, UOM, drawing number, revision, status).
 
-### 5.8 Stock adjustment workflow
-Requested → Supervisor Review → Manager Approval → Posted. Adjustments above the configurable threshold require Admin approval. Reason is mandatory.
+**MDM-011:** Type-specific attributes shall be stored in a JSONB column driven by a metadata catalogue (`product_attribute_definitions`). Adding a new product type requires only a seed data row, not a code change.
 
-### 5.9 Traceability
-The system must answer:
-- "For finished batch `FG-2026-0050`, which raw-material batch was used?"
-- "For raw-material batch `RM-2026-0035`, which production orders and FG batches used it?"
+**MDM-012:** Customer-specific product specifications shall be supported (tolerance overrides per customer).
 
-Traceability screen chain: Raw Material Batch → Material Issue → Production Order → Production Operations → Quality Inspection → Finished Goods Batch → Sales Order → Customer Dispatch (with Supplier at the head of the chain).
+### 7.3 Supplier and Customer Master [Implemented R1–R8]
 
-### 5.10 Alerts
-Low stock (stock < reorder level), overstock, pending inspection, production delay, material shortage, expiring/aging batches, pending purchase orders.
+**MDM-020:** Suppliers shall have: code, name, GST number, payment terms, contact, bank details, status, approved materials list.
 
-### 5.11 Dashboard KPIs
-- **Inventory:** total RM stock, WIP, FG, low-stock items, quarantine, rejected, total inventory value
-- **Production:** today's and monthly production, target, achievement %, WIP quantity, pending orders, efficiency, machine downtime
-- **Quality:** first pass yield, rejection %, scrap %, inspections pending, failed inspections
-- **Purchase:** open POs, pending receipts, supplier deliveries
-- **Sales:** open customer orders, pending dispatches, FG available, dispatch summary
+**MDM-021:** Customers shall have: code, name, GST number, payment terms, contact, credit limit, approved products list.
 
-Charts and graphs required; recent transactions and alerts shown on the main dashboard.
+**MDM-022:** Supplier performance metrics (on-time delivery %, quality pass rate %) shall be maintained automatically from transaction history.
 
-### 5.12 Reports (export to Excel, PDF, CSV)
-- **Inventory:** current stock, stock ledger, valuation, low stock, batch-wise, warehouse-wise
-- **Production:** summary, order status, material consumption, efficiency, machine-wise, operator-wise
-- **Quality:** rejection, defect analysis, inspection, batch quality history, customer complaint analysis
-- **Purchase:** history, supplier-wise, pending POs (plus supplier performance)
-- **Sales:** customer orders, dispatch, product-wise sales
+### 7.4 Chart of Accounts (R9 — FIN)
 
-### 5.13 Search and filtering
-All major screens: search, sorting, pagination, and filters for date range, status, product, batch, supplier, customer.
+**MDM-030:** The system shall maintain a hierarchical chart of accounts (company, account group, GL account).
+
+**MDM-031:** Account types: Asset, Liability, Equity, Revenue, Expense, Cost of Goods Sold.
+
+**MDM-032:** The chart of accounts shall be configurable per company; a default chart shall ship as seed data for manufacturing companies.
+
+**MDM-033:** Cost centres and profit centres shall be first-class master data entities.
+
+### 7.5 Employee Master (R13 — HRM)
+
+**MDM-040:** Employee master shall include: employee code, name, designation, department, plant, cost centre, date of joining, employment type, pay grade, bank details.
+
+**MDM-041:** Operators and supervisors in IAM shall be linked to the Employee master.
 
 ---
 
-## 6. Business Rules
+## 8. Inventory Management Requirements (INV) [Implemented R1–R8]
 
+**INV-001:** All stock changes shall be recorded through `InventoryPostingService` as append-only ledger transactions. No direct write to balances outside this service.
+
+**INV-002:** Stock shall be tracked by Warehouse + Location + Item + Batch + Stock Status.
+
+**INV-003:** Transaction types: OPENING_BALANCE, PURCHASE_RECEIPT, MATERIAL_ISSUE, MATERIAL_RETURN, MATERIAL_CONSUMPTION, PRODUCTION_RECEIPT, PRODUCTION_REJECTION, SALES_DISPATCH, STOCK_ADJUSTMENT, STOCK_TRANSFER, SCRAP, CUSTOMER_RETURN.
+
+**INV-004:** Stock cannot go negative unless explicitly enabled by an administrator (configurable per item).
+
+**INV-005:** Quarantine, Hold, and Rejected stock cannot be issued to production.
+
+**INV-006:** Batch/lot management with FEFO/FIFO allocation. Batch fields: batch number, supplier, PO reference, heat number, certificate number, received date, expiry date, quantity, status.
+
+**INV-007:** Stock adjustment workflow: Requested → Supervisor Review → Manager Approval → Admin Approval (above threshold) → Posted. Reason mandatory.
+
+**INV-008:** Nightly reconciliation shall verify that the sum of ledger transactions equals the balance projection; mismatches raise a critical alert.
+
+**INV-009:** Full traceability from raw material batch to finished goods batch and dispatch.
+
+**INV-010:** The system shall support stock valuation using moving weighted average (default) or standard cost. The costing method shall be configurable per company.
+
+---
+
+## 9. Warehouse Management Requirements (WMS — R14)
+
+**WMS-001:** The system shall support a bin-level warehouse structure: Warehouse → Zone → Aisle → Rack → Bin.
+
+**WMS-002:** Bin capacity management: weight capacity, volume capacity, allowed material types.
+
+**WMS-003:** Goods receipt process shall include: unloading, quality inspection, put-away task generation.
+
+**WMS-004:** Put-away strategies: fixed bin (item-to-bin assignment), nearest empty bin, bulk zone first.
+
+**WMS-005:** Picking strategies: FEFO/FIFO, zone-based picking, multi-order wave picking.
+
+**WMS-006:** The system shall generate transfer orders (TO) for internal movements. TOs shall be confirmable via barcode scan or manual entry.
+
+**WMS-007:** Cycle count management: frequency-based (ABC), random sample, zone-based. Count results shall feed into the stock adjustment workflow.
+
+**WMS-008:** The system shall support cross-docking: goods received from a PO are directly staged for a production order or dispatch without putaway.
+
+---
+
+## 10. Procurement Requirements (PUR) [Implemented R1–R8]
+
+**PUR-001:** Full PO lifecycle: DRAFT → SUBMITTED → APPROVED → SENT_TO_SUPPLIER → PARTIALLY_RECEIVED → RECEIVED → CANCELLED.
+
+**PUR-002:** Purchase requisitions shall be raisable by Store Managers and Supervisors; requisitions require approval before becoming POs.
+
+**PUR-003:** Goods receipts against POs shall create RM batches in QUARANTINE status pending incoming inspection.
+
+**PUR-004:** Three-way matching: PO quantity, GR quantity, and supplier invoice quantity shall be reconciled before AP payment.
+
+**PUR-005:** Supplier performance shall be tracked: promised delivery date vs actual, inspection pass rate, price variance.
+
+**PUR-006** (R11): MRP-generated purchase proposals shall be convertable to PRs/POs in one click, referencing the MRP run that generated them.
+
+---
+
+## 11. Manufacturing Requirements (MFG) [Implemented R1–R8]
+
+**MFG-001:** Bill of Materials with revisions. BOM workflow: DRAFT → ENGINEERING_REVIEW → APPROVED → ACTIVE. Only one ACTIVE revision per product.
+
+**MFG-002:** On production order release, the active BOM and routing shall be snapshotted into the order. Later BOM revisions shall not affect running orders.
+
+**MFG-003:** Production order lifecycle: DRAFT → APPROVED → RELEASED → IN_PROGRESS → COMPLETED → CLOSED.
+
+**MFG-004:** Material issue against production orders with FEFO/FIFO batch allocation. Multiple issues per order supported.
+
+**MFG-005:** Operation-level output recording: good quantity, rejected quantity, scrap quantity, operator, machine, start/end time.
+
+**MFG-006:** WIP tracking: quantity at each operation shall be derivable from issue and output records.
+
+**MFG-007:** Operator UI shall be tablet-optimised: large touch targets, minimal navigation, single-screen quantity entry with numeric keypad.
+
+**MFG-008:** Production downtime recording with reason codes. Machine problem and material problem reporting.
+
+**MFG-009:** BOM quantity basis shall be configurable per BOM (via `bom.base_quantity` column; default from system setting `bom.default_base_quantity=1`).
+
+### 11.1 MRP Requirements (R11)
+
+**MRP-001:** The MRP engine shall calculate net material requirements from: sales order demand, production order demand, safety stock levels, existing POs, and on-hand stock.
+
+**MRP-002:** MRP shall generate: purchase proposals (for raw materials) and production proposals (for semi-finished/finished items).
+
+**MRP-003:** MRP shall respect: lead times (supplier, production), lot sizing rules (fixed lot, min/max, economic order quantity), and planning horizons.
+
+**MRP-004:** MRP proposals shall be reviewable and filterable before conversion to PRs/production orders.
+
+**MRP-005:** The system shall support make-to-stock (MTS) and make-to-order (MTO) planning strategies per product.
+
+**MRP-006:** Capacity levelling: MRP proposals shall be checked against rough-cut capacity (machine hours, labour hours) and flagged when overloaded.
+
+### 11.2 PLM Requirements (R15)
+
+**PLM-001:** Engineering Change Orders (ECOs) shall govern changes to product specifications, BOMs, and routings. ECO workflow: DRAFT → REVIEW → APPROVED → IMPLEMENTED.
+
+**PLM-002:** Each ECO shall record: change description, affected products/BOMs, reason, impact assessment, effectivity date.
+
+**PLM-003:** On ECO approval, the system shall automatically create a new BOM revision for affected products.
+
+**PLM-004:** Drawing and document attachments shall be supported on products, BOMs, and ECOs (file references, not file storage — files stored externally via DOC module).
+
+**PLM-005:** Product lifecycle states: DEVELOPMENT → PROTOTYPE → APPROVED → ACTIVE → PHASE_OUT → OBSOLETE. Status transitions shall be audited.
+
+---
+
+## 12. Quality Management Requirements (QMS) [Implemented R1–R8]
+
+**QMS-001:** Three inspection types: INCOMING (raw material), IN_PROCESS (during production), FINAL (finished goods).
+
+**QMS-002:** Inspection plans shall be data-driven (`inspection_plan_parameters`). Adding a new quality parameter requires only a seed row, not a code change.
+
+**QMS-003:** Quality outcomes: PENDING → APPROVED / REJECTED / HOLD. Partial acceptance supported (accept x, reject y of a batch).
+
+**QMS-004:** Finished goods shall not enter AVAILABLE stock until quality approval. FG lands in QUALITY_PENDING; moves to AVAILABLE only via inspection approval.
+
+**QMS-005:** Rejection management: record reason, quantity, rejection %. Pareto analysis of rejection reasons.
+
+**QMS-006:** Traceability: for any FG batch, the system shall trace back to raw material batch, supplier, and PO.
+
+**QMS-007** (R16 — Advanced Quality): Statistical Process Control (SPC) charts (X-bar, R, P, C charts) for critical parameters.
+
+**QMS-008** (R16): Capability indices (Cp, Cpk) calculated from inspection history per parameter.
+
+**QMS-009** (R16): Customer complaint management: complaint receipt, root cause analysis, corrective action (CAPA), closure.
+
+**QMS-010** (R16): First Article Inspection (FAI) reports for new products or after ECOs.
+
+---
+
+## 13. Sales Management Requirements (SAL) [Implemented R1–R8]
+
+**SAL-001:** Sales order lifecycle: ORDERED → ALLOCATED → PACKED → PARTIALLY_DISPATCHED → DISPATCHED → CANCELLED.
+
+**SAL-002:** FG reservation against available stock. Reservation shall reduce available-to-promise quantity.
+
+**SAL-003:** Dispatch records: customer, sales order, product, FG batch, quantity, transport, invoice reference. Dispatch reduces FG inventory.
+
+**SAL-004:** Dispatch quantity cannot exceed available (on-hand minus reserved for others) FG stock.
+
+**SAL-005:** Printable dispatch documents (PDF delivery note, packing list).
+
+**SAL-006:** Customer-specific product specifications shall override standard specs during quality approval.
+
+### 13.1 CRM Requirements (R12)
+
+**CRM-001:** Lead and opportunity management: track prospects from first contact through quote to order.
+
+**CRM-002:** Quotation management: create price quotations from product master + customer-specific pricing. Accepted quotations shall convert to sales orders.
+
+**CRM-003:** Customer activity log: calls, emails, meetings, follow-ups tracked per customer.
+
+**CRM-004:** Customer segmentation and tagging (industry, region, tier, strategic status).
+
+**CRM-005:** Pipeline reporting: opportunities by stage, value, expected close date.
+
+**CRM-006:** CRM contacts shall link to the customer master in MDM; a contact may have multiple CRM activities.
+
+---
+
+## 14. Finance Requirements (FIN — R9)
+
+**FIN-001:** General Ledger with double-entry bookkeeping. Every financial posting shall create balanced journal entries (Dr = Cr).
+
+**FIN-002:** Automatic journal entry generation from operational transactions:
+- Goods Receipt → Dr Inventory / Cr GR Clearing
+- Invoice receipt → Dr GR Clearing / Cr AP
+- Production completion → Dr FG Inventory / Cr WIP
+- Sales dispatch → Dr COGS / Cr FG Inventory; Dr AR / Cr Revenue
+
+**FIN-003:** Accounts Payable: supplier invoices, three-way match, payment processing, ageing analysis.
+
+**FIN-004:** Accounts Receivable: customer invoices from dispatch, receipts, credit notes, ageing analysis.
+
+**FIN-005:** Bank reconciliation: import bank statements, match with GL entries, flag unreconciled items.
+
+**FIN-006:** Financial periods: monthly close process with period-open/period-close controls. Posting to a closed period shall require Finance Manager approval.
+
+**FIN-007:** Tax management: GST (India) — CGST, SGST, IGST, UTGST — with configurable tax codes per material/supplier/customer combination.
+
+**FIN-008:** Financial statements: Balance Sheet, P&L, Cash Flow Statement — as of any period.
+
+**FIN-009:** Multi-currency support: exchange rates configurable per period; functional currency = INR default.
+
+**FIN-010:** Budget management: enter annual budgets per GL account per cost centre; actual vs budget variance reporting.
+
+---
+
+## 15. Controlling Requirements (CTR — R10)
+
+**CTR-001:** Cost centre accounting: all operational costs shall be assignable to cost centres. Production labour, machine hours, and overhead absorption recorded per cost centre.
+
+**CTR-002:** Product costing: calculate standard cost per product from BOM (material cost), routing (labour + machine cost), and overhead rates.
+
+**CTR-003:** Actual costing: capture actual material, labour, and overhead costs per production order. Calculate production order variance (actual vs standard).
+
+**CTR-004:** Variance analysis: price variance (standard vs actual material price), quantity variance (standard vs actual consumption), efficiency variance (standard vs actual labour hours).
+
+**CTR-005:** Profit centre reporting: revenue and cost aggregation per profit centre. Contribution margin analysis.
+
+**CTR-006:** Internal orders for project-based cost tracking (capital expenditure, maintenance projects).
+
+**CTR-007:** Period-end cost allocation: overhead cost distribution from cost centre to products using allocation bases (machine hours, labour hours, production quantity).
+
+---
+
+## 16. HR Management Requirements (HRM — R13)
+
+**HRM-001:** Employee master (linked to IAM users for system access, separate for non-system employees).
+
+**HRM-002:** Attendance management: shift definitions, attendance recording, late/absent tracking. Integration with production operations for automatic operator time capture.
+
+**HRM-003:** Leave management: leave types (CL, SL, EL, LOP), leave application, approval workflow, balance tracking.
+
+**HRM-004:** Payroll: basic pay, allowances (HRA, DA, travel), deductions (PF, ESI, PT, TDS), net pay. Pay slip generation.
+
+**HRM-005:** Operator skill matrix: skills, certifications, machines authorised to operate. Referenced by production scheduling.
+
+**HRM-006:** Training records: training programmes, attendance, certifications, renewal dates.
+
+---
+
+## 17. Maintenance Requirements (MNT) [Partial R1–R8]
+
+**MNT-001:** Machine master with maintenance schedules (PM frequencies: daily, weekly, monthly, annual, by-meter). [Implemented R1–R8]
+
+**MNT-002:** Preventive maintenance (PM) schedules with due-date alerts. [Implemented R1–R8]
+
+**MNT-003:** Breakdown maintenance: record breakdown, assign technician, record repair activities, spare parts used, resolution time. [Implemented R1–R8]
+
+**MNT-004** (R18): Spare parts inventory: maintain spare part stock, issue against maintenance work orders, minimum stock alerts.
+
+**MNT-005** (R18): OEE (Overall Equipment Effectiveness) calculation: Availability × Performance × Quality per machine per period.
+
+**MNT-006** (R18): Maintenance cost tracking per machine (spare parts + labour), integrated with CTR cost centres.
+
+---
+
+## 18. Reporting and Analytics Requirements (RPT / ANA)
+
+### 18.1 Standard Reports [Implemented R1–R8]
+
+**RPT-001:** All reports shall be exportable to Excel (XLSX), PDF, and CSV.
+
+**RPT-002:** Inventory reports: current stock, stock ledger, batch-wise, warehouse-wise, valuation (by cost method), low stock, ageing.
+
+**RPT-003:** Production reports: order status, material consumption, efficiency, machine-wise, operator-wise, rejection.
+
+**RPT-004:** Quality reports: inspection results, rejection pareto, batch quality history, first-pass yield, customer complaint.
+
+**RPT-005:** Purchase reports: PO history, supplier performance, pending POs, GR summary.
+
+**RPT-006:** Sales reports: order backlog, dispatch summary, customer-wise, product-wise.
+
+**RPT-007:** Financial reports (R9): GL trial balance, P&L, Balance Sheet, AP ageing, AR ageing, bank reconciliation.
+
+### 18.2 Advanced Analytics (R19 — ANA)
+
+**ANA-001:** An embedded BI engine shall provide drag-and-drop ad-hoc report building across all operational and financial data.
+
+**ANA-002:** Pre-built analytical dashboards: Production OEE, Inventory turns, Supplier scorecards, Customer profitability, Cost variance.
+
+**ANA-003:** AI-powered demand forecasting: use historical sales and production data to forecast material requirements. Forecasts feed into MRP.
+
+**ANA-004:** Anomaly detection: automatically flag unusual patterns in stock consumption, supplier quality, production efficiency.
+
+**ANA-005:** Predictive maintenance: use machine downtime history and sensor data (IoT integration) to predict maintenance needs.
+
+---
+
+## 19. Integration Requirements (INT — R19)
+
+**INT-001:** REST API with OpenAPI 3.0 documentation for all modules. External systems shall integrate via the same API as the Angular SPA.
+
+**INT-002:** Webhook outbox: the system shall emit domain events (StockPosted, OrderCompleted, InvoicePaid) to configurable HTTP endpoints.
+
+**INT-003:** Import APIs: bulk import of master data (materials, products, customers, suppliers) via CSV/Excel upload.
+
+**INT-004:** Export APIs: full data export per entity for data warehousing.
+
+**INT-005:** The system shall provide a read-only reporting schema (PostgreSQL views) that external BI tools can query directly.
+
+**INT-006** (R19): Message broker integration: publish domain events to Kafka/RabbitMQ for IoT integration (machine data ingestion) and downstream systems.
+
+**INT-007** (R19): ERP connector: standard integration with tally (popular in Indian SME market) for financial data export.
+
+---
+
+## 20. Security Requirements (SEC) [Implemented R1–R8]
+
+**SEC-001:** JWT authentication; BCrypt(12) password hashing; no plain-text passwords.
+
+**SEC-002:** Every endpoint shall be authorised (`@PreAuthorize`). An ArchUnit rule shall verify no unprotected endpoints exist.
+
+**SEC-003:** Refresh tokens stored hashed in the database; token reuse detection and family revocation.
+
+**SEC-004:** Security headers: HSTS (2 years), X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy, CSP.
+
+**SEC-005:** Rate limiting on authentication endpoints.
+
+**SEC-006:** OWASP dependency scanning in CI.
+
+**SEC-007:** All secrets from environment variables; never committed to source control.
+
+**SEC-008:** Segregation of duties: PO requester ≠ approver; stock adjustment requester ≠ approver; journal entry preparer ≠ approver.
+
+**SEC-009** (R9): Financial controls — period close requires Finance Manager; posting to closed periods requires Finance Manager override (audited).
+
+**SEC-010** (R9): Sensitive financial reports (trial balance, payment runs) shall require re-authentication or MFA (configurable).
+
+---
+
+## 21. Non-Functional Requirements (NFR)
+
+**NFR-001 Performance:** Ledger posting P95 < 150 ms; stock availability query P95 < 100 ms; dashboard load P95 < 500 ms; report generation (up to 10,000 rows) < 3 s.
+
+**NFR-002 Scalability:** Backend stateless (JWT); horizontal scaling with ShedLock for distributed scheduling; read replicas for reporting.
+
+**NFR-003 Availability:** 99.5% uptime target (excluding planned maintenance). Graceful degradation: reporting and analytics can be delayed but inventory posting must remain available.
+
+**NFR-004 Data integrity:** Ledger and audit log immutability enforced by DB triggers. Referential integrity via FK constraints.
+
+**NFR-005 Backup:** Automated daily pg_dump + WAL archiving. Restore procedures tested monthly. RTO < 4 hours, RPO < 1 hour.
+
+**NFR-006 Internationalisation:** UI strings externalised (Angular i18n). Date/time display in user's timezone (default Asia/Kolkata). Currency display in INR. Kannada/Hindi locale support in a later release.
+
+**NFR-007 Accessibility:** Angular Material components; keyboard navigation; WCAG 2.1 AA for operator-facing screens.
+
+**NFR-008 Mobile:** Operator tablet UI optimised for 10" tablet. Future: Progressive Web App (PWA) for offline capability.
+
+**NFR-009 Auditability:** Every sensitive action records user, role, action, entity, old value, new value, reason, timestamp, IP address. Audit records retained permanently.
+
+**NFR-010 Compliance:** GST compliance for Indian businesses. Future: GAAP/IFRS compliance for financial reporting.
+
+---
+
+## 22. Audit Trail Requirements [Implemented R1–R8]
+
+**AUD-001:** Every sensitive action shall be audited: User, Role(s), Action, Entity, Entity ID, Old Value, New Value, Reason (mandatory where applicable), Timestamp, IP address.
+
+**AUD-002:** Audit records are append-only. DB triggers prevent UPDATE/DELETE on `audit_logs`.
+
+**AUD-003:** Coverage: user/role changes, logins, master data edits, BOM approvals, document state transitions, stock adjustments, threshold approvals, production corrections, setting changes, financial postings, period close/open, report exports.
+
+**AUD-004:** Audit log is accessible only to users with `AUDIT_VIEW` permission. Filterable by user, entity, action, date range. Exportable.
+
+---
+
+## 23. Demo Data Requirements [Implemented R1–R8]
+
+**DEMO-001:** Demo data shall load only when profile is `dev` or `demo` (`ims.demo.load-data=true`). Never in production.
+
+**DEMO-002:** Demo data shall be generated through production services (not raw SQL), so ledger and balances agree.
+
+**DEMO-003:** Demo workflow shall cover the complete Spring Manufacturing lifecycle: PO → GR → Inspection → Production → Quality → Dispatch.
+
+**DEMO-004:** Sample users for every role with documented credentials. At least 10 production orders, realistic inventory transactions, 5+ suppliers, 5+ customers.
+
+---
+
+## 24. Implementation Phases
+
+See PLAN.md for detailed task IDs, estimates, and exit gates.
+
+| Release | Modules | Status |
+|---|---|---|
+| R1 Foundation | IAM, MDM (partial), AUD, SEC | **Complete** |
+| R2 Inventory Core | INV (ledger, balances, batches, adjustment) | **Complete** |
+| R3 Procurement | PUR, incoming QMS | **Complete** |
+| R4 Manufacturing | MFG (BOM, production, WIP) | **Complete** |
+| R5 Quality | QMS (in-process, final inspection, FG) | **Complete** |
+| R6 Sales | SAL (orders, dispatch) | **Complete** |
+| R7 Insight | RPT, dashboards, alerts, traceability, MNT | **Complete** |
+| R8 Hardening | SEC headers, DemoData, load tests, README | **Complete** |
+| R9 Finance | FIN, ENT, extended MDM | Planned |
+| R10 Controlling | CTR, product costing, variance analysis | Planned |
+| R11 MRP | MRP engine, demand planning, proposals | Planned |
+| R12 CRM | CRM (leads, opportunities, quotations) | Planned |
+| R13 HR | HRM (employee, attendance, payroll, skills) | Planned |
+| R14 WMS | Bin-level WMS, advanced picking/put-away | Planned |
+| R15 PLM | ECOs, drawing management, product lifecycle | Planned |
+| R16 Advanced Quality | SPC, CAPA, FAI, customer complaints | Planned |
+| R17 Document Management | DOC module, NTF engine, template management | Planned |
+| R18 Advanced Manufacturing | OEE, spare parts, advanced scheduling | Planned |
+| R19 AI and Integration | ANA, INT, AI forecasting, message broker | Planned |
+| R20 Industry Verticals | Automotive, Furniture, Electronics verticals | Planned |
+
+---
+
+## 25. Business Rules
+
+### Existing Rules [Implemented R1–R8]
 1. Stock cannot go negative unless explicitly enabled by an administrator.
 2. Material cannot be issued without sufficient available stock.
 3. Quarantine material cannot be issued to production.
@@ -269,133 +694,29 @@ All major screens: search, sorting, pagination, and filters for date range, stat
 8. A completed production order cannot be modified without authorized permission.
 9. Every stock change generates an inventory transaction.
 10. Every important transaction is auditable.
-11. Batch traceability is maintained.
+11. Batch traceability is maintained end-to-end.
 12. BOM revisions are preserved; only one active revision per product.
-13. Historical transactions are never silently deleted (corrections are made by reversing/adjusting entries).
-14. Adjustments above the configured threshold need Admin approval.
-15. Engineers, Purchase and Sales roles cannot change stock directly; stock changes only through Goods Receipt, Production, Dispatch and approved Adjustment transactions.
+13. Historical transactions are never silently deleted; corrections are reversals.
+14. Adjustments above the configured threshold require Admin approval.
+15. Engineers, Purchase, and Sales roles cannot change stock directly.
+
+### Financial Rules (R9)
+16. Every financial posting must balance (Dr = Cr).
+17. Posting to a closed financial period requires Finance Manager approval.
+18. Three-way match (PO/GR/Invoice) is required before AP payment.
+19. Journal preparer and approver must be different users (segregation of duties).
+
+### MRP Rules (R11)
+20. MRP proposals are advisory only; they require human review before conversion to orders.
+21. MRP shall not generate proposals that would violate supplier lead times.
 
 ---
 
-## 7. Audit Trail
+## 26. Open Questions and Assumptions
 
-For every sensitive action record: **User, Role, Action, Entity, Entity ID, Old Value, New Value, Reason (where applicable), Timestamp, IP address (if available)**. Records remain available permanently.
-
-Examples:
-- `STOCK_ADJUSTMENT` by admin: 500 KG → 480 KG, reason "Physical stock verification"
-- `PRODUCTION_QUANTITY_UPDATE` by supervisor S001: 8,500 → 8,450, reason "50 pieces rejected during final inspection"
-
----
-
-## 8. Data Design
-
-**Tables (minimum):** users, roles, permissions, user_roles, role_permissions, suppliers, customers, materials, material_batches, products, spring_specifications, bom, bom_items, operations, product_routing, warehouses, warehouse_locations, inventory, inventory_transactions, purchase_orders, purchase_order_items, goods_receipts, goods_receipt_items, quality_inspections, quality_inspection_items, production_orders, material_issues, production_operations, production_outputs, rejections, sales_orders, sales_order_items, dispatches, dispatch_items, stock_adjustments, audit_logs.
-Additions implied by Attachment 2: machines, downtime/maintenance records, purchase requisitions, approval records.
-
-**Conventions:** primary and foreign keys, unique constraints, indexes, created/updated timestamps, optimistic locking where appropriate, Flyway/Liquibase-style migration scripts.
-
----
-
-## 9. REST API
-
-Standard conventions and HTTP status codes, centralized exception handling, OpenAPI documentation. Example: `GET/POST /api/products`, `GET/PUT/DELETE /api/products/{id}`.
-
-Base resources: `/api/materials`, `/api/products`, `/api/inventory`, `/api/suppliers`, `/api/customers`, `/api/purchase-orders`, `/api/goods-receipts`, `/api/production-orders`, `/api/production`, `/api/quality`, `/api/sales-orders`, `/api/dispatches`, `/api/reports`.
-
----
-
-## 10. Security
-
-- JWT authentication; BCrypt password hashing; no plain-text passwords; secure password policy
-- Role/permission authorization enforced on every endpoint (403 on violation)
-- Input validation, global exception handling, CORS configuration
-- Audit of sensitive actions (section 7)
-
----
-
-## 11. Frontend
-
-**Modules:** Login (login, forgot password); Dashboard (KPI cards, charts, alerts, recent transactions); Master Data (materials, spring products, suppliers, customers, operations, warehouses, machines); Procurement (POs, goods receipts, incoming inspection); Inventory (current stock, ledger, adjustment, transfer, batch tracking); Production (orders, material issue, operations, WIP, output); Quality (inspections, rejections, quality dashboard); Sales (customer orders, finished goods, dispatch); Reports (inventory, production, quality, purchase, sales); Administration (users, roles, audit logs, system settings); Traceability screen.
-
-**UI/UX:** professional industrial ERP style; left sidebar, top bar, dashboard cards, data tables, modal dialogs, validated forms, status badges, confirmation dialogs, toast notifications. Responsive for desktop and tablet. Simple enough for non-technical factory operators; the operator view is optimized for quick entry.
-Consistent status colors for: AVAILABLE, LOW STOCK, QUARANTINE, REJECTED, IN PRODUCTION, COMPLETED, PENDING.
-
----
-
-## 12. Seed / Sample Data
-
-- ≥ 10 raw materials
-- Spring products: ≥ 5 compression, 3 extension, 3 torsion, 2 conical, 2 wire forms
-- ≥ 5 suppliers, ≥ 5 customers
-- ≥ 10 production orders
-- Realistic inventory transactions
-- Sample users for every role, with documented login credentials
-
----
-
-## 13. Testing
-
-- **Backend:** unit, service, repository, controller/API, security (including 403 checks per role)
-- **Frontend:** component, service, form-validation
-- **Integration workflows:**
-  1. Purchase Order → Goods Receipt → Quality Inspection → Inventory
-  2. Production Order → Material Issue → Production → Quality Inspection → Finished Goods
-  3. Sales Order → Dispatch → Inventory Reduction
-
----
-
-## 14. Implementation Phases
-
-Implement each phase completely (no placeholders or TODOs) before the next.
-
-| Phase | Scope |
-|---|---|
-| 1 | Authentication, users, roles/permissions, materials, products, suppliers, customers |
-| 2 | Warehouses, inventory, stock ledger, batch management |
-| 3 | Purchase orders, goods receipts, incoming quality inspection |
-| 4 | BOM, routing, production orders, material issue, WIP, production output |
-| 5 | Quality management, final inspection, rejection, finished goods |
-| 6 | Sales orders, dispatch, customer management |
-| 7 | Reports, dashboards, analytics, audit logs |
-
-**Per-module checklist:** entities → repositories → DTOs → services → controllers → validation → exception handling → security → Angular service → Angular component → UI validation → workflow test.
-
-**Before coding:** analyze requirements; define architecture, ER diagram, entities and relationships, REST APIs, frontend screens, business rules, and development plan.
-
-*Note:* Attachment 2 adds roles (Maintenance, Supervisor, Dispatch, etc.) that touch machines, downtime and approvals. Place these in the phase where their dependent module is built (e.g. machines/downtime with Phase 4, approval workflows alongside each module).
-
----
-
-## 15. Deliverables
-
-1. System architecture
-2. ER / database design
-3. Spring Boot backend project
-4. PostgreSQL schema and migration scripts
-5. REST APIs with OpenAPI docs
-6. Angular frontend
-7. Authentication and authorization
-8. Seed/sample data and sample login credentials
-9. Unit and integration tests
-10. README with full setup (dependencies, database creation, migrations, starting backend and frontend, login, loading sample data, running the full manufacturing workflow)
-11. Docker configuration
-12. End-to-end demonstration workflow
-
-Must run locally with Spring Boot + PostgreSQL + Angular.
-
----
-
-## 16. Future Extensibility (design for, do not over-engineer now)
-
-Barcode/QR scanning, RFID, IoT machines and machine data, predictive maintenance, AI demand forecasting and inventory optimization, production scheduling, cost accounting, OEE, supplier performance analytics, mobile app, multi-company, multi-location.
-
----
-
-## 17. Open Questions / Assumptions
-
-- **Role set:** the 13-role model from Attachment 2 is treated as authoritative over Attachment 1's 7 roles.
-- **PO status:** Attachment 1 lists DRAFT/APPROVED/…; Attachment 2 adds Submitted and Sent to Supplier. The system should support both sets of states.
-- **Production order status:** Attachment 2 adds an APPROVED step before RELEASED.
-- **Adjustment threshold:** value and unit (quantity or currency) to be defined in System Settings.
-- **Roles per user:** multiple roles allowed; permissions are the union.
-- **Currency/tax:** GST is mentioned; tax and currency handling details to be confirmed.
+- **Multi-currency (R9):** Functional currency is INR; foreign currency invoices need exchange rate at posting time. Method (transaction date rate vs closing rate) to be confirmed.
+- **Payroll method (R13):** Monthly payroll with Indian statutory deductions (PF/ESI/PT). International payroll rules deferred to R20.
+- **Barcode / RFID:** Store Operator workflow supports batch-code scan; dedicated scanner hardware integration is a future phase.
+- **IoT machine data:** Machine downtime tables exist; ingestion pipeline deferred to R19.
+- **Production targets:** Either from `system_settings` or a `production_targets` table — to be decided in R11.
+- **GST filing:** Reports provide GST-ready data; e-filing integration is deferred to R19.

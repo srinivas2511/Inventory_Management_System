@@ -1,35 +1,44 @@
-# PLAN.md — Manufacturing ERP Platform
-## Spring Configuration (v1) — Execution Plan
+# PLAN.md — Configurable Manufacturing ERP Platform
 
-**Version:** 1.1  **Date:** 2026-10-02  **Updated:** multi-industry platform framing added
-**Inputs:** REQUIREMENTS.md v1.1 (what) · ARCHITECTURE.md v1.1 (structure) · DESIGN.md v1.1 (detail)
-**Purpose:** the execution plan — phases, tasks, estimates, dependencies, quality gates, risks and the order of work. Each task points to the exact section of DESIGN.md / ARCHITECTURE.md it implements, so it can be handed to a developer or to an AI coding session without further design work.
+**Version:** 2.0  **Date:** 2026-10-02
+**Inputs:** REQUIREMENTS.md v2.0 (what) · ARCHITECTURE.md v2.0 (structure) · DESIGN.md v2.0 (detail)
+**Purpose:** the execution plan — releases, tasks, estimates, dependencies, quality gates, and the order of work. Each task points to the exact DESIGN.md / ARCHITECTURE.md section it implements.
 
 > Document map: REQUIREMENTS = *what* · ARCHITECTURE = *structure* · DESIGN = *detail* · **PLAN = *order, effort and gates*.**
 >
-> **Platform note:** Phases 0–8 deliver the Spring Manufacturing (v1) configuration of the platform. The universal Core ERP, Manufacturing and Common Services layers are built once and reused by all future industry verticals. A Phase 9+ would add a new industry vertical (Automotive, Furniture, Electronics) solely through seed data migrations.
+> **Platform note:** Releases R1–R8 deliver the Spring Manufacturing (v1) configuration of the platform. The universal Core ERP, Manufacturing and Common Services layers are built once and reused by all future industry verticals. Releases R9–R20 expand the platform into a full SAP-class ERP. R20 adds additional industry verticals solely through seed data migrations.
 
 ## Contents
 1. Planning Basis and Assumptions
-2. Schedule Summary and Milestones
+2. Release Summary and Milestones (R1–R20)
 3. Working Agreements (Definition of Ready / Done)
-4. Phase 0 — Foundations
-5. Phase 1 — Identity, Security and Master Data
-6. Phase 2 — Warehouses and Inventory Core
-7. Phase 3 — Procurement and Incoming Quality
-8. Phase 4 — Manufacturing
-9. Phase 5 — Quality and Finished Goods
-10. Phase 6 — Sales and Dispatch
-11. Phase 7 — Insight: Dashboards, Reports, Alerts, Traceability
-12. Phase 8 — Hardening and Release
-13. Dependency Map
-14. Decisions Needed (Blockers)
-15. Risk Register
-16. Quality Gates and Metrics
-17. Requirements Coverage by Phase
-18. Building with Claude Code (AI-assisted protocol)
-19. Release and Handover Checklist
-20. Command Cheat Sheet
+4. Phase 0 — Foundations [Complete]
+5. Phase 1 / R1 — Identity, Security and Master Data [Complete]
+6. Phase 2 / R2 — Warehouses and Inventory Core [Complete]
+7. Phase 3 / R3 — Procurement and Incoming Quality [Complete]
+8. Phase 4 / R4 — Manufacturing [Complete]
+9. Phase 5 / R5 — Quality and Finished Goods [Complete]
+10. Phase 6 / R6 — Sales and Dispatch [Complete]
+11. Phase 7 / R7 — Insight: Dashboards, Reports, Alerts, Traceability [Complete]
+12. Phase 8 / R8 — Hardening and Release [Complete]
+13. Release 9 — Finance (FIN)
+14. Release 10 — Controlling (CTR)
+15. Release 11 — MRP
+16. Release 12 — CRM
+17. Release 13 — HR Management (HRM)
+18. Release 14 — Warehouse Management (WMS)
+19. Release 15 — Product Lifecycle Management (PLM)
+20. Release 16 — Advanced Quality (QMS+)
+21. Release 17 — Document Management and Notifications
+22. Release 18 — Advanced Manufacturing (OEE, Scheduling)
+23. Release 19 — Analytics and Integration
+24. Release 20 — Industry Verticals
+25. Dependency Map (R9–R20)
+26. Risk Register
+27. Quality Gates and Metrics
+28. Requirements Coverage Matrix (R1–R20)
+29. Building with Claude Code (AI-assisted protocol)
+30. Command Cheat Sheet
 
 ---
 
@@ -609,4 +618,401 @@ cd frontend && npx playwright test e2e/demo-workflow.spec.ts
 
 ---
 
-*End of PLAN.md*
+## 13. Release 9 — Finance (FIN)
+
+**Duration:** ~4 weeks  **Effort:** ~45 pd  **Gate M9**
+
+### Prerequisites
+- R1–R8 complete (M8 passed)
+- Chart of accounts defined for Spring Manufacturing vertical (seed data)
+- GL account assignments for all inventory transaction types defined
+
+### Task Table
+
+| Task ID | Task | DESIGN ref | Effort |
+|---|---|---|---|
+| R9-1.1 | Enterprise structure: `companies`, `plants`; add `plant_id` to POs, production orders, sales orders (V14) | DESIGN §15, ARCH §15 | 3 pd |
+| R9-1.2 | GL master data: `gl_account_groups`, `gl_accounts`, `fiscal_periods` (V15) | DESIGN §15.1 | 2 pd |
+| R9-1.3 | Journal engine: `journal_headers`, `journal_lines` + immutability trigger; `JournalService`, balance check (V16) | DESIGN §15.2 | 4 pd |
+| R9-1.4 | `inventory_account_assignments` seed; `AccountingBridgeService` (listens to StockPosted events) | DESIGN §15.3, §15.5 | 3 pd |
+| R9-1.5 | Journal entry UI: list, create (Dr/Cr lines, running balance indicator), approve, post | ARCH §13 | 3 pd |
+| R9-2.1 | Accounts Payable: `ap_invoices`, `ap_payments` (V17); `ApService`; three-way match validation | DESIGN §15.4 | 3 pd |
+| R9-2.2 | AP UI: invoice list, payment entry, ageing grid | | 2 pd |
+| R9-2.3 | Accounts Receivable: `ar_invoices` auto-created on dispatch; `ar_receipts`; `ArService` | DESIGN §15.4 | 3 pd |
+| R9-2.4 | AR UI: invoice list, receipt entry, ageing grid | | 2 pd |
+| R9-3.1 | `bank_statements`, `bank_statement_lines` (V17); import (CSV); auto-match with GL entries | DESIGN §15.4 | 4 pd |
+| R9-3.2 | Bank reconciliation UI: matched/unmatched items, manual match, reconcile period | | 2 pd |
+| R9-4.1 | Period management: `fiscal_periods` CRUD, period close workflow, `FiscalPeriodService` | DESIGN §15.6 | 3 pd |
+| R9-4.2 | `budgets`, `exchange_rates`, `tax_codes` (V18); budget entry UI | ARCH §15 | 3 pd |
+| R9-5.1 | Financial reports: Trial Balance, P&L, Balance Sheet, Cash Flow; add to `ReportDefinition` catalogue | ARCH §14 | 4 pd |
+| R9-5.2 | Finance dashboard: AP/AR ageing KPI cards, revenue vs budget chart, open period indicator | | 2 pd |
+| R9-6.1 | ArchUnit rule: `AccountingBridgeService` may call `JournalService`; `JournalService` may not call inventory | ARCH §4 | 1 pd |
+| R9-6.2 | Integration tests: PO → GR → AP invoice created; dispatch → AR invoice and COGS journal; period close | ARCH §23 | 4 pd |
+| R9-6.3 | Security: `GL_POST`, `JOURNAL_APPROVE`, `PERIOD_CLOSE` permissions; 403 matrix for all finance endpoints | ARCH §10 | 2 pd |
+
+**Gate M9 criteria:**
+- `mvn verify` green (all tests including R9 finance ITs)
+- Demo workflow: PO → GR → AP invoice; sales dispatch → AR invoice + COGS journal
+- Period close prevents posting after close; Finance Manager override creates audit entry
+- All R9 endpoints have `@PreAuthorize` (ArchUnit confirms)
+- Frontend build clean
+
+---
+
+## 14. Release 10 — Controlling (CTR)
+
+**Duration:** ~3 weeks  **Effort:** ~30 pd  **Gate M10**
+
+### Prerequisites
+- R9 complete (M9 passed); GL accounts, cost centres, fiscal periods available
+
+### Task Table
+
+| Task ID | Task | DESIGN ref | Effort |
+|---|---|---|---|
+| R10-1.1 | `cost_centres`, `profit_centres` (V19); CRUD endpoints + UI | DESIGN §16.1 | 3 pd |
+| R10-1.2 | Add `cost_centre_id`, `profit_centre_id` to journal_lines; update AccountingBridgeService | DESIGN §16.1 | 2 pd |
+| R10-2.1 | `product_cost_estimates`, `cost_estimate_lines` (V20); `ProductCostingService.estimate(productId, bomId)` | DESIGN §16.2 | 4 pd |
+| R10-2.2 | Product costing UI: estimate list, estimate detail with cost breakdown (material/labour/machine/overhead), release action | | 3 pd |
+| R10-3.1 | `ProductionOrderVarianceService.calculate(orderId)` — post variance journal on order close | DESIGN §16.3 | 4 pd |
+| R10-3.2 | Variance analysis UI: production orders with variance %, drill-down by cost element | | 2 pd |
+| R10-4.1 | Cost centre reports: actual vs budget, cost distribution by product/period | ARCH §14 | 3 pd |
+| R10-4.2 | Profit centre reports: revenue, COGS, gross margin by profit centre | | 2 pd |
+| R10-5.1 | Integration tests: production order complete → variance journal posted; cost estimate vs actual comparison | ARCH §23 | 4 pd |
+| R10-5.2 | 403 matrix for controlling endpoints | ARCH §10 | 2 pd |
+
+**Gate M10:** variance journal posted on order close; product cost estimate matches BOM; controlling reports show actuals by cost centre.
+
+---
+
+## 15. Release 11 — MRP
+
+**Duration:** ~3 weeks  **Effort:** ~30 pd  **Gate M11**
+
+### Task Table
+
+| Task ID | Task | DESIGN ref | Effort |
+|---|---|---|---|
+| R11-1.1 | `mrp_runs`, `mrp_proposals`, `demand_forecasts` (V21) | DESIGN §17.1 | 2 pd |
+| R11-1.2 | `MrpRunService.runMrp(horizonDays)` — demand collection, net requirements, BOM explosion, lot sizing | DESIGN §17.2 | 8 pd |
+| R11-1.3 | Rough-cut capacity check: machine hours per period; flag overloaded proposals | DESIGN §17.2 | 3 pd |
+| R11-2.1 | MRP proposal conversion: PR for PURCHASE, production order for PRODUCTION | DESIGN §17.3 | 3 pd |
+| R11-2.2 | MRP UI: run list, proposal table (filterable by type, status, material), convert actions | | 4 pd |
+| R11-2.3 | Demand forecast UI: enter manual forecasts per product per period | | 2 pd |
+| R11-3.1 | Integration tests: sales order demand drives MRP purchase proposal; BOM explosion cascades correctly | ARCH §23 | 4 pd |
+| R11-3.2 | MRP run timing test: 1,000 active sales order lines → run completes in < 30 s | ARCH §23 | 2 pd |
+| R11-3.3 | 403 matrix for MRP endpoints (`MRP_RUN`, `DEMAND_PLAN` permissions) | | 2 pd |
+
+**Gate M11:** MRP run with 100+ items completes; proposals convertible to PRs and production orders; capacity overloads flagged.
+
+---
+
+## 16. Release 12 — CRM
+
+**Duration:** ~2.5 weeks  **Effort:** ~22 pd  **Gate M12**
+
+### Task Table
+
+| Task ID | Task | DESIGN ref | Effort |
+|---|---|---|---|
+| R12-1.1 | `crm_contacts`, `crm_leads`, `crm_opportunities` (V22) | DESIGN §18.1 | 2 pd |
+| R12-1.2 | `crm_quotations`, `crm_quotation_items`, `crm_activities` (V22) | DESIGN §18.1 | 2 pd |
+| R12-1.3 | Lead CRUD + state machine (NEW → CONTACTED → QUALIFIED → CONVERTED/UNQUALIFIED) | DESIGN §18 | 3 pd |
+| R12-1.4 | Opportunity CRUD + stage machine (PROSPECT → … → CLOSED_WON / CLOSED_LOST) | | 3 pd |
+| R12-2.1 | Quotation creation from opportunity (product, qty, unit price, discount) | DESIGN §18.2 | 3 pd |
+| R12-2.2 | `CrmQuotationService.convertToSalesOrder(quotationId)` | DESIGN §18.2 | 2 pd |
+| R12-2.3 | Activity log CRUD (CALL, EMAIL, MEETING, FOLLOW_UP) | | 2 pd |
+| R12-3.1 | CRM UI: leads list/detail, opportunities pipeline view (Kanban + list), quotation form, activity timeline | | 3 pd |
+| R12-3.2 | Integration test: quotation → sales order conversion | | 1 pd |
+| R12-3.3 | 403 matrix for CRM endpoints | | 1 pd |
+
+**Gate M12:** quotation converts to sales order; opportunity pipeline UI shows stages; activity log recorded per customer.
+
+---
+
+## 17. Release 13 — HR Management (HRM)
+
+**Duration:** ~3 weeks  **Effort:** ~28 pd  **Gate M13**
+
+### Task Table
+
+| Task ID | Task | DESIGN ref | Effort |
+|---|---|---|---|
+| R13-1.1 | `employees` + `employee_skill_matrix` (V23); link to `users` (optional) | DESIGN §19.1 | 3 pd |
+| R13-1.2 | Employee CRUD; skill matrix UI | | 3 pd |
+| R13-2.1 | `attendance` (V23); daily attendance recording; auto-capture from production operation start/complete | DESIGN §19.1 | 3 pd |
+| R13-2.2 | Attendance UI: daily view, monthly summary, late/absent highlights | | 2 pd |
+| R13-3.1 | `leave_types`, `leave_applications` (V23); leave workflow (PENDING → APPROVED / REJECTED) | DESIGN §19.1 | 3 pd |
+| R13-3.2 | Leave UI: application form, calendar view, balance display | | 2 pd |
+| R13-4.1 | `payroll_runs`, `payroll_slips` (V24); `PayrollService.calculateSlip()` — basic pay, allowances, PF, ESI, PT, TDS, net | DESIGN §19.2 | 5 pd |
+| R13-4.2 | Payroll UI: initiate run, review slips, download PDF pay slips, approve run | | 3 pd |
+| R13-4.3 | Payroll → finance journal: Dr Salary Expense / Cr Salary Payable, Dr PF Expense / Cr PF Payable, etc. | ARCH §15.2 | 2 pd |
+| R13-5.1 | `training_records` (V24); training UI | DESIGN §19.1 | 1 pd |
+| R13-5.2 | 403 matrix for HR endpoints | | 1 pd |
+
+**Gate M13:** monthly payroll run calculates net pay and creates finance journal; leave approval workflow; attendance linked to production operations.
+
+---
+
+## 18. Release 14 — Warehouse Management (WMS)
+
+**Duration:** ~3 weeks  **Effort:** ~28 pd  **Gate M14**
+
+### Task Table
+
+| Task ID | Task | DESIGN ref | Effort |
+|---|---|---|---|
+| R14-1.1 | `warehouse_zones`, `warehouse_bins`, `bin_item_assignments` (V25) | DESIGN §20.1 | 2 pd |
+| R14-1.2 | Bin master CRUD; zone and bin capacity configuration UI | | 3 pd |
+| R14-2.1 | `transfer_orders`, `transfer_order_lines` (V25); `TransferOrderService` | DESIGN §20 | 3 pd |
+| R14-2.2 | `PutAwayService.createPutAwayTasks(goodsReceiptId)` — nearest-bin strategy | DESIGN §20.2 | 3 pd |
+| R14-2.3 | Picking task generation from dispatch: FEFO bin picking, generate TO lines | DESIGN §20 | 3 pd |
+| R14-3.1 | TO confirmation: scan-based (bin_code + batch_code) or manual qty; posts STOCK_TRANSFER on confirm | | 3 pd |
+| R14-3.2 | WMS UI: put-away task list, picking list, bin view (current inventory), TO confirmation screen | | 4 pd |
+| R14-4.1 | Cycle count: `cycle_counts`, `cycle_count_lines` (V25); count by zone or ABC classification | | 3 pd |
+| R14-4.2 | Cycle count UI: create count, count entry, variance review, post adjustments | | 2 pd |
+| R14-5.1 | Integration tests: GR → put-away TO created; dispatch → picking TO created; cycle count → adjustment | ARCH §23 | 2 pd |
+
+**Gate M14:** GR triggers put-away task; dispatch triggers picking task; cycle count posts to stock adjustment workflow; bin capacity limits enforced.
+
+---
+
+## 19. Release 15 — Product Lifecycle Management (PLM)
+
+**Duration:** ~2 weeks  **Effort:** ~18 pd  **Gate M15**
+
+### Task Table
+
+| Task ID | Task | DESIGN ref | Effort |
+|---|---|---|---|
+| R15-1.1 | `ecos`, `eco_affected_items`, `product_lifecycle_events` (V26) | DESIGN §21.1 | 2 pd |
+| R15-1.2 | ECO CRUD; state machine: DRAFT → REVIEW → APPROVED → IMPLEMENTING → IMPLEMENTED | DESIGN §21 | 3 pd |
+| R15-1.3 | `EcoService.implement(ecoId)` — auto-create new BOM revision for each affected product | DESIGN §21.2 | 4 pd |
+| R15-2.1 | Product lifecycle states: DEVELOPMENT → PROTOTYPE → APPROVED → ACTIVE → PHASE_OUT → OBSOLETE | DESIGN §21 | 2 pd |
+| R15-2.2 | ECO UI: ECO list/detail, affected items, approval action, implement action | | 3 pd |
+| R15-3.1 | Integration test: ECO approved → new BOM revision created; old active BOM superseded | ARCH §23 | 2 pd |
+| R15-3.2 | 403 matrix for PLM endpoints | | 2 pd |
+
+**Gate M15:** ECO approval auto-creates new BOM revision; product lifecycle state transitions audited; PLM endpoints secured.
+
+---
+
+## 20. Release 16 — Advanced Quality (QMS+)
+
+**Duration:** ~3 weeks  **Effort:** ~26 pd  **Gate M16**
+
+### Task Table
+
+| Task ID | Task | DESIGN ref | Effort |
+|---|---|---|---|
+| R16-1.1 | `spc_control_charts`, `spc_data_points` (V27); `SpcService.addDataPoint()`, `calculateCapability()` | DESIGN §22.1, §22.2 | 5 pd |
+| R16-1.2 | SPC UI: X-bar/R chart (Chart.js), control limits, data point entry, Cp/Cpk display | | 4 pd |
+| R16-1.3 | Out-of-control detection (Nelson rules R1, R2): flag violations on data point add | DESIGN §22.2 | 2 pd |
+| R16-2.1 | `capa_records` (V27); CAPA state machine: OPEN → ROOT_CAUSE_ANALYSIS → ACTION_IN_PROGRESS → VERIFICATION → CLOSED | DESIGN §22.3 | 3 pd |
+| R16-2.2 | CAPA UI: CAPA list/detail, timeline, evidence upload reference | | 2 pd |
+| R16-3.1 | `customer_complaints` (V27); complaint registration, link to FG batch + CAPA | DESIGN §22.3 | 3 pd |
+| R16-3.2 | Customer complaint UI: complaint list, FG batch traceability link, CAPA link | | 2 pd |
+| R16-4.1 | FAI (First Article Inspection): link inspection_plan to first production batch; generate FAI report PDF | | 3 pd |
+| R16-4.2 | Integration tests: inspection data → SPC chart updated; out-of-control → CAPA alert | | 2 pd |
+
+**Gate M16:** SPC chart shows real-time control limits with out-of-control detection; CAPA created from rejection event; customer complaint linked to FG batch trace.
+
+---
+
+## 21. Release 17 — Document Management and Notifications
+
+**Duration:** ~2 weeks  **Effort:** ~18 pd  **Gate M17**
+
+### Task Table
+
+| Task ID | Task | DESIGN ref | Effort |
+|---|---|---|---|
+| R17-1.1 | `document_categories`, `documents` (V28); `DocumentService` (metadata only; file content external) | DESIGN §23.1 | 3 pd |
+| R17-1.2 | Document UI: upload (stores file reference + metadata), version history, link to entity | | 3 pd |
+| R17-2.1 | `notification_templates`, `notification_subscriptions`, `notifications` (V28); Mustache template engine | DESIGN §23.2 | 3 pd |
+| R17-2.2 | `NotificationService.send(templateCode, recipientUserId, payload)` — in-app + email | | 3 pd |
+| R17-2.3 | Replace alert email with `NotificationService`; add in-app notification bell in Angular | | 3 pd |
+| R17-2.4 | User notification preferences UI: subscribe/unsubscribe per event type per channel | | 2 pd |
+| R17-3.1 | Integration tests: PO approved → notification sent to supplier contact; low stock → in-app notification | | 1 pd |
+
+**Gate M17:** in-app notifications appear in bell menu; email notifications sent on key events; documents attachable to products and BOMs.
+
+---
+
+## 22. Release 18 — Advanced Manufacturing
+
+**Duration:** ~3 weeks  **Effort:** ~26 pd  **Gate M18**
+
+### Task Table
+
+| Task ID | Task | DESIGN ref | Effort |
+|---|---|---|---|
+| R18-1.1 | `spare_parts`, `spare_part_issue_lines` (V29); spare part stock tracking via `InventoryPostingService` | DESIGN §24.2 | 3 pd |
+| R18-1.2 | Spare part UI: master list, issue against maintenance request, min-stock alerts | | 3 pd |
+| R18-2.1 | `OeeService.calculateForMachine(machineId, from, to)` — Availability × Performance × Quality | DESIGN §24.1 | 4 pd |
+| R18-2.2 | `mv_oee_daily` materialized view (V29); scheduled refresh | | 2 pd |
+| R18-2.3 | OEE dashboard: machine OEE trends, loss category breakdown (Pareto), top 5 downtime reasons | | 4 pd |
+| R18-3.1 | Advanced production scheduling: sequencing production orders by priority and machine availability | ARCH §18 | 5 pd |
+| R18-3.2 | Scheduling UI: Gantt chart of production orders per machine per day; drag-to-reschedule | | 3 pd |
+| R18-4.1 | Integration tests: machine downtime reduces OEE; spare part issued → maintenance cost recorded | ARCH §23 | 2 pd |
+
+**Gate M18:** OEE displayed per machine with breakdown; spare parts tracked through inventory; production Gantt chart operational.
+
+---
+
+## 23. Release 19 — Analytics and Integration
+
+**Duration:** ~4 weeks  **Effort:** ~38 pd  **Gate M19**
+
+### Task Table
+
+| Task ID | Task | DESIGN ref | Effort |
+|---|---|---|---|
+| R19-1.1 | `webhook_subscriptions`, `webhook_deliveries` (V30); `WebhookDeliveryService` with exponential retry | DESIGN §25.3 | 4 pd |
+| R19-1.2 | Webhook admin UI: subscription management, delivery history, manual retry | | 2 pd |
+| R19-2.1 | Analytics materialized views: `mv_financial_summary_monthly`, `mv_supplier_performance`, `mv_customer_sales_summary` (V30) | DESIGN §25.1 | 3 pd |
+| R19-2.2 | BI query endpoint `GET /api/analytics/query?key=…&params=…`; pre-built query catalogue | | 4 pd |
+| R19-2.3 | BI dashboard builder UI: drag-and-drop chart/table builder over analytics views | | 6 pd |
+| R19-3.1 | `DemandForecastService` interface + default implementation (returns manually entered forecasts) | DESIGN §25.2 | 2 pd |
+| R19-3.2 | AI forecasting integration seam: `AiForecastAdapter` calls external ML API (pluggable) | | 4 pd |
+| R19-3.3 | Anomaly detection sweep: flag unusual consumption patterns, supplier quality drops, efficiency dips | | 4 pd |
+| R19-4.1 | Bulk import APIs: materials, products, customers, suppliers from CSV/Excel | | 4 pd |
+| R19-4.2 | Integration tests: webhook fired on StockPosted; BI query returns correct aggregates | | 3 pd |
+| R19-4.3 | Kafka adapter (optional, feature-flagged): publish domain events to Kafka topic | ARCH §21 | 2 pd |
+
+**Gate M19:** webhooks delivered with retry; BI query endpoint returns financial/operational aggregates; bulk import tested; AI forecast seam wired.
+
+---
+
+## 24. Release 20 — Industry Verticals
+
+**Duration:** ~2 weeks  **Effort:** ~16 pd  **Gate M20**
+
+### Task Table
+
+| Task ID | Task | DESIGN ref | Effort |
+|---|---|---|---|
+| R20-1.1 | Automotive vertical seed: `R__automotive_v1_attributes.sql`, `R__automotive_v1_operations.sql`, `R__automotive_v1_rejection_reasons.sql` | DESIGN §26.1 | 2 pd |
+| R20-1.2 | Deploy and demo: automotive product created with automotive attributes; inspection plan with automotive params | | 2 pd |
+| R20-2.1 | Furniture vertical seed: attributes (leg_height, load_capacity, finish_type, wood_grade), operations (Cutting, Sanding, Assembly, Painting) | DESIGN §26.2 | 2 pd |
+| R20-2.2 | Deploy and demo: furniture product with furniture attributes | | 1 pd |
+| R20-3.1 | Electronics vertical seed: attributes (pcb_layer_count, tolerance, component_type), operations (Soldering, Reflow, Functional_Test, Burn_In) | DESIGN §26.3 | 2 pd |
+| R20-3.2 | Deploy and demo: electronics product with electronics attributes | | 1 pd |
+| R20-4.1 | Admin screen for managing `product_attribute_definitions` (add/edit/deactivate attribute definitions via UI, not just migrations) | DESIGN §0.1 | 4 pd |
+| R20-4.2 | Document vertical enablement: README section on adding a new industry vertical (5-step guide: seed data files, demo data, test, activate) | | 2 pd |
+
+**Gate M20:** three industry verticals (Automotive, Furniture, Electronics) deployable via seed migrations; Admin UI manages product attribute definitions; no code change needed to add a new vertical.
+
+---
+
+## 25. Dependency Map (R9–R20)
+
+```
+R1–R8 (complete) ──► R9 Finance ──► R10 Controlling ──► (costing feeds into R11, R18 OEE costs)
+                       │
+                       ├──► R11 MRP ──────────────────► R19 Analytics (demand forecasts)
+                       │
+                       ├──► R12 CRM ──────────────────► (quotations feed into SAL)
+                       │
+                       ├──► R13 HRM ──────────────────► R18 (operator skills for scheduling)
+                       │
+                       ├──► R14 WMS ──────────────────► R18 (bin-level scheduling)
+                       │
+                       ├──► R15 PLM ──────────────────► R16 (ECO triggers CAPA when quality fails)
+                       │
+                       └──► R16 Advanced QMS ──────────► R19 (SPC data in BI)
+
+R1–R8 (complete) ──► R17 Documents/Notifications (parallel to R9–R16, no dependencies)
+R9–R18 (any subset) ──► R19 Analytics/Integration (aggregates any available modules)
+R1–R8 (complete) ──► R20 Industry Verticals (parallel to R9–R19, seed data only)
+```
+
+---
+
+## 26. Risk Register
+
+| ID | Risk | Likelihood | Impact | Mitigation |
+|---|---|---|---|---|
+| RS-01 | Double-entry GL bugs (Dr ≠ Cr) | Medium | High | DB trigger check + service validation + comprehensive journal tests |
+| RS-02 | MRP performance on large BOMs (explosion recursion) | Medium | Medium | Iterative (not recursive) BOM explosion; pagination; max depth limit (10 levels) |
+| RS-03 | Payroll compliance (PF/ESI rate changes) | Low | Medium | Rates in `system_settings`; Admin-editable without code deploy |
+| RS-04 | Industry vertical data conflicts | Low | Low | `company_id` scoping; vertical seeds are additive; no shared attribute codes |
+| RS-05 | Finance period close contention | Medium | Medium | Optimistic lock on `fiscal_periods`; concurrency test |
+| RS-06 | WMS bin capacity management complexity | Medium | Medium | Bin capacity is advisory (warning only in v1); hard enforcement deferred to R20 |
+| RS-07 | AI forecasting accuracy | Low | Low | Interface-based; manual forecasts as fallback; clearly labelled as AI-generated |
+| RS-08 | CRM to SAL data model divergence | Low | Medium | CRM quotation → sales order is a one-way conversion; no synchronisation needed |
+
+---
+
+## 27. Quality Gates and Metrics (R9–R20)
+
+Each release gate (M9–M20) requires:
+
+1. `mvn verify` passes — all unit + ArchUnit + Testcontainers IT tests green
+2. Frontend build clean: `npm run lint && npm run format:check && npm run test:ci && npm run build:prod`
+3. All new endpoints have `@PreAuthorize` — ArchUnit confirms 0 violations
+4. New 403 matrix rows added for each new endpoint × role
+5. Integration test covering the primary business workflow of the release
+6. DESIGN.md and ARCHITECTURE.md updated to reflect as-built state
+7. No TODO / placeholder implementations
+8. k6 load test (existing) re-run; no regression in P95 latency thresholds
+
+**Finance-specific (M9):** Dr=Cr balance on every posted journal verified by automated test; period close test verifies no new postings allowed after close.
+
+**MRP-specific (M11):** MRP run with 500 active sales order lines completes in < 60 s.
+
+---
+
+## 28. Requirements Coverage Matrix (R1–R20)
+
+| REQUIREMENTS section | Covered in release |
+|---|---|
+| §3 Platform architecture | R1–R8 ✓ |
+| §7 Enterprise Structure (ENT) | R9 |
+| §8 MDM (materials, products, suppliers, customers) | R1–R8 ✓ |
+| §8 MDM — chart of accounts, cost centres | R9 |
+| §8 MDM — employee master | R13 |
+| §9 INV (inventory, ledger, batches, adjustment) | R1–R8 ✓ |
+| §10 WMS (bin management, put-away, picking) | R14 |
+| §11 PUR (purchase orders, goods receipts) | R1–R8 ✓ |
+| §12 MFG (BOM, production, WIP, quality) | R1–R8 ✓ |
+| §12.1 MRP (demand planning, proposals) | R11 |
+| §12.2 PLM (ECOs, product lifecycle) | R15 |
+| §13 QMS (inspections, rejections, FG) | R1–R8 ✓ |
+| §13 QMS R16 (SPC, CAPA, complaints) | R16 |
+| §14 SAL (sales orders, dispatch) | R1–R8 ✓ |
+| §14.1 CRM (leads, opportunities, quotations) | R12 |
+| §15 FIN (GL, AP, AR, bank, periods, budgets) | R9 |
+| §16 CTR (cost centres, product costing, variance) | R10 |
+| §17 HRM (employee, attendance, payroll) | R13 |
+| §18 RPT (reports, exports) | R1–R8 ✓ |
+| §18.2 ANA (BI engine, AI forecasting) | R19 |
+| §19 INT (webhooks, Kafka, bulk import) | R19 |
+| §20 SEC (headers, JWT, BCrypt) | R1–R8 ✓ |
+| §20 FIN controls (period close, SOD) | R9 |
+| §21 NFR (performance, availability, backup) | R1–R8 ✓ (re-tested each release) |
+| §22 AUD (audit trail) | R1–R8 ✓ (extended each release) |
+| §23 Demo data | R1–R8 ✓ |
+| §24 Industry verticals (Automotive, Furniture, Electronics) | R20 |
+
+---
+
+## 29. Building with Claude Code (AI-assisted protocol)
+
+For AI-assisted development, the existing protocol from the original PLAN.md §18 applies to all releases R9–R20:
+
+1. **Read first:** Before each release, read the REQUIREMENTS, ARCHITECTURE, and DESIGN sections that the release tasks reference. Stop and flag any discrepancy between docs and code.
+2. **One task at a time:** Complete each task ID fully (backend + migration + Angular + tests) before moving to the next. Mark the task done in CLAUDE.md.
+3. **Build check:** Run `mvn verify` and frontend checks after every task; report failures honestly.
+4. **Gate check:** Before marking a release complete, verify all gate M* criteria in §27.
+5. **Self-annealing:** When a test fails, fix the root cause (not the test), re-run, update the directive.
+6. **Additive only:** New Flyway migrations (`V14__*.sql`–`V30__*.sql`); never edit applied migrations.
+
+**Token-efficient pattern for long releases:**
+- Fork agents for backend and frontend in parallel (they write to different directories).
+- Explicitly assign migration version numbers (`V14` to R9-1.1, `V15` to R9-1.2, etc.) to prevent collision.
+- Single parent agent reads completion notifications and updates CLAUDE.md gate status.
+
+---
+
+*End of PLAN.md v2.0*

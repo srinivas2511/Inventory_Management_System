@@ -1,28 +1,40 @@
-# DESIGN.md — Manufacturing ERP Platform
-## Spring Configuration (v1)
+# DESIGN.md — Configurable Manufacturing ERP Platform
 
-**Version:** 1.1  **Date:** 2026-10-02  **Updated:** multi-industry platform framing added
-**Inputs:** REQUIREMENTS.md v1.1 (what), ARCHITECTURE.md v1.1 (structure)
+**Version:** 2.0  **Date:** 2026-10-02
+**Inputs:** REQUIREMENTS.md v2.0 (what), ARCHITECTURE.md v2.0 (structure)
 **Purpose:** the detailed, implementable design — schemas, domain model, algorithms, API contracts, screens, seed data and test cases. A developer should be able to build each phase from this document without further design decisions.
 
 > Document map: REQUIREMENTS = *what* · ARCHITECTURE = *how it is structured* · **DESIGN = exactly how each part works.**
 
 ## Contents
-0. Platform Configuration Design
-1. Conventions and Shared Types
-2. Detailed Database Design
-3. Domain Model
-4. Component Design (algorithms)
-5. Module Designs
-6. API Contracts
-7. Security Design Details
-8. Frontend Design
-9. Dashboards, Reports and Alerts
-10. Configuration and Settings
-11. Seed Data Design
-12. End-to-End Demonstration Workflow
-13. Test Design
+0. Platform Configuration Design [Implemented R1–R8]
+1. Conventions and Shared Types [Implemented R1–R8]
+2. Detailed Database Design — R1–R8 [Implemented R1–R8]
+3. Domain Model [Implemented R1–R8]
+4. Component Design — Algorithms [Implemented R1–R8]
+5. Module Designs — R1–R8 [Implemented R1–R8]
+6. API Contracts — R1–R8 [Implemented R1–R8]
+7. Security Design Details [Implemented R1–R8]
+8. Frontend Design [Implemented R1–R8]
+9. Dashboards, Reports and Alerts [Implemented R1–R8]
+10. Configuration and Settings [Implemented R1–R8]
+11. Seed Data Design [Implemented R1–R8]
+12. End-to-End Demonstration Workflow [Implemented R1–R8]
+13. Test Design [Implemented R1–R8]
 14. Assumptions and Open Items
+15. Finance Module Design (R9)
+16. Controlling Module Design (R10)
+17. MRP Module Design (R11)
+18. CRM Module Design (R12)
+19. HRM Module Design (R13)
+20. WMS Module Design (R14)
+21. PLM Module Design (R15)
+22. Advanced Quality Design (R16)
+23. Document Management and Notifications (R17)
+24. Advanced Manufacturing Design (R18)
+25. Analytics and Integration Design (R19)
+26. Industry Vertical Design (R20)
+27. Updated Migration Plan (R9–R20)
 
 ---
 
@@ -1391,4 +1403,960 @@ Reproducible script (also the E2E acceptance test). Quantities follow the exampl
 
 ---
 
-*End of DESIGN.md*
+## 15. Finance Module Design (R9)
+
+### 15.1 GL Account structure
+
+```sql
+CREATE TABLE gl_account_groups (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  group_code VARCHAR(10) UNIQUE NOT NULL,  -- e.g. '14', 'CURR_ASSETS'
+  name VARCHAR(100) NOT NULL,
+  account_type VARCHAR(20) NOT NULL CHECK (account_type IN ('ASSET','LIABILITY','EQUITY','REVENUE','EXPENSE','COGS')),
+  company_id BIGINT NOT NULL DEFAULT 1
+);
+
+CREATE TABLE gl_accounts (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  account_code VARCHAR(15) UNIQUE NOT NULL,  -- e.g. '1401', '2001', '4001'
+  name VARCHAR(150) NOT NULL,
+  account_group_id BIGINT NOT NULL REFERENCES gl_account_groups,
+  account_type VARCHAR(20) NOT NULL,
+  normal_balance VARCHAR(6) NOT NULL CHECK (normal_balance IN ('DEBIT','CREDIT')),
+  allow_direct_posting BOOLEAN NOT NULL DEFAULT TRUE,
+  is_reconciliation_account BOOLEAN NOT NULL DEFAULT FALSE,
+  is_tax_account BOOLEAN NOT NULL DEFAULT FALSE,
+  tax_code VARCHAR(10),
+  active BOOLEAN NOT NULL DEFAULT TRUE,
+  company_id BIGINT NOT NULL DEFAULT 1
+);
+```
+
+### 15.2 Journal entry design
+
+```sql
+CREATE TABLE fiscal_periods (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  period_name VARCHAR(20) NOT NULL,         -- 'APR-2026', 'MAY-2026'
+  fiscal_year INT NOT NULL,
+  period_number SMALLINT NOT NULL,          -- 1-12 (or 1-13 for 4-4-5)
+  start_date DATE NOT NULL,
+  end_date DATE NOT NULL,
+  status VARCHAR(10) NOT NULL DEFAULT 'OPEN' CHECK (status IN ('OPEN','CLOSING','CLOSED','LOCKED')),
+  closed_by BIGINT, closed_at TIMESTAMPTZ,
+  company_id BIGINT NOT NULL DEFAULT 1,
+  UNIQUE (company_id, fiscal_year, period_number)
+);
+
+CREATE TABLE journal_headers (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  journal_number VARCHAR(20) UNIQUE NOT NULL,
+  journal_type VARCHAR(20) NOT NULL,   -- GL, AP, AR, BANK, INVENTORY, PAYROLL
+  source_module VARCHAR(20),           -- inventory, purchase, sales, hrm, ...
+  source_document_type VARCHAR(30),    -- GOODS_RECEIPT, DISPATCH, PAYROLL_RUN, ...
+  source_document_id BIGINT,
+  posting_date DATE NOT NULL,
+  period_id BIGINT NOT NULL REFERENCES fiscal_periods,
+  description VARCHAR(300) NOT NULL,
+  currency_code CHAR(3) NOT NULL DEFAULT 'INR',
+  exchange_rate NUMERIC(12,6) NOT NULL DEFAULT 1,
+  status VARCHAR(10) NOT NULL DEFAULT 'DRAFT' CHECK (status IN ('DRAFT','SUBMITTED','APPROVED','POSTED','REVERSED')),
+  reversal_of_id BIGINT REFERENCES journal_headers,
+  prepared_by BIGINT NOT NULL,
+  approved_by BIGINT, approved_at TIMESTAMPTZ,
+  posted_by BIGINT, posted_at TIMESTAMPTZ,
+  company_id BIGINT NOT NULL DEFAULT 1
+);
+
+CREATE TABLE journal_lines (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  journal_header_id BIGINT NOT NULL REFERENCES journal_headers ON DELETE CASCADE,
+  line_number INT NOT NULL,
+  gl_account_id BIGINT NOT NULL REFERENCES gl_accounts,
+  cost_centre_id BIGINT REFERENCES cost_centres,
+  profit_centre_id BIGINT REFERENCES profit_centres,
+  debit_amount NUMERIC(18,4) NOT NULL DEFAULT 0,
+  credit_amount NUMERIC(18,4) NOT NULL DEFAULT 0,
+  description VARCHAR(200),
+  CHECK (debit_amount >= 0 AND credit_amount >= 0),
+  CHECK ((debit_amount > 0 AND credit_amount = 0) OR (credit_amount > 0 AND debit_amount = 0)),
+  UNIQUE (journal_header_id, line_number)
+);
+-- Immutability: once journal_headers.status = 'POSTED', journal_lines are append-only (trigger)
+-- Balance check: enforced by service (Dr total = Cr total) before posting
+```
+
+### 15.3 Inventory Account Assignment (auto-journal configuration)
+
+```sql
+CREATE TABLE inventory_account_assignments (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  company_id BIGINT NOT NULL DEFAULT 1,
+  transaction_type VARCHAR(25) NOT NULL,      -- matches inventory_transactions.transaction_type
+  item_type VARCHAR(10),                       -- MATERIAL or PRODUCT; NULL = both
+  valuation_class VARCHAR(20),                 -- optional material grouping (RAW_MATERIAL, FG, etc.)
+  gl_account_debit_id BIGINT NOT NULL REFERENCES gl_accounts,
+  gl_account_credit_id BIGINT NOT NULL REFERENCES gl_accounts,
+  UNIQUE (company_id, transaction_type, COALESCE(item_type,''), COALESCE(valuation_class,''))
+);
+```
+
+**Seed assignments for Spring Manufacturing vertical:**
+| Transaction Type | Dr | Cr |
+|---|---|---|
+| PURCHASE_RECEIPT | 1401 Raw Material Stock | 2401 GR/IR Clearing |
+| MATERIAL_ISSUE | 1501 WIP Stock | 1401 Raw Material Stock |
+| PRODUCTION_RECEIPT | 1410 FG Stock | 1501 WIP Stock |
+| PRODUCTION_REJECTION | 5202 Scrap Loss | 1501 WIP Stock |
+| SALES_DISPATCH (COGS) | 5001 Cost of Goods Sold | 1410 FG Stock |
+| STOCK_ADJUSTMENT+ | 1401/1410 Stock | 5203 Inventory Adjustment |
+| STOCK_ADJUSTMENT- | 5203 Inventory Adjustment | 1401/1410 Stock |
+
+### 15.4 Accounts Payable design
+
+```sql
+CREATE TABLE ap_invoices (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  invoice_number VARCHAR(25) UNIQUE NOT NULL,   -- system generated
+  supplier_invoice_no VARCHAR(40),
+  supplier_id BIGINT NOT NULL REFERENCES suppliers,
+  invoice_date DATE NOT NULL, due_date DATE NOT NULL,
+  goods_receipt_id BIGINT REFERENCES goods_receipts,   -- three-way match anchor
+  subtotal NUMERIC(18,4) NOT NULL, tax_total NUMERIC(18,4) NOT NULL DEFAULT 0,
+  total_amount NUMERIC(18,4) NOT NULL,
+  paid_amount NUMERIC(18,4) NOT NULL DEFAULT 0,
+  balance_amount NUMERIC(18,4) GENERATED ALWAYS AS (total_amount - paid_amount) STORED,
+  status VARCHAR(12) NOT NULL DEFAULT 'OPEN' CHECK (status IN ('DRAFT','OPEN','PARTIALLY_PAID','PAID','CANCELLED')),
+  currency_code CHAR(3) NOT NULL DEFAULT 'INR',
+  period_id BIGINT NOT NULL REFERENCES fiscal_periods,
+  journal_header_id BIGINT REFERENCES journal_headers,
+  company_id BIGINT NOT NULL DEFAULT 1
+);
+
+CREATE TABLE ap_payments (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  payment_reference VARCHAR(25) UNIQUE NOT NULL,
+  ap_invoice_id BIGINT NOT NULL REFERENCES ap_invoices,
+  payment_date DATE NOT NULL, amount NUMERIC(18,4) NOT NULL CHECK (amount > 0),
+  payment_method VARCHAR(20) NOT NULL,  -- BANK_TRANSFER, CHEQUE, CASH
+  bank_reference VARCHAR(60),
+  journal_header_id BIGINT REFERENCES journal_headers,
+  created_by BIGINT NOT NULL
+);
+```
+
+### 15.5 AccountingBridgeService algorithm
+
+```java
+// Listens to StockPostedEvent (published AFTER_COMMIT from InventoryPostingService)
+@TransactionalEventListener(phase = AFTER_COMMIT)
+public void onStockPosted(StockPostedEvent event) {
+    // 1. Find account assignment for (company, transactionType, itemType, valuationClass)
+    // 2. Calculate amount = |quantity| × unitCost
+    // 3. Build journal lines: Dr assignment.debitAccount, Cr assignment.creditAccount
+    // 4. Call journalService.postAutoJournal(lines, sourceRef = event.transactionId)
+    // 5. Link journal back to inventory_transaction via journal_header.source_document_id
+}
+```
+
+**Error handling:** If no account assignment found, publish a `MissingAccountAssignment` alert and log a warning. The inventory posting succeeds regardless — accounting errors must not block stock movements. The un-journalled transactions appear in a reconciliation screen for Finance Manager review.
+
+### 15.6 Period close process
+
+1. Finance Manager initiates period close: `POST /api/periods/{id}/close`
+2. System checks: no unposted auto-journals, no open AP invoices in that period (warning, not block)
+3. Period status → CLOSING (no new business transactions; Finance-only adjustments allowed with extra permission)
+4. Finance Manager runs period-end reports, posts any adjustment journals
+5. `POST /api/periods/{id}/finalize` → status CLOSED
+6. Audit record: user, action=PERIOD_CLOSE, old=OPEN, new=CLOSED, reason (mandatory)
+
+---
+
+## 16. Controlling Module Design (R10)
+
+### 16.1 Cost centre accounting
+
+```sql
+CREATE TABLE cost_centres (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  cost_centre_code VARCHAR(20) UNIQUE NOT NULL,  -- e.g. 'CC-PROD-01', 'CC-QUAL-01'
+  name VARCHAR(100) NOT NULL,
+  parent_id BIGINT REFERENCES cost_centres,      -- hierarchical
+  responsible_user_id BIGINT REFERENCES users,
+  plant_id BIGINT,
+  active BOOLEAN NOT NULL DEFAULT TRUE,
+  company_id BIGINT NOT NULL DEFAULT 1
+);
+
+CREATE TABLE profit_centres (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  profit_centre_code VARCHAR(20) UNIQUE NOT NULL,
+  name VARCHAR(100) NOT NULL,
+  active BOOLEAN NOT NULL DEFAULT TRUE,
+  company_id BIGINT NOT NULL DEFAULT 1
+);
+```
+
+### 16.2 Product costing
+
+```sql
+CREATE TABLE product_cost_estimates (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  product_id BIGINT NOT NULL REFERENCES products,
+  bom_id BIGINT NOT NULL REFERENCES bom,
+  estimated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  valid_from DATE, valid_to DATE,
+  material_cost NUMERIC(18,4) NOT NULL DEFAULT 0,
+  labour_cost NUMERIC(18,4) NOT NULL DEFAULT 0,
+  machine_cost NUMERIC(18,4) NOT NULL DEFAULT 0,
+  overhead_cost NUMERIC(18,4) NOT NULL DEFAULT 0,
+  total_standard_cost NUMERIC(18,4) NOT NULL DEFAULT 0,
+  cost_lot_size NUMERIC(18,3) NOT NULL DEFAULT 1,
+  status VARCHAR(10) NOT NULL DEFAULT 'DRAFT',   -- DRAFT, RELEASED, HISTORICAL
+  released_by BIGINT, released_at TIMESTAMPTZ
+);
+
+CREATE TABLE cost_estimate_lines (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  estimate_id BIGINT NOT NULL REFERENCES product_cost_estimates ON DELETE CASCADE,
+  cost_element VARCHAR(15) NOT NULL,  -- MATERIAL, LABOUR, MACHINE, OVERHEAD
+  item_description VARCHAR(100),
+  material_id BIGINT REFERENCES materials, operation_id BIGINT REFERENCES operations,
+  quantity NUMERIC(18,3), uom VARCHAR(10),
+  unit_rate NUMERIC(18,4), amount NUMERIC(18,4) NOT NULL
+);
+```
+
+### 16.3 Production order variance analysis
+
+**Algorithm (`ProductionOrderVarianceService.calculate(productionOrderId)`):**
+```
+Standard cost   = product_cost_estimates.total_standard_cost × actual_good_qty / cost_lot_size
+Actual cost     = Σ(material_issue_lines: quantity × unit_cost)
+                + Σ(production_operations: actual_hours × labour_rate_per_hour)
+                + overhead_applied
+
+Price variance   = Σ((actual unit cost - standard unit cost) × actual qty)  [material lines]
+Quantity variance = Σ((actual qty - standard qty for actual output) × standard unit cost)
+Total variance   = Actual cost - Standard cost (positive = unfavourable)
+
+Post variance journal:
+  If positive (unfavourable): Dr Production Variance Expense / Cr WIP
+  If negative (favourable):   Dr WIP / Cr Production Variance Income
+```
+
+---
+
+## 17. MRP Module Design (R11)
+
+### 17.1 MRP tables
+
+```sql
+CREATE TABLE mrp_runs (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  run_number VARCHAR(20) UNIQUE NOT NULL,
+  initiated_at TIMESTAMPTZ NOT NULL DEFAULT now(), completed_at TIMESTAMPTZ,
+  planning_horizon_days INT NOT NULL DEFAULT 90,
+  include_safety_stock BOOLEAN NOT NULL DEFAULT TRUE,
+  status VARCHAR(12) NOT NULL DEFAULT 'INITIATED',  -- INITIATED, RUNNING, COMPLETED, FAILED
+  initiated_by BIGINT NOT NULL, total_proposals INT, error_message VARCHAR(500)
+);
+
+CREATE TABLE mrp_proposals (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  mrp_run_id BIGINT NOT NULL REFERENCES mrp_runs,
+  proposal_type VARCHAR(12) NOT NULL CHECK (proposal_type IN ('PURCHASE','PRODUCTION')),
+  material_id BIGINT REFERENCES materials, product_id BIGINT REFERENCES products,
+  required_qty NUMERIC(18,3) NOT NULL CHECK (required_qty > 0),
+  proposed_qty NUMERIC(18,3) NOT NULL,            -- after lot sizing
+  need_date DATE NOT NULL,                         -- when the material is needed
+  proposed_order_date DATE NOT NULL,               -- when to place the order / start production
+  source_demand_type VARCHAR(20),                  -- SALES_ORDER, FORECAST, SAFETY_STOCK
+  source_demand_id BIGINT,
+  lot_size_rule VARCHAR(10),                       -- EXACT, FIXED, EOQ
+  status VARCHAR(10) NOT NULL DEFAULT 'OPEN',      -- OPEN, CONVERTED, DISCARDED
+  converted_document_type VARCHAR(10),
+  converted_document_id BIGINT, converted_by BIGINT, converted_at TIMESTAMPTZ
+);
+```
+
+### 17.2 MRP run algorithm (pseudocode)
+
+```
+MrpRunService.runMrp(horizonDays):
+
+1. DEMAND COLLECTION
+   grossRequirements = []
+   for each sales_order_item (status != CANCELLED, required_date within horizon):
+     grossRequirements.add(item.product_id, item.ordered_qty - item.dispatched_qty, item.required_date)
+   for each demand_forecast (within horizon):
+     grossRequirements.add(forecast.product_id, forecast.qty, forecast.target_date)
+
+2. FOR EACH GROSS REQUIREMENT (grouped by product, date):
+   netQty = grossQty
+           - available_stock(product, AVAILABLE)
+           - open_production_order_planned_qty(product, expected_completion <= need_date)
+   if netQty <= 0: continue
+   
+   applyLotSizing(product, netQty) -> proposedQty
+   
+   if product is manufactured (has active BOM):
+     create PRODUCTION proposal for product, proposedQty, orderDate = need_date - production_lead_time
+     explode BOM:
+       for each BOM item (material, qty):
+         add material gross requirement: proposedQty × (qty/bom.base_quantity) × (1 + scrap_pct/100)
+   else:
+     create PURCHASE proposal for material, proposedQty, orderDate = need_date - supplier.lead_time_days
+
+3. CHECK CAPACITY (rough-cut):
+   for each PRODUCTION proposal:
+     machine_hours_required = proposedQty × routing.standard_time / 60
+     if machine_hours_required > available_hours_in_week(machine, order_date): flag as CAPACITY_OVERLOAD
+
+4. SAVE proposals (OPEN status)
+5. Mark run COMPLETED
+```
+
+### 17.3 MRP proposal conversion
+
+- `POST /api/mrp/proposals/{id}/convert-to-pr` → creates `purchase_requisitions` row referencing `mrp_proposal.id`
+- `POST /api/mrp/proposals/{id}/convert-to-production-order` → creates `production_orders` row referencing `mrp_proposal.id`
+- Batch conversion: `POST /api/mrp/runs/{runId}/convert-all?type=PURCHASE` → converts all open purchase proposals in one request
+
+---
+
+## 18. CRM Module Design (R12)
+
+### 18.1 CRM tables
+
+```sql
+CREATE TABLE crm_contacts (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  customer_id BIGINT REFERENCES customers,        -- nullable until customer created
+  first_name VARCHAR(60) NOT NULL, last_name VARCHAR(60),
+  email VARCHAR(160), phone VARCHAR(20), designation VARCHAR(80), department VARCHAR(60),
+  active BOOLEAN NOT NULL DEFAULT TRUE
+);
+
+CREATE TABLE crm_leads (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  lead_number VARCHAR(20) UNIQUE NOT NULL,
+  company_name VARCHAR(150) NOT NULL, contact_id BIGINT REFERENCES crm_contacts,
+  source VARCHAR(30), status VARCHAR(15) NOT NULL DEFAULT 'NEW',
+  -- NEW, CONTACTED, QUALIFIED, UNQUALIFIED, CONVERTED
+  owner_id BIGINT NOT NULL REFERENCES users,
+  estimated_value NUMERIC(18,4), expected_close_date DATE,
+  converted_customer_id BIGINT REFERENCES customers,
+  converted_at TIMESTAMPTZ, notes TEXT
+);
+
+CREATE TABLE crm_opportunities (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  opportunity_number VARCHAR(20) UNIQUE NOT NULL,
+  lead_id BIGINT REFERENCES crm_leads, customer_id BIGINT REFERENCES customers,
+  contact_id BIGINT REFERENCES crm_contacts,
+  description VARCHAR(200) NOT NULL, stage VARCHAR(20) NOT NULL DEFAULT 'PROSPECT',
+  -- PROSPECT, QUALIFIED, PROPOSAL, NEGOTIATION, CLOSED_WON, CLOSED_LOST
+  probability_pct SMALLINT NOT NULL DEFAULT 50 CHECK (probability_pct BETWEEN 0 AND 100),
+  estimated_value NUMERIC(18,4), expected_close_date DATE,
+  owner_id BIGINT NOT NULL REFERENCES users,
+  converted_quotation_id BIGINT, won_at TIMESTAMPTZ, lost_reason VARCHAR(200)
+);
+
+CREATE TABLE crm_quotations (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  quotation_number VARCHAR(20) UNIQUE NOT NULL,
+  opportunity_id BIGINT REFERENCES crm_opportunities, customer_id BIGINT NOT NULL REFERENCES customers,
+  valid_until DATE NOT NULL, status VARCHAR(15) NOT NULL DEFAULT 'DRAFT',
+  -- DRAFT, SENT, ACCEPTED, REJECTED, EXPIRED, CONVERTED
+  total_amount NUMERIC(18,4) NOT NULL DEFAULT 0,
+  converted_sales_order_id BIGINT REFERENCES sales_orders, converted_at TIMESTAMPTZ
+);
+
+CREATE TABLE crm_quotation_items (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  quotation_id BIGINT NOT NULL REFERENCES crm_quotations ON DELETE CASCADE,
+  line_no INT NOT NULL, product_id BIGINT NOT NULL REFERENCES products,
+  quantity NUMERIC(18,3) NOT NULL CHECK (quantity > 0), unit_price NUMERIC(18,4) NOT NULL,
+  discount_pct NUMERIC(5,2) NOT NULL DEFAULT 0, line_total NUMERIC(18,4) NOT NULL,
+  UNIQUE (quotation_id, line_no)
+);
+
+CREATE TABLE crm_activities (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  activity_type VARCHAR(15) NOT NULL CHECK (activity_type IN ('CALL','EMAIL','MEETING','DEMO','FOLLOW_UP')),
+  customer_id BIGINT REFERENCES customers, contact_id BIGINT REFERENCES crm_contacts,
+  lead_id BIGINT REFERENCES crm_leads, opportunity_id BIGINT REFERENCES crm_opportunities,
+  subject VARCHAR(200) NOT NULL, notes TEXT, outcome VARCHAR(200),
+  activity_date TIMESTAMPTZ NOT NULL, duration_minutes INT,
+  owner_id BIGINT NOT NULL REFERENCES users
+);
+```
+
+### 18.2 Quotation → Sales Order conversion
+
+```java
+// CrmQuotationService.convertToSalesOrder(quotationId):
+// 1. Load quotation, validate status = ACCEPTED
+// 2. Create SalesOrder from quotation header (customer, dates, payment terms)
+// 3. Create SalesOrderItem for each CrmQuotationItem (product, qty, unit_price)
+// 4. Set quotation.status = CONVERTED, quotation.converted_sales_order_id = so.id
+// 5. Audit both records
+// 6. Return created sales order
+```
+
+---
+
+## 19. HRM Module Design (R13)
+
+### 19.1 HRM tables
+
+```sql
+CREATE TABLE employees (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  employee_code VARCHAR(20) UNIQUE NOT NULL,
+  user_id BIGINT REFERENCES users,               -- nullable (non-system employees)
+  first_name VARCHAR(60) NOT NULL, last_name VARCHAR(60) NOT NULL,
+  email VARCHAR(160), phone VARCHAR(20),
+  designation VARCHAR(80), department VARCHAR(60),
+  plant_id BIGINT, cost_centre_id BIGINT REFERENCES cost_centres,
+  date_of_joining DATE NOT NULL, employment_type VARCHAR(15) NOT NULL,  -- PERMANENT, CONTRACT, TRAINEE
+  pay_grade VARCHAR(10), basic_pay NUMERIC(18,4) NOT NULL DEFAULT 0,
+  bank_account_no VARCHAR(30), bank_ifsc VARCHAR(15),
+  pf_number VARCHAR(20), esi_number VARCHAR(20),
+  active BOOLEAN NOT NULL DEFAULT TRUE
+);
+
+CREATE TABLE employee_skill_matrix (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  employee_id BIGINT NOT NULL REFERENCES employees,
+  skill_type VARCHAR(20) NOT NULL CHECK (skill_type IN ('MACHINE','OPERATION','CERTIFICATION')),
+  machine_id BIGINT REFERENCES machines, operation_id BIGINT REFERENCES operations,
+  skill_name VARCHAR(80), certification_no VARCHAR(40),
+  proficiency_level SMALLINT CHECK (proficiency_level BETWEEN 1 AND 5),
+  certified_on DATE, expires_on DATE, active BOOLEAN NOT NULL DEFAULT TRUE
+);
+
+CREATE TABLE attendance (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  employee_id BIGINT NOT NULL REFERENCES employees,
+  attendance_date DATE NOT NULL,
+  shift VARCHAR(10),
+  check_in TIMESTAMPTZ, check_out TIMESTAMPTZ,
+  status VARCHAR(10) NOT NULL DEFAULT 'PRESENT',  -- PRESENT, ABSENT, HALF_DAY, HOLIDAY, LEAVE
+  work_hours NUMERIC(5,2) GENERATED ALWAYS AS (
+    CASE WHEN check_in IS NOT NULL AND check_out IS NOT NULL
+         THEN EXTRACT(EPOCH FROM (check_out - check_in)) / 3600
+         ELSE NULL END
+  ) STORED,
+  remarks VARCHAR(200),
+  UNIQUE (employee_id, attendance_date)
+);
+
+CREATE TABLE leave_types (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  leave_code VARCHAR(10) UNIQUE NOT NULL,  -- CL, SL, EL, LOP
+  name VARCHAR(40) NOT NULL, max_days_per_year SMALLINT, carry_forward BOOLEAN DEFAULT FALSE
+);
+
+CREATE TABLE leave_applications (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  application_number VARCHAR(20) UNIQUE NOT NULL,
+  employee_id BIGINT NOT NULL REFERENCES employees,
+  leave_type_id BIGINT NOT NULL REFERENCES leave_types,
+  from_date DATE NOT NULL, to_date DATE NOT NULL,
+  days NUMERIC(4,1) NOT NULL CHECK (days > 0),
+  reason VARCHAR(300),
+  status VARCHAR(10) NOT NULL DEFAULT 'PENDING',  -- PENDING, APPROVED, REJECTED, CANCELLED
+  approved_by BIGINT REFERENCES users, approved_at TIMESTAMPTZ
+);
+
+CREATE TABLE payroll_runs (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  run_number VARCHAR(20) UNIQUE NOT NULL,
+  period_month SMALLINT NOT NULL CHECK (period_month BETWEEN 1 AND 12),
+  period_year SMALLINT NOT NULL,
+  status VARCHAR(10) NOT NULL DEFAULT 'DRAFT',  -- DRAFT, PROCESSING, COMPLETED, PAID
+  initiated_by BIGINT NOT NULL, completed_at TIMESTAMPTZ,
+  total_employees INT, total_gross NUMERIC(18,4), total_net NUMERIC(18,4),
+  journal_header_id BIGINT REFERENCES journal_headers,
+  UNIQUE (period_year, period_month)
+);
+
+CREATE TABLE payroll_slips (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  payroll_run_id BIGINT NOT NULL REFERENCES payroll_runs,
+  employee_id BIGINT NOT NULL REFERENCES employees,
+  basic_pay NUMERIC(18,4) NOT NULL, hra NUMERIC(18,4) NOT NULL DEFAULT 0,
+  travel_allowance NUMERIC(18,4) NOT NULL DEFAULT 0, other_allowances NUMERIC(18,4) NOT NULL DEFAULT 0,
+  gross_pay NUMERIC(18,4) NOT NULL,
+  pf_employee NUMERIC(18,4) NOT NULL DEFAULT 0, pf_employer NUMERIC(18,4) NOT NULL DEFAULT 0,
+  esi_employee NUMERIC(18,4) NOT NULL DEFAULT 0, esi_employer NUMERIC(18,4) NOT NULL DEFAULT 0,
+  professional_tax NUMERIC(18,4) NOT NULL DEFAULT 0, tds NUMERIC(18,4) NOT NULL DEFAULT 0,
+  total_deductions NUMERIC(18,4) NOT NULL, net_pay NUMERIC(18,4) NOT NULL,
+  working_days NUMERIC(4,1), paid_days NUMERIC(4,1), lop_days NUMERIC(4,1),
+  UNIQUE (payroll_run_id, employee_id)
+);
+```
+
+### 19.2 Payroll calculation algorithm
+
+```
+PayrollService.calculateSlip(employee, payrollRun):
+1. Get attendance for period: working_days, paid_days, lop_days
+2. attendance_factor = paid_days / working_days (∈ [0, 1])
+3. proportional_basic = basic_pay × attendance_factor
+4. HRA = proportional_basic × hra_pct (from system_settings or pay_grade)
+5. gross_pay = proportional_basic + HRA + travel_allowance + other_allowances
+6. PF (employee) = MIN(proportional_basic, 15000) × 12%
+7. PF (employer) = same
+8. ESI (employee) = gross_pay × 0.75%  (only if gross_pay ≤ 21,000)
+9. ESI (employer) = gross_pay × 3.25%  (only if gross_pay ≤ 21,000)
+10. Professional tax = per state slab (system_settings)
+11. TDS = annual projected income tax / 12 (simplified)
+12. net_pay = gross_pay − total_deductions
+```
+
+---
+
+## 20. WMS Module Design (R14)
+
+### 20.1 WMS schema additions
+
+```sql
+CREATE TABLE warehouse_zones (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  warehouse_id BIGINT NOT NULL REFERENCES warehouses,
+  zone_code VARCHAR(10) NOT NULL, name VARCHAR(60) NOT NULL,
+  zone_type VARCHAR(15) NOT NULL,  -- BULK, PICKING, RECEIVING, DISPATCH, QC
+  UNIQUE (warehouse_id, zone_code)
+);
+
+CREATE TABLE warehouse_bins (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  zone_id BIGINT NOT NULL REFERENCES warehouse_zones,
+  bin_code VARCHAR(20) NOT NULL,   -- e.g. 'A-01-02-03' (aisle-rack-level-bin)
+  bin_type VARCHAR(15) NOT NULL,   -- STANDARD, OVERSIZED, QUARANTINE, QC
+  max_weight_kg NUMERIC(10,3), max_volume_m3 NUMERIC(10,4),
+  current_weight_kg NUMERIC(10,3) NOT NULL DEFAULT 0,
+  allowed_material_types VARCHAR(200),   -- comma-separated or NULL = any
+  active BOOLEAN NOT NULL DEFAULT TRUE,
+  UNIQUE (zone_id, bin_code)
+);
+
+CREATE TABLE bin_item_assignments (   -- fixed bin per item (optional strategy)
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  bin_id BIGINT NOT NULL REFERENCES warehouse_bins,
+  material_id BIGINT REFERENCES materials, product_id BIGINT REFERENCES products,
+  is_primary BOOLEAN NOT NULL DEFAULT TRUE,
+  UNIQUE (bin_id, COALESCE(material_id,0), COALESCE(product_id,0))
+);
+
+CREATE TABLE transfer_orders (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  to_number VARCHAR(20) UNIQUE NOT NULL,
+  warehouse_id BIGINT NOT NULL REFERENCES warehouses,
+  movement_type VARCHAR(15) NOT NULL,  -- PUTAWAY, PICKING, INTERNAL_TRANSFER, CYCLE_COUNT
+  source_document_type VARCHAR(20),    -- GOODS_RECEIPT, PRODUCTION_ORDER, SALES_ORDER
+  source_document_id BIGINT,
+  status VARCHAR(12) NOT NULL DEFAULT 'CREATED',
+  -- CREATED, IN_PROGRESS, COMPLETED, CANCELLED
+  assigned_to BIGINT REFERENCES users,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(), completed_at TIMESTAMPTZ
+);
+
+CREATE TABLE transfer_order_lines (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  transfer_order_id BIGINT NOT NULL REFERENCES transfer_orders ON DELETE CASCADE,
+  line_no INT NOT NULL,
+  item_type VARCHAR(10) NOT NULL, material_id BIGINT, product_id BIGINT, batch_id BIGINT,
+  from_bin_id BIGINT REFERENCES warehouse_bins,
+  to_bin_id BIGINT REFERENCES warehouse_bins,
+  planned_qty NUMERIC(18,3) NOT NULL CHECK (planned_qty > 0),
+  confirmed_qty NUMERIC(18,3) NOT NULL DEFAULT 0,
+  status VARCHAR(10) NOT NULL DEFAULT 'OPEN',  -- OPEN, PARTIAL, CONFIRMED
+  confirmed_at TIMESTAMPTZ, confirmed_by BIGINT,
+  UNIQUE (transfer_order_id, line_no)
+);
+```
+
+### 20.2 WMS put-away algorithm
+
+```
+PutAwayService.createPutAwayTasks(goodsReceiptId):
+1. Load GR items (material, batch, qty, to-warehouse)
+2. For each GR item:
+   a. If material has fixed bin assignment → assign to_bin = fixed_bin
+   b. Else if zone-based strategy:
+      - Query warehouse_bins WHERE zone_type = BULK AND material_type allowed
+        AND (max_weight - current_weight) >= item.qty × material.weight_per_unit
+        ORDER BY bin_code ASC (nearest first)
+      - Assign to_bin = first available bin
+   c. Create transfer_order_line (from_bin = RECEIVING zone, to_bin)
+3. Save transfer_order with movement_type = PUTAWAY
+4. Assign to available store operator
+```
+
+---
+
+## 21. PLM Module Design (R15)
+
+### 21.1 ECO tables
+
+```sql
+CREATE TABLE ecos (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  eco_number VARCHAR(20) UNIQUE NOT NULL,
+  title VARCHAR(200) NOT NULL, description TEXT,
+  change_category VARCHAR(20) NOT NULL,  -- BOM_CHANGE, ROUTING_CHANGE, SPEC_CHANGE, DRAWING_CHANGE
+  urgency VARCHAR(10) NOT NULL DEFAULT 'NORMAL',  -- CRITICAL, HIGH, NORMAL, LOW
+  effectivity_date DATE,
+  status VARCHAR(20) NOT NULL DEFAULT 'DRAFT',
+  -- DRAFT, REVIEW, APPROVED, IMPLEMENTING, IMPLEMENTED, CANCELLED
+  initiated_by BIGINT NOT NULL REFERENCES users,
+  approved_by BIGINT REFERENCES users, approved_at TIMESTAMPTZ,
+  implemented_at TIMESTAMPTZ, impact_assessment TEXT
+);
+
+CREATE TABLE eco_affected_items (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  eco_id BIGINT NOT NULL REFERENCES ecos ON DELETE CASCADE,
+  item_type VARCHAR(10) NOT NULL,  -- PRODUCT, BOM, ROUTING
+  product_id BIGINT REFERENCES products,
+  old_bom_id BIGINT REFERENCES bom, new_bom_id BIGINT REFERENCES bom,
+  change_description VARCHAR(300)
+);
+
+CREATE TABLE product_lifecycle_events (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  product_id BIGINT NOT NULL REFERENCES products,
+  from_status VARCHAR(15), to_status VARCHAR(15) NOT NULL,
+  eco_id BIGINT REFERENCES ecos,
+  changed_by BIGINT NOT NULL REFERENCES users, changed_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  reason VARCHAR(300)
+);
+```
+
+### 21.2 ECO implementation flow
+
+```
+EcoService.implement(ecoId):
+1. Validate ECO status = APPROVED
+2. For each eco_affected_item with item_type = BOM:
+   - Load current active BOM for product
+   - Create new BOM revision (Rev letter incremented: A→B, B→C, ...)
+   - Copy BOM items from old revision to new
+   - Apply changes described in eco_affected_items
+   - Submit new BOM through workflow (DRAFT → ENGINEERING_REVIEW → APPROVED → ACTIVE)
+3. Record product_lifecycle_event for each affected product
+4. Set eco.status = IMPLEMENTED, eco.implemented_at = now()
+5. Audit all changes
+```
+
+---
+
+## 22. Advanced Quality Design (R16)
+
+### 22.1 SPC (Statistical Process Control) tables
+
+```sql
+CREATE TABLE spc_control_charts (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  product_id BIGINT NOT NULL REFERENCES products,
+  parameter_name VARCHAR(60) NOT NULL,
+  chart_type VARCHAR(10) NOT NULL CHECK (chart_type IN ('XBAR_R','XBAR_S','P','NP','C','U')),
+  subgroup_size INT NOT NULL DEFAULT 5,
+  ucl NUMERIC(14,6), lcl NUMERIC(14,6), cl NUMERIC(14,6),  -- control limits
+  usl NUMERIC(14,6), lsl NUMERIC(14,6),                     -- spec limits (for Cp/Cpk)
+  active BOOLEAN NOT NULL DEFAULT TRUE
+);
+
+CREATE TABLE spc_data_points (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  control_chart_id BIGINT NOT NULL REFERENCES spc_control_charts,
+  inspection_id BIGINT REFERENCES quality_inspections,
+  subgroup_no INT NOT NULL, measurement_no INT NOT NULL,
+  measured_value NUMERIC(14,6) NOT NULL, measured_at TIMESTAMPTZ NOT NULL,
+  subgroup_mean NUMERIC(14,6), subgroup_range NUMERIC(14,6),
+  out_of_control BOOLEAN NOT NULL DEFAULT FALSE, violation_rule VARCHAR(30)
+);
+```
+
+### 22.2 Cp / Cpk calculation
+
+```
+SpcService.calculateCapability(controlChartId, periodFrom, periodTo):
+1. Load data points for period
+2. grand_mean = AVG(measured_value)
+3. process_std_dev = σ (standard deviation of all values)
+4. Cp  = (USL - LSL) / (6 × process_std_dev)
+5. Cpu = (USL - grand_mean) / (3 × process_std_dev)
+6. Cpl = (grand_mean - LSL) / (3 × process_std_dev)
+7. Cpk = MIN(Cpu, Cpl)
+Return: {Cp, Cpk, grand_mean, process_std_dev, data_count}
+```
+
+### 22.3 CAPA tables
+
+```sql
+CREATE TABLE capa_records (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  capa_number VARCHAR(20) UNIQUE NOT NULL,
+  title VARCHAR(200) NOT NULL, description TEXT,
+  source_type VARCHAR(20) NOT NULL,  -- CUSTOMER_COMPLAINT, INTERNAL_AUDIT, REJECTION_ANALYSIS, SPC_VIOLATION
+  source_id BIGINT,                  -- FK to source record
+  root_cause TEXT,
+  corrective_action TEXT, preventive_action TEXT,
+  target_completion_date DATE,
+  status VARCHAR(15) NOT NULL DEFAULT 'OPEN',
+  -- OPEN, ROOT_CAUSE_ANALYSIS, ACTION_IN_PROGRESS, VERIFICATION, CLOSED
+  assigned_to BIGINT REFERENCES users, verified_by BIGINT REFERENCES users,
+  opened_at TIMESTAMPTZ NOT NULL DEFAULT now(), closed_at TIMESTAMPTZ
+);
+
+CREATE TABLE customer_complaints (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  complaint_number VARCHAR(20) UNIQUE NOT NULL,
+  customer_id BIGINT NOT NULL REFERENCES customers,
+  product_id BIGINT REFERENCES products, fg_batch_id BIGINT REFERENCES fg_batches,
+  complaint_date DATE NOT NULL, received_by BIGINT NOT NULL REFERENCES users,
+  description TEXT NOT NULL, customer_ref VARCHAR(60),
+  quantity_complained NUMERIC(18,3), quantity_returned NUMERIC(18,3),
+  disposition VARCHAR(15),   -- REPLACEMENT, CREDIT_NOTE, REWORK, SCRAP
+  status VARCHAR(12) NOT NULL DEFAULT 'OPEN',
+  capa_id BIGINT REFERENCES capa_records,
+  closed_at TIMESTAMPTZ
+);
+```
+
+---
+
+## 23. Document Management and Notifications (R17)
+
+### 23.1 Document management schema
+
+```sql
+CREATE TABLE document_categories (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  category_code VARCHAR(20) UNIQUE NOT NULL,  -- DRAWING, SOP, CERTIFICATE, CONTRACT
+  name VARCHAR(80) NOT NULL, retention_years INT, active BOOLEAN NOT NULL DEFAULT TRUE
+);
+
+CREATE TABLE documents (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  document_number VARCHAR(30) UNIQUE NOT NULL,
+  category_id BIGINT NOT NULL REFERENCES document_categories,
+  title VARCHAR(200) NOT NULL, description VARCHAR(500),
+  version VARCHAR(10) NOT NULL DEFAULT '1.0',
+  status VARCHAR(12) NOT NULL DEFAULT 'DRAFT',  -- DRAFT, REVIEW, APPROVED, OBSOLETE
+  file_reference VARCHAR(500),   -- external storage path / URL (not file content)
+  file_size_bytes BIGINT, mime_type VARCHAR(80),
+  linked_entity_type VARCHAR(30),  -- PRODUCT, BOM, ECO, SUPPLIER, MACHINE
+  linked_entity_id BIGINT,
+  uploaded_by BIGINT NOT NULL REFERENCES users, uploaded_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  approved_by BIGINT REFERENCES users, approved_at TIMESTAMPTZ
+);
+```
+
+### 23.2 Notification engine schema
+
+```sql
+CREATE TABLE notification_templates (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  template_code VARCHAR(40) UNIQUE NOT NULL,   -- PO_APPROVED, LOW_STOCK, INSPECTION_DUE
+  channel VARCHAR(10) NOT NULL,                 -- EMAIL, IN_APP, BOTH
+  subject_template VARCHAR(200), body_template TEXT NOT NULL,  -- Mustache templates
+  active BOOLEAN NOT NULL DEFAULT TRUE
+);
+
+CREATE TABLE notification_subscriptions (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  user_id BIGINT NOT NULL REFERENCES users,
+  template_code VARCHAR(40) NOT NULL, channel VARCHAR(10) NOT NULL,
+  UNIQUE (user_id, template_code, channel)
+);
+
+CREATE TABLE notifications (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  user_id BIGINT NOT NULL REFERENCES users,
+  template_code VARCHAR(40), channel VARCHAR(10) NOT NULL,
+  subject VARCHAR(200), body TEXT NOT NULL,
+  entity_type VARCHAR(30), entity_id BIGINT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  sent_at TIMESTAMPTZ, read_at TIMESTAMPTZ,
+  status VARCHAR(10) NOT NULL DEFAULT 'PENDING'  -- PENDING, SENT, FAILED, READ
+);
+```
+
+---
+
+## 24. Advanced Manufacturing Design (R18)
+
+### 24.1 OEE calculation
+
+```
+OEE formula: Availability × Performance × Quality
+
+OeeService.calculateForMachine(machineId, fromDate, toDate):
+1. total_available_time_min = working_hours × 60 (from shift calendar)
+2. planned_downtime_min = Σ maintenance_activities.duration WHERE planned=TRUE
+3. unplanned_downtime_min = Σ production_downtime.duration WHERE category='BREAKDOWN'
+4. operating_time = total_available_time - planned_downtime - unplanned_downtime
+5. Availability = operating_time / total_available_time
+
+6. ideal_cycle_time_min = operation.standard_time_min (from routing)
+7. total_parts_run = Σ production_outputs.good_qty + rejected_qty
+8. Performance = (ideal_cycle_time × total_parts_run) / operating_time
+
+9. total_output = Σ production_outputs.good_qty
+10. total_run = total_parts_run
+11. Quality = total_output / total_run
+
+12. OEE = Availability × Performance × Quality
+```
+
+### 24.2 Spare parts inventory
+
+```sql
+CREATE TABLE spare_parts (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  spare_part_code VARCHAR(20) UNIQUE NOT NULL,
+  name VARCHAR(150) NOT NULL, description VARCHAR(300),
+  uom VARCHAR(10) NOT NULL, material_id BIGINT REFERENCES materials,
+  compatible_machine_types VARCHAR(200),
+  min_stock NUMERIC(18,3) NOT NULL DEFAULT 0, reorder_level NUMERIC(18,3) NOT NULL DEFAULT 0,
+  standard_cost NUMERIC(18,4) NOT NULL DEFAULT 0, active BOOLEAN NOT NULL DEFAULT TRUE
+);
+
+CREATE TABLE spare_part_issue_lines (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  maintenance_request_id BIGINT NOT NULL REFERENCES maintenance_requests,
+  spare_part_id BIGINT NOT NULL REFERENCES spare_parts,
+  issued_qty NUMERIC(18,3) NOT NULL CHECK (issued_qty > 0),
+  unit_cost NUMERIC(18,4),
+  issued_by BIGINT NOT NULL REFERENCES users, issued_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+```
+
+---
+
+## 25. Analytics and Integration Design (R19)
+
+### 25.1 Analytics architecture
+
+**Read-only reporting schema:** All existing materialized views (`mv_production_monthly`, `mv_inventory_value_monthly`) plus new views:
+- `mv_financial_summary_monthly` — P&L summary per period
+- `mv_supplier_performance` — delivery rate, quality pass rate, price variance per supplier per period
+- `mv_customer_sales_summary` — revenue, orders, dispatch per customer per period
+- `mv_oee_daily` — OEE per machine per day
+
+**BI query endpoint:** `GET /api/analytics/query` — accepts a pre-defined query key + parameters, returns aggregated data. External BI tools (Power BI, Metabase) query the read-only PostgreSQL views directly.
+
+### 25.2 AI services seam
+
+```java
+// AiForecastService interface (R19 implementation plugs in behind this)
+public interface DemandForecastService {
+    List<DemandForecast> forecastMaterials(Long companyId, int horizonDays);
+}
+
+// Default implementation (R11): returns empty list (human-entered forecasts only)
+// R19 implementation: calls ML model or OpenAI Assistants API
+```
+
+### 25.3 Integration webhook outbox
+
+```sql
+CREATE TABLE webhook_subscriptions (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  webhook_code VARCHAR(40) UNIQUE NOT NULL,
+  target_url VARCHAR(500) NOT NULL, secret_token_hash VARCHAR(100),
+  events VARCHAR(500) NOT NULL,  -- comma-separated event types
+  active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_by BIGINT NOT NULL
+);
+
+CREATE TABLE webhook_deliveries (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  subscription_id BIGINT NOT NULL REFERENCES webhook_subscriptions,
+  event_type VARCHAR(60) NOT NULL, payload JSONB NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  attempted_at TIMESTAMPTZ, response_status INT, response_body TEXT,
+  status VARCHAR(10) NOT NULL DEFAULT 'PENDING',   -- PENDING, DELIVERED, FAILED, RETRY
+  retry_count SMALLINT NOT NULL DEFAULT 0, next_retry_at TIMESTAMPTZ
+);
+```
+
+**Retry policy:** exponential back-off (1 min, 5 min, 15 min, 1 hr, 4 hr, 24 hr). After 6 failures, status = FAILED and admin is notified.
+
+---
+
+## 26. Industry Vertical Design (R20)
+
+### 26.1 Automotive vertical seed
+
+`R__automotive_v1_attributes.sql`:
+```sql
+INSERT INTO product_attribute_definitions (industry_type, attribute_code, label, data_type, unit, required)
+VALUES
+  ('AUTOMOTIVE', 'thread_pitch', 'Thread Pitch', 'NUMBER', 'mm', true),
+  ('AUTOMOTIVE', 'tensile_strength', 'Tensile Strength', 'NUMBER', 'MPa', true),
+  ('AUTOMOTIVE', 'hardness', 'Hardness', 'NUMBER', 'HRC', false),
+  ('AUTOMOTIVE', 'surface_roughness', 'Surface Roughness Ra', 'NUMBER', 'μm', false),
+  ('AUTOMOTIVE', 'weight_kg', 'Weight', 'NUMBER', 'kg', false);
+```
+
+`R__automotive_v1_operations.sql`:
+```sql
+INSERT INTO operations (operation_code, name, standard_time_min) VALUES
+  ('STM', 'Stamping', 2.5), ('WLD', 'Welding', 5.0), ('MCH', 'Machining', 8.0),
+  ('HT', 'Heat Treatment', 120.0), ('PLT', 'Plating', 45.0), ('INS', 'Inspection', 3.0);
+```
+
+`R__automotive_v1_rejection_reasons.sql`:
+```sql
+INSERT INTO rejection_reasons (reason_code, name, applies_to) VALUES
+  ('AUT-01', 'Dimensional Out of Tolerance', 'ALL'),
+  ('AUT-02', 'Surface Defect / Burr', 'ALL'),
+  ('AUT-03', 'Wrong Material Grade', 'INCOMING'),
+  ('AUT-04', 'Hardness Out of Range', 'INCOMING');
+```
+
+### 26.2 Furniture vertical seed
+
+Similarly: `R__furniture_v1_attributes.sql` with `leg_height`, `load_capacity_kg`, `finish_type`, `wood_grade` attributes; `R__furniture_v1_operations.sql` with Cutting, Sanding, Assembling, Painting, QC Inspection.
+
+### 26.3 Electronics vertical seed
+
+`pcb_layer_count`, `tolerance_mm`, `component_type`, `rework_type` attributes; Soldering, Reflow, Wave_Solder, Functional_Test, Burn_In operations.
+
+---
+
+## 27. Updated Migration Plan (R9–R20)
+
+| Version | Content | Release |
+|---|---|---|
+| V14 | `companies`, `plants`, `departments`; add `plant_id` column to POs, production orders, sales orders | R9 |
+| V15 | GL accounts structure: `gl_account_groups`, `gl_accounts`, `fiscal_periods` | R9 |
+| V16 | `journal_headers`, `journal_lines` + immutability trigger; `inventory_account_assignments` seed | R9 |
+| V17 | `ap_invoices`, `ap_payments`, `ar_invoices`, `ar_receipts`, `bank_statements` | R9 |
+| V18 | `budgets`, `exchange_rates`, `tax_codes`; add `cost_centre_id`, `profit_centre_id` to journal_lines | R9 |
+| V19 | `cost_centres`, `profit_centres` | R10 |
+| V20 | `product_cost_estimates`, `cost_estimate_lines`; overhead rate settings | R10 |
+| V21 | `mrp_runs`, `mrp_proposals`, `demand_forecasts`, `capacity_plans` | R11 |
+| V22 | `crm_contacts`, `crm_leads`, `crm_opportunities`, `crm_quotations`, `crm_quotation_items`, `crm_activities` | R12 |
+| V23 | `employees`, `employee_skill_matrix`, `attendance`, `leave_types`, `leave_applications` | R13 |
+| V24 | `payroll_runs`, `payroll_slips`, `training_records` | R13 |
+| V25 | `warehouse_zones`, `warehouse_bins`, `bin_item_assignments`, `transfer_orders`, `transfer_order_lines` | R14 |
+| V26 | `ecos`, `eco_affected_items`, `product_lifecycle_events` | R15 |
+| V27 | `spc_control_charts`, `spc_data_points`, `capa_records`, `customer_complaints` | R16 |
+| V28 | `document_categories`, `documents`, `notification_templates`, `notification_subscriptions`, `notifications` | R17 |
+| V29 | `spare_parts`, `spare_part_issue_lines`; `mv_oee_daily` materialized view | R18 |
+| V30 | `webhook_subscriptions`, `webhook_deliveries`; analytics views | R19 |
+| `R__automotive_v1_*.sql` | Automotive vertical seed data | R20 |
+| `R__furniture_v1_*.sql` | Furniture vertical seed data | R20 |
+| `R__electronics_v1_*.sql` | Electronics vertical seed data | R20 |
+
+---
+
+*End of DESIGN.md v2.0*

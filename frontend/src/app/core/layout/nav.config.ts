@@ -197,6 +197,47 @@ export const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
+    label: 'Finance',
+    items: [
+      {
+        label: 'Dashboard',
+        icon: 'account_balance',
+        route: '/finance/dashboard',
+        permission: 'FINANCE_REPORT',
+        enabled: true,
+      },
+      {
+        label: 'Journal Entries',
+        icon: 'receipt_long',
+        route: '/finance/journals',
+        permission: 'GL_VIEW',
+        enabled: true,
+      },
+      {
+        label: 'Fiscal Periods',
+        icon: 'calendar_today',
+        route: '/finance/periods',
+        permission: 'GL_VIEW',
+        enabled: true,
+      },
+      { label: 'Accounts Payable', icon: 'payments', route: '/finance/ap', permission: 'AP_MANAGE', enabled: true },
+      {
+        label: 'Accounts Receivable',
+        icon: 'request_quote',
+        route: '/finance/ar',
+        permission: 'AR_MANAGE',
+        enabled: true,
+      },
+      {
+        label: 'Bank Reconciliation',
+        icon: 'account_balance_wallet',
+        route: '/finance/bank',
+        permission: 'BANK_RECONCILE',
+        enabled: true,
+      },
+    ],
+  },
+  {
     label: 'Maintenance',
     items: [
       { label: 'Maintenance', icon: 'build', route: '/maintenance', permission: 'MAINTENANCE_VIEW', enabled: true },
