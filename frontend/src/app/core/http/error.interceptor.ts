@@ -1,18 +1,22 @@
 import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { catchError, throwError } from 'rxjs';
+import { AppConfigService } from '../config/app-config.service';
 import { isProblemDetail } from '../models/problem.model';
 import { ToastService } from '../notification/toast.service';
+import { isSessionCall } from './auth.interceptor';
 
 /**
- * Maps API problems to user-facing toasts. Validation errors (400) are left to forms to show next to the
- * fields; 401 handling (redirect to login) arrives with authentication in Phase 1.
+ * Maps API problems to user-facing toasts. Validation errors (400) are left to forms to show next to the fields;
+ * 401 is handled by the auth interceptor (refresh, or back to the login page); the sign-in, password and reset
+ * calls report their own errors inline, so they never toast.
  */
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const toast = inject(ToastService);
+  const apiBase = inject(AppConfigService).apiBaseUrl;
   return next(req).pipe(
     catchError((error: unknown) => {
-      if (error instanceof HttpErrorResponse) {
+      if (error instanceof HttpErrorResponse && !isSessionCall(req.url, apiBase)) {
         const problem = isProblemDetail(error.error) ? error.error : null;
         if (error.status === 0) {
           toast.error('Cannot reach the server. Check your connection and try again.');

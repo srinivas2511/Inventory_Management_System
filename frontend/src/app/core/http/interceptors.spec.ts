@@ -1,6 +1,8 @@
 import { HttpClient, HttpContext, provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { TestBed } from '@angular/core/testing';
+import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { Router } from '@angular/router';
+import { SessionStore } from '../auth/session.store';
 import { TokenStore } from '../auth/token.store';
 import { AppConfigService } from '../config/app-config.service';
 import { ToastService } from '../notification/toast.service';
@@ -105,5 +107,65 @@ describe('HTTP interceptors', () => {
 
   it('uses the configured API base for matching', () => {
     expect(TestBed.inject(AppConfigService).apiBaseUrl).toBe('/api');
+  });
+
+  describe('expired access token', () => {
+    const user = { id: 1, username: 'a', fullName: 'A', roles: [], permissions: [], primaryDashboard: 'ADMIN' };
+    const renewed = { accessToken: 'new.token.value', mustChangePassword: false, user };
+
+    function signIn(): void {
+      TestBed.inject(TokenStore).set('old.token.value');
+      TestBed.inject(SessionStore).login('a', 'b').subscribe();
+      backend.expectOne('/api/auth/login').flush({ ...renewed, accessToken: 'old.token.value' });
+    }
+
+    it('refreshes once and retries the request with the new token', () => {
+      signIn();
+      let body: unknown;
+      http.get('/api/materials').subscribe((b) => (body = b));
+      backend.expectOne('/api/materials').flush({}, { status: 401, statusText: 'Unauthorized' });
+      backend.expectOne('/api/auth/refresh').flush(renewed);
+      const retry = backend.expectOne('/api/materials');
+      expect(retry.request.headers.get('Authorization')).toBe('Bearer new.token.value');
+      retry.flush({ ok: true });
+      expect(body).toEqual({ ok: true });
+    });
+
+    it('shares one refresh between parallel failures', () => {
+      signIn();
+      http.get('/api/a').subscribe();
+      http.get('/api/b').subscribe();
+      backend.expectOne('/api/a').flush({}, { status: 401, statusText: 'Unauthorized' });
+      backend.expectOne('/api/b').flush({}, { status: 401, statusText: 'Unauthorized' });
+      backend.expectOne('/api/auth/refresh').flush(renewed);
+      backend.expectOne('/api/a').flush({});
+      backend.expectOne('/api/b').flush({});
+    });
+
+    it('clears the session and goes to login when the refresh fails', fakeAsync(() => {
+      signIn();
+      const router = TestBed.inject(Router);
+      const navigate = spyOn(router, 'navigate').and.resolveTo(true);
+      let failed = false;
+      http.get('/api/materials').subscribe({ error: () => (failed = true) });
+      backend.expectOne('/api/materials').flush({}, { status: 401, statusText: 'Unauthorized' });
+      backend
+        .expectOne('/api/auth/refresh')
+        .flush({ code: 'UNAUTHENTICATED', status: 401 }, { status: 401, statusText: 'Unauthorized' });
+      tick();
+      expect(failed).toBeTrue();
+      expect(TestBed.inject(SessionStore).isAuthenticated()).toBeFalse();
+      expect(navigate).toHaveBeenCalled();
+      expect(toast.info).toHaveBeenCalledTimes(1);
+    }));
+
+    it('does not try to refresh a failed login', () => {
+      signIn();
+      http.post('/api/auth/login', {}).subscribe({ error: () => undefined });
+      backend
+        .expectOne('/api/auth/login')
+        .flush({ code: 'BAD_CREDENTIALS', status: 401 }, { status: 401, statusText: 'Unauthorized' });
+      expect(toast.error).not.toHaveBeenCalled();
+    });
   });
 });

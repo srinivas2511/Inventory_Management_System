@@ -4,6 +4,7 @@ import { provideRouter, withComponentInputBinding } from '@angular/router';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 
 import { routes } from './app.routes';
+import { SessionStore } from './core/auth/session.store';
 import { AppConfigService } from './core/config/app-config.service';
 import { authInterceptor } from './core/http/auth.interceptor';
 import { errorInterceptor } from './core/http/error.interceptor';
@@ -24,7 +25,12 @@ export const appConfig: ApplicationConfig = {
       multi: true,
       useFactory: () => {
         const config = inject(AppConfigService);
-        return () => config.load();
+        const session = inject(SessionStore);
+        // Load the runtime config, then resume a session from the refresh cookie, before any route is evaluated.
+        return async () => {
+          await config.load();
+          await session.restore();
+        };
       },
     },
   ],

@@ -1047,7 +1047,7 @@ Supplier ▸ PO ▸ RM batch ▸ Material issue ▸ Production order ▸ Operati
 | `KpiCard`, `TrendChart`, `BarChart`, `DonutChart`, `AlertList` | dashboard widgets |
 | `DocumentTimeline` | shows state transitions from audit log for a document |
 | `ExportMenu` | Excel / PDF / CSV buttons calling `/api/reports/{code}?format=` |
-| `HasPermissionDirective` | `*hasPermission="'CODE'"` or `any`/`all` modes |
+| `HasPermissionDirective` | `*appHasPermission="'CODE'"` or `any`/`all` modes |
 
 ### 8.5 State and services
 - Per-feature `*Api` services (typed, `HttpClient`), per-feature signal stores for lists and the current document; global `SessionStore` (user, permissions, settings), `AlertStore` (polling every 60 s, pauses when tab hidden).
@@ -1310,7 +1310,7 @@ Reproducible script (also the E2E acceptance test). Quantities follow the exampl
 ### 13.3 Frontend tests
 | Area | Cases |
 |---|---|
-| Directive/guard | `*hasPermission` hides control; route guard redirects with message |
+| Directive/guard | `*appHasPermission` hides control; route guard redirects with message |
 | Forms | quantity validators, limits ordering, `good+rejected+scrap ≤ remaining`, GST format, dynamic spec form per spring type |
 | Interceptors | token refresh queue; ProblemDetail → field errors; idempotency header on marked calls |
 | Components | DataTable pagination/sort events, StatusBadge mapping, operator keypad |

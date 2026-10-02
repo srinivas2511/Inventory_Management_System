@@ -135,3 +135,16 @@ Choices made where DESIGN/ARCHITECTURE left room; change by editing the setting 
 | Who | only `ENGINEER` holds `PRODUCT_CREATE`/`PRODUCT_UPDATE`; Admin can view but not edit products (ARCHITECTURE §10.3) |
 | Frontend note (task 1.11) | the product form needs a customer dropdown, but Engineers hold neither `CUSTOMER_MANAGE` nor `SALES_VIEW`, so `GET /api/customers` is 403 for them. Decide in 1.11: grant Engineers `SALES_VIEW`, or add a lookup endpoint for active customers |
 | Lists | products load material and customer in the list query; the summary omits the specifications |
+
+## Phase 1 — frontend core decisions (task 1.10)
+| Point | Behaviour |
+|---|---|
+| Directive name | `*appHasPermission` (the lint rule requires the `app` prefix) instead of DESIGN's `*hasPermission`; DESIGN §8.4 updated. Modes `any` (default) and `all` |
+| Token refresh | reactive only: a 401 on a non-session call triggers one shared refresh and a retry; if it fails the user is sent to `/login?returnUrl=…` with one "session ended" toast. No proactive timer and no idle-timeout warning (the 7-day refresh cookie is absolute; add a warning later if wanted) |
+| Session start | `APP_INITIALIZER` loads config, then tries the refresh cookie, so a page reload keeps the user signed in; the access token itself is memory-only |
+| Forced password change | a second step on the login page (the server issues no session until the password is changed); username and current password are kept in memory only for that step |
+| Return URL | only same-site paths are followed (`/x`, never `//x`); default `/dashboard` |
+| Route guards | `authGuard`, `guestGuard`, `permissionGuard` (route `data.permission`, optional `permissionMode`); denied users land on `/forbidden`. UX only, the API still answers 403 |
+| Menu | an item shows when enabled and the user holds its permission; groups with no visible items vanish. Users needs `USER_VIEW`, Roles needs `ROLE_MANAGE` |
+| Admin screens | plain `mat-table` with server-side paging, sort and debounced search. The reusable `DataTable`, `FilterBar` and `StatusBadge` arrive in task 1.11 and these screens can adopt them then |
+| Verification | lint, format, 55 unit tests and the production build pass. The stack was not run in a browser in this session |
