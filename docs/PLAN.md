@@ -182,6 +182,17 @@ gantt
 
 **Exit gate M1:** §3.4 + the acceptance criteria above.
 
+### 5.1 Phase 1 retrospective (gate item 8)
+| Topic | Finding |
+|---|---|
+| Velocity | not measured: the work was done in assistant sessions and elapsed time was not recorded, so the ±25% estimates are **not re-baselined**. The product owner should note calendar time from the first Phase 1 commit to the M1 demo and re-baseline Phases 2–8 from that |
+| Scope added beyond the task list | `GET /api/lookups/customers` (so Engineers can pick a customer without customer read access) and `allowedActions` on product list rows (DESIGN §6.4); a deactivation override (`force=true`) for materials in use; the `MaterialUsageCheck` hook that Phases 2, 3 and 4 must implement; URL-bound list state. All recorded in `docs/decisions.md` |
+| Left for later phases | audit-log viewer and system-settings screens (REQUIREMENTS §11 lists them under Administration; the API exists since 1.6/1.7 and 7.9 covers settings, but **no task builds the audit-log screen**: add one), demo master data (8.3), the audit export endpoint, `customer_product_specs` |
+| R5 authorization gaps | mitigations are now in place and green: the ArchUnit rule, the generated role × endpoint matrix and per-module security ITs (including Management read-only and Operator 403 on `PUT /api/products/{id}`). Keep regenerating it each phase |
+| R7 attribute model | the JSONB catalogue held for all seven types. **Still open:** the Conical and Wire-form attribute sets were assumed (REQUIREMENTS lists none), and the plan's mitigation was a review with Engineering before Phase 1 ends |
+| New risk R15 | frontend verification is unit tests only (no Playwright until 8.3), so screen behaviour against the real API is untested until then. Mitigation: run the stack for the M1 demo and add smoke tests earlier if defects appear |
+| New risk R16 | the integration tests ran against a local PostgreSQL in the assistant environment; CI must run them with Testcontainers to count for gate item 3 |
+
 ---
 
 ## 6. Phase 2 — Warehouses and Inventory Core (32 pd)

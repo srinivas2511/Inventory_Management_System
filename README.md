@@ -89,7 +89,19 @@ docs/       requirements, architecture, design, plan, decisions, ADRs
 ```
 
 ## Sample login credentials
-None yet — authentication and demo users arrive in Phase 1 and Phase 8. Demo users will load only under the `dev`/`demo` profile.
+Demo users are created **only** under the `dev`/`demo` profile (the dev compose override and `mvn spring-boot:run -Dspring-boot.run.profiles=dev` both use it); the app refuses to load them under `prod`. Every demo user has the password `Demo@123456!` and must choose a new one at first sign-in (minimum 12 characters).
+
+| Username | Role | Username | Role |
+|---|---|---|---|
+| `admin` | Admin | `purchase1` | Purchase manager |
+| `engineer1` | Engineer | `sales1` | Sales |
+| `prodmgr1` | Production manager | `dispatch1` | Dispatch |
+| `supervisor1` | Supervisor | `maint1` | Maintenance |
+| `operator1`, `operator2` | Operator | `storeop1` | Store operator |
+| `quality1` | Quality manager | `mgmt1` | Management (read-only) |
+| `storemgr1` | Store manager | | |
+
+Five wrong passwords lock an account for 15 minutes. In any other environment the first Admin is created from `BOOTSTRAP_ADMIN_*` (see `docker/.env.example`) when the users table is empty. Sample master data (materials, products, suppliers, customers) is not loaded yet; it arrives with the demo data loader in Phase 8, so until then add records through the Master Data screens.
 
 ## Working on this project
 See [CONTRIBUTING.md](CONTRIBUTING.md) and [CLAUDE.md](CLAUDE.md).
