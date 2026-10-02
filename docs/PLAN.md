@@ -1,10 +1,13 @@
-# PLAN.md — Spring Manufacturing Inventory Management System
+# PLAN.md — Manufacturing ERP Platform
+## Spring Configuration (v1) — Execution Plan
 
-**Version:** 1.0  **Date:** 2026-10-01
-**Inputs:** REQUIREMENTS.md (what) · ARCHITECTURE.md (structure) · DESIGN.md (detail)
+**Version:** 1.1  **Date:** 2026-10-02  **Updated:** multi-industry platform framing added
+**Inputs:** REQUIREMENTS.md v1.1 (what) · ARCHITECTURE.md v1.1 (structure) · DESIGN.md v1.1 (detail)
 **Purpose:** the execution plan — phases, tasks, estimates, dependencies, quality gates, risks and the order of work. Each task points to the exact section of DESIGN.md / ARCHITECTURE.md it implements, so it can be handed to a developer or to an AI coding session without further design work.
 
 > Document map: REQUIREMENTS = *what* · ARCHITECTURE = *structure* · DESIGN = *detail* · **PLAN = *order, effort and gates*.**
+>
+> **Platform note:** Phases 0–8 deliver the Spring Manufacturing (v1) configuration of the platform. The universal Core ERP, Manufacturing and Common Services layers are built once and reused by all future industry verticals. A Phase 9+ would add a new industry vertical (Automotive, Furniture, Electronics) solely through seed data migrations.
 
 ## Contents
 1. Planning Basis and Assumptions
@@ -34,7 +37,7 @@
 
 | Item | Assumption |
 |---|---|
-| Scope | Everything in REQUIREMENTS.md, delivered in the seven phases it prescribes, plus a Phase 0 (foundations) and Phase 8 (hardening/release) |
+| Scope | Everything in REQUIREMENTS.md v1.1, delivered in the seven phases it prescribes, plus a Phase 0 (foundations) and Phase 8 (hardening/release). Phases 0–8 build the Spring Manufacturing (v1) vertical of the Manufacturing ERP Platform; the universal layers (Core ERP, Manufacturing, Common Services) are the primary deliverable — the Spring configuration is seed data on top. |
 | Order | **Each phase is finished completely (backend + migration + Angular + tests + seed + docs) before the next starts.** No placeholders or TODOs carried forward. Work *inside* a phase can be parallel (backend / frontend / tests). |
 | Team (reference) | 3 developers (2 backend-leaning, 1 frontend-leaning, all comfortable across the stack), part-time QA and DevOps support, product owner available for decisions and UAT |
 | Effort unit | person-days (pd). Estimates include unit/integration tests, code review and documentation for the task |
@@ -355,6 +358,24 @@ gantt
 
 ---
 
+## 11.5 Phase 9+ — Additional Industry Verticals (future)
+
+These phases are not planned in detail here; they are noted to confirm that the platform architecture explicitly supports them. Each vertical is a seed-data project, not a code project.
+
+| Future vertical | New seed data required | Estimated effort |
+|---|---|---|
+| **Automotive** (fasteners, stampings) | Product attributes (thread pitch, hardness, tensile strength), material types (steel rod, rubber), operations (Stamping, Welding, Painting), inspection plans, rejection reasons | 3–5 pd (data + migration + UI attribute definitions) |
+| **Furniture** (upholstered / wooden) | Product attributes (leg height, load capacity, finish), operations (Cutting, Assembly, Finishing), inspection parameters | 3–5 pd |
+| **Electronics** (PCBs, components) | Product attributes (resistance, voltage, frequency), material types, inspection parameters (AOI, ICT) | 4–6 pd |
+
+**What is NOT needed for a new vertical:** no code changes to Core ERP, Manufacturing or Common Services; no schema migrations (only seed data); no Angular code changes (forms render from `attribute_definitions` dynamically).
+
+**What is needed:** one Flyway seed migration per vertical, Admin-screen review of attribute definitions, routing templates and inspection plans, and UAT with industry users.
+
+See ARCHITECTURE §0.2 and DESIGN §0.5 for implementation details.
+
+---
+
 ## 12. Phase 8 — Hardening and Release (15.5 pd)
 
 **Goal:** make the system trustworthy: performance, security, documentation, acceptance by users.
@@ -442,6 +463,7 @@ Each is carried from DESIGN §14; a default is stated so work is never stalled, 
 | R12 | Festival/holiday and leave reduce capacity | High | Low | calendar check at Phase 0; schedule slack ~20% | Project lead |
 | R13 | Dependency vulnerabilities / supply-chain issues | Med | Med | OWASP and `npm audit` in CI, pinned versions, scheduled updates | DevOps |
 | R14 | Seed/demo data diverges from real rules | Low | Low | seed only through services; demo workflow is a CI test | QA |
+| R15 | Platform architecture drift — code begins encoding industry-specific logic | Low | High | architecture reviews check that operations/material types/attributes stay as data rows; ArchUnit rule can be added to assert no Spring-type enum values in business services; DESIGN §0 is the reference | Architect |
 
 ---
 
@@ -469,6 +491,7 @@ Per-phase burn-down: planned vs actual pd tracked at each exit gate; if a phase 
 
 | REQUIREMENTS section | Phase(s) |
 |---|---|
+| §0 Platform architecture (multi-industry framing) | 0 (foundations/conventions), throughout all phases (universal layers built incrementally); Phase 9+ (additional verticals via seed data) |
 | §3 Roles/RBAC, 403 rule | 1 (model, plumbing), extended in every phase; audited in 8 |
 | §4 Master data (materials, products/specs, suppliers, customers) | 1 |
 | §4 Operations, warehouses, machines, rejection reasons | 1 (reference), 2 (warehouses), 4 (operations/machines) |
@@ -501,6 +524,8 @@ Per-phase burn-down: planned vs actual pd tracked at each exit gate; if a phase 
 ## 18. Building with Claude Code (AI-assisted protocol)
 
 Use this when tasks are executed by an AI coding session in the repository (`C:\Users\ADMIN\Inventory_Management_System`). Keep REQUIREMENTS.md, ARCHITECTURE.md, DESIGN.md and PLAN.md in `/docs` (and add a short `CLAUDE.md` pointing to them and to the rules below) so every session starts with the same context.
+
+**Platform context:** all four docs now carry multi-industry ERP platform framing (v1.1). When implementing tasks, remember: the universal layers (Core ERP / Manufacturing / Common Services) are code; spring-specific content (attribute definitions, operations, material types, inspection plans) is seed data that could be replaced for another vertical without changing any Java or Angular source.
 
 ### 18.1 Rules to put in `CLAUDE.md`
 1. Read the DESIGN/ARCHITECTURE sections referenced by the task before writing code.

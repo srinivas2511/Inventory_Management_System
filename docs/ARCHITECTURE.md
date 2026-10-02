@@ -1,10 +1,12 @@
-# ARCHITECTURE.md — Spring Manufacturing Inventory Management System
+# ARCHITECTURE.md — Manufacturing ERP Platform
+## Spring Configuration (v1)
 
-**Version:** 1.0  **Date:** 2026-10-01  **Derived from:** REQUIREMENTS.md v1.0
+**Version:** 1.1  **Date:** 2026-10-02  **Derived from:** REQUIREMENTS.md v1.1
 
 ---
 
 ## Table of Contents
+0. Platform Architecture Overview
 1. Architectural Goals and Principles
 2. System Context
 3. Architecture Style and Layering
@@ -26,6 +28,84 @@
 19. Implementation Phasing
 20. Architecture Decision Records
 21. Requirements Traceability Matrix
+
+---
+
+## 0. Platform Architecture Overview
+
+This system is a **Manufacturing ERP Platform**. Three universal layers are identical regardless of the industry vertical deployed. The Industry Configuration layer is the only part that changes between Spring Manufacturing, Automotive, Furniture, Electronics, and any future vertical.
+
+```mermaid
+flowchart TB
+    subgraph Config["Industry Configuration Layer (data — no code change per vertical)"]
+        direction LR
+        Spr["Springs\n(v1 — deployed)"]
+        Aut["Automotive\n(future)"]
+        Fur["Furniture\n(future)"]
+        Ele["Electronics\n(future)"]
+    end
+    subgraph Core["Core ERP"]
+        direction LR
+        Inv["Inventory\nledger + balances + batches"]
+        Pur["Purchase\nPO · GR"]
+        Sal["Sales\nSO · Dispatch"]
+        WH["Warehouses\n+ Locations"]
+        MD["Master Data\nMaterials · Products · Suppliers · Customers"]
+    end
+    subgraph Mfg["Manufacturing"]
+        direction LR
+        BOM["BOM + Routing"]
+        Prod["Production\nOrders · Issue · WIP · Output"]
+        Qual["Quality\nInspections · Rejections · FG Release"]
+        MRP["MRP-ready\n(seam)"]
+    end
+    subgraph Svc["Common Services"]
+        direction LR
+        IAM["IAM\nUsers · Roles · Permissions"]
+        Aud["Audit\nAppend-only log"]
+        Wf["Workflow\nApprovals · State machines"]
+        Rep["Reports\nDashboards · Exports · Alerts"]
+    end
+    Config -->|"product attributes\noperations · materials\ninspection plans\nrejection reasons\nBOM/routing templates"| Core
+    Config --> Mfg
+    Core --- Mfg
+    Core --- Svc
+    Mfg --- Svc
+```
+
+### 0.1 What makes each layer universal
+
+| Layer | Why it never changes per industry |
+|---|---|
+| **Core ERP** | Inventory is always a ledger + balance projection; purchase and sales follow the same document workflow; warehouses and master data are generic entities |
+| **Manufacturing** | BOM, routing, production orders, WIP and quality inspections are the same concepts regardless of what is manufactured |
+| **Common Services** | IAM, audit, approvals, numbering, reports and notifications have no industry-specific logic |
+
+### 0.2 What the Industry Configuration layer contains
+
+All configuration is **data**, loaded via Flyway seed migrations and manageable through Admin screens:
+
+| Artefact | Mechanism | Spring v1 example | New vertical example |
+|---|---|---|---|
+| Product attribute definitions | `spring_attribute_definitions` / `product_attribute_definitions` metadata rows + JSONB | `wire_diameter`, `spring_rate`, `end_type` | Automotive: `thread_pitch`, `tensile_strength`; Furniture: `leg_height`, `load_capacity` |
+| Material types | `materials.material_type` enum values (configurable) | SPRING_STEEL, MUSIC_WIRE | Automotive: STEEL_ROD, RUBBER; Furniture: TIMBER, FABRIC |
+| Standard operations | `operations` seed rows | Wire Drawing, Coiling, Grinding, Heat Treatment | Automotive: Stamping, Welding; Furniture: Cutting, Assembly |
+| Inspection parameters | `inspection_plan_parameters` data rows | Diameter ± 0.03 mm, spring rate limits | Automotive: torque spec, hardness; Electronics: resistance tolerance |
+| Rejection reasons | `rejection_reasons` seed rows | Coiling defect, Surface defect | Automotive: Burr, Wrong pitch |
+| BOM / routing templates | Demo seed through services | 0.045 kg wire/pc, 9-operation routing | Industry-specific material and routing templates |
+| Document number prefixes | `system_settings` or `number_sequences` prefixes | PUR-, GR-, QI- | Same or customised per company |
+
+### 0.3 Extensibility seams already in place
+
+The codebase was designed from the start for multi-industry use:
+- `product_attributes JSONB` (`spring_specifications`) — type-specific fields without schema changes
+- `spring_attribute_definitions` — metadata catalogue drives backend validation **and** Angular form rendering dynamically
+- `inspection_plan_parameters` — quality parameters per material/product are configuration rows, not code
+- `materials.material_type` stored as `VARCHAR` with no hardcoded enum in the domain
+- `company_id` on every aggregate root table (see ADR-15)
+- Spring events + notification outbox seam for IoT/ERP integrations (see ADR-14)
+
+Adding a new industry vertical is a **data change** (a Flyway migration with seed rows), not a code change. This is recorded in ADR-15.
 
 ---
 
@@ -1125,6 +1205,7 @@ Phase 4 pulls in machines and maintenance-lite (machine master, downtime recordi
 | 12 | **Flyway + Testcontainers PostgreSQL** | Test the same engine, constraints and partial indexes used in production | H2 in-memory (divergent behaviour) |
 | 13 | **Order-level traceability by default, batch-level optional** | Meets the stated trace questions with low overhead; precision available where needed | Always batch-level (heavy data capture on the shop floor) |
 | 14 | **Spring events now, outbox later** | Simplicity today with a defined path to IoT/ERP integration | Message broker from day one (over-engineering) |
+| 15 | **Multi-industry through configuration data, not code branching** | Product attributes (JSONB + metadata catalogue), operations, materials, inspection plans and rejection reasons are all data rows; adding a new industry vertical is a seed migration, not a code change; `company_id` on every aggregate root and a tenant-resolver stub make multi-company straightforward | Per-industry code branches (brittle, hard to maintain); separate deployments per industry (loses shared platform value); forcing all industries into a single rigid schema (not extensible) |
 
 ---
 
@@ -1132,6 +1213,7 @@ Phase 4 pulls in machines and maintenance-lite (machine master, downtime recordi
 
 | REQUIREMENTS section | Realised by (ARCHITECTURE section) |
 |---|---|
+| §0 Platform architecture | §0, ADR-15 |
 | §1 Purpose / lifecycle | §2, §3, §7 |
 | §2 Tech stack, layering, DTOs | §3, §4.3, §12.3 |
 | §3 Roles / RBAC / 403 | §10.2, §10.3, §17 (403 matrix) |

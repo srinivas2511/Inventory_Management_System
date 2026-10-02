@@ -1,12 +1,14 @@
-# DESIGN.md — Spring Manufacturing Inventory Management System
+# DESIGN.md — Manufacturing ERP Platform
+## Spring Configuration (v1)
 
-**Version:** 1.0  **Date:** 2026-10-01
-**Inputs:** REQUIREMENTS.md v1.0 (what), ARCHITECTURE.md v1.0 (structure)
+**Version:** 1.1  **Date:** 2026-10-02  **Updated:** multi-industry platform framing added
+**Inputs:** REQUIREMENTS.md v1.1 (what), ARCHITECTURE.md v1.1 (structure)
 **Purpose:** the detailed, implementable design — schemas, domain model, algorithms, API contracts, screens, seed data and test cases. A developer should be able to build each phase from this document without further design decisions.
 
 > Document map: REQUIREMENTS = *what* · ARCHITECTURE = *how it is structured* · **DESIGN = exactly how each part works.**
 
 ## Contents
+0. Platform Configuration Design
 1. Conventions and Shared Types
 2. Detailed Database Design
 3. Domain Model
@@ -21,6 +23,90 @@
 12. End-to-End Demonstration Workflow
 13. Test Design
 14. Assumptions and Open Items
+
+---
+
+## 0. Platform Configuration Design
+
+This section describes how the Industry Configuration layer (ARCHITECTURE §0) is implemented at the database and service level. All Spring-specific content below is the Spring Manufacturing vertical's configuration — it is data, not structural code.
+
+### 0.1 Product attribute model (schema-less extensibility)
+
+```
+products                                spring_attribute_definitions
+ id                                      id
+ product_code                            spring_type / industry_type  ← configurable
+ spring_type     ← industry-specific     attribute_code
+ wire_diameter   ← common searched       label
+ outer_diameter  ← common searched       data_type (NUMBER/TEXT/ENUM/BOOLEAN)
+ ...                                     unit, required, min_value, max_value
+ status                                  enum_values (JSONB)
+                                         display_order
+spring_specifications
+ product_id PK FK
+ attributes JSONB     ← type-specific values (GIN indexed)
+```
+
+- **Common, frequently queried fields** (wire diameter, outer diameter, free length, spring type) are real indexed columns on `products`.
+- **Industry- and type-specific fields** (hook type, torque, body diameter; or automotive thread pitch, hardness) live in `spring_specifications.attributes` (JSONB).
+- `spring_attribute_definitions` is the **metadata catalogue** that drives backend validation AND Angular form rendering. Adding a new product type (Belleville, Automotive, Custom) is a data migration — no code change.
+
+### 0.2 Inspection parameters (data-driven quality)
+
+```
+inspection_plans                         inspection_plan_parameters
+ id                                       id
+ plan_code                                plan_id FK
+ inspection_type   INCOMING/IN_PROCESS    seq
+                   /FINAL                 parameter_name   ← industry-configured
+ product_id FK                            specification
+ material_id FK                           nominal / lower_limit / upper_limit
+ active                                   unit
+                                          is_attribute
+                                          mandatory
+```
+
+Inspection parameters are rows, not enums. A Spring INCOMING plan contains "wire diameter ± 0.03 mm, tensile strength ≥ 1800 MPa"; an Automotive plan contains "thread pitch, surface roughness". Adding a new quality parameter is an Admin-screen action, not a deployment.
+
+### 0.3 Operations and material types (seed-configurable)
+
+```sql
+-- Spring manufacturing operations (seed data — not hard-coded)
+INSERT INTO operations (operation_code, name, ...) VALUES
+  ('WD',  'Wire Drawing',      ...),
+  ('COI', 'Coiling',           ...),
+  ('GRD', 'Grinding',          ...),
+  ('HT',  'Heat Treatment',    ...),
+  ('SP',  'Shot Peening',      ...),
+  ('ST',  'Surface Treatment', ...),
+  ('INS', 'Inspection',        ...),
+  ('PKG', 'Packaging',         ...);
+
+-- An Automotive vertical seed would instead contain:
+-- ('STM', 'Stamping', ...), ('WLD', 'Welding', ...), ...
+```
+
+### 0.4 Multi-company / multi-tenant hooks
+
+Every aggregate-root table carries `company_id BIGINT NOT NULL DEFAULT 1`. A `TenantResolver` stub is wired into the security layer. This allows:
+- Running the same deployment for multiple manufacturing units/plants (Phase 9+).
+- Scoping all queries to a single company without a schema redesign.
+- Deploying a single platform instance serving Spring + Automotive verticals simultaneously, with `company_id` distinguishing them.
+
+### 0.5 Industry bootstrap migration pattern
+
+Each industry vertical is packaged as a set of seed files:
+
+```
+db/seed/
+  R__spring_v1_attribute_definitions.sql   -- product attributes for 7 spring types
+  R__spring_v1_operations.sql              -- Wire Drawing, Coiling, ...
+  R__spring_v1_rejection_reasons.sql       -- Coiling defect, Surface defect, ...
+  R__spring_v1_inspection_plans.sql        -- INCOMING plan with wire params
+  (future) R__automotive_v1_*.sql
+```
+
+`R__` prefix = repeatable migration (Flyway re-runs on checksum change). The application code never needs to know which vertical is deployed — it reads from these tables at runtime.
 
 ---
 

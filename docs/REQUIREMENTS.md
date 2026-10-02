@@ -1,8 +1,45 @@
-# Inventory Management System — Spring Manufacturing Company
-## REQUIREMENTS.md
+# Manufacturing ERP Platform — Requirements
+## Spring Configuration (v1)
 
-**Version:** 1.0  **Date:** 2026-10-01
+**Version:** 1.1  **Date:** 2026-10-02  **Updated:** multi-industry platform framing added
 **Sources:** Attachment 1 (system specification), Attachment 2 (RBAC specification)
+
+---
+
+## 0. Platform Architecture
+
+This system is a **Manufacturing ERP Platform** designed to be deployed across multiple industries by changing only the Industry Configuration layer. Three universal layers are identical regardless of the industry vertical:
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│                  INDUSTRY CONFIGURATION LAYER                    │
+│  Springs (v1)  │  Automotive  │  Furniture  │  Electronics  │ … │
+└──────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────┐
+│                    UNIVERSAL PLATFORM LAYERS                     │
+│  Core ERP: Inventory · Purchase · Sales · Warehouses · Master   │
+│  Manufacturing: BOM · Production · WIP · Quality · MRP-ready    │
+│  Common Services: IAM · Audit · Workflow · Reports · Alerts      │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+**Universal layers** (code — unchanged per industry):
+- **Core ERP** — inventory ledger, purchase orders, goods receipts, sales orders, warehouses, materials, suppliers, customers
+- **Manufacturing** — BOM, production orders, material issue, operations/routing, WIP, quality inspections, FG batches
+- **Common Services** — IAM (users/roles/permissions), audit trail, approval workflow, document numbering, reports, notifications, system settings
+
+**Industry Configuration layer** (data only — the only thing that changes per vertical):
+| Configuration artefact | Spring (v1) example | Generic mechanism |
+|---|---|---|
+| Product attribute model | Wire diameter, outer Ø, spring rate, end type… | `product_attributes JSONB` + `attribute_definitions` metadata catalogue |
+| Material types | SPRING_STEEL, HIGH_CARBON, MUSIC_WIRE… | seed rows in `materials.material_type` |
+| Standard operations | Wire Drawing, Coiling, Grinding, Heat Treatment… | seed rows in `operations` |
+| Inspection parameters | Diameter tolerance, load, free length… | `inspection_plan_parameters` (data rows) |
+| Rejection reasons | Coiling defect, Surface defect… | seed rows in `rejection_reasons` |
+| BOM / routing templates | 0.045 kg wire/pc, 9 operations | seed data through services |
+| Reference data | Spring types, attribute definitions | Flyway seed migration |
+
+The Spring Manufacturing configuration (v1) is the **first deployed vertical**. Deploying "Automotive" would mean a new seed migration with automotive product attributes, material types, operations and inspection parameters — no code change. See ARCHITECTURE §0 and DESIGN §0 for implementation details.
 
 ---
 
