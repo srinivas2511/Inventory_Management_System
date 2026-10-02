@@ -14,8 +14,15 @@ import { ProductApi, ProductDto, SpringAttributeDefinitionDto, SpringType } from
   selector: 'app-product-form',
   standalone: true,
   imports: [
-    ReactiveFormsModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatSelectModule,
-    MatButtonModule, MatProgressSpinnerModule, MatDividerModule, DynamicSpecFormComponent,
+    ReactiveFormsModule,
+    MatDialogModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+    MatButtonModule,
+    MatProgressSpinnerModule,
+    MatDividerModule,
+    DynamicSpecFormComponent,
   ],
   template: `
     <h2 mat-dialog-title>{{ product ? 'Edit Product' : 'New Spring Product' }}</h2>
@@ -25,19 +32,27 @@ import { ProductApi, ProductDto, SpringAttributeDefinitionDto, SpringType } from
           <mat-form-field appearance="outline">
             <mat-label>Code</mat-label>
             <input matInput formControlName="code" [readonly]="!!product" data-testid="code" />
-            @if (form.controls.code.hasError('required') && form.controls.code.touched) { <mat-error>Required</mat-error> }
+            @if (form.controls.code.hasError('required') && form.controls.code.touched) {
+              <mat-error>Required</mat-error>
+            }
           </mat-form-field>
           <mat-form-field appearance="outline">
             <mat-label>Name</mat-label>
             <input matInput formControlName="name" data-testid="name" />
-            @if (form.controls.name.hasError('required') && form.controls.name.touched) { <mat-error>Required</mat-error> }
+            @if (form.controls.name.hasError('required') && form.controls.name.touched) {
+              <mat-error>Required</mat-error>
+            }
           </mat-form-field>
           <mat-form-field appearance="outline">
             <mat-label>Spring type</mat-label>
             <mat-select formControlName="springType" data-testid="springType">
-              @for (t of springTypes; track t) { <mat-option [value]="t">{{ t }}</mat-option> }
+              @for (t of springTypes; track t) {
+                <mat-option [value]="t">{{ t }}</mat-option>
+              }
             </mat-select>
-            @if (form.controls.springType.hasError('required') && form.controls.springType.touched) { <mat-error>Required</mat-error> }
+            @if (form.controls.springType.hasError('required') && form.controls.springType.touched) {
+              <mat-error>Required</mat-error>
+            }
           </mat-form-field>
           <mat-form-field appearance="outline">
             <mat-label>Drawing number</mat-label>
@@ -93,7 +108,9 @@ import { ProductApi, ProductDto, SpringAttributeDefinitionDto, SpringType } from
           />
         }
 
-        @if (errorMessage()) { <p class="form-error mat-body-2">{{ errorMessage() }}</p> }
+        @if (errorMessage()) {
+          <p class="form-error mat-body-2">{{ errorMessage() }}</p>
+        }
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
@@ -104,22 +121,58 @@ import { ProductApi, ProductDto, SpringAttributeDefinitionDto, SpringType } from
         </button>
       }
       <button mat-flat-button color="primary" form="prod-form" type="submit" [disabled]="saving()">
-        @if (saving()) { <mat-spinner diameter="18" /> } @else { Save Draft }
+        @if (saving()) {
+          <mat-spinner diameter="18" />
+        } @else {
+          Save Draft
+        }
       </button>
     </mat-dialog-actions>
   `,
-  styles: [`
-    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; padding: 8px 0; }
-    .form-grid mat-form-field { width: 100%; }
-    .spec-section { border: none; padding: 8px 0; }
-    .spec-section legend { color: rgba(0,0,0,.54); font-size: 0.875rem; margin-bottom: 4px; }
-    .spec-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 0 12px; }
-    .spec-grid mat-form-field { width: 100%; }
-    .form-error { color: var(--mat-warn-color, #f44336); }
-  `],
+  styles: [
+    `
+      .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0 12px;
+        padding: 8px 0;
+      }
+      .form-grid mat-form-field {
+        width: 100%;
+      }
+      .spec-section {
+        border: none;
+        padding: 8px 0;
+      }
+      .spec-section legend {
+        color: rgba(0, 0, 0, 0.54);
+        font-size: 0.875rem;
+        margin-bottom: 4px;
+      }
+      .spec-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 0 12px;
+      }
+      .spec-grid mat-form-field {
+        width: 100%;
+      }
+      .form-error {
+        color: var(--mat-warn-color, #f44336);
+      }
+    `,
+  ],
 })
 export class ProductFormComponent implements OnInit {
-  protected readonly springTypes: SpringType[] = ['COMPRESSION', 'EXTENSION', 'TORSION', 'CONICAL', 'DISC_BELLEVILLE', 'WIRE_FORM', 'CUSTOM'];
+  protected readonly springTypes: SpringType[] = [
+    'COMPRESSION',
+    'EXTENSION',
+    'TORSION',
+    'CONICAL',
+    'DISC_BELLEVILLE',
+    'WIRE_FORM',
+    'CUSTOM',
+  ];
   protected readonly product = inject<ProductDto | undefined>(MAT_DIALOG_DATA);
   protected readonly attrDefs = signal<SpringAttributeDefinitionDto[]>([]);
   protected readonly saving = signal(false);
@@ -175,7 +228,10 @@ export class ProductFormComponent implements OnInit {
   }
 
   save(activate = false): void {
-    if (this.form.invalid) { this.form.markAllAsTouched(); return; }
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
     this.saving.set(true);
     const raw = this.form.getRawValue();
     const req = {
@@ -190,15 +246,24 @@ export class ProductFormComponent implements OnInit {
       next: (saved) => {
         if (activate && saved.status === 'DRAFT') {
           this.api.activate(saved.id).subscribe({
-            next: () => { this.saving.set(false); this.dialogRef.close(true); },
-            error: (err) => { this.saving.set(false); this.errorMessage.set(err?.error?.detail ?? 'Activate failed.'); },
+            next: () => {
+              this.saving.set(false);
+              this.dialogRef.close(true);
+            },
+            error: (err) => {
+              this.saving.set(false);
+              this.errorMessage.set(err?.error?.detail ?? 'Activate failed.');
+            },
           });
         } else {
           this.saving.set(false);
           this.dialogRef.close(true);
         }
       },
-      error: (err) => { this.saving.set(false); this.errorMessage.set(err?.error?.detail ?? 'Save failed.'); },
+      error: (err) => {
+        this.saving.set(false);
+        this.errorMessage.set(err?.error?.detail ?? 'Save failed.');
+      },
     });
   }
 

@@ -115,6 +115,16 @@
             <artifactId>caffeine</artifactId>
         </dependency>
 
+        <!-- Spring Retry — deadlock/serialization retries on posting service -->
+        <dependency>
+            <groupId>org.springframework.retry</groupId>
+            <artifactId>spring-retry</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-aop</artifactId>
+        </dependency>
+
         <!-- ShedLock — single execution of scheduled jobs in multi-instance deployments -->
         <dependency>
             <groupId>net.javacrumbs.shedlock</groupId>

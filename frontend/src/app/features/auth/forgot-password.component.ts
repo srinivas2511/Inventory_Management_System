@@ -44,7 +44,11 @@ import { AuthService } from '../../core/auth/auth.service';
                 <p class="error mat-body-2">{{ errorMessage() }}</p>
               }
               <button mat-flat-button color="primary" type="submit" class="full-width" [disabled]="loading()">
-                @if (loading()) { <mat-spinner diameter="20" /> } @else { Send reset link }
+                @if (loading()) {
+                  <mat-spinner diameter="20" />
+                } @else {
+                  Send reset link
+                }
               </button>
             </form>
           } @else {
@@ -59,13 +63,30 @@ import { AuthService } from '../../core/auth/auth.service';
       </mat-card>
     </div>
   `,
-  styles: [`
-    .page-wrapper { display: flex; justify-content: center; align-items: center; min-height: 100vh;
-      background: var(--mat-app-background-color, #f5f5f5); padding: 16px; }
-    .card { width: 100%; max-width: 400px; }
-    .full-width { width: 100%; margin-bottom: 8px; }
-    .error { color: var(--mat-warn-color, #f44336); margin: 4px 0 8px; }
-  `],
+  styles: [
+    `
+      .page-wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        background: var(--mat-app-background-color, #f5f5f5);
+        padding: 16px;
+      }
+      .card {
+        width: 100%;
+        max-width: 400px;
+      }
+      .full-width {
+        width: 100%;
+        margin-bottom: 8px;
+      }
+      .error {
+        color: var(--mat-warn-color, #f44336);
+        margin: 4px 0 8px;
+      }
+    `,
+  ],
 })
 export class ForgotPasswordComponent {
   protected readonly form = inject(FormBuilder).nonNullable.group({
@@ -78,11 +99,20 @@ export class ForgotPasswordComponent {
   private readonly authService = inject(AuthService);
 
   onSubmit(): void {
-    if (this.form.invalid) { this.form.markAllAsTouched(); return; }
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
     this.loading.set(true);
     this.authService.forgotPassword(this.form.getRawValue().email).subscribe({
-      next: () => { this.loading.set(false); this.sent.set(true); },
-      error: () => { this.loading.set(false); this.sent.set(true); }, // always show success to prevent enumeration
+      next: () => {
+        this.loading.set(false);
+        this.sent.set(true);
+      },
+      error: () => {
+        this.loading.set(false);
+        this.sent.set(true);
+      }, // always show success to prevent enumeration
     });
   }
 }

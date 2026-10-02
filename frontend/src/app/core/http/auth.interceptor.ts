@@ -49,15 +49,14 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const apiBase = inject(AppConfigService).apiBaseUrl;
 
   // Skip auth header for public auth endpoints
-  const isAuthEndpoint = req.url.includes('/api/auth/login')
-    || req.url.includes('/api/auth/refresh')
-    || req.url.includes('/api/auth/forgot-password')
-    || req.url.includes('/api/auth/reset-password');
+  const isAuthEndpoint =
+    req.url.includes('/api/auth/login') ||
+    req.url.includes('/api/auth/refresh') ||
+    req.url.includes('/api/auth/forgot-password') ||
+    req.url.includes('/api/auth/reset-password');
 
   const token = tokenStore.accessToken();
-  const outgoing = token && req.url.startsWith(apiBase) && !isAuthEndpoint
-    ? addBearer(req, token)
-    : req;
+  const outgoing = token && req.url.startsWith(apiBase) && !isAuthEndpoint ? addBearer(req, token) : req;
 
   return next(outgoing).pipe(
     catchError((err) => {

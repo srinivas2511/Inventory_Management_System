@@ -14,11 +14,11 @@ export class HasPermissionDirective implements OnInit {
   private readonly vcr = inject(ViewContainerRef);
 
   ngOnInit(): void {
-    const codes = this.permission.split(',').map((s) => s.trim()).filter(Boolean);
-    const allowed =
-      this.mode === 'all'
-        ? this.session.hasAllPermissions(codes)
-        : this.session.hasAnyPermission(codes);
+    const codes = this.permission
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const allowed = this.mode === 'all' ? this.session.hasAllPermissions(codes) : this.session.hasAnyPermission(codes);
     if (allowed) {
       this.vcr.createEmbeddedView(this.tpl);
     }

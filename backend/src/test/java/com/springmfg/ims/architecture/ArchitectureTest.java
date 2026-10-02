@@ -70,4 +70,38 @@ class ArchitectureTest {
             noClasses().that().resideInAPackage("..common..")
                     .should().dependOnClassesThat().resideInAnyPackage("..system..", "..inventory..", "..production..")
                     .because("shared kernel must not depend on feature modules");
+
+    /**
+     * Stock changes only through InventoryPostingService (CLAUDE.md rule 1 + ARCHITECTURE.md §17).
+     * Only the posting service, query service, reconciliation job and alert listener may use
+     * InventoryBalanceRepository.
+     */
+    @ArchTest
+    static final ArchRule only_posting_service_uses_balance_repo =
+            noClasses().that()
+                    .haveSimpleNameNotContaining("PostingService")
+                    .and().haveSimpleNameNotContaining("QueryService")
+                    .and().haveSimpleNameNotContaining("ReconciliationJob")
+                    .and().haveSimpleNameNotContaining("AlertListener")
+                    .and().haveSimpleNameNotContaining("BatchAllocator")         // reads balances for FIFO allocation
+                    .and().haveSimpleNameNotContaining("AdjustmentService")      // reads current balance to compute variance
+                    .should().dependOnClassesThat()
+                    .haveSimpleNameContaining("InventoryBalanceRepository")
+                    .allowEmptyShould(true)
+                    .because("InventoryPostingService is the sole writer of the inventory ledger (rule 1)");
+
+    /**
+     * Only the posting service, query service and reconciliation job may use
+     * InventoryTransactionRepository.
+     */
+    @ArchTest
+    static final ArchRule only_posting_service_uses_transaction_repo =
+            noClasses().that()
+                    .haveSimpleNameNotContaining("PostingService")
+                    .and().haveSimpleNameNotContaining("QueryService")
+                    .and().haveSimpleNameNotContaining("ReconciliationJob")
+                    .should().dependOnClassesThat()
+                    .haveSimpleNameContaining("InventoryTransactionRepository")
+                    .allowEmptyShould(true)
+                    .because("Only the inventory ledger services may read/write the transaction log");
 }

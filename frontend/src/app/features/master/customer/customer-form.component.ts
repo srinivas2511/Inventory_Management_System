@@ -12,7 +12,14 @@ const GST_PATTERN = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
 @Component({
   selector: 'app-customer-form',
   standalone: true,
-  imports: [ReactiveFormsModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatProgressSpinnerModule],
+  imports: [
+    ReactiveFormsModule,
+    MatDialogModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatButtonModule,
+    MatProgressSpinnerModule,
+  ],
   template: `
     <h2 mat-dialog-title>{{ customer ? 'Edit Customer' : 'New Customer' }}</h2>
     <mat-dialog-content>
@@ -20,12 +27,16 @@ const GST_PATTERN = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
         <mat-form-field appearance="outline">
           <mat-label>Code</mat-label>
           <input matInput formControlName="code" [readonly]="!!customer" />
-          @if (form.controls.code.hasError('required') && form.controls.code.touched) { <mat-error>Required</mat-error> }
+          @if (form.controls.code.hasError('required') && form.controls.code.touched) {
+            <mat-error>Required</mat-error>
+          }
         </mat-form-field>
         <mat-form-field appearance="outline">
           <mat-label>Name</mat-label>
           <input matInput formControlName="name" />
-          @if (form.controls.name.hasError('required') && form.controls.name.touched) { <mat-error>Required</mat-error> }
+          @if (form.controls.name.hasError('required') && form.controls.name.touched) {
+            <mat-error>Required</mat-error>
+          }
         </mat-form-field>
         <mat-form-field appearance="outline">
           <mat-label>Contact person</mat-label>
@@ -34,7 +45,9 @@ const GST_PATTERN = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
         <mat-form-field appearance="outline">
           <mat-label>Email</mat-label>
           <input matInput type="email" formControlName="email" />
-          @if (form.controls.email.hasError('email') && form.controls.email.touched) { <mat-error>Invalid email</mat-error> }
+          @if (form.controls.email.hasError('email') && form.controls.email.touched) {
+            <mat-error>Invalid email</mat-error>
+          }
         </mat-form-field>
         <mat-form-field appearance="outline">
           <mat-label>Phone</mat-label>
@@ -51,19 +64,42 @@ const GST_PATTERN = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
           <mat-label>Address</mat-label>
           <textarea matInput formControlName="address" rows="2"></textarea>
         </mat-form-field>
-        @if (errorMessage()) { <p class="form-error mat-body-2">{{ errorMessage() }}</p> }
+        @if (errorMessage()) {
+          <p class="form-error mat-body-2">{{ errorMessage() }}</p>
+        }
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
       <button mat-button mat-dialog-close>Cancel</button>
       <button mat-flat-button color="primary" form="cust-form" type="submit" [disabled]="saving()">
-        @if (saving()) { <mat-spinner diameter="18" /> } @else { Save }
+        @if (saving()) {
+          <mat-spinner diameter="18" />
+        } @else {
+          Save
+        }
       </button>
     </mat-dialog-actions>
   `,
-  styles: [`.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 12px;padding:8px 0}
-    .form-grid mat-form-field{width:100%}.full-span{grid-column:1/-1}
-    .form-error{color:var(--mat-warn-color,#f44336);grid-column:1/-1}`],
+  styles: [
+    `
+      .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0 12px;
+        padding: 8px 0;
+      }
+      .form-grid mat-form-field {
+        width: 100%;
+      }
+      .full-span {
+        grid-column: 1/-1;
+      }
+      .form-error {
+        color: var(--mat-warn-color, #f44336);
+        grid-column: 1/-1;
+      }
+    `,
+  ],
 })
 export class CustomerFormComponent {
   protected readonly customer = inject<CustomerDto | undefined>(MAT_DIALOG_DATA);
@@ -83,17 +119,29 @@ export class CustomerFormComponent {
   private readonly dialogRef = inject(MatDialogRef<CustomerFormComponent>);
 
   constructor() {
-    if (this.customer) { this.form.patchValue(this.customer); this.form.controls.code.disable(); }
+    if (this.customer) {
+      this.form.patchValue(this.customer);
+      this.form.controls.code.disable();
+    }
   }
 
   save(): void {
-    if (this.form.invalid) { this.form.markAllAsTouched(); return; }
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
     this.saving.set(true);
     const req = this.form.getRawValue();
     const obs = this.customer ? this.api.update(this.customer.id, req) : this.api.create(req);
     obs.subscribe({
-      next: () => { this.saving.set(false); this.dialogRef.close(true); },
-      error: (err) => { this.saving.set(false); this.errorMessage.set(err?.error?.detail ?? 'Save failed.'); },
+      next: () => {
+        this.saving.set(false);
+        this.dialogRef.close(true);
+      },
+      error: (err) => {
+        this.saving.set(false);
+        this.errorMessage.set(err?.error?.detail ?? 'Save failed.');
+      },
     });
   }
 }

@@ -18,7 +18,13 @@ export const appConfig: ApplicationConfig = {
     provideAnimationsAsync(),
     // Order matters: loading wraps everything, errors are mapped last on the way back.
     provideHttpClient(
-      withInterceptors([loadingInterceptor, correlationInterceptor, authInterceptor, idempotencyInterceptor, errorInterceptor]),
+      withInterceptors([
+        loadingInterceptor,
+        correlationInterceptor,
+        authInterceptor,
+        idempotencyInterceptor,
+        errorInterceptor,
+      ]),
     ),
     {
       provide: APP_INITIALIZER,

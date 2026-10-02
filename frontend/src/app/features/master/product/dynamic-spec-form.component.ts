@@ -27,11 +27,24 @@ import { SpringAttributeDefinitionDto } from './product.api';
       }
     </fieldset>
   `,
-  styles: [`
-    .spec-group { border: 1px solid rgba(0,0,0,.12); border-radius: 4px; padding: 8px 16px; margin: 8px 0; }
-    legend { padding: 0 4px; color: rgba(0,0,0,.54); }
-    .spec-field { margin-right: 8px; min-width: 140px; }
-  `],
+  styles: [
+    `
+      .spec-group {
+        border: 1px solid rgba(0, 0, 0, 0.12);
+        border-radius: 4px;
+        padding: 8px 16px;
+        margin: 8px 0;
+      }
+      legend {
+        padding: 0 4px;
+        color: rgba(0, 0, 0, 0.54);
+      }
+      .spec-field {
+        margin-right: 8px;
+        min-width: 140px;
+      }
+    `,
+  ],
 })
 export class DynamicSpecFormComponent implements OnChanges {
   @Input() group!: FormGroup;
@@ -51,10 +64,7 @@ export class DynamicSpecFormComponent implements OnChanges {
     // Add new controls
     for (const attr of this.attributes) {
       if (!this.group.contains(attr.attributeKey)) {
-        this.group.addControl(
-          attr.attributeKey,
-          new FormControl(null, attr.required ? Validators.required : []),
-        );
+        this.group.addControl(attr.attributeKey, new FormControl(null, attr.required ? Validators.required : []));
       }
     }
   }

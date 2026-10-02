@@ -40,6 +40,46 @@ export const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
+    label: 'Warehouses & Inventory',
+    items: [
+      {
+        label: 'Warehouses',
+        icon: 'warehouse',
+        route: '/warehouse/warehouses',
+        permission: 'INVENTORY_VIEW',
+        enabled: true,
+      },
+      {
+        label: 'Current Stock',
+        icon: 'inventory_2',
+        route: '/inventory/stock',
+        permission: 'INVENTORY_VIEW',
+        enabled: true,
+      },
+      {
+        label: 'Stock Ledger',
+        icon: 'receipt_long',
+        route: '/inventory/ledger',
+        permission: 'INVENTORY_VIEW',
+        enabled: true,
+      },
+      {
+        label: 'Batch Tracking',
+        icon: 'qr_code',
+        route: '/inventory/batches',
+        permission: 'INVENTORY_VIEW',
+        enabled: true,
+      },
+      {
+        label: 'Adjustments',
+        icon: 'tune',
+        route: '/inventory/adjustments',
+        permission: 'INVENTORY_VIEW',
+        enabled: true,
+      },
+    ],
+  },
+  {
     label: 'Administration',
     items: [
       { label: 'Users', icon: 'manage_accounts', route: '/admin/users', permission: 'IAM_USER_MANAGE', enabled: true },

@@ -95,7 +95,7 @@ import { MaterialFormComponent } from './material-form.component';
           </td>
         </ng-container>
         <tr mat-header-row *matHeaderRowDef="columns"></tr>
-        <tr mat-row *matRowDef="let row; columns: columns;"></tr>
+        <tr mat-row *matRowDef="let row; columns: columns"></tr>
       </table>
       <mat-paginator
         [length]="total()"
@@ -107,14 +107,37 @@ import { MaterialFormComponent } from './material-form.component';
       />
     }
   `,
-  styles: [`
-    .page-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 16px 0; }
-    .filter-bar { display: flex; gap: 12px; padding: 8px 16px; flex-wrap: wrap; }
-    .search-field { flex: 1; min-width: 200px; }
-    .status-field { width: 140px; }
-    .loading-center { display: flex; justify-content: center; padding: 48px; }
-    table { width: 100%; }
-  `],
+  styles: [
+    `
+      .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 16px 0;
+      }
+      .filter-bar {
+        display: flex;
+        gap: 12px;
+        padding: 8px 16px;
+        flex-wrap: wrap;
+      }
+      .search-field {
+        flex: 1;
+        min-width: 200px;
+      }
+      .status-field {
+        width: 140px;
+      }
+      .loading-center {
+        display: flex;
+        justify-content: center;
+        padding: 48px;
+      }
+      table {
+        width: 100%;
+      }
+    `,
+  ],
 })
 export class MaterialListComponent implements OnInit {
   protected readonly columns = ['code', 'name', 'type', 'uom', 'reorder', 'status', 'actions'];
@@ -144,16 +167,14 @@ export class MaterialListComponent implements OnInit {
 
   protected load(): void {
     this.loading.set(true);
-    this.api
-      .search(this.searchCtrl.value ?? '', this.activeCtrl.value, this.pageIndex(), this.pageSize)
-      .subscribe({
-        next: (page) => {
-          this.rows.set(page.content);
-          this.total.set(page.totalElements);
-          this.loading.set(false);
-        },
-        error: () => this.loading.set(false),
-      });
+    this.api.search(this.searchCtrl.value ?? '', this.activeCtrl.value, this.pageIndex(), this.pageSize).subscribe({
+      next: (page) => {
+        this.rows.set(page.content);
+        this.total.set(page.totalElements);
+        this.loading.set(false);
+      },
+      error: () => this.loading.set(false),
+    });
   }
 
   protected onPage(e: PageEvent): void {
@@ -166,6 +187,8 @@ export class MaterialListComponent implements OnInit {
       width: '600px',
       data: material,
     });
-    ref.afterClosed().subscribe((saved) => { if (saved) this.load(); });
+    ref.afterClosed().subscribe((saved) => {
+      if (saved) this.load();
+    });
   }
 }

@@ -11,9 +11,7 @@
       <mat-icon>arrow_drop_down</mat-icon>
     </button>
     <mat-menu #userMenu>
-      <button mat-menu-item (click)="logout()" data-testid="logout-btn">
-        <mat-icon>logout</mat-icon> Sign out
-      </button>
+      <button mat-menu-item (click)="logout()" data-testid="logout-btn"><mat-icon>logout</mat-icon> Sign out</button>
     </mat-menu>
   } @else {
     <span class="user" data-testid="session-state">Not signed in</span>

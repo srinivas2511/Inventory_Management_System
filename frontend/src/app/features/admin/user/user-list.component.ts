@@ -14,16 +14,34 @@ import { AppConfigService } from '../../../core/config/app-config.service';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge.component';
 
 interface UserDto {
-  id: number; username: string; fullName: string; email: string;
-  roles: string[]; active: boolean; lastLoginAt?: string;
+  id: number;
+  username: string;
+  fullName: string;
+  email: string;
+  roles: string[];
+  active: boolean;
+  lastLoginAt?: string;
 }
-interface Page<T> { content: T[]; totalElements: number; }
+interface Page<T> {
+  content: T[];
+  totalElements: number;
+}
 
 @Component({
   selector: 'app-user-list',
   standalone: true,
-  imports: [ReactiveFormsModule, MatTableModule, MatPaginatorModule, MatButtonModule, MatIconModule,
-    MatFormFieldModule, MatInputModule, MatSelectModule, MatProgressSpinnerModule, StatusBadgeComponent],
+  imports: [
+    ReactiveFormsModule,
+    MatTableModule,
+    MatPaginatorModule,
+    MatButtonModule,
+    MatIconModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+    MatProgressSpinnerModule,
+    StatusBadgeComponent,
+  ],
   template: `
     <div class="page-header">
       <h2 class="mat-h2">Users</h2>
@@ -42,24 +60,71 @@ interface Page<T> { content: T[]; totalElements: number; }
         </mat-select>
       </mat-form-field>
     </div>
-    @if (loading()) { <div class="loading-center"><mat-spinner diameter="40" /></div> } @else {
+    @if (loading()) {
+      <div class="loading-center"><mat-spinner diameter="40" /></div>
+    } @else {
       <table mat-table [dataSource]="rows()" class="mat-elevation-z1">
-        <ng-container matColumnDef="username"><th mat-header-cell *matHeaderCellDef>Username</th><td mat-cell *matCellDef="let r">{{ r.username }}</td></ng-container>
-        <ng-container matColumnDef="fullName"><th mat-header-cell *matHeaderCellDef>Full name</th><td mat-cell *matCellDef="let r">{{ r.fullName }}</td></ng-container>
-        <ng-container matColumnDef="email"><th mat-header-cell *matHeaderCellDef>Email</th><td mat-cell *matCellDef="let r">{{ r.email }}</td></ng-container>
-        <ng-container matColumnDef="roles"><th mat-header-cell *matHeaderCellDef>Roles</th><td mat-cell *matCellDef="let r">{{ r.roles?.join(', ') }}</td></ng-container>
-        <ng-container matColumnDef="status"><th mat-header-cell *matHeaderCellDef>Status</th>
-          <td mat-cell *matCellDef="let r"><app-status-badge [status]="r.active ? 'ACTIVE' : 'INACTIVE'" /></td></ng-container>
+        <ng-container matColumnDef="username"
+          ><th mat-header-cell *matHeaderCellDef>Username</th>
+          <td mat-cell *matCellDef="let r">{{ r.username }}</td></ng-container
+        >
+        <ng-container matColumnDef="fullName"
+          ><th mat-header-cell *matHeaderCellDef>Full name</th>
+          <td mat-cell *matCellDef="let r">{{ r.fullName }}</td></ng-container
+        >
+        <ng-container matColumnDef="email"
+          ><th mat-header-cell *matHeaderCellDef>Email</th>
+          <td mat-cell *matCellDef="let r">{{ r.email }}</td></ng-container
+        >
+        <ng-container matColumnDef="roles"
+          ><th mat-header-cell *matHeaderCellDef>Roles</th>
+          <td mat-cell *matCellDef="let r">{{ r.roles?.join(', ') }}</td></ng-container
+        >
+        <ng-container matColumnDef="status"
+          ><th mat-header-cell *matHeaderCellDef>Status</th>
+          <td mat-cell *matCellDef="let r"><app-status-badge [status]="r.active ? 'ACTIVE' : 'INACTIVE'" /></td
+        ></ng-container>
         <tr mat-header-row *matHeaderRowDef="columns"></tr>
-        <tr mat-row *matRowDef="let row; columns: columns;"></tr>
+        <tr mat-row *matRowDef="let row; columns: columns"></tr>
       </table>
-      <mat-paginator [length]="total()" [pageSize]="pageSize" [pageIndex]="pageIndex()"
-        [pageSizeOptions]="[20,50]" (page)="onPage($event)" showFirstLastButtons />
+      <mat-paginator
+        [length]="total()"
+        [pageSize]="pageSize"
+        [pageIndex]="pageIndex()"
+        [pageSizeOptions]="[20, 50]"
+        (page)="onPage($event)"
+        showFirstLastButtons
+      />
     }
   `,
-  styles: [`.page-header{display:flex;justify-content:space-between;align-items:center;padding:16px 16px 0}
-    .filter-bar{display:flex;gap:12px;padding:8px 16px;flex-wrap:wrap}.search-field{flex:1;min-width:200px}
-    .loading-center{display:flex;justify-content:center;padding:48px}table{width:100%}`],
+  styles: [
+    `
+      .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 16px 0;
+      }
+      .filter-bar {
+        display: flex;
+        gap: 12px;
+        padding: 8px 16px;
+        flex-wrap: wrap;
+      }
+      .search-field {
+        flex: 1;
+        min-width: 200px;
+      }
+      .loading-center {
+        display: flex;
+        justify-content: center;
+        padding: 48px;
+      }
+      table {
+        width: 100%;
+      }
+    `,
+  ],
 })
 export class UserListComponent implements OnInit {
   protected readonly columns = ['username', 'fullName', 'email', 'roles', 'status'];
@@ -75,8 +140,14 @@ export class UserListComponent implements OnInit {
 
   ngOnInit(): void {
     this.load();
-    this.searchCtrl.valueChanges.pipe(debounceTime(300), distinctUntilChanged()).subscribe(() => { this.pageIndex.set(0); this.load(); });
-    this.activeCtrl.valueChanges.subscribe(() => { this.pageIndex.set(0); this.load(); });
+    this.searchCtrl.valueChanges.pipe(debounceTime(300), distinctUntilChanged()).subscribe(() => {
+      this.pageIndex.set(0);
+      this.load();
+    });
+    this.activeCtrl.valueChanges.subscribe(() => {
+      this.pageIndex.set(0);
+      this.load();
+    });
   }
 
   protected load(): void {
@@ -85,10 +156,17 @@ export class UserListComponent implements OnInit {
     if (this.searchCtrl.value) params = params.set('q', this.searchCtrl.value);
     if (this.activeCtrl.value !== null) params = params.set('active', this.activeCtrl.value!);
     this.http.get<Page<UserDto>>(`${this.base}/api/admin/users`, { params }).subscribe({
-      next: (p) => { this.rows.set(p.content); this.total.set(p.totalElements); this.loading.set(false); },
+      next: (p) => {
+        this.rows.set(p.content);
+        this.total.set(p.totalElements);
+        this.loading.set(false);
+      },
       error: () => this.loading.set(false),
     });
   }
 
-  protected onPage(e: PageEvent): void { this.pageIndex.set(e.pageIndex); this.load(); }
+  protected onPage(e: PageEvent): void {
+    this.pageIndex.set(e.pageIndex);
+    this.load();
+  }
 }

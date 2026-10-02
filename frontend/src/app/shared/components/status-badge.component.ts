@@ -40,26 +40,53 @@ const STATUS_MAP: Record<string, { color: StatusColor; icon: string; label?: str
       {{ displayLabel }}
     </span>
   `,
-  styles: [`
-    .status-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      padding: 2px 8px;
-      border-radius: 12px;
-      font-size: 0.75rem;
-      font-weight: 500;
-      white-space: nowrap;
-    }
-    .status-icon { font-size: 14px; width: 14px; height: 14px; }
-    .status-green { background: #e8f5e9; color: #2e7d32; }
-    .status-amber { background: #fff8e1; color: #f57f17; }
-    .status-orange { background: #fff3e0; color: #e65100; }
-    .status-red { background: #ffebee; color: #c62828; }
-    .status-blue { background: #e3f2fd; color: #1565c0; }
-    .status-teal { background: #e0f2f1; color: #00695c; }
-    .status-grey { background: #f5f5f5; color: #616161; }
-  `],
+  styles: [
+    `
+      .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        white-space: nowrap;
+      }
+      .status-icon {
+        font-size: 14px;
+        width: 14px;
+        height: 14px;
+      }
+      .status-green {
+        background: #e8f5e9;
+        color: #2e7d32;
+      }
+      .status-amber {
+        background: #fff8e1;
+        color: #f57f17;
+      }
+      .status-orange {
+        background: #fff3e0;
+        color: #e65100;
+      }
+      .status-red {
+        background: #ffebee;
+        color: #c62828;
+      }
+      .status-blue {
+        background: #e3f2fd;
+        color: #1565c0;
+      }
+      .status-teal {
+        background: #e0f2f1;
+        color: #00695c;
+      }
+      .status-grey {
+        background: #f5f5f5;
+        color: #616161;
+      }
+    `,
+  ],
 })
 export class StatusBadgeComponent {
   @Input() status = '';

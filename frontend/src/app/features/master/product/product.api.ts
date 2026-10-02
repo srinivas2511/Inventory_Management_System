@@ -5,13 +5,7 @@ import { AppConfigService } from '../../../core/config/app-config.service';
 import { Page } from '../material/material.api';
 
 export type SpringType =
-  | 'COMPRESSION'
-  | 'EXTENSION'
-  | 'TORSION'
-  | 'CONICAL'
-  | 'DISC_BELLEVILLE'
-  | 'WIRE_FORM'
-  | 'CUSTOM';
+  'COMPRESSION' | 'EXTENSION' | 'TORSION' | 'CONICAL' | 'DISC_BELLEVILLE' | 'WIRE_FORM' | 'CUSTOM';
 
 export type ProductStatus = 'DRAFT' | 'ACTIVE' | 'OBSOLETE';
 
@@ -71,7 +65,13 @@ export class ProductApi {
   private readonly http = inject(HttpClient);
   private readonly base = inject(AppConfigService).apiBaseUrl;
 
-  search(q: string, springType: SpringType | null, status: ProductStatus | null, page: number, size: number): Observable<Page<ProductDto>> {
+  search(
+    q: string,
+    springType: SpringType | null,
+    status: ProductStatus | null,
+    page: number,
+    size: number,
+  ): Observable<Page<ProductDto>> {
     let params = new HttpParams().set('page', page).set('size', size);
     if (q) params = params.set('q', q);
     if (springType) params = params.set('springType', springType);
@@ -96,9 +96,8 @@ export class ProductApi {
   }
 
   getAttributeDefinitions(springType: SpringType): Observable<SpringAttributeDefinitionDto[]> {
-    return this.http.get<SpringAttributeDefinitionDto[]>(
-      `${this.base}/api/products/attribute-definitions`,
-      { params: new HttpParams().set('springType', springType) },
-    );
+    return this.http.get<SpringAttributeDefinitionDto[]>(`${this.base}/api/products/attribute-definitions`, {
+      params: new HttpParams().set('springType', springType),
+    });
   }
 }

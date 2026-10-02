@@ -100,15 +100,31 @@ import { MaterialApi, MaterialDto, UomDto } from './material.api';
     <mat-dialog-actions align="end">
       <button mat-button mat-dialog-close>Cancel</button>
       <button mat-flat-button color="primary" form="material-form" type="submit" [disabled]="saving()">
-        @if (saving()) { <mat-spinner diameter="18" /> } @else { Save }
+        @if (saving()) {
+          <mat-spinner diameter="18" />
+        } @else {
+          Save
+        }
       </button>
     </mat-dialog-actions>
   `,
-  styles: [`
-    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; padding: 8px 0; }
-    .form-grid mat-form-field { width: 100%; }
-    .form-error { color: var(--mat-warn-color, #f44336); grid-column: 1 / -1; }
-  `],
+  styles: [
+    `
+      .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0 12px;
+        padding: 8px 0;
+      }
+      .form-grid mat-form-field {
+        width: 100%;
+      }
+      .form-error {
+        color: var(--mat-warn-color, #f44336);
+        grid-column: 1 / -1;
+      }
+    `,
+  ],
 })
 export class MaterialFormComponent implements OnInit {
   protected readonly material = inject<MaterialDto | undefined>(MAT_DIALOG_DATA);
@@ -141,14 +157,18 @@ export class MaterialFormComponent implements OnInit {
   }
 
   save(): void {
-    if (this.form.invalid) { this.form.markAllAsTouched(); return; }
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
     this.saving.set(true);
     const req = this.form.getRawValue();
-    const obs = this.material
-      ? this.api.update(this.material.id, req)
-      : this.api.create(req);
+    const obs = this.material ? this.api.update(this.material.id, req) : this.api.create(req);
     obs.subscribe({
-      next: () => { this.saving.set(false); this.dialogRef.close(true); },
+      next: () => {
+        this.saving.set(false);
+        this.dialogRef.close(true);
+      },
       error: (err) => {
         this.saving.set(false);
         this.errorMessage.set(err?.error?.detail ?? 'Save failed.');

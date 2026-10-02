@@ -19,9 +19,18 @@ import { CustomerFormComponent } from './customer-form.component';
   selector: 'app-customer-list',
   standalone: true,
   imports: [
-    ReactiveFormsModule, MatTableModule, MatPaginatorModule, MatButtonModule, MatIconModule,
-    MatFormFieldModule, MatInputModule, MatSelectModule, MatProgressSpinnerModule, MatTooltipModule,
-    MatDialogModule, StatusBadgeComponent,
+    ReactiveFormsModule,
+    MatTableModule,
+    MatPaginatorModule,
+    MatButtonModule,
+    MatIconModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+    MatProgressSpinnerModule,
+    MatTooltipModule,
+    MatDialogModule,
+    StatusBadgeComponent,
   ],
   template: `
     <div class="page-header">
@@ -76,15 +85,49 @@ import { CustomerFormComponent } from './customer-form.component';
           </td>
         </ng-container>
         <tr mat-header-row *matHeaderRowDef="columns"></tr>
-        <tr mat-row *matRowDef="let row; columns: columns;"></tr>
+        <tr mat-row *matRowDef="let row; columns: columns"></tr>
       </table>
-      <mat-paginator [length]="total()" [pageSize]="pageSize" [pageIndex]="pageIndex()"
-        [pageSizeOptions]="[20,50]" (page)="onPage($event)" showFirstLastButtons />
+      <mat-paginator
+        [length]="total()"
+        [pageSize]="pageSize"
+        [pageIndex]="pageIndex()"
+        [pageSizeOptions]="[20, 50]"
+        (page)="onPage($event)"
+        showFirstLastButtons
+      />
     }
   `,
-  styles: [`.page-header{display:flex;justify-content:space-between;align-items:center;padding:16px 16px 0}
-    .filter-bar{display:flex;gap:12px;padding:8px 16px;flex-wrap:wrap}.search-field{flex:1;min-width:200px}
-    .status-field{width:140px}.loading-center{display:flex;justify-content:center;padding:48px}table{width:100%}`],
+  styles: [
+    `
+      .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 16px 0;
+      }
+      .filter-bar {
+        display: flex;
+        gap: 12px;
+        padding: 8px 16px;
+        flex-wrap: wrap;
+      }
+      .search-field {
+        flex: 1;
+        min-width: 200px;
+      }
+      .status-field {
+        width: 140px;
+      }
+      .loading-center {
+        display: flex;
+        justify-content: center;
+        padding: 48px;
+      }
+      table {
+        width: 100%;
+      }
+    `,
+  ],
 })
 export class CustomerListComponent implements OnInit {
   protected readonly columns = ['code', 'name', 'contact', 'phone', 'status', 'actions'];
@@ -100,22 +143,39 @@ export class CustomerListComponent implements OnInit {
 
   ngOnInit(): void {
     this.load();
-    this.searchCtrl.valueChanges.pipe(debounceTime(300), distinctUntilChanged()).subscribe(() => { this.pageIndex.set(0); this.load(); });
-    this.activeCtrl.valueChanges.subscribe(() => { this.pageIndex.set(0); this.load(); });
+    this.searchCtrl.valueChanges.pipe(debounceTime(300), distinctUntilChanged()).subscribe(() => {
+      this.pageIndex.set(0);
+      this.load();
+    });
+    this.activeCtrl.valueChanges.subscribe(() => {
+      this.pageIndex.set(0);
+      this.load();
+    });
   }
 
   protected load(): void {
     this.loading.set(true);
     this.api.search(this.searchCtrl.value ?? '', this.activeCtrl.value, this.pageIndex(), this.pageSize).subscribe({
-      next: (p) => { this.rows.set(p.content); this.total.set(p.totalElements); this.loading.set(false); },
+      next: (p) => {
+        this.rows.set(p.content);
+        this.total.set(p.totalElements);
+        this.loading.set(false);
+      },
       error: () => this.loading.set(false),
     });
   }
 
-  protected onPage(e: PageEvent): void { this.pageIndex.set(e.pageIndex); this.load(); }
+  protected onPage(e: PageEvent): void {
+    this.pageIndex.set(e.pageIndex);
+    this.load();
+  }
 
   protected openForm(customer?: CustomerDto): void {
-    this.dialog.open(CustomerFormComponent, { width: '560px', data: customer })
-      .afterClosed().subscribe((saved) => { if (saved) this.load(); });
+    this.dialog
+      .open(CustomerFormComponent, { width: '560px', data: customer })
+      .afterClosed()
+      .subscribe((saved) => {
+        if (saved) this.load();
+      });
   }
 }

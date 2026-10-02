@@ -84,19 +84,30 @@ import { AuthService } from '../../core/auth/auth.service';
   `,
   styles: [
     `
-    .login-wrapper {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      background: var(--mat-app-background-color, #f5f5f5);
-      padding: 16px;
-    }
-    .login-card { width: 100%; max-width: 400px; }
-    .full-width { width: 100%; margin-bottom: 8px; }
-    .login-btn { margin-top: 8px; }
-    .login-error { color: var(--mat-warn-color, #f44336); margin: 4px 0 8px; }
-  `,
+      .login-wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        background: var(--mat-app-background-color, #f5f5f5);
+        padding: 16px;
+      }
+      .login-card {
+        width: 100%;
+        max-width: 400px;
+      }
+      .full-width {
+        width: 100%;
+        margin-bottom: 8px;
+      }
+      .login-btn {
+        margin-top: 8px;
+      }
+      .login-error {
+        color: var(--mat-warn-color, #f44336);
+        margin: 4px 0 8px;
+      }
+    `,
   ],
 })
 export class LoginComponent {
@@ -122,9 +133,7 @@ export class LoginComponent {
       next: () => this.router.navigate(['/dashboard']),
       error: (err) => {
         this.loading.set(false);
-        this.errorMessage.set(
-          err?.error?.detail ?? 'Invalid username or password.',
-        );
+        this.errorMessage.set(err?.error?.detail ?? 'Invalid username or password.');
       },
     });
   }

@@ -10,13 +10,32 @@ import { DatePipe } from '@angular/common';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { AppConfigService } from '../../../core/config/app-config.service';
 
-interface AuditLogDto { id: number; occurredAt: string; username: string; action: string; entity: string; entityId: string; reason?: string; }
-interface Page<T> { content: T[]; totalElements: number; }
+interface AuditLogDto {
+  id: number;
+  occurredAt: string;
+  username: string;
+  action: string;
+  entity: string;
+  entityId: string;
+  reason?: string;
+}
+interface Page<T> {
+  content: T[];
+  totalElements: number;
+}
 
 @Component({
   selector: 'app-audit-log-list',
   standalone: true,
-  imports: [ReactiveFormsModule, MatTableModule, MatPaginatorModule, MatFormFieldModule, MatInputModule, MatProgressSpinnerModule, DatePipe],
+  imports: [
+    ReactiveFormsModule,
+    MatTableModule,
+    MatPaginatorModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatProgressSpinnerModule,
+    DatePipe,
+  ],
   template: `
     <div style="padding:16px 16px 0"><h2 class="mat-h2">Audit Logs</h2></div>
     <div style="display:flex;gap:12px;padding:8px 16px;flex-wrap:wrap">
@@ -29,18 +48,41 @@ interface Page<T> { content: T[]; totalElements: number; }
         <input matInput [formControl]="actionCtrl" />
       </mat-form-field>
     </div>
-    @if (loading()) { <div style="display:flex;justify-content:center;padding:48px"><mat-spinner diameter="40"/></div> } @else {
+    @if (loading()) {
+      <div style="display:flex;justify-content:center;padding:48px"><mat-spinner diameter="40" /></div>
+    } @else {
       <table mat-table [dataSource]="rows()" class="mat-elevation-z1" style="width:100%">
-        <ng-container matColumnDef="occurredAt"><th mat-header-cell *matHeaderCellDef>When</th><td mat-cell *matCellDef="let r">{{ r.occurredAt | date:'short' }}</td></ng-container>
-        <ng-container matColumnDef="username"><th mat-header-cell *matHeaderCellDef>User</th><td mat-cell *matCellDef="let r">{{ r.username }}</td></ng-container>
-        <ng-container matColumnDef="action"><th mat-header-cell *matHeaderCellDef>Action</th><td mat-cell *matCellDef="let r">{{ r.action }}</td></ng-container>
-        <ng-container matColumnDef="entity"><th mat-header-cell *matHeaderCellDef>Entity</th><td mat-cell *matCellDef="let r">{{ r.entity }}</td></ng-container>
-        <ng-container matColumnDef="entityId"><th mat-header-cell *matHeaderCellDef>ID</th><td mat-cell *matCellDef="let r">{{ r.entityId }}</td></ng-container>
-        <tr mat-header-row *matHeaderRowDef="['occurredAt','username','action','entity','entityId']"></tr>
-        <tr mat-row *matRowDef="let row; columns: ['occurredAt','username','action','entity','entityId'];"></tr>
+        <ng-container matColumnDef="occurredAt"
+          ><th mat-header-cell *matHeaderCellDef>When</th>
+          <td mat-cell *matCellDef="let r">{{ r.occurredAt | date: 'short' }}</td></ng-container
+        >
+        <ng-container matColumnDef="username"
+          ><th mat-header-cell *matHeaderCellDef>User</th>
+          <td mat-cell *matCellDef="let r">{{ r.username }}</td></ng-container
+        >
+        <ng-container matColumnDef="action"
+          ><th mat-header-cell *matHeaderCellDef>Action</th>
+          <td mat-cell *matCellDef="let r">{{ r.action }}</td></ng-container
+        >
+        <ng-container matColumnDef="entity"
+          ><th mat-header-cell *matHeaderCellDef>Entity</th>
+          <td mat-cell *matCellDef="let r">{{ r.entity }}</td></ng-container
+        >
+        <ng-container matColumnDef="entityId"
+          ><th mat-header-cell *matHeaderCellDef>ID</th>
+          <td mat-cell *matCellDef="let r">{{ r.entityId }}</td></ng-container
+        >
+        <tr mat-header-row *matHeaderRowDef="['occurredAt', 'username', 'action', 'entity', 'entityId']"></tr>
+        <tr mat-row *matRowDef="let row; columns: ['occurredAt', 'username', 'action', 'entity', 'entityId']"></tr>
       </table>
-      <mat-paginator [length]="total()" [pageSize]="pageSize" [pageIndex]="pageIndex()"
-        [pageSizeOptions]="[20,50]" (page)="onPage($event)" showFirstLastButtons />
+      <mat-paginator
+        [length]="total()"
+        [pageSize]="pageSize"
+        [pageIndex]="pageIndex()"
+        [pageSizeOptions]="[20, 50]"
+        (page)="onPage($event)"
+        showFirstLastButtons
+      />
     }
   `,
 })
@@ -57,8 +99,14 @@ export class AuditLogListComponent implements OnInit {
 
   ngOnInit(): void {
     this.load();
-    this.entityCtrl.valueChanges.pipe(debounceTime(400), distinctUntilChanged()).subscribe(() => { this.pageIndex.set(0); this.load(); });
-    this.actionCtrl.valueChanges.pipe(debounceTime(400), distinctUntilChanged()).subscribe(() => { this.pageIndex.set(0); this.load(); });
+    this.entityCtrl.valueChanges.pipe(debounceTime(400), distinctUntilChanged()).subscribe(() => {
+      this.pageIndex.set(0);
+      this.load();
+    });
+    this.actionCtrl.valueChanges.pipe(debounceTime(400), distinctUntilChanged()).subscribe(() => {
+      this.pageIndex.set(0);
+      this.load();
+    });
   }
 
   protected load(): void {
@@ -67,10 +115,17 @@ export class AuditLogListComponent implements OnInit {
     if (this.entityCtrl.value) params = params.set('entity', this.entityCtrl.value);
     if (this.actionCtrl.value) params = params.set('action', this.actionCtrl.value);
     this.http.get<Page<AuditLogDto>>(`${this.base}/api/audit-logs`, { params }).subscribe({
-      next: (p) => { this.rows.set(p.content); this.total.set(p.totalElements); this.loading.set(false); },
+      next: (p) => {
+        this.rows.set(p.content);
+        this.total.set(p.totalElements);
+        this.loading.set(false);
+      },
       error: () => this.loading.set(false),
     });
   }
 
-  protected onPage(e: PageEvent): void { this.pageIndex.set(e.pageIndex); this.load(); }
+  protected onPage(e: PageEvent): void {
+    this.pageIndex.set(e.pageIndex);
+    this.load();
+  }
 }

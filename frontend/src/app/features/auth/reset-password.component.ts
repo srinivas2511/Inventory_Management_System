@@ -33,8 +33,13 @@ import { AuthService } from '../../core/auth/auth.service';
             <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
               <mat-form-field appearance="outline" class="full-width">
                 <mat-label>New password</mat-label>
-                <input matInput [type]="showPwd() ? 'text' : 'password'" formControlName="password"
-                  autocomplete="new-password" data-testid="new-password" />
+                <input
+                  matInput
+                  [type]="showPwd() ? 'text' : 'password'"
+                  formControlName="password"
+                  autocomplete="new-password"
+                  data-testid="new-password"
+                />
                 <button mat-icon-button matSuffix type="button" (click)="showPwd.set(!showPwd())">
                   <mat-icon>{{ showPwd() ? 'visibility_off' : 'visibility' }}</mat-icon>
                 </button>
@@ -49,25 +54,44 @@ import { AuthService } from '../../core/auth/auth.service';
                 <p class="error mat-body-2">{{ errorMessage() }}</p>
               }
               <button mat-flat-button color="primary" type="submit" class="full-width" [disabled]="loading()">
-                @if (loading()) { <mat-spinner diameter="20" /> } @else { Set password }
+                @if (loading()) {
+                  <mat-spinner diameter="20" />
+                } @else {
+                  Set password
+                }
               </button>
             </form>
           } @else {
-            <p class="mat-body-1" data-testid="done-message">
-              Password updated. <a routerLink="/login">Sign in</a>
-            </p>
+            <p class="mat-body-1" data-testid="done-message">Password updated. <a routerLink="/login">Sign in</a></p>
           }
         </mat-card-content>
       </mat-card>
     </div>
   `,
-  styles: [`
-    .page-wrapper { display: flex; justify-content: center; align-items: center; min-height: 100vh;
-      background: var(--mat-app-background-color, #f5f5f5); padding: 16px; }
-    .card { width: 100%; max-width: 400px; }
-    .full-width { width: 100%; margin-bottom: 8px; }
-    .error { color: var(--mat-warn-color, #f44336); margin: 4px 0 8px; }
-  `],
+  styles: [
+    `
+      .page-wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        background: var(--mat-app-background-color, #f5f5f5);
+        padding: 16px;
+      }
+      .card {
+        width: 100%;
+        max-width: 400px;
+      }
+      .full-width {
+        width: 100%;
+        margin-bottom: 8px;
+      }
+      .error {
+        color: var(--mat-warn-color, #f44336);
+        margin: 4px 0 8px;
+      }
+    `,
+  ],
 })
 export class ResetPasswordComponent {
   protected readonly form = inject(FormBuilder).nonNullable.group({
@@ -83,11 +107,17 @@ export class ResetPasswordComponent {
   private readonly router = inject(Router);
 
   onSubmit(): void {
-    if (this.form.invalid) { this.form.markAllAsTouched(); return; }
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
     const token = this.route.snapshot.paramMap.get('token') ?? '';
     this.loading.set(true);
     this.authService.resetPassword(token, this.form.getRawValue().password).subscribe({
-      next: () => { this.loading.set(false); this.done.set(true); },
+      next: () => {
+        this.loading.set(false);
+        this.done.set(true);
+      },
       error: (err) => {
         this.loading.set(false);
         this.errorMessage.set(err?.error?.detail ?? 'Invalid or expired link.');

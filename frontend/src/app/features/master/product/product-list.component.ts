@@ -19,9 +19,18 @@ import { ProductFormComponent } from './product-form.component';
   selector: 'app-product-list',
   standalone: true,
   imports: [
-    ReactiveFormsModule, MatTableModule, MatPaginatorModule, MatButtonModule, MatIconModule,
-    MatFormFieldModule, MatInputModule, MatSelectModule, MatProgressSpinnerModule, MatTooltipModule,
-    MatDialogModule, StatusBadgeComponent,
+    ReactiveFormsModule,
+    MatTableModule,
+    MatPaginatorModule,
+    MatButtonModule,
+    MatIconModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+    MatProgressSpinnerModule,
+    MatTooltipModule,
+    MatDialogModule,
+    StatusBadgeComponent,
   ],
   template: `
     <div class="page-header">
@@ -40,7 +49,9 @@ import { ProductFormComponent } from './product-form.component';
         <mat-label>Spring type</mat-label>
         <mat-select [formControl]="typeCtrl">
           <mat-option [value]="null">All types</mat-option>
-          @for (t of springTypes; track t) { <mat-option [value]="t">{{ t }}</mat-option> }
+          @for (t of springTypes; track t) {
+            <mat-option [value]="t">{{ t }}</mat-option>
+          }
         </mat-select>
       </mat-form-field>
       <mat-form-field appearance="outline">
@@ -71,7 +82,9 @@ import { ProductFormComponent } from './product-form.component';
         </ng-container>
         <ng-container matColumnDef="drawing">
           <th mat-header-cell *matHeaderCellDef>Drawing</th>
-          <td mat-cell *matCellDef="let r">{{ r.drawingNumber ?? '—' }}{{ r.drawingRevision ? ' Rev ' + r.drawingRevision : '' }}</td>
+          <td mat-cell *matCellDef="let r">
+            {{ r.drawingNumber ?? '—' }}{{ r.drawingRevision ? ' Rev ' + r.drawingRevision : '' }}
+          </td>
         </ng-container>
         <ng-container matColumnDef="status">
           <th mat-header-cell *matHeaderCellDef>Status</th>
@@ -86,18 +99,57 @@ import { ProductFormComponent } from './product-form.component';
           </td>
         </ng-container>
         <tr mat-header-row *matHeaderRowDef="columns"></tr>
-        <tr mat-row *matRowDef="let row; columns: columns;"></tr>
+        <tr mat-row *matRowDef="let row; columns: columns"></tr>
       </table>
-      <mat-paginator [length]="total()" [pageSize]="pageSize" [pageIndex]="pageIndex()"
-        [pageSizeOptions]="[20,50]" (page)="onPage($event)" showFirstLastButtons />
+      <mat-paginator
+        [length]="total()"
+        [pageSize]="pageSize"
+        [pageIndex]="pageIndex()"
+        [pageSizeOptions]="[20, 50]"
+        (page)="onPage($event)"
+        showFirstLastButtons
+      />
     }
   `,
-  styles: [`.page-header{display:flex;justify-content:space-between;align-items:center;padding:16px 16px 0}
-    .filter-bar{display:flex;gap:12px;padding:8px 16px;flex-wrap:wrap}.search-field{flex:1;min-width:200px}
-    .loading-center{display:flex;justify-content:center;padding:48px}table{width:100%}`],
+  styles: [
+    `
+      .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 16px 0;
+      }
+      .filter-bar {
+        display: flex;
+        gap: 12px;
+        padding: 8px 16px;
+        flex-wrap: wrap;
+      }
+      .search-field {
+        flex: 1;
+        min-width: 200px;
+      }
+      .loading-center {
+        display: flex;
+        justify-content: center;
+        padding: 48px;
+      }
+      table {
+        width: 100%;
+      }
+    `,
+  ],
 })
 export class ProductListComponent implements OnInit {
-  protected readonly springTypes: SpringType[] = ['COMPRESSION', 'EXTENSION', 'TORSION', 'CONICAL', 'DISC_BELLEVILLE', 'WIRE_FORM', 'CUSTOM'];
+  protected readonly springTypes: SpringType[] = [
+    'COMPRESSION',
+    'EXTENSION',
+    'TORSION',
+    'CONICAL',
+    'DISC_BELLEVILLE',
+    'WIRE_FORM',
+    'CUSTOM',
+  ];
   protected readonly columns = ['code', 'name', 'springType', 'drawing', 'status', 'actions'];
   protected readonly rows = signal<ProductDto[]>([]);
   protected readonly total = signal(0);
@@ -112,23 +164,45 @@ export class ProductListComponent implements OnInit {
 
   ngOnInit(): void {
     this.load();
-    this.searchCtrl.valueChanges.pipe(debounceTime(300), distinctUntilChanged()).subscribe(() => { this.pageIndex.set(0); this.load(); });
-    this.typeCtrl.valueChanges.subscribe(() => { this.pageIndex.set(0); this.load(); });
-    this.statusCtrl.valueChanges.subscribe(() => { this.pageIndex.set(0); this.load(); });
+    this.searchCtrl.valueChanges.pipe(debounceTime(300), distinctUntilChanged()).subscribe(() => {
+      this.pageIndex.set(0);
+      this.load();
+    });
+    this.typeCtrl.valueChanges.subscribe(() => {
+      this.pageIndex.set(0);
+      this.load();
+    });
+    this.statusCtrl.valueChanges.subscribe(() => {
+      this.pageIndex.set(0);
+      this.load();
+    });
   }
 
   protected load(): void {
     this.loading.set(true);
-    this.api.search(this.searchCtrl.value ?? '', this.typeCtrl.value, this.statusCtrl.value, this.pageIndex(), this.pageSize).subscribe({
-      next: (p) => { this.rows.set(p.content); this.total.set(p.totalElements); this.loading.set(false); },
-      error: () => this.loading.set(false),
-    });
+    this.api
+      .search(this.searchCtrl.value ?? '', this.typeCtrl.value, this.statusCtrl.value, this.pageIndex(), this.pageSize)
+      .subscribe({
+        next: (p) => {
+          this.rows.set(p.content);
+          this.total.set(p.totalElements);
+          this.loading.set(false);
+        },
+        error: () => this.loading.set(false),
+      });
   }
 
-  protected onPage(e: PageEvent): void { this.pageIndex.set(e.pageIndex); this.load(); }
+  protected onPage(e: PageEvent): void {
+    this.pageIndex.set(e.pageIndex);
+    this.load();
+  }
 
   protected openForm(product?: ProductDto): void {
-    this.dialog.open(ProductFormComponent, { width: '700px', data: product, disableClose: true })
-      .afterClosed().subscribe((saved) => { if (saved) this.load(); });
+    this.dialog
+      .open(ProductFormComponent, { width: '700px', data: product, disableClose: true })
+      .afterClosed()
+      .subscribe((saved) => {
+        if (saved) this.load();
+      });
   }
 }
