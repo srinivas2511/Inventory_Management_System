@@ -9,7 +9,7 @@ CREATE TABLE companies (
     gstin                    VARCHAR(20),
     pan                      VARCHAR(15),
     registered_address       TEXT,
-    currency_code            CHAR(3)      NOT NULL DEFAULT 'INR',
+    currency_code            VARCHAR(3)      NOT NULL DEFAULT 'INR',
     fiscal_year_start_month  SMALLINT     NOT NULL DEFAULT 4,
     active                   BOOLEAN      NOT NULL DEFAULT TRUE,
     created_at               TIMESTAMPTZ  NOT NULL DEFAULT now(),

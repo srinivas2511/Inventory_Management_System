@@ -117,27 +117,24 @@ CREATE TABLE dispatch_items (
 
 -- ─── Customer-specific product specs ────────────────────────────────────────
 
-CREATE TABLE customer_product_specs (
-  id                   BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  customer_id          BIGINT       NOT NULL REFERENCES customers(id),
-  product_id           BIGINT       NOT NULL REFERENCES products(id),
-  spec_reference       VARCHAR(100),
-  drawing_number       VARCHAR(50),
-  customer_part_number VARCHAR(50),
-  notes                VARCHAR(500),
-  active               BOOLEAN      NOT NULL DEFAULT TRUE,
-  created_at           TIMESTAMPTZ  NOT NULL DEFAULT now(),
-  created_by           BIGINT,
-  updated_at           TIMESTAMPTZ  NOT NULL DEFAULT now(),
-  updated_by           BIGINT,
-  version              BIGINT       NOT NULL DEFAULT 0,
-  company_id           BIGINT       NOT NULL DEFAULT 1,
-  UNIQUE (customer_id, product_id)
-);
+-- customer_product_specs is created in V3; V11 reshapes it for the sales module (rename + audit columns).
+ALTER TABLE customer_product_specs RENAME COLUMN customer_part_no TO customer_part_number;
+ALTER TABLE customer_product_specs ALTER COLUMN customer_part_number TYPE VARCHAR(50);
+ALTER TABLE customer_product_specs RENAME COLUMN special_requirements TO notes;
+ALTER TABLE customer_product_specs
+  ADD COLUMN spec_reference  VARCHAR(100),
+  ADD COLUMN drawing_number  VARCHAR(50),
+  ADD COLUMN active          BOOLEAN      NOT NULL DEFAULT TRUE,
+  ADD COLUMN created_at      TIMESTAMPTZ  NOT NULL DEFAULT now(),
+  ADD COLUMN created_by      BIGINT,
+  ADD COLUMN updated_at      TIMESTAMPTZ  NOT NULL DEFAULT now(),
+  ADD COLUMN updated_by      BIGINT,
+  ADD COLUMN version         BIGINT       NOT NULL DEFAULT 0,
+  ADD COLUMN company_id      BIGINT       NOT NULL DEFAULT 1;
 
 -- ─── System settings ─────────────────────────────────────────────────────────
 
-INSERT INTO system_settings (key, value, description) VALUES
-  ('sales.reservation.max_days',       '30',    'Days before an unused reservation is auto-released'),
-  ('sales.dispatch.require_reservation','false', 'If true, dispatch is only allowed against an active reservation')
+INSERT INTO system_settings (key, value, value_type, description) VALUES
+  ('sales.reservation.max_days',       '30',    'INTEGER', 'Days before an unused reservation is auto-released'),
+  ('sales.dispatch.require_reservation','false', 'BOOLEAN', 'If true, dispatch is only allowed against an active reservation')
 ON CONFLICT (key) DO NOTHING;

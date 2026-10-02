@@ -12,7 +12,7 @@ CREATE TABLE journal_headers (
     posting_date         DATE         NOT NULL,
     period_id            BIGINT       NOT NULL REFERENCES fiscal_periods(id),
     description          VARCHAR(300) NOT NULL,
-    currency_code        CHAR(3)      NOT NULL DEFAULT 'INR',
+    currency_code        VARCHAR(3)      NOT NULL DEFAULT 'INR',
     exchange_rate        NUMERIC(12,6) NOT NULL DEFAULT 1,
     status               VARCHAR(10)  NOT NULL DEFAULT 'DRAFT' CHECK (status IN ('DRAFT','SUBMITTED','APPROVED','POSTED','REVERSED')),
     reversal_of_id       BIGINT       REFERENCES journal_headers(id),
@@ -76,9 +76,10 @@ CREATE TABLE inventory_account_assignments (
     item_type             VARCHAR(10),
     valuation_class       VARCHAR(20),
     gl_account_debit_id   BIGINT       NOT NULL REFERENCES gl_accounts(id),
-    gl_account_credit_id  BIGINT       NOT NULL REFERENCES gl_accounts(id),
-    UNIQUE (company_id, transaction_type, COALESCE(item_type,''), COALESCE(valuation_class,''))
+    gl_account_credit_id  BIGINT       NOT NULL REFERENCES gl_accounts(id)
 );
+CREATE UNIQUE INDEX ux_inv_acct_assign
+    ON inventory_account_assignments (company_id, transaction_type, COALESCE(item_type,''), COALESCE(valuation_class,''));
 
 -- Seed account assignments
 INSERT INTO inventory_account_assignments

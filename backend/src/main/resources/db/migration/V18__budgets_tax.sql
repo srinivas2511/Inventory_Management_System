@@ -3,8 +3,8 @@ SET search_path = ims;
 
 CREATE TABLE exchange_rates (
     id            BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    from_currency CHAR(3)       NOT NULL,
-    to_currency   CHAR(3)       NOT NULL DEFAULT 'INR',
+    from_currency VARCHAR(3)       NOT NULL,
+    to_currency   VARCHAR(3)       NOT NULL DEFAULT 'INR',
     period_id     BIGINT        NOT NULL REFERENCES fiscal_periods(id),
     rate          NUMERIC(12,6) NOT NULL CHECK (rate > 0),
     company_id    BIGINT        NOT NULL DEFAULT 1,

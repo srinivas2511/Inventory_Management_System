@@ -39,7 +39,7 @@ CREATE TABLE purchase_orders (
     subtotal                NUMERIC(18,4) NOT NULL DEFAULT 0,
     tax_total               NUMERIC(18,4) NOT NULL DEFAULT 0,
     grand_total             NUMERIC(18,4) NOT NULL DEFAULT 0,
-    currency                CHAR(3)      NOT NULL DEFAULT 'INR',
+    currency                VARCHAR(3)      NOT NULL DEFAULT 'INR',
     payment_terms           VARCHAR(60),
     remarks                 VARCHAR(500),
     requisition_id          BIGINT       REFERENCES purchase_requisitions(id),

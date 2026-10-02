@@ -19,7 +19,7 @@ CREATE TABLE ap_invoices (
     balance_amount      NUMERIC(18,4) GENERATED ALWAYS AS (total_amount - paid_amount) STORED,
     status              VARCHAR(15)   NOT NULL DEFAULT 'DRAFT'
                             CHECK (status IN ('DRAFT','OPEN','PARTIALLY_PAID','PAID','CANCELLED')),
-    currency_code       CHAR(3)       NOT NULL DEFAULT 'INR',
+    currency_code       VARCHAR(3)       NOT NULL DEFAULT 'INR',
     period_id           BIGINT        NOT NULL REFERENCES fiscal_periods(id),
     journal_header_id   BIGINT        REFERENCES journal_headers(id),
     company_id          BIGINT        NOT NULL DEFAULT 1,
@@ -60,7 +60,7 @@ CREATE TABLE ar_invoices (
     balance_amount   NUMERIC(18,4) GENERATED ALWAYS AS (total_amount - received_amount) STORED,
     status           VARCHAR(15)   NOT NULL DEFAULT 'OPEN'
                          CHECK (status IN ('OPEN','PARTIALLY_PAID','PAID','CANCELLED','CREDIT_NOTE')),
-    currency_code    CHAR(3)       NOT NULL DEFAULT 'INR',
+    currency_code    VARCHAR(3)       NOT NULL DEFAULT 'INR',
     period_id        BIGINT        NOT NULL REFERENCES fiscal_periods(id),
     journal_header_id BIGINT       REFERENCES journal_headers(id),
     company_id       BIGINT        NOT NULL DEFAULT 1,

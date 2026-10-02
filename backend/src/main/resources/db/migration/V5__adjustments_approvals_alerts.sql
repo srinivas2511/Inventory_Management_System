@@ -62,39 +62,16 @@ CREATE TABLE stock_count_lines (
 );
 
 -- ── Approval requests ─────────────────────────────────────────────────────────
-CREATE TABLE approval_requests (
-  id                  BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  document_type       VARCHAR(30)  NOT NULL,
-  document_id         BIGINT       NOT NULL,
-  step_no             INT          NOT NULL,
-  required_permission VARCHAR(60)  NOT NULL,
-  status              VARCHAR(15)  NOT NULL DEFAULT 'PENDING',
-  requested_by        BIGINT       NOT NULL,
-  decided_by          BIGINT,
-  decided_at          TIMESTAMPTZ,
-  comment             VARCHAR(500),
-  created_at          TIMESTAMPTZ  NOT NULL DEFAULT now(),
-  CONSTRAINT chk_ap_status CHECK (status IN ('PENDING','APPROVED','REJECTED'))
-);
-CREATE INDEX ix_ap_doc ON approval_requests(document_type, document_id);
+-- approval_requests is created in V1; V5 only aligns it with the document workflow (default + check + index).
+ALTER TABLE approval_requests ALTER COLUMN status SET DEFAULT 'PENDING';
+ALTER TABLE approval_requests ADD CONSTRAINT chk_ap_status CHECK (status IN ('PENDING','APPROVED','REJECTED'));
 CREATE INDEX ix_ap_status ON approval_requests(status);
 
 -- ── Alerts ────────────────────────────────────────────────────────────────────
-CREATE TABLE alerts (
-  id              BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  alert_type      VARCHAR(30)  NOT NULL,
-  severity        VARCHAR(10)  NOT NULL DEFAULT 'MEDIUM',
-  entity_type     VARCHAR(40),
-  entity_id       BIGINT,
-  open_key        VARCHAR(120) NOT NULL,
-  message         VARCHAR(300) NOT NULL,
-  first_seen_at   TIMESTAMPTZ  NOT NULL DEFAULT now(),
-  last_seen_at    TIMESTAMPTZ  NOT NULL DEFAULT now(),
-  acknowledged_by BIGINT,
-  acknowledged_at TIMESTAMPTZ,
-  resolved_at     TIMESTAMPTZ,
-  CONSTRAINT chk_alert_type     CHECK (alert_type IN ('LOW_STOCK','OVERSTOCK','PENDING_INSPECTION','PRODUCTION_DELAY','MATERIAL_SHORTAGE','AGING_BATCH','PENDING_PO','LEDGER_MISMATCH')),
-  CONSTRAINT chk_alert_severity CHECK (severity IN ('LOW','MEDIUM','HIGH','CRITICAL'))
-);
-CREATE UNIQUE INDEX ux_alert_open ON alerts(open_key) WHERE resolved_at IS NULL;
+-- alerts and ux_alert_open are created in V1; V5 adds defaults, value checks and the type index.
+ALTER TABLE alerts ALTER COLUMN severity SET DEFAULT 'MEDIUM';
+ALTER TABLE alerts ALTER COLUMN first_seen_at SET DEFAULT now();
+ALTER TABLE alerts ALTER COLUMN last_seen_at SET DEFAULT now();
+ALTER TABLE alerts ADD CONSTRAINT chk_alert_type CHECK (alert_type IN ('LOW_STOCK','OVERSTOCK','PENDING_INSPECTION','PRODUCTION_DELAY','MATERIAL_SHORTAGE','AGING_BATCH','PENDING_PO','LEDGER_MISMATCH'));
+ALTER TABLE alerts ADD CONSTRAINT chk_alert_severity CHECK (severity IN ('LOW','MEDIUM','HIGH','CRITICAL'));
 CREATE INDEX ix_alert_type ON alerts(alert_type) WHERE resolved_at IS NULL;

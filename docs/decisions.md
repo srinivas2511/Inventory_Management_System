@@ -21,3 +21,9 @@ Source: DESIGN.md §14, PLAN.md §14.
 ## Phase 0 technical notes
 - Java: the project targets Java 17 (`<release>17`); it also builds on newer JDKs.
 - Fonts and icons are self-hosted from npm (`@fontsource/roboto`, `material-icons`) so builds and the running app work without internet access (ADR-15).
+
+## Baseline repair (2026-10-02)
+Integration tests were silently skipped (Testcontainers could not talk to Docker 29: client defaulted to an API older than the engine minimum 1.44; fixed with `backend/src/test/resources/docker-java.properties`). Running them for the first time exposed that the Flyway chain and Spring context had never started on real PostgreSQL.
+Deviation from CLAUDE.md rule 4 (never edit applied migrations): V5, V6, V11, V12, V13, V16 and the CHAR(3)->VARCHAR(3) columns in V7/V14/V16/V17/V18 were edited in place because they had never been applied successfully anywhere.
+Fixed: duplicate `lockProvider` bean; V5 recreated tables V1 already defines; V13 `CREATE INDEX CONCURRENTLY` deadlocked on Flyway's own transaction and referenced non-existent columns (`posted_at`, `entity_type`, `created_by`); V16 expression inside a UNIQUE constraint (now a unique index); CHAR(3) vs String entity mapping.
+OPEN (needs a decision): entity vs schema drift. Hibernate `validate` fails; e.g. ApPayment/ArReceipt/BankStatement(Line)/Budget/ExchangeRate entities diverge from DESIGN section 15 / V17-V18, SpringAttributeDefinition (input_type, options, sort_order vs V3 enum_values, display_order), QualityInspectionItem / InspectionPlanParameter lack updated_at/updated_by. Choose per table: align entities to DESIGN or migrations to entities.

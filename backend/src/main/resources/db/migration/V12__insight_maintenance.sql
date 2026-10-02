@@ -103,11 +103,11 @@ WITH DATA;
 CREATE UNIQUE INDEX IF NOT EXISTS ux_mv_inv_monthly ON mv_inventory_value_monthly (month, item_type);
 
 -- ── System settings ──────────────────────────────────────────────────────────
-INSERT INTO system_settings (key, value, description) VALUES
-  ('alert.low_stock.enabled',          'true',   'Enable low stock alerts'),
-  ('alert.pending_inspection.days',    '2',      'Alert if inspection pending for this many days'),
-  ('report.export.max_rows',           '100000', 'Max rows for synchronous export'),
-  ('production.target.monthly',        '10000',  'Monthly production target (pieces)'),
-  ('report.retention.days',            '90',     'Days to keep generated report files'),
-  ('dashboard.cache.ttl_seconds',      '300',    'Dashboard KPI cache TTL in seconds')
+INSERT INTO system_settings (key, value, value_type, description) VALUES
+  ('alert.low_stock.enabled',          'true',   'BOOLEAN', 'Enable low stock alerts'),
+  ('alert.pending_inspection.days',    '2',      'INTEGER', 'Alert if inspection pending for this many days'),
+  ('report.export.max_rows',           '100000', 'INTEGER', 'Max rows for synchronous export'),
+  ('production.target.monthly',        '10000',  'INTEGER', 'Monthly production target (pieces)'),
+  ('report.retention.days',            '90',     'INTEGER', 'Days to keep generated report files'),
+  ('dashboard.cache.ttl_seconds',      '300',    'INTEGER', 'Dashboard KPI cache TTL in seconds')
 ON CONFLICT (key) DO NOTHING;
