@@ -1,0 +1,116 @@
+import { Component, OnInit, inject, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { DatePipe } from '@angular/common';
+import { MatButtonModule } from '@angular/material/button';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSelectModule } from '@angular/material/select';
+import { MatTableModule } from '@angular/material/table';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
+import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
+
+export interface GoodsReceiptDto {
+  id: number;
+  grNumber: string;
+  purchaseOrderId: number;
+  poNumber: string;
+  receiptDate: string;
+  status: string;
+  receivedBy: number;
+}
+
+@Component({
+  selector: 'app-goods-receipt-list',
+  standalone: true,
+  imports: [
+    ReactiveFormsModule,
+    MatTableModule,
+    MatButtonModule,
+    MatIconModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+    MatProgressSpinnerModule,
+    MatTooltipModule,
+    MatSnackBarModule,
+    DatePipe,
+    StatusBadgeComponent,
+    HasPermissionDirective,
+  ],
+  template: `
+    <div class="page-header">
+      <h2 class="mat-h2">Goods Receipts</h2>
+      <button mat-raised-button color="primary" *appHasPermission="'GOODS_RECEIVE'">
+        <mat-icon>add</mat-icon> Receive Goods
+      </button>
+    </div>
+
+    <div class="filter-bar">
+      <mat-form-field appearance="outline">
+        <mat-label>PO Number</mat-label>
+        <input matInput [formControl]="poCtrl" placeholder="Filter by PO Number" />
+      </mat-form-field>
+      <button mat-stroked-button (click)="load()"><mat-icon>refresh</mat-icon> Refresh</button>
+    </div>
+
+    @if (loading()) {
+      <div class="loading-center"><mat-spinner diameter="40" /></div>
+    } @else {
+      <table mat-table [dataSource]="rows()" class="mat-elevation-z1">
+        <ng-container matColumnDef="grNumber">
+          <th mat-header-cell *matHeaderCellDef>GR Number</th>
+          <td mat-cell *matCellDef="let r">{{ r.grNumber }}</td>
+        </ng-container>
+        <ng-container matColumnDef="purchaseOrderId">
+          <th mat-header-cell *matHeaderCellDef>PO ID</th>
+          <td mat-cell *matCellDef="let r">{{ r.purchaseOrderId }}</td>
+        </ng-container>
+        <ng-container matColumnDef="receiptDate">
+          <th mat-header-cell *matHeaderCellDef>Receipt Date</th>
+          <td mat-cell *matCellDef="let r">{{ r.receiptDate | date: 'dd/MM/yyyy' }}</td>
+        </ng-container>
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef>Status</th>
+          <td mat-cell *matCellDef="let r"><app-status-badge [status]="r.status" /></td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="columns"></tr>
+        <tr mat-row *matRowDef="let r; columns: columns"></tr>
+      </table>
+    }
+  `,
+})
+export class GoodsReceiptListComponent implements OnInit {
+  private http = inject(HttpClient);
+  private snack = inject(MatSnackBar);
+
+  columns = ['grNumber', 'purchaseOrderId', 'receiptDate', 'status'];
+  rows = signal<GoodsReceiptDto[]>([]);
+  loading = signal(false);
+  poCtrl = new FormControl<string>('');
+
+  ngOnInit(): void {
+    this.load();
+  }
+
+  load(): void {
+    this.loading.set(true);
+    // Fetch all GRs by listing purchase orders then their GRs is complex;
+    // use a broad search via purchase-orders endpoint first
+    this.http.get<{ content: GoodsReceiptDto[] }>('/api/procurement/goods-receipts', {}).subscribe({
+      next: (page) => {
+        this.rows.set(page.content ?? []);
+        this.loading.set(false);
+      },
+      error: () => {
+        this.rows.set([]);
+        this.loading.set(false);
+      },
+    });
+  }
+}

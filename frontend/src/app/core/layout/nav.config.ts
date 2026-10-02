@@ -80,6 +80,44 @@ export const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
+    label: 'Procurement',
+    items: [
+      {
+        label: 'Purchase Orders',
+        icon: 'shopping_cart',
+        route: '/procurement/purchase-orders',
+        permission: 'PURCHASE_VIEW',
+        enabled: true,
+      },
+      {
+        label: 'Requisitions',
+        icon: 'request_quote',
+        route: '/procurement/requisitions',
+        permission: 'PURCHASE_VIEW',
+        enabled: true,
+      },
+      {
+        label: 'Goods Receipts',
+        icon: 'local_shipping',
+        route: '/procurement/goods-receipts',
+        permission: 'GOODS_RECEIVE',
+        enabled: true,
+      },
+    ],
+  },
+  {
+    label: 'Quality',
+    items: [
+      {
+        label: 'Inspections',
+        icon: 'fact_check',
+        route: '/quality/inspections',
+        permission: 'QUALITY_VIEW',
+        enabled: true,
+      },
+    ],
+  },
+  {
     label: 'Administration',
     items: [
       { label: 'Users', icon: 'manage_accounts', route: '/admin/users', permission: 'IAM_USER_MANAGE', enabled: true },

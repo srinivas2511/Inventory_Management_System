@@ -40,6 +40,10 @@ public enum ErrorCode {
     QUARANTINE_NOT_ISSUABLE(HttpStatus.UNPROCESSABLE_ENTITY, "Quarantined material cannot be issued"),
     REJECTED_NOT_USABLE(HttpStatus.UNPROCESSABLE_ENTITY, "Rejected material cannot be used"),
 
+    // 422 - procurement rules
+    OVER_RECEIPT(HttpStatus.UNPROCESSABLE_ENTITY, "Receipt exceeds ordered quantity beyond tolerance"),
+    ILLEGAL_PO_TRANSITION(HttpStatus.UNPROCESSABLE_ENTITY, "Illegal purchase order state transition"),
+
     // 422 - production rules
     OVER_CONSUMPTION(HttpStatus.UNPROCESSABLE_ENTITY, "Consumption exceeds issued quantity"),
     ISSUE_EXCEEDS_PLAN(HttpStatus.UNPROCESSABLE_ENTITY, "Issue exceeds planned quantity"),

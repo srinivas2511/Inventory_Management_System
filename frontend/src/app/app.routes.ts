@@ -91,6 +91,36 @@ export const routes: Routes = [
           import('./features/inventory/stock-adjustment-list.component').then((m) => m.StockAdjustmentListComponent),
       },
       {
+        path: 'procurement/purchase-orders',
+        title: 'Purchase Orders',
+        canActivate: [permissionGuard('PURCHASE_VIEW')],
+        loadComponent: () =>
+          import('./features/procurement/purchase-order-list.component').then((m) => m.PurchaseOrderListComponent),
+      },
+      {
+        path: 'procurement/requisitions',
+        title: 'Purchase Requisitions',
+        canActivate: [permissionGuard('PURCHASE_VIEW')],
+        loadComponent: () =>
+          import('./features/procurement/purchase-requisition-list.component').then(
+            (m) => m.PurchaseRequisitionListComponent,
+          ),
+      },
+      {
+        path: 'procurement/goods-receipts',
+        title: 'Goods Receipts',
+        canActivate: [permissionGuard('GOODS_RECEIVE')],
+        loadComponent: () =>
+          import('./features/procurement/goods-receipt-list.component').then((m) => m.GoodsReceiptListComponent),
+      },
+      {
+        path: 'quality/inspections',
+        title: 'Quality Inspections',
+        canActivate: [permissionGuard('QUALITY_VIEW')],
+        loadComponent: () =>
+          import('./features/quality/inspection-list.component').then((m) => m.InspectionListComponent),
+      },
+      {
         path: 'admin/users',
         title: 'Users',
         canActivate: [permissionGuard('IAM_USER_MANAGE')],
