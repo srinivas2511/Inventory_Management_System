@@ -924,7 +924,7 @@ Passwords never logged or returned; `password_hash` excluded from all DTOs; refr
 |---|---|---|
 | `/login`, `/forgot-password`, `/reset-password/:token` | auth pages | public |
 | `/dashboard` | role-aware shell | `DASHBOARD_VIEW` or any role |
-| `/master/materials`, `/master/products`, `/master/suppliers`, `/master/customers`, `/master/operations`, `/master/warehouses`, `/master/machines` | list + dialog/detail | respective `*_VIEW` / `MASTERDATA_MANAGE` |
+| `/master/materials`, `/master/products` (+ `/master/products/new`, `/master/products/:id/edit`), `/master/suppliers`, `/master/customers`, `/master/operations`, `/master/warehouses`, `/master/machines` | list + dialog/detail | respective `*_VIEW` / `MASTERDATA_MANAGE` |
 | `/engineering/boms`, `/engineering/boms/:id`, `/engineering/routing/:productId` | | `BOM_VIEW`, `ROUTING_MANAGE` |
 | `/procurement/purchase-orders`, `/procurement/goods-receipts`, `/procurement/incoming-inspection` | | `PURCHASE_VIEW`, `INVENTORY_RECEIVE`, `QUALITY_INSPECT` |
 | `/inventory/stock`, `/inventory/ledger`, `/inventory/batches`, `/inventory/transfer`, `/inventory/adjustments`, `/inventory/counts` | | `INVENTORY_VIEW` … |
@@ -1039,7 +1039,8 @@ Supplier ▸ PO ▸ RM batch ▸ Material issue ▸ Production order ▸ Operati
 | Component | Responsibility |
 |---|---|
 | `DataTable<T>` | server-side paging/sorting, column config, filters bound to URL query params, row actions from `allowedActions` |
-| `FilterBar` | search, status, date range, product, batch, supplier, customer pickers (typeahead using `/api/lookups`) |
+| `FilterBar` | search box (debounced) and select filters; values come in and changes go out, the screen keeps them in the URL (`listState`). Date range and the pickers below are added as screens need them |
+| `LookupPicker` | typeahead form control for a record by code or name (customer, material; batch, supplier later). Customers come from `GET /api/lookups/customers`, which returns only `id, code, name` of active customers to holders of `CUSTOMER_MANAGE`, `SALES_VIEW` or `PRODUCT_VIEW` |
 | `StatusBadge` | status→colour/icon/label map (§8.7) |
 | `ConfirmDialog`, `ReasonDialog` | irreversible actions; reasons for adjustments, cancellations, overrides |
 | `QuantityInput` | numeric entry with UOM, step, min/max, keypad mode for tablets |

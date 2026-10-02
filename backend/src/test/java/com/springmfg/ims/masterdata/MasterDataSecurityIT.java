@@ -80,6 +80,8 @@ class MasterDataSecurityIT extends AbstractIntegrationTest {
         all.add(new Endpoint("PUT /api/customers/{id}", cus, false, () -> withBody(put("/api/customers/" + customerId), updatePartner)));
         all.add(new Endpoint("POST /api/customers/{id}/activate", cus, false, () -> post("/api/customers/" + customerId + "/activate")));
         all.add(new Endpoint("DELETE /api/customers/{id}", cus, false, () -> delete("/api/customers/" + customerId)));
+        all.add(new Endpoint("GET /api/lookups/customers", Set.of("CUSTOMER_MANAGE", "SALES_VIEW", "PRODUCT_VIEW"), true,
+                () -> get("/api/lookups/customers")));
         all.add(new Endpoint("GET /api/materials", matRead, true, () -> get("/api/materials")));
         all.add(new Endpoint("GET /api/materials/{id}", matRead, true, () -> get("/api/materials/" + materialId)));
         all.add(new Endpoint("POST /api/materials", mat, false, () -> withBody(post("/api/materials"), newMaterial)));

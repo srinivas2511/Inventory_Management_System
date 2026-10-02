@@ -497,11 +497,15 @@ class ProductIT extends AbstractIntegrationTest {
     @Test
     void allowedActionsFollowTheStateAndThePermissionsOfTheCaller() throws Exception {
         String token = engineerToken();
-        long id = create(token, valid(SpringType.COMPRESSION, code("SPR-A"))).get("id").asLong();
+        String productCode = code("SPR-A");
+        long id = create(token, valid(SpringType.COMPRESSION, productCode)).get("id").asLong();
         send(get("/api/products/" + id), token, null).andExpect(jsonPath("$.allowedActions[0]").value("EDIT")).andExpect(jsonPath("$.allowedActions[1]").value("ACTIVATE"));
         send(post("/api/products/" + id + "/activate"), token, null).andExpect(jsonPath("$.allowedActions[1]").value("OBSOLETE"));
         send(delete("/api/products/" + id), token, null).andExpect(status().isNoContent());
         send(get("/api/products/" + id), token, null).andExpect(jsonPath("$.allowedActions.length()").value(1)).andExpect(jsonPath("$.allowedActions[0]").value("ACTIVATE"));
+
+        // the list carries the same actions, so a screen can offer row actions without loading each product
+        send(get("/api/products?q=" + productCode), token, null).andExpect(jsonPath("$.content[0].allowedActions[0]").value("ACTIVATE"));
 
         // someone who may only view gets no actions at all
         String viewer = Api.login(mockMvc, json, testUsers.create("ADMIN").getUsername(), TestUsers.PASSWORD).accessToken();

@@ -53,6 +53,12 @@ export function errorText(control: AbstractControl | null): string {
   if (errors['email']) {
     return 'Enter a valid e-mail address.';
   }
+  if (errors['min']) {
+    return `Must be at least ${errors['min'].min}.`;
+  }
+  if (errors['max']) {
+    return `Must be at most ${errors['max'].max}.`;
+  }
   if (errors['minlength']) {
     return `Must be at least ${errors['minlength'].requiredLength} characters.`;
   }

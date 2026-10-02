@@ -73,7 +73,7 @@ describe('ShellComponent', () => {
 
   it('hides groups that have no enabled items', () => {
     const groups = visibleGroups(NAV_GROUPS);
-    expect(groups.map((g) => g.label)).toEqual(['Overview', 'Administration']);
+    expect(groups.map((g) => g.label)).toEqual(['Overview', 'Master Data', 'Administration']);
   });
 
   it('filters items by permission', () => {

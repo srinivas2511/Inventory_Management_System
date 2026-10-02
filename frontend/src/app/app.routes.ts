@@ -40,6 +40,54 @@ export const routes: Routes = [
         loadComponent: () => import('./features/forbidden/forbidden.component').then((m) => m.ForbiddenComponent),
       },
       {
+        path: 'master/materials',
+        title: 'Materials',
+        canActivate: [permissionGuard],
+        data: { permission: ['MATERIAL_VIEW', 'MASTERDATA_MANAGE'] },
+        loadComponent: () =>
+          import('./features/master/pages/materials-page.component').then((m) => m.MaterialsPageComponent),
+      },
+      {
+        path: 'master/suppliers',
+        title: 'Suppliers',
+        canActivate: [permissionGuard],
+        data: { permission: ['SUPPLIER_MANAGE', 'PURCHASE_VIEW'], kind: 'suppliers' },
+        loadComponent: () =>
+          import('./features/master/pages/partners-page.component').then((m) => m.PartnersPageComponent),
+      },
+      {
+        path: 'master/customers',
+        title: 'Customers',
+        canActivate: [permissionGuard],
+        data: { permission: ['CUSTOMER_MANAGE', 'SALES_VIEW'], kind: 'customers' },
+        loadComponent: () =>
+          import('./features/master/pages/partners-page.component').then((m) => m.PartnersPageComponent),
+      },
+      {
+        path: 'master/products',
+        title: 'Spring products',
+        canActivate: [permissionGuard],
+        data: { permission: 'PRODUCT_VIEW' },
+        loadComponent: () =>
+          import('./features/master/pages/products-page.component').then((m) => m.ProductsPageComponent),
+      },
+      {
+        path: 'master/products/new',
+        title: 'New product',
+        canActivate: [permissionGuard],
+        data: { permission: 'PRODUCT_CREATE' },
+        loadComponent: () =>
+          import('./features/master/pages/product-form-page.component').then((m) => m.ProductFormPageComponent),
+      },
+      {
+        path: 'master/products/:id/edit',
+        title: 'Edit product',
+        canActivate: [permissionGuard],
+        data: { permission: 'PRODUCT_VIEW' },
+        loadComponent: () =>
+          import('./features/master/pages/product-form-page.component').then((m) => m.ProductFormPageComponent),
+      },
+      {
         path: 'admin/users',
         title: 'Users',
         canActivate: [permissionGuard],

@@ -27,7 +27,7 @@ public final class ProductDtos {
 
     public record ProductSummary(long id, String code, String name, SpringType springType, MaterialRef primaryMaterial,
             java.math.BigDecimal wireDiameter, java.math.BigDecimal outerDiameter, java.math.BigDecimal freeLength,
-            String drawingNumber, String drawingRevision, PartnerRef customer, ProductStatus status, boolean active) {
+            String drawingNumber, String drawingRevision, PartnerRef customer, ProductStatus status, boolean active, List<String> allowedActions) {
     }
 
     public record ProductResponse(long id, String code, String name, SpringType springType, MaterialRef primaryMaterial,

@@ -23,3 +23,19 @@ export function matchingFields(password: string, confirm: string): ValidatorFn {
     return null;
   };
 }
+
+/** 15-character GSTIN: state code, PAN, entity number, 'Z', check character (DESIGN.md section 5.2). */
+export const gstNumber: ValidatorFn = (control) => {
+  const value = control.value as string | null;
+  return !value || /^\d{2}[A-Z]{5}\d{4}[A-Z]\d[Z][A-Z\d]$/.test(value.trim().toUpperCase())
+    ? null
+    : { pattern: true, message: 'Not a valid 15-character GST number.' };
+};
+
+/** A non-negative number is optional; empty is fine, a negative value is not. */
+export const nonNegative: ValidatorFn = (control) => {
+  const value = control.value as number | null;
+  return value === null || value === undefined || (value as unknown) === '' || value >= 0
+    ? null
+    : { min: { min: 0, actual: value } };
+};

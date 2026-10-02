@@ -25,22 +25,34 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     label: 'Master Data',
     items: [
-      { label: 'Materials', icon: 'category', route: '/master/materials', permission: 'MATERIAL_VIEW', enabled: false },
+      {
+        label: 'Materials',
+        icon: 'category',
+        route: '/master/materials',
+        permission: ['MATERIAL_VIEW', 'MASTERDATA_MANAGE'],
+        enabled: true,
+      },
       {
         label: 'Spring Products',
         icon: 'settings_input_component',
         route: '/master/products',
         permission: 'PRODUCT_VIEW',
-        enabled: false,
+        enabled: true,
       },
       {
         label: 'Suppliers',
         icon: 'local_shipping',
         route: '/master/suppliers',
-        permission: 'SUPPLIER_MANAGE',
-        enabled: false,
+        permission: ['SUPPLIER_MANAGE', 'PURCHASE_VIEW'],
+        enabled: true,
       },
-      { label: 'Customers', icon: 'groups', route: '/master/customers', permission: 'CUSTOMER_MANAGE', enabled: false },
+      {
+        label: 'Customers',
+        icon: 'groups',
+        route: '/master/customers',
+        permission: ['CUSTOMER_MANAGE', 'SALES_VIEW'],
+        enabled: true,
+      },
     ],
   },
   {

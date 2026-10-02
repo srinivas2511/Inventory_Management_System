@@ -148,3 +148,17 @@ Choices made where DESIGN/ARCHITECTURE left room; change by editing the setting 
 | Menu | an item shows when enabled and the user holds its permission; groups with no visible items vanish. Users needs `USER_VIEW`, Roles needs `ROLE_MANAGE` |
 | Admin screens | plain `mat-table` with server-side paging, sort and debounced search. The reusable `DataTable`, `FilterBar` and `StatusBadge` arrive in task 1.11 and these screens can adopt them then |
 | Verification | lint, format, 55 unit tests and the production build pass. The stack was not run in a browser in this session |
+
+## Phase 1 — frontend master data decisions (task 1.11)
+| Point | Behaviour |
+|---|---|
+| Customer picker for Engineers (open item from 1.9) | resolved with a lookup endpoint, not by widening roles: `GET /api/lookups/customers?q=` returns `id, code, name` of active customers (max 50) to holders of `CUSTOMER_MANAGE`, `SALES_VIEW` or `PRODUCT_VIEW`. Engineers still cannot read customer records. DESIGN §8.4 documents it. More lookups are added the same way when a screen needs them |
+| `allowedActions` on the product list | DESIGN §6.4 says row actions come from `allowedActions`, but only the single-product response had it. It is now also on each list row (same rule, same method), so the list renders row actions without re-implementing the state machine or loading every product |
+| URL-bound lists | search, filters, sort and page live in the query string (`listState`), so a filtered list survives reload and can be shared. Changing search, a filter or the sort returns to page 1 |
+| Suppliers and customers | one screen (`PartnersPage`) selected by route data `kind`; they share fields and API shape |
+| Dynamic product form | built from `GET /api/spring-types/{type}/attributes`: `storage: CORE` attributes become top-level request fields, `SPECIFICATIONS` ones go in `specifications`; field errors map back by the same paths. A draft saves with required attributes empty; "Save & activate" and editing an ACTIVE product require them (the server also checks). Changing the type asks before clearing entered values. The type is fixed once a product is no longer a draft (DESIGN §6.3) |
+| Custom springs | free-form attribute/value rows; `true`/`false` and plain numbers keep their type, anything else is text |
+| Preserved columns | a product update replaces everything, so on edit the columns the spring type's catalogue does not describe (for example an inner diameter set through the API) are sent back unchanged rather than blanked |
+| Forced deactivation | deactivating a material still in use shows the server's reason and asks again before retrying with `force=true` |
+| Suppliers in the material form | the preferred-supplier picker reads `/api/suppliers`, which only suppliers' managers and purchase roles can read; the material form itself is Admin-only, who can |
+| Not built | date-range, product, batch pickers in `FilterBar`, `QuantityInput`, charts: they arrive with the screens that need them |

@@ -301,7 +301,7 @@ public class ProductService {
     private ProductDtos.ProductSummary toSummary(Product p) {
         return new ProductDtos.ProductSummary(p.getId(), p.getProductCode(), p.getName(), p.getSpringType(), materialRef(p.getPrimaryMaterial()),
                 p.getWireDiameter(), p.getOuterDiameter(), p.getFreeLength(), p.getDrawingNumber(), p.getDrawingRevision(),
-                partnerRef(p.getCustomer()), p.getStatus(), p.isActive());
+                partnerRef(p.getCustomer()), p.getStatus(), p.isActive(), allowedActions(p));
     }
 
     private ProductDtos.ProductResponse toResponse(Product p) {
