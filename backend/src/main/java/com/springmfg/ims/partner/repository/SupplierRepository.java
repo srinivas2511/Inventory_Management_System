@@ -6,11 +6,15 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Optional;
+
 import com.springmfg.ims.partner.domain.Supplier;
 
 public interface SupplierRepository extends JpaRepository<Supplier, Long> {
 
     boolean existsBySupplierCode(String supplierCode);
+
+    Optional<Supplier> findBySupplierCode(String supplierCode);
 
     @Query("SELECT s FROM Supplier s WHERE " +
            "(:q IS NULL OR LOWER(s.name) LIKE LOWER(CONCAT('%', :q, '%')) " +

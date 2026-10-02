@@ -1,5 +1,54 @@
-# Production: everything sensitive comes from the environment; Swagger stays off unless SWAGGER_ENABLED=true.
+## Production profile — all sensitive values come from the environment.
+## Override the defaults in application.yml; never hard-code secrets here.
+
+spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+    hikari:
+      maximum-pool-size: ${DB_POOL_MAX:20}
+      minimum-idle: ${DB_POOL_MIN:5}
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+  mail:
+    host: ${MAIL_HOST}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USER}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+
+springdoc:
+  api-docs.enabled: ${SWAGGER_ENABLED:false}
+  swagger-ui.enabled: ${SWAGGER_ENABLED:false}
+
+ims:
+  security:
+    cors-origins: ${CORS_ORIGINS}
+  jwt:
+    secret: ${JWT_SECRET}
+    access-token-minutes: ${JWT_ACCESS_MINUTES:15}
+  demo:
+    load-data: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: when-authorized
+      roles: ADMIN
+
 logging:
   level:
-    root: INFO
+    root: WARN
     com.springmfg.ims: INFO
+    org.flywaydb: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd'T'HH:mm:ss.SSSZ} %-5level [%X{traceId},%X{spanId}] %logger{36} - %msg%n"

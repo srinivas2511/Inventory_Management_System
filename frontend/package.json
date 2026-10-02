@@ -11,7 +11,9 @@
     "build:prod": "ng build --configuration production",
     "format": "prettier --write \"src/**/*.{ts,html,scss,json}\"",
     "format:check": "prettier --check \"src/**/*.{ts,html,scss,json}\"",
-    "lint": "ng lint"
+    "lint": "ng lint",
+    "e2e": "playwright test",
+    "e2e:report": "playwright show-report"
   },
   "private": true,
   "dependencies": {
@@ -46,6 +48,7 @@
     "karma-jasmine-html-reporter": "~2.1.0",
     "prettier": "^3.9.9",
     "typescript": "~5.5.2",
-    "typescript-eslint": "8.16.0"
+    "typescript-eslint": "8.16.0",
+    "@playwright/test": "^1.48.2"
   }
 }

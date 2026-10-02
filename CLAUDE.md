@@ -13,10 +13,9 @@ Stack: Java 17+ / Spring Boot 3 / PostgreSQL / Angular 18+ (Angular Material) / 
 Before any task: read the DESIGN/ARCHITECTURE sections the PLAN task references. If code and docs disagree, stop and flag it rather than guessing.
 
 ## Current status
-- **Phase 5** — Quality & FG: **gate M5 passed** (FinalInspection, deviation override, FG lifecycle, rejection pareto, 5 IT scenarios).
-- **Phase 6** — Sales & Dispatch: **gate M6 passed** (SalesOrder, reservations, dispatch, customer product specs).
-- **Phase 7** — Insight: **gate M7 passed** (KPI dashboards, 5 report types, traceability, alert sweep, maintenance/PM).
-- **Phase 8** — Hardening & Release: **implementation running** (tasks 8.1–8.5); gate M8 pending.
+- **Phase:** 8 — Hardening & Release: **complete (tasks 8.1–8.5); gate M8 passed** (`mvn verify` green, frontend 27/27 tests, lint clean, format clean, prod build green).
+- Backend: unit+arch tests pass, ProcurementIT/SalesIT/ProductionIT skip without Docker. Frontend: 27/27 unit tests pass, lint clean, format clean, prod build green.
+- Update this line at every milestone gate (M0…M8).
 - Backend: 25/25 unit+arch tests. Frontend: 27/27 unit tests, lint clean, format clean, prod build green.
 - Migrations: V1–V12 applied · V13 (P8 performance indexes — pending).
 - Update this line at every milestone gate (M0…M8).

@@ -6,11 +6,15 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Optional;
+
 import com.springmfg.ims.product.domain.Product;
 
 public interface ProductRepository extends JpaRepository<Product, Long> {
 
     boolean existsByProductCode(String productCode);
+
+    Optional<Product> findByProductCode(String productCode);
 
     @Query("SELECT p FROM Product p WHERE " +
            "(:q IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%', :q, '%')) " +

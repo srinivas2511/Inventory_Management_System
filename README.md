@@ -4,7 +4,7 @@ Inventory and manufacturing-material management for a spring manufacturer: raw m
 
 **Stack:** Java 17 · Spring Boot 3.5 · PostgreSQL 16 · Angular 18 (Angular Material) · Docker
 
-**Status:** Phase 0 (foundations) — runnable skeleton: API with security baseline, Angular shell, Docker stack, CI. Business modules arrive phase by phase (see `docs/PLAN.md`).
+**Status:** Phase 8 complete (M8 passed) — full end-to-end manufacturing ERP: procurement → inventory → production → quality → sales → dispatch, with insight dashboards, batch traceability, scheduled alerts, and hardened for production (security headers, performance indexes, Playwright E2E, runbook, UAT checklist).
 
 ## Documentation
 | Document | Purpose |
@@ -13,6 +13,9 @@ Inventory and manufacturing-material management for a spring manufacturer: raw m
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | structure, workflows, security, decisions |
 | [docs/DESIGN.md](docs/DESIGN.md) | schemas, algorithms, API contracts, screens, seed data |
 | [docs/PLAN.md](docs/PLAN.md) | phases, tasks, estimates, gates |
+| [docs/RUNBOOK.md](docs/RUNBOOK.md) | deploy, upgrade, rollback, backup/restore |
+| [docs/UAT_CHECKLIST.md](docs/UAT_CHECKLIST.md) | 10-role UAT checklist |
+| [docs/env.example](docs/env.example) | environment variable template |
 | [docs/decisions.md](docs/decisions.md) | open business decisions and the defaults in force |
 | [docs/adr/](docs/adr/) | architecture decision records |
 
@@ -66,30 +69,40 @@ npm start            # http://localhost:4200, proxies /api to http://localhost:8
 
 ## Tests
 ```bash
-cd backend  && mvn verify                       # unit tests, ArchUnit rules, integration tests (need Docker)
-cd frontend && npm run test:ci                  # Karma/Jasmine, headless Chrome, with coverage
+cd backend  && mvn verify                        # unit tests, ArchUnit rules, integration tests (need Docker)
+cd frontend && npm run test:ci                   # Karma/Jasmine, headless Chrome, with coverage
 cd frontend && npm run lint && npm run format:check
+cd frontend && npm run e2e                       # Playwright E2E (stack must be running at E2E_BASE_URL)
 ```
 Integration tests (`*IT`) use a real PostgreSQL via Testcontainers and are skipped automatically when Docker is not available.
+Playwright E2E tests require the full Docker stack running with `ims.demo.load-data=true`.
 
 ## Production-style run
 ```bash
-cp docker/.env.example docker/.env      # then edit: strong DB_PASSWORD, real CORS_ORIGINS
+cp docs/env.example docker/.env         # then fill in: DB_PASSWORD, JWT_SECRET, CORS_ORIGINS, etc.
 docker compose -f docker/docker-compose.yml -f docker/docker-compose.prod.yml --env-file docker/.env up -d --build
 ```
 The prod override refuses to start without secrets, exposes only the web port, disables Swagger, and loads no demo data.
+See [docs/RUNBOOK.md](docs/RUNBOOK.md) for upgrade, rollback, and backup procedures.
 
 ## Repository layout
 ```
 backend/    Spring Boot (com.springmfg.ims, package-by-feature)
-frontend/   Angular (core / shared / features)
-docker/     compose files, nginx.conf, .env.example
-docs/       requirements, architecture, design, plan, decisions, ADRs
+frontend/   Angular (core / shared / features), Playwright E2E in e2e/
+docker/     compose files, nginx.conf
+docs/       requirements, architecture, design, plan, runbook, UAT checklist, env template, ADRs
 .github/    CI workflow, pull request template
 ```
 
-## Sample login credentials
-None yet — authentication and demo users arrive in Phase 1 and Phase 8. Demo users will load only under the `dev`/`demo` profile.
+## Demo login credentials
+
+Seeded in the `dev`/`demo` profile only (never production):
+
+| Username | Default password | Role |
+|----------|-----------------|------|
+| `admin` | `Admin@123` | ADMIN (all permissions) |
+
+Set `ims.demo.load-data=true` in your docker `.env` (or `application-dev.yml`) to auto-seed a complete end-to-end workflow on startup: supplier → raw-material stock → purchase order → production order (3 operations) → final inspection (48 pcs approved) → sales order → dispatch.
 
 ## Working on this project
 See [CONTRIBUTING.md](CONTRIBUTING.md) and [CLAUDE.md](CLAUDE.md).

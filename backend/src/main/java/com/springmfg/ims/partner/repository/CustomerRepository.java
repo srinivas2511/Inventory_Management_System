@@ -6,11 +6,15 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Optional;
+
 import com.springmfg.ims.partner.domain.Customer;
 
 public interface CustomerRepository extends JpaRepository<Customer, Long> {
 
     boolean existsByCustomerCode(String customerCode);
+
+    Optional<Customer> findByCustomerCode(String customerCode);
 
     @Query("SELECT c FROM Customer c WHERE " +
            "(:q IS NULL OR LOWER(c.name) LIKE LOWER(CONCAT('%', :q, '%')) " +

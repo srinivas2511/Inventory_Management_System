@@ -41,6 +41,9 @@ public interface QualityInspectionRepository extends JpaRepository<QualityInspec
     @Query("SELECT COUNT(q) FROM QualityInspection q WHERE q.status = 'PENDING'")
     long countPending();
 
+    List<QualityInspection> findByProductionOrderIdAndInspectionTypeAndStatus(
+            Long productionOrderId, String inspectionType, String status);
+
     @Query("SELECT CASE WHEN COUNT(q) = 0 THEN CAST(0.0 AS java.math.BigDecimal) " +
            "ELSE CAST((SUM(CASE WHEN q.status IN ('PASSED','APPROVED') THEN 1.0 ELSE 0.0 END) / COUNT(q)) * 100 AS java.math.BigDecimal) END " +
            "FROM QualityInspection q WHERE q.status IN ('PASSED','APPROVED','FAILED','REJECTED') " +

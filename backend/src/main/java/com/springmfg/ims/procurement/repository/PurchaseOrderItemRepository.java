@@ -16,6 +16,8 @@ public interface PurchaseOrderItemRepository extends JpaRepository<PurchaseOrder
 
     List<PurchaseOrderItem> findByPurchaseOrderId(Long poId);
 
+    long countByMaterialId(Long materialId);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT i FROM PurchaseOrderItem i WHERE i.id = :id")
     Optional<PurchaseOrderItem> lockById(@Param("id") Long id);

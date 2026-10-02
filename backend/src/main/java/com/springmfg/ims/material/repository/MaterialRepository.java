@@ -8,11 +8,15 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Optional;
+
 import com.springmfg.ims.material.domain.Material;
 
 public interface MaterialRepository extends JpaRepository<Material, Long> {
 
     boolean existsByMaterialCode(String materialCode);
+
+    Optional<Material> findByMaterialCode(String materialCode);
 
     List<Material> findAllByActiveTrue();
 
