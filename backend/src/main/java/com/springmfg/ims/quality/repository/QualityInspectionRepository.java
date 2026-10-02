@@ -24,6 +24,10 @@ public interface QualityInspectionRepository extends JpaRepository<QualityInspec
            "AND q.materialBatchId = :batchId AND q.status NOT IN ('APPROVED','REJECTED')")
     Optional<QualityInspection> findOpenIncomingByBatch(@Param("batchId") Long batchId);
 
+    @Query("SELECT q FROM QualityInspection q WHERE q.inspectionType = 'FINAL' " +
+           "AND q.fgBatchId = :fgBatchId AND q.status NOT IN ('PASSED','FAILED','HOLD')")
+    Optional<QualityInspection> findOpenFinalByFgBatch(@Param("fgBatchId") Long fgBatchId);
+
     @Query("SELECT q FROM QualityInspection q WHERE (:type IS NULL OR q.inspectionType = :type) " +
            "AND (:status IS NULL OR q.status = :status)")
     Page<QualityInspection> search(@Param("type") String type, @Param("status") String status,

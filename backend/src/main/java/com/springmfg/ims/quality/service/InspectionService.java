@@ -258,15 +258,18 @@ public class InspectionService {
                 .map(i -> new QualityInspectionDto.InspectionItemDto(
                         i.getId(), i.getSeq(), i.getParameterName(), i.getSpecification(),
                         i.getLowerLimit(), i.getUpperLimit(), i.getActualValue(),
-                        i.getActualText(), i.getUnit(), i.getResult(), i.getDeviationNote(), i.isMandatory()))
+                        i.getActualText(), i.getUnit(), i.getResult(), i.getDeviationNote(),
+                        i.isMandatory(), i.getDeviationApprovedBy(), i.getDeviationApprovedAt()))
                 .toList();
         return new QualityInspectionDto(
                 insp.getId(), insp.getInspectionNumber(), insp.getInspectionType(), insp.getStatus(),
                 insp.getGoodsReceiptItemId(), null,
                 insp.getMaterialBatchId(), null,
                 insp.getMaterialId(), null,
+                insp.getFgBatchId(), insp.getProductionOrderId(), insp.getProductionOperationId(),
                 insp.getInspectedQty(), insp.getSampleSize(),
-                insp.getAcceptedQty(), insp.getRejectedQty(),
-                insp.getInspectorId(), insp.getInspectedAt(), insp.getRemarks(), itemDtos);
+                insp.getAcceptedQty(), insp.getRejectedQty(), insp.getHoldQty(),
+                insp.getInspectorId(), insp.getInspectedAt(), insp.getDecisionAt(),
+                insp.getRemarks(), itemDtos);
     }
 }

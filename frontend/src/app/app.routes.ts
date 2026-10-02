@@ -147,6 +147,32 @@ export const routes: Routes = [
           import('./features/quality/inspection-list.component').then((m) => m.InspectionListComponent),
       },
       {
+        path: 'quality/fg-batches',
+        title: 'FG Batches',
+        canActivate: [permissionGuard('QUALITY_VIEW')],
+        loadComponent: () => import('./features/quality/fg-batch-list.component').then((m) => m.FgBatchListComponent),
+      },
+      {
+        path: 'quality/rejections',
+        title: 'Rejection Analysis',
+        canActivate: [permissionGuard('QUALITY_VIEW')],
+        loadComponent: () =>
+          import('./features/quality/rejection-dashboard.component').then((m) => m.RejectionDashboardComponent),
+      },
+      {
+        path: 'sales/orders',
+        title: 'Sales Orders',
+        canActivate: [permissionGuard('SALES_VIEW')],
+        loadComponent: () =>
+          import('./features/sales/sales-order-list.component').then((m) => m.SalesOrderListComponent),
+      },
+      {
+        path: 'sales/dispatches',
+        title: 'Dispatches',
+        canActivate: [permissionGuard('DISPATCH_VIEW')],
+        loadComponent: () => import('./features/sales/dispatch-list.component').then((m) => m.DispatchListComponent),
+      },
+      {
         path: 'admin/users',
         title: 'Users',
         canActivate: [permissionGuard('IAM_USER_MANAGE')],

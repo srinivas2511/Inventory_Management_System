@@ -24,4 +24,7 @@ public interface WarehouseLocationRepository extends JpaRepository<WarehouseLoca
 
     @Query("SELECT l.locationType FROM WarehouseLocation l WHERE l.warehouse.id = :warehouseId AND l.active = true GROUP BY l.locationType")
     List<String> findActiveLocationTypesByWarehouse(@Param("warehouseId") Long warehouseId);
+
+    @Query("SELECT l FROM WarehouseLocation l WHERE l.warehouse.id = :warehouseId AND l.locationType = :type AND l.active = true")
+    List<WarehouseLocation> findByWarehouseIdAndLocationType(@Param("warehouseId") Long warehouseId, @Param("type") String type);
 }

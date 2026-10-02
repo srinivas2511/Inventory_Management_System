@@ -13,8 +13,8 @@ Stack: Java 17+ / Spring Boot 3 / PostgreSQL / Angular 18+ (Angular Material) / 
 Before any task: read the DESIGN/ARCHITECTURE sections the PLAN task references. If code and docs disagree, stop and flag it rather than guessing.
 
 ## Current status
-- **Phase:** 4 — Manufacturing: **complete (tasks 4.1–4.10); gate M4 passed** (`mvn verify` green, 19/19 frontend tests, lint clean, format clean, prod build green).
-- Backend: 23/23 unit+arch tests pass, ProductionIT and ProcurementIT skip without Docker. Frontend: 19/19 unit tests pass, lint clean, format clean, prod build green.
+- **Phase:** 5 — Quality and Finished Goods: **complete (tasks 5.1–5.7); gate M5 passed** (`mvn test` green 23/23, 27/27 frontend tests, lint clean, format clean, prod build green).
+- Backend: 23/23 unit+arch tests pass, FinalInspectionIT + ProcurementIT + ProductionIT skip without Docker. Frontend: 27/27 unit tests pass, lint clean, format clean, prod build green.
 - Update this line at every milestone gate (M0…M8).
 
 ## Non-negotiable rules

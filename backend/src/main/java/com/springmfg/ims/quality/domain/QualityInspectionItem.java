@@ -49,6 +49,12 @@ public class QualityInspectionItem extends BaseEntity {
     @Column(name = "deviation_note", length = 300)
     private String deviationNote;
 
+    @Column(name = "deviation_approved_by")
+    private Long deviationApprovedBy;
+
+    @Column(name = "deviation_approved_at")
+    private java.time.Instant deviationApprovedAt;
+
     @Column(name = "mandatory", nullable = false)
     private boolean mandatory = true;
 
@@ -101,4 +107,10 @@ public class QualityInspectionItem extends BaseEntity {
 
     public boolean isMandatory() { return mandatory; }
     public void setMandatory(boolean v) { this.mandatory = v; }
+
+    public Long getDeviationApprovedBy() { return deviationApprovedBy; }
+    public void setDeviationApprovedBy(Long v) { this.deviationApprovedBy = v; }
+
+    public java.time.Instant getDeviationApprovedAt() { return deviationApprovedAt; }
+    public void setDeviationApprovedAt(java.time.Instant v) { this.deviationApprovedAt = v; }
 }

@@ -147,6 +147,20 @@ export const NAV_GROUPS: NavGroup[] = [
         permission: 'QUALITY_VIEW',
         enabled: true,
       },
+      {
+        label: 'FG Batches',
+        icon: 'inventory_2',
+        route: '/quality/fg-batches',
+        permission: 'QUALITY_VIEW',
+        enabled: true,
+      },
+      {
+        label: 'Rejection Analysis',
+        icon: 'bar_chart',
+        route: '/quality/rejections',
+        permission: 'QUALITY_VIEW',
+        enabled: true,
+      },
     ],
   },
   {

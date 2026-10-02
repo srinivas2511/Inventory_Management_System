@@ -15,12 +15,17 @@ public record QualityInspectionDto(
         String batchNumber,
         Long materialId,
         String materialCode,
+        Long fgBatchId,
+        Long productionOrderId,
+        Long productionOperationId,
         BigDecimal inspectedQty,
         Integer sampleSize,
         BigDecimal acceptedQty,
         BigDecimal rejectedQty,
+        BigDecimal holdQty,
         Long inspectorId,
         Instant inspectedAt,
+        Instant decisionAt,
         String remarks,
         List<InspectionItemDto> items
 ) {
@@ -36,6 +41,8 @@ public record QualityInspectionDto(
             String unit,
             String result,
             String deviationNote,
-            boolean mandatory
+            boolean mandatory,
+            Long deviationApprovedBy,
+            java.time.Instant deviationApprovedAt
     ) {}
 }

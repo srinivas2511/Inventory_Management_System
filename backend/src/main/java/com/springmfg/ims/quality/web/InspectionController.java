@@ -15,9 +15,16 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.springmfg.ims.quality.dto.ApproveFgHoldRequest;
+import com.springmfg.ims.quality.dto.CreateFinalInspectionRequest;
+import com.springmfg.ims.quality.dto.CreateInProcessInspectionRequest;
+import com.springmfg.ims.quality.dto.DeviationOverrideRequest;
+import com.springmfg.ims.quality.dto.FgBatchDto;
+import com.springmfg.ims.quality.dto.FinalInspectionDecisionRequest;
 import com.springmfg.ims.quality.dto.InspectionResultRequest;
 import com.springmfg.ims.quality.dto.QualityInspectionDto;
 import com.springmfg.ims.quality.dto.SupplierPerformanceDto;
+import com.springmfg.ims.quality.service.FinalInspectionService;
 import com.springmfg.ims.quality.service.InspectionService;
 import com.springmfg.ims.quality.service.SupplierPerformanceService;
 
@@ -26,14 +33,20 @@ import com.springmfg.ims.quality.service.SupplierPerformanceService;
 public class InspectionController {
 
     private final InspectionService service;
+    private final FinalInspectionService finalService;
     private final SupplierPerformanceService performanceService;
 
-    public InspectionController(InspectionService service, SupplierPerformanceService performanceService) {
+    public InspectionController(InspectionService service,
+            FinalInspectionService finalService,
+            SupplierPerformanceService performanceService) {
         this.service = service;
+        this.finalService = finalService;
         this.performanceService = performanceService;
     }
 
     public record RejectRequest(@NotBlank String reason) {}
+
+    // ── Incoming inspections (Phase 3) ────────────────────────────────────────
 
     @GetMapping("/inspections")
     @PreAuthorize("hasAnyAuthority('QUALITY_VIEW','QUALITY_INSPECT')")
@@ -74,5 +87,64 @@ public class InspectionController {
     @PreAuthorize("hasAnyAuthority('QUALITY_VIEW','PURCHASE_VIEW')")
     public SupplierPerformanceDto supplierPerformance(@PathVariable Long supplierId) {
         return performanceService.supplierPerformance(supplierId);
+    }
+
+    // ── In-process inspections (Task 5.2) ────────────────────────────────────
+
+    @PostMapping("/inspections/in-process")
+    @PreAuthorize("hasAuthority('QUALITY_INSPECT')")
+    public QualityInspectionDto createInProcess(@Valid @RequestBody CreateInProcessInspectionRequest req) {
+        return finalService.createInProcess(req);
+    }
+
+    // ── Final inspections (Task 5.3) ──────────────────────────────────────────
+
+    @PostMapping("/inspections/final")
+    @PreAuthorize("hasAuthority('QUALITY_INSPECT')")
+    public QualityInspectionDto createFinal(@Valid @RequestBody CreateFinalInspectionRequest req) {
+        return finalService.createFinal(req);
+    }
+
+    @PostMapping("/inspections/{id}/final-decision")
+    @PreAuthorize("hasAuthority('QUALITY_INSPECT')")
+    public QualityInspectionDto completeFinal(
+            @PathVariable Long id,
+            @Valid @RequestBody FinalInspectionDecisionRequest req) {
+        return finalService.completeFinalInspection(id, req);
+    }
+
+    // ── Deviation override (Task 5.5) ─────────────────────────────────────────
+
+    @PostMapping("/inspections/{id}/items/{seq}/deviation")
+    @PreAuthorize("hasAuthority('QUALITY_APPROVE')")
+    public QualityInspectionDto deviationOverride(
+            @PathVariable Long id, @PathVariable int seq,
+            @Valid @RequestBody DeviationOverrideRequest req) {
+        return finalService.recordDeviationOverride(id, seq, req.deviationNote());
+    }
+
+    // ── FG batch endpoints (Tasks 5.1, 5.3) ──────────────────────────────────
+
+    @GetMapping("/fg-batches")
+    @PreAuthorize("hasAnyAuthority('QUALITY_VIEW','QUALITY_INSPECT')")
+    public Page<FgBatchDto> listFgBatches(
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) Long productId,
+            @PageableDefault(size = 20) Pageable pageable) {
+        return finalService.searchFgBatches(status, productId, pageable);
+    }
+
+    @GetMapping("/fg-batches/{id}")
+    @PreAuthorize("hasAnyAuthority('QUALITY_VIEW','QUALITY_INSPECT')")
+    public FgBatchDto getFgBatch(@PathVariable Long id) {
+        return finalService.getFgBatch(id);
+    }
+
+    @PostMapping("/fg-batches/{id}/approve-hold")
+    @PreAuthorize("hasAuthority('QUALITY_APPROVE')")
+    public FgBatchDto approveHold(
+            @PathVariable Long id,
+            @Valid @RequestBody ApproveFgHoldRequest req) {
+        return finalService.approveHold(id, req);
     }
 }

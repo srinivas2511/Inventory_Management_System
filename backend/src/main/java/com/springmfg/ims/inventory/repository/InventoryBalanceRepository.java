@@ -56,4 +56,11 @@ public interface InventoryBalanceRepository extends JpaRepository<InventoryBalan
 
     @Query("SELECT b FROM InventoryBalance b WHERE b.productId = :prodId")
     List<InventoryBalance> findByProductId(@Param("prodId") Long prodId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT b FROM InventoryBalance b WHERE b.fgBatchId = :fgId AND b.warehouseId = :wh AND b.locationId = :loc")
+    Optional<InventoryBalance> lockByFgBatchAndLocation(
+            @Param("fgId") Long fgBatchId,
+            @Param("wh") Long warehouseId,
+            @Param("loc") Long locationId);
 }

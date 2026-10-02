@@ -14,6 +14,26 @@ public interface RejectionRepository extends JpaRepository<Rejection, Long> {
 
     List<Rejection> findByInspectionId(Long inspectionId);
 
+    @Query("SELECT r FROM Rejection r WHERE (:productId IS NULL OR r.productId = :productId) " +
+           "AND (:reasonId IS NULL OR r.rejectionReasonId = :reasonId)")
+    Page<Rejection> search(@Param("productId") Long productId,
+                           @Param("reasonId") Long reasonId, Pageable pageable);
+
+    @Query("SELECT r.rejectionReasonId, COUNT(r), SUM(r.quantity) FROM Rejection r " +
+           "WHERE r.itemType = 'PRODUCT' " +
+           "GROUP BY r.rejectionReasonId ORDER BY SUM(r.quantity) DESC")
+    List<Object[]> paretoByReason();
+
+    @Query(value = """
+        SELECT DATE_TRUNC('month', r.created_at) AS month,
+               SUM(r.quantity) AS rejected_qty
+        FROM ims.rejections r
+        WHERE r.item_type = 'PRODUCT'
+          AND r.created_at >= CURRENT_DATE - INTERVAL '12 months'
+        GROUP BY month ORDER BY month
+        """, nativeQuery = true)
+    List<Object[]> rejectionTrend();
+
     /** Pareto by reason: count and total quantity per reason for supplier performance queries. */
     @Query("SELECT r.rejectionReasonId, COUNT(r), SUM(r.quantity) FROM Rejection r " +
            "WHERE r.itemType = :itemType GROUP BY r.rejectionReasonId ORDER BY COUNT(r) DESC")

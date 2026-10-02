@@ -219,6 +219,32 @@ public class InventoryPostingService {
         return new PostingResult(reversalTx.getId(), reversalTx.getTransactionNumber(), bal.getQtyOnHand());
     }
 
+    // ── reservation helpers (qty_reserved only — no transaction record) ───────
+
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    @Retryable(retryFor = org.springframework.dao.PessimisticLockingFailureException.class, maxAttempts = 3, backoff = @Backoff(delay = 200))
+    public void reserveStock(Long fgBatchId, Long productId, Long warehouseId, Long locationId, BigDecimal qty) {
+        InventoryBalance bal = balanceRepo.lockByFgBatchAndLocation(fgBatchId, warehouseId, locationId)
+                .orElseThrow(() -> new BusinessRuleException(ErrorCode.INSUFFICIENT_STOCK,
+                        "No inventory balance found for FG batch " + fgBatchId));
+        if (bal.available().compareTo(qty) < 0) {
+            throw new BusinessRuleException(ErrorCode.DISPATCH_EXCEEDS_STOCK,
+                    String.format("Requested %.3f; available %.3f", qty, bal.available()));
+        }
+        bal.setQtyReserved(bal.getQtyReserved().add(qty));
+        balanceRepo.save(bal);
+    }
+
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    @Retryable(retryFor = org.springframework.dao.PessimisticLockingFailureException.class, maxAttempts = 3, backoff = @Backoff(delay = 200))
+    public void releaseReservedStock(Long fgBatchId, Long productId, Long warehouseId, Long locationId, BigDecimal qty) {
+        balanceRepo.lockByFgBatchAndLocation(fgBatchId, warehouseId, locationId).ifPresent(bal -> {
+            BigDecimal newReserved = bal.getQtyReserved().subtract(qty);
+            bal.setQtyReserved(newReserved.max(BigDecimal.ZERO));
+            balanceRepo.save(bal);
+        });
+    }
+
     // ── private helpers ───────────────────────────────────────────────────────
 
     private void validateCommand(PostingCommand cmd) {
