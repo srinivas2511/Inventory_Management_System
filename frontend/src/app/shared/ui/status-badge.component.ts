@@ -1,20 +1,51 @@
 import { Component, computed, input } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 
+type Tone = 'green' | 'amber' | 'orange' | 'red' | 'blue' | 'teal' | 'grey';
+
 interface BadgeStyle {
   label: string;
-  tone: 'ok' | 'neutral' | 'info' | 'warn' | 'bad';
+  tone: Tone;
   icon: string;
 }
 
-/** Status to colour, icon and label (DESIGN.md section 8.7). Unknown statuses fall back to a neutral badge. */
-const STYLES: Record<string, BadgeStyle> = {
-  ACTIVE: { label: 'Active', tone: 'ok', icon: 'check_circle' },
-  INACTIVE: { label: 'Inactive', tone: 'neutral', icon: 'block' },
-  DRAFT: { label: 'Draft', tone: 'info', icon: 'edit_note' },
-  OBSOLETE: { label: 'Obsolete', tone: 'warn', icon: 'archive' },
-  LOCKED: { label: 'Locked', tone: 'warn', icon: 'lock' },
+const TONE_ICONS: Record<Tone, string> = {
+  green: 'check_circle',
+  amber: 'warning',
+  orange: 'hourglass_top',
+  red: 'cancel',
+  blue: 'play_circle',
+  teal: 'circle',
+  grey: 'radio_button_unchecked',
 };
+
+/** Status to colour tone (DESIGN.md section 8.7). Each tone has its own icon; the label is always shown too. */
+const TONES: Record<Tone, string[]> = {
+  green: ['AVAILABLE', 'APPROVED', 'ACTIVE', 'PASS', 'RECEIVED', 'DISPATCHED'],
+  amber: ['LOW_STOCK', 'HOLD'],
+  orange: ['QUARANTINE', 'QUALITY_PENDING'],
+  red: ['REJECTED', 'FAIL', 'CANCELLED', 'BREAKDOWN'],
+  blue: ['IN_PROGRESS', 'IN_PRODUCTION', 'RELEASED'],
+  teal: ['COMPLETED', 'CLOSED'],
+  grey: ['PENDING', 'DRAFT', 'SUBMITTED'],
+};
+
+/**
+ * Statuses the design table does not list: a deactivated record is grey, and states that need attention without being
+ * a failure (obsolete, locked) are amber. Anything else, and every PARTIALLY_* state, follows the table's rules.
+ */
+const EXTRA: Record<string, Tone> = { INACTIVE: 'grey', OBSOLETE: 'amber', LOCKED: 'amber' };
+
+export function statusStyle(status: string): BadgeStyle {
+  const key = status.toUpperCase().replace(/\s+/g, '_');
+  const tone: Tone =
+    EXTRA[key] ??
+    (key.startsWith('PARTIALLY_')
+      ? 'amber'
+      : ((Object.keys(TONES) as Tone[]).find((t) => TONES[t].includes(key)) ?? 'grey'));
+  const label = key.charAt(0) + key.slice(1).toLowerCase().replace(/_/g, ' ');
+  return { label, tone, icon: TONE_ICONS[tone] };
+}
 
 /** A coloured status chip. Colour is never the only signal: each status also has an icon and a text label. */
 @Component({
@@ -40,32 +71,38 @@ const STYLES: Record<string, BadgeStyle> = {
       height: 14px;
       width: 14px;
     }
-    .ok {
+    .green {
       background: #e8f5e9;
       color: #1b5e20;
     }
-    .neutral {
-      background: #eceff1;
-      color: #455a64;
+    .amber {
+      background: #fff8e1;
+      color: #8d6e00;
     }
-    .info {
+    .orange {
+      background: #fff3e0;
+      color: #bf360c;
+    }
+    .red {
+      background: #ffebee;
+      color: #b71c1c;
+    }
+    .blue {
       background: #e3f2fd;
       color: #0d47a1;
     }
-    .warn {
-      background: #fff3e0;
-      color: #e65100;
+    .teal {
+      background: #e0f2f1;
+      color: #00695c;
     }
-    .bad {
-      background: #ffebee;
-      color: #b71c1c;
+    .grey {
+      background: #eceff1;
+      color: #455a64;
     }
   `,
 })
 export class StatusBadgeComponent {
   readonly status = input.required<string>();
 
-  protected readonly style = computed<BadgeStyle>(
-    () => STYLES[this.status()] ?? { label: this.status(), tone: 'neutral', icon: 'info' },
-  );
+  protected readonly style = computed<BadgeStyle>(() => statusStyle(this.status()));
 }

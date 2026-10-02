@@ -5,7 +5,7 @@ import { ActivatedRoute, Router, provideRouter } from '@angular/router';
 import { Column, DataTableComponent } from './data-table.component';
 import { FilterBarComponent } from './filter-bar.component';
 import { listState } from './list-state';
-import { StatusBadgeComponent } from '../ui/status-badge.component';
+import { StatusBadgeComponent, statusStyle } from '../ui/status-badge.component';
 
 interface Row {
   code: string;
@@ -76,7 +76,27 @@ describe('StatusBadgeComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('Obsolete');
     fixture.componentRef.setInput('status', 'WEIRD');
     fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain('WEIRD');
+    expect(fixture.nativeElement.textContent).toContain('Weird');
+  });
+});
+
+describe('statusStyle (DESIGN.md section 8.7)', () => {
+  it('colours the documented statuses', () => {
+    expect(statusStyle('ACTIVE').tone).toBe('green');
+    expect(statusStyle('LOW_STOCK').tone).toBe('amber');
+    expect(statusStyle('QUARANTINE').tone).toBe('orange');
+    expect(statusStyle('REJECTED').tone).toBe('red');
+    expect(statusStyle('IN_PRODUCTION').tone).toBe('blue');
+    expect(statusStyle('CLOSED').tone).toBe('teal');
+    expect(statusStyle('DRAFT').tone).toBe('grey');
+    expect(statusStyle('PARTIALLY_RECEIVED').tone).toBe('amber');
+  });
+
+  it('adds the product and account states the table lacks, and never leaves a status unstyled', () => {
+    expect(statusStyle('OBSOLETE').tone).toBe('amber');
+    expect(statusStyle('INACTIVE').tone).toBe('grey');
+    expect(statusStyle('SOMETHING_NEW').tone).toBe('grey');
+    expect(statusStyle('IN PRODUCTION').label).toBe('In production');
   });
 });
 
