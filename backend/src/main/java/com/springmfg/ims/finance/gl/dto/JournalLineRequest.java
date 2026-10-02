@@ -8,5 +8,11 @@ public record JournalLineRequest(
         @NotNull Long glAccountId,
         @PositiveOrZero BigDecimal debitAmount,
         @PositiveOrZero BigDecimal creditAmount,
-        String description
-) {}
+        String description,
+        Long costCentreId,
+        Long profitCentreId
+) {
+    public JournalLineRequest(Long glAccountId, BigDecimal debitAmount, BigDecimal creditAmount, String description) {
+        this(glAccountId, debitAmount, creditAmount, description, null, null);
+    }
+}

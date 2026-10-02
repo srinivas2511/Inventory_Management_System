@@ -6,6 +6,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import com.springmfg.ims.common.exception.NotFoundException;
@@ -33,8 +36,17 @@ public class ReportService {
     public ReportResult run(String code, ReportRequest req) {
         ReportDefinition def = definitions.get(code);
         if (def == null) throw new NotFoundException("Report", code);
+        requireAuthority(def);
         List<Map<String, Object>> rows = def.runQuery(req);
         return new ReportResult(def.reportCode(), def.displayName(), def.columnHeaders(), rows, rows.size());
+    }
+
+    private void requireAuthority(ReportDefinition def) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null) return;
+        boolean allowed = auth.getAuthorities().stream()
+                .anyMatch(a -> "ADMIN".equals(a.getAuthority()) || def.requiredAuthority().contains(a.getAuthority()));
+        if (!allowed) throw new AccessDeniedException("Missing authority for report " + def.reportCode());
     }
 
     public record ReportMeta(String code, String name) {}

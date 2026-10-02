@@ -14,10 +14,10 @@ Stack: Java 17+ / Spring Boot 3 / PostgreSQL / Angular 18+ (Angular Material) / 
 Before any task: read the DESIGN/ARCHITECTURE sections the PLAN task references. If code and docs disagree, stop and flag it rather than guessing.
 
 ## Current status
-- **R1–R9 code-complete. Gates M3–M9 were originally verified by unit/ArchUnit tests only (integration tests had never run). Baseline repaired 2026-10-02: `mvn verify` now runs 27 unit/ArchUnit + 35 integration tests (7 IT classes) against real PostgreSQL, 0 skipped, 0 failed.**
+- **R1–R10 COMPLETE — gate M10 passed (2026-10-02). `mvn verify`: 98 unit/ArchUnit + 48 integration tests (8 IT classes) against real PostgreSQL, 0 skipped, 0 failed. Frontend: 37/37 unit tests, lint clean, format clean, prod build green.**
 - **Docs: v2.0 — expanded to SAP-class ERP platform scope (R9–R20 planned, 2026-10-02).**
-- IT counts: FinanceIT 4, InventoryPostingIT 11, ProcurementIT 2, ProductionIT 4, FinalInspectionIT 5, SalesDispatchIT 6, SystemControllerIT 3. Frontend: 27/27 unit tests, lint clean, format clean, prod build green (not re-run; no frontend change in the baseline repair).
-- Migrations: V1–V18 (fixed in place during the baseline repair, see docs/decisions.md). R10 work is stashed/uncommitted until restored on top of this baseline.
+- IT counts: ControllingIT 13, FinanceIT 4, InventoryPostingIT 11, ProcurementIT 2, ProductionIT 4, FinalInspectionIT 5, SalesDispatchIT 6, SystemControllerIT 3.
+- Migrations: V1–V21 (V19 cost/profit centres + journal dimensions + controlling permissions, V20 product costing, V21 production variance). Next release: R11 MRP → V22+.
 - Update this line at every milestone gate (M0…M20).
 
 ## Non-negotiable rules

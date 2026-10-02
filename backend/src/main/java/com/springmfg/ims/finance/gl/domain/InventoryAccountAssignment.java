@@ -28,7 +28,15 @@ public class InventoryAccountAssignment {
     @Column(name = "gl_account_credit_id", nullable = false)
     private Long glAccountCreditId;
 
+    @Column(name = "cost_centre_id")
+    private Long costCentreId;
+
+    @Column(name = "profit_centre_id")
+    private Long profitCentreId;
+
     public Long getId() { return id; }
+    public Long getCostCentreId() { return costCentreId; }
+    public Long getProfitCentreId() { return profitCentreId; }
     public Long getCompanyId() { return companyId; }
     public String getTransactionType() { return transactionType; }
     public String getItemType() { return itemType; }
@@ -36,6 +44,8 @@ public class InventoryAccountAssignment {
     public Long getGlAccountDebitId() { return glAccountDebitId; }
     public Long getGlAccountCreditId() { return glAccountCreditId; }
 
+    public void setCostCentreId(Long costCentreId) { this.costCentreId = costCentreId; }
+    public void setProfitCentreId(Long profitCentreId) { this.profitCentreId = profitCentreId; }
     public void setCompanyId(Long companyId) { this.companyId = companyId; }
     public void setTransactionType(String transactionType) { this.transactionType = transactionType; }
     public void setItemType(String itemType) { this.itemType = itemType; }

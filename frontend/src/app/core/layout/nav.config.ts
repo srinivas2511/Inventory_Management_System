@@ -238,6 +238,39 @@ export const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
+    label: 'Controlling',
+    items: [
+      {
+        label: 'Cost Centres',
+        icon: 'account_tree',
+        route: '/controlling/cost-centres',
+        permission: 'CONTROLLING_VIEW',
+        enabled: true,
+      },
+      {
+        label: 'Product Costing',
+        icon: 'calculate',
+        route: '/controlling/cost-estimates',
+        permission: 'CONTROLLING_VIEW',
+        enabled: true,
+      },
+      {
+        label: 'Variance Analysis',
+        icon: 'compare_arrows',
+        route: '/controlling/variances',
+        permission: 'CONTROLLING_VIEW',
+        enabled: true,
+      },
+      {
+        label: 'Controlling Reports',
+        icon: 'analytics',
+        route: '/controlling/reports',
+        permission: 'CONTROLLING_VIEW',
+        enabled: true,
+      },
+    ],
+  },
+  {
     label: 'Maintenance',
     items: [
       { label: 'Maintenance', icon: 'build', route: '/maintenance', permission: 'MAINTENANCE_VIEW', enabled: true },

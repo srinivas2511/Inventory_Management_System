@@ -162,7 +162,8 @@ public class JournalService {
 
         List<JournalLineRequest> reversedLines = original.getLines().stream()
                 .map(l -> new JournalLineRequest(l.getGlAccountId(),
-                        l.getCreditAmount(), l.getDebitAmount(), "Reversal: " + l.getDescription()))
+                        l.getCreditAmount(), l.getDebitAmount(), "Reversal: " + l.getDescription(),
+                        l.getCostCentreId(), l.getProfitCentreId()))
                 .toList();
         buildLines(reversal, reversedLines);
 
@@ -229,6 +230,8 @@ public class JournalService {
             line.setDebitAmount(lr.debitAmount() != null ? lr.debitAmount() : BigDecimal.ZERO);
             line.setCreditAmount(lr.creditAmount() != null ? lr.creditAmount() : BigDecimal.ZERO);
             line.setDescription(lr.description());
+            line.setCostCentreId(lr.costCentreId());
+            line.setProfitCentreId(lr.profitCentreId());
             lines.add(journalLineRepo.save(line));
         }
         return lines;
@@ -255,7 +258,8 @@ public class JournalService {
             return new JournalLineDto(l.getId(), l.getLineNumber(), l.getGlAccountId(),
                     acc != null ? acc.getAccountCode() : "",
                     acc != null ? acc.getName() : "",
-                    l.getDebitAmount(), l.getCreditAmount(), l.getDescription());
+                    l.getDebitAmount(), l.getCreditAmount(), l.getDescription(),
+                    l.getCostCentreId(), l.getProfitCentreId());
         }).toList();
         return new JournalHeaderDto(h.getId(), h.getJournalNumber(), h.getJournalType(),
                 h.getSourceModule(), h.getSourceDocumentType(), h.getSourceDocumentId(),

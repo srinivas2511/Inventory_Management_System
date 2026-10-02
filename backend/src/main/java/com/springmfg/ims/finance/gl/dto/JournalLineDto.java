@@ -10,5 +10,7 @@ public record JournalLineDto(
         String accountName,
         BigDecimal debitAmount,
         BigDecimal creditAmount,
-        String description
+        String description,
+        Long costCentreId,
+        Long profitCentreId
 ) {}

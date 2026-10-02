@@ -243,6 +243,43 @@ export const routes: Routes = [
           import('./features/finance/bank-reconciliation.component').then((m) => m.BankReconciliationComponent),
       },
       {
+        path: 'controlling/cost-centres',
+        title: 'Cost Centres',
+        canActivate: [permissionGuard('CONTROLLING_VIEW')],
+        loadComponent: () =>
+          import('./features/controlling/cost-centre-list.component').then((m) => m.CostCentreListComponent),
+      },
+      {
+        path: 'controlling/cost-estimates',
+        title: 'Product Costing',
+        canActivate: [permissionGuard('CONTROLLING_VIEW')],
+        loadComponent: () =>
+          import('./features/controlling/product-costing-list.component').then((m) => m.ProductCostingListComponent),
+      },
+      {
+        path: 'controlling/cost-estimates/:id',
+        title: 'Cost Estimate',
+        canActivate: [permissionGuard('CONTROLLING_VIEW')],
+        loadComponent: () =>
+          import('./features/controlling/product-costing-detail.component').then(
+            (m) => m.ProductCostingDetailComponent,
+          ),
+      },
+      {
+        path: 'controlling/variances',
+        title: 'Variance Analysis',
+        canActivate: [permissionGuard('CONTROLLING_VIEW')],
+        loadComponent: () =>
+          import('./features/controlling/variance-list.component').then((m) => m.VarianceListComponent),
+      },
+      {
+        path: 'controlling/reports',
+        title: 'Controlling Reports',
+        canActivate: [permissionGuard('CONTROLLING_VIEW')],
+        loadComponent: () =>
+          import('./features/controlling/controlling-reports.component').then((m) => m.ControllingReportsComponent),
+      },
+      {
         path: 'admin/users',
         title: 'Users',
         canActivate: [permissionGuard('IAM_USER_MANAGE')],

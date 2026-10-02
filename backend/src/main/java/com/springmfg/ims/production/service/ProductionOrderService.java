@@ -38,6 +38,7 @@ import com.springmfg.ims.production.dto.ProductionOperationDto;
 import com.springmfg.ims.production.dto.ProductionOrderDto;
 import com.springmfg.ims.production.dto.ProductionOrderMaterialDto;
 import com.springmfg.ims.production.dto.WipDto;
+import com.springmfg.ims.production.event.ProductionOrderClosedEvent;
 import com.springmfg.ims.production.repository.ProductionOperationRepository;
 import com.springmfg.ims.production.repository.ProductionOrderMaterialRepository;
 import com.springmfg.ims.production.repository.ProductionOrderRepository;
@@ -219,6 +220,7 @@ public class ProductionOrderService {
         order = orderRepo.save(order);
 
         auditService.record("PROD_ORDER_CLOSE", "ProductionOrder", String.valueOf(orderId), "COMPLETED", "CLOSED", null);
+        eventPublisher.publishEvent(new ProductionOrderClosedEvent(orderId));
         return toDto(order);
     }
 

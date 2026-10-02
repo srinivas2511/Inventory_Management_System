@@ -30,7 +30,15 @@ public class JournalLine {
     @Column(length = 200)
     private String description;
 
+    @Column(name = "cost_centre_id")
+    private Long costCentreId;
+
+    @Column(name = "profit_centre_id")
+    private Long profitCentreId;
+
     public Long getId() { return id; }
+    public Long getCostCentreId() { return costCentreId; }
+    public Long getProfitCentreId() { return profitCentreId; }
     public JournalHeader getJournalHeader() { return journalHeader; }
     public Integer getLineNumber() { return lineNumber; }
     public Long getGlAccountId() { return glAccountId; }
@@ -44,4 +52,6 @@ public class JournalLine {
     public void setDebitAmount(BigDecimal debitAmount) { this.debitAmount = debitAmount; }
     public void setCreditAmount(BigDecimal creditAmount) { this.creditAmount = creditAmount; }
     public void setDescription(String description) { this.description = description; }
+    public void setCostCentreId(Long costCentreId) { this.costCentreId = costCentreId; }
+    public void setProfitCentreId(Long profitCentreId) { this.profitCentreId = profitCentreId; }
 }

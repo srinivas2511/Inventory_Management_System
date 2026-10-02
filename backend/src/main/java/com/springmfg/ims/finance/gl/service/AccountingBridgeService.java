@@ -61,9 +61,11 @@ public class AccountingBridgeService {
 
             List<JournalLineRequest> lines = List.of(
                     new JournalLineRequest(assignment.getGlAccountDebitId(), amount, BigDecimal.ZERO,
-                            tx.getTransactionType() + " " + tx.getTransactionNumber()),
+                            tx.getTransactionType() + " " + tx.getTransactionNumber(),
+                            assignment.getCostCentreId(), assignment.getProfitCentreId()),
                     new JournalLineRequest(assignment.getGlAccountCreditId(), BigDecimal.ZERO, amount,
-                            tx.getTransactionType() + " " + tx.getTransactionNumber())
+                            tx.getTransactionType() + " " + tx.getTransactionNumber(),
+                            assignment.getCostCentreId(), assignment.getProfitCentreId())
             );
 
             AutoJournalRequest req = new AutoJournalRequest(
