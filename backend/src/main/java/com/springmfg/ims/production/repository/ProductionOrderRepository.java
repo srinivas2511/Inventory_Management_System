@@ -1,5 +1,6 @@
 package com.springmfg.ims.production.repository;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
@@ -28,4 +29,16 @@ public interface ProductionOrderRepository extends JpaRepository<ProductionOrder
            "LEFT JOIN ProductionOperation op ON op.productionOrderId = po.id " +
            "WHERE po.id = :orderId AND (po.supervisorId = :userId OR op.assignedOperatorId = :userId)")
     boolean isAccessibleByUser(@Param("orderId") Long orderId, @Param("userId") Long userId);
+
+    @Query("SELECT po FROM ProductionOrder po WHERE po.status = 'IN_PROGRESS' AND po.expectedCompletionDate < :today")
+    List<ProductionOrder> findDelayed(@Param("today") LocalDate today);
+
+    @Query("SELECT COUNT(po) FROM ProductionOrder po WHERE po.status IN ('APPROVED','RELEASED','IN_PROGRESS')")
+    long countInProgress();
+
+    @Query("SELECT COALESCE(SUM(po.plannedQty), 0) FROM ProductionOrder po WHERE po.status NOT IN ('DRAFT','CANCELLED') AND MONTH(po.createdAt) = MONTH(CURRENT_DATE) AND YEAR(po.createdAt) = YEAR(CURRENT_DATE)")
+    java.math.BigDecimal sumPlannedQtyThisMonth();
+
+    @Query("SELECT COALESCE(SUM(po.goodQty), 0) FROM ProductionOrder po WHERE po.status NOT IN ('DRAFT','CANCELLED') AND MONTH(po.createdAt) = MONTH(CURRENT_DATE) AND YEAR(po.createdAt) = YEAR(CURRENT_DATE)")
+    java.math.BigDecimal sumGoodQtyThisMonth();
 }

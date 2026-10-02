@@ -28,4 +28,11 @@ public interface SalesOrderRepository extends JpaRepository<SalesOrder, Long> {
             @Param("from") LocalDate from,
             @Param("to") LocalDate to,
             Pageable pageable);
+
+    @Query("SELECT COUNT(o) FROM SalesOrder o WHERE o.status NOT IN ('CLOSED','CANCELLED')")
+    long countOpen();
+
+    @Query("SELECT COUNT(DISTINCT o.id) FROM SalesOrder o JOIN Dispatch d ON d.salesOrderId = o.id " +
+           "WHERE d.status = 'DISPATCHED' AND MONTH(d.dispatchDate) = MONTH(CURRENT_DATE) AND YEAR(d.dispatchDate) = YEAR(CURRENT_DATE)")
+    long countDispatchedThisMonth();
 }

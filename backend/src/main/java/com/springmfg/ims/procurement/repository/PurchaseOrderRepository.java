@@ -1,5 +1,7 @@
 package com.springmfg.ims.procurement.repository;
 
+import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -23,4 +25,13 @@ public interface PurchaseOrderRepository extends JpaRepository<PurchaseOrder, Lo
     Page<PurchaseOrder> search(@Param("status") String status,
                                @Param("supplierId") Long supplierId,
                                Pageable pageable);
+
+    @Query("SELECT p FROM PurchaseOrder p WHERE p.status NOT IN ('RECEIVED','CANCELLED') AND p.expectedDeliveryDate < :today")
+    List<PurchaseOrder> findOverdue(@Param("today") LocalDate today);
+
+    @Query("SELECT COUNT(p) FROM PurchaseOrder p WHERE p.status NOT IN ('RECEIVED','CANCELLED','DRAFT')")
+    long countOpen();
+
+    @Query("SELECT COUNT(p) FROM PurchaseOrder p WHERE p.status NOT IN ('RECEIVED','CANCELLED') AND p.expectedDeliveryDate < :today")
+    long countOverdue(@Param("today") LocalDate today);
 }

@@ -1,5 +1,7 @@
 package com.springmfg.ims.quality.repository;
 
+import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -32,4 +34,17 @@ public interface QualityInspectionRepository extends JpaRepository<QualityInspec
            "AND (:status IS NULL OR q.status = :status)")
     Page<QualityInspection> search(@Param("type") String type, @Param("status") String status,
                                    Pageable pageable);
+
+    @Query("SELECT q.id FROM QualityInspection q WHERE q.status = 'PENDING' AND q.createdAt < :cutoff")
+    List<Long> findIdsPendingBefore(@Param("cutoff") Instant cutoff);
+
+    @Query("SELECT COUNT(q) FROM QualityInspection q WHERE q.status = 'PENDING'")
+    long countPending();
+
+    @Query("SELECT CASE WHEN COUNT(q) = 0 THEN CAST(0.0 AS java.math.BigDecimal) " +
+           "ELSE CAST((SUM(CASE WHEN q.status IN ('PASSED','APPROVED') THEN 1.0 ELSE 0.0 END) / COUNT(q)) * 100 AS java.math.BigDecimal) END " +
+           "FROM QualityInspection q WHERE q.status IN ('PASSED','APPROVED','FAILED','REJECTED') " +
+           "AND FUNCTION('MONTH', q.createdAt) = FUNCTION('MONTH', CURRENT_DATE) " +
+           "AND FUNCTION('YEAR', q.createdAt) = FUNCTION('YEAR', CURRENT_DATE)")
+    java.math.BigDecimal passRateThisMonth();
 }

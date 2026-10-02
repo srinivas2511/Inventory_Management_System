@@ -41,6 +41,9 @@ public class Alert {
     @Column(name = "last_seen_at", nullable = false)
     private Instant lastSeenAt = Instant.now();
 
+    @Column(nullable = false, length = 15)
+    private String status = "OPEN";
+
     @Column(name = "acknowledged_by")
     private Long acknowledgedBy;
 
@@ -49,6 +52,12 @@ public class Alert {
 
     @Column(name = "resolved_at")
     private Instant resolvedAt;
+
+    @Column(name = "resolved_by")
+    private Long resolvedBy;
+
+    @Column(name = "resolution_note", length = 300)
+    private String resolutionNote;
 
     public Alert() {}
 
@@ -64,6 +73,9 @@ public class Alert {
     public Long getAcknowledgedBy() { return acknowledgedBy; }
     public Instant getAcknowledgedAt() { return acknowledgedAt; }
     public Instant getResolvedAt() { return resolvedAt; }
+    public Long getResolvedBy() { return resolvedBy; }
+    public String getResolutionNote() { return resolutionNote; }
+    public String getStatus() { return status; }
 
     public void setAlertType(String alertType) { this.alertType = alertType; }
     public void setSeverity(String severity) { this.severity = severity; }
@@ -76,6 +88,9 @@ public class Alert {
     public void setAcknowledgedBy(Long acknowledgedBy) { this.acknowledgedBy = acknowledgedBy; }
     public void setAcknowledgedAt(Instant acknowledgedAt) { this.acknowledgedAt = acknowledgedAt; }
     public void setResolvedAt(Instant resolvedAt) { this.resolvedAt = resolvedAt; }
+    public void setResolvedBy(Long resolvedBy) { this.resolvedBy = resolvedBy; }
+    public void setResolutionNote(String resolutionNote) { this.resolutionNote = resolutionNote; }
+    public void setStatus(String status) { this.status = status; }
 
     public boolean isOpen() { return resolvedAt == null; }
 }

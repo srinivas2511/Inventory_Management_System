@@ -164,6 +164,45 @@ export const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
+    label: 'Sales',
+    items: [
+      { label: 'Sales Orders', icon: 'sell', route: '/sales/orders', permission: 'SALES_VIEW', enabled: true },
+      {
+        label: 'Dispatches',
+        icon: 'local_shipping',
+        route: '/sales/dispatches',
+        permission: 'DISPATCH_VIEW',
+        enabled: true,
+      },
+    ],
+  },
+  {
+    label: 'Insight',
+    items: [
+      {
+        label: 'Alerts',
+        icon: 'notifications_active',
+        route: '/insight/alerts',
+        permission: 'ALERT_VIEW',
+        enabled: true,
+      },
+      { label: 'Reports', icon: 'assessment', route: '/insight/reports', permission: 'REPORT_VIEW', enabled: true },
+      {
+        label: 'Traceability',
+        icon: 'track_changes',
+        route: '/insight/traceability',
+        permission: 'TRACEABILITY_VIEW',
+        enabled: true,
+      },
+    ],
+  },
+  {
+    label: 'Maintenance',
+    items: [
+      { label: 'Maintenance', icon: 'build', route: '/maintenance', permission: 'MAINTENANCE_VIEW', enabled: true },
+    ],
+  },
+  {
     label: 'Administration',
     items: [
       { label: 'Users', icon: 'manage_accounts', route: '/admin/users', permission: 'IAM_USER_MANAGE', enabled: true },
@@ -175,6 +214,7 @@ export const NAV_GROUPS: NavGroup[] = [
         enabled: true,
       },
       { label: 'Audit Logs', icon: 'history', route: '/admin/audit-logs', permission: 'IAM_AUDIT_VIEW', enabled: true },
+      { label: 'System Settings', icon: 'settings', route: '/admin/settings', permission: 'ADMIN', enabled: true },
     ],
   },
 ];

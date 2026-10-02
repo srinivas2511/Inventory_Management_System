@@ -1,5 +1,7 @@
 package com.springmfg.ims.material.repository;
 
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -11,6 +13,8 @@ import com.springmfg.ims.material.domain.Material;
 public interface MaterialRepository extends JpaRepository<Material, Long> {
 
     boolean existsByMaterialCode(String materialCode);
+
+    List<Material> findAllByActiveTrue();
 
     @Query("SELECT m FROM Material m WHERE " +
            "(:q IS NULL OR LOWER(m.name) LIKE LOWER(CONCAT('%', :q, '%')) " +

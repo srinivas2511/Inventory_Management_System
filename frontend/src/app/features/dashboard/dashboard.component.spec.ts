@@ -1,18 +1,26 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { DashboardComponent } from './dashboard.component';
+
+const mockKpis = {
+  inventory: { itemsWithStock: 12, totalValueInr: 500000 },
+  production: { ordersInProgress: 3, plannedQtyMonth: 1000, goodQtyMonth: 950, yieldPct: 95.0 },
+  quality: { pendingInspections: 2, passRateMonth: 97.5 },
+  procurement: { openPOs: 5, overduePOs: 1 },
+  sales: { openOrders: 8, dispatchedThisMonth: 4 },
+  alerts: { critical: 0, high: 1, medium: 2, low: 0, total: 3 },
+};
 
 describe('DashboardComponent', () => {
   let fixture: ComponentFixture<DashboardComponent>;
   let backend: HttpTestingController;
 
-  const status = () => fixture.nativeElement.querySelector('[data-testid="api-status"]').textContent as string;
-
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [DashboardComponent],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
     }).compileComponents();
     fixture = TestBed.createComponent(DashboardComponent);
     backend = TestBed.inject(HttpTestingController);
@@ -21,21 +29,25 @@ describe('DashboardComponent', () => {
 
   afterEach(() => backend.verify());
 
-  it('shows a checking state first', () => {
-    expect(status()).toContain('Checking');
-    backend.expectOne('/api/system/ping').flush({ status: 'UP', application: 'ims', version: '0.1.0', time: '' });
+  it('shows loading spinner on init', () => {
+    expect(fixture.nativeElement.querySelector('mat-spinner')).toBeTruthy();
+    backend.expectOne('/api/dashboard/kpis').flush(mockKpis);
   });
 
-  it('shows the server version when the API is up', () => {
-    backend.expectOne('/api/system/ping').flush({ status: 'UP', application: 'ims', version: '0.1.0', time: '' });
+  it('renders KPI cards after data loads', () => {
+    backend.expectOne('/api/dashboard/kpis').flush(mockKpis);
     fixture.detectChanges();
-    expect(status()).toContain('Server is running');
-    expect(fixture.nativeElement.textContent).toContain('Version 0.1.0');
+    const text = fixture.nativeElement.textContent as string;
+    expect(text).toContain('Inventory');
+    expect(text).toContain('Production');
+    expect(text).toContain('Quality');
+    expect(text).toContain('Procurement');
+    expect(text).toContain('Alerts');
   });
 
-  it('shows an unreachable state when the call fails', () => {
-    backend.expectOne('/api/system/ping').flush('boom', { status: 500, statusText: 'Server Error' });
+  it('hides spinner on API error', () => {
+    backend.expectOne('/api/dashboard/kpis').flush('error', { status: 500, statusText: 'Server Error' });
     fixture.detectChanges();
-    expect(status()).toContain('not reachable');
+    expect(fixture.nativeElement.querySelector('mat-spinner')).toBeFalsy();
   });
 });

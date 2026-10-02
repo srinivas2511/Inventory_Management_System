@@ -63,4 +63,10 @@ public interface InventoryBalanceRepository extends JpaRepository<InventoryBalan
             @Param("fgId") Long fgBatchId,
             @Param("wh") Long warehouseId,
             @Param("loc") Long locationId);
+
+    @Query(value = "SELECT COUNT(DISTINCT COALESCE(CAST(b.material_id AS TEXT), 'P' || b.product_id)) FROM ims.inventory_balances b WHERE b.qty_on_hand > 0", nativeQuery = true)
+    long countItemsWithStock();
+
+    @Query(value = "SELECT COALESCE(SUM(b.qty_on_hand * m.standard_cost), 0) FROM ims.inventory_balances b JOIN ims.materials m ON m.id = b.material_id WHERE b.qty_on_hand > 0", nativeQuery = true)
+    java.math.BigDecimal sumInventoryValue();
 }

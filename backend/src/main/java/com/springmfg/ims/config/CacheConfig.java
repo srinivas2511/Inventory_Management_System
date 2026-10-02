@@ -21,7 +21,7 @@ public class CacheConfig {
         manager.setCaffeine(Caffeine.newBuilder()
             .expireAfterWrite(60, TimeUnit.SECONDS)
             .maximumSize(1000));
-        manager.setCacheNames(List.of("userPermissions", "systemSettings", "springAttributes"));
+        manager.setCacheNames(List.of("userPermissions", "systemSettings", "springAttributes", "dashboardKpis"));
         return manager;
     }
 }

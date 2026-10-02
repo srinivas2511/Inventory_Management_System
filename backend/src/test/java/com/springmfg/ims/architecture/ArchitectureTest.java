@@ -85,6 +85,8 @@ class ArchitectureTest {
                     .and().haveSimpleNameNotContaining("AlertListener")
                     .and().haveSimpleNameNotContaining("BatchAllocator")         // reads balances for FIFO allocation
                     .and().haveSimpleNameNotContaining("AdjustmentService")      // reads current balance to compute variance
+                    .and().haveSimpleNameNotContaining("DashboardService")       // reads KPI aggregates (read-only)
+                    .and().haveSimpleNameNotContaining("AlertSweepJob")          // reads available qty for low-stock alerts (read-only)
                     .should().dependOnClassesThat()
                     .haveSimpleNameContaining("InventoryBalanceRepository")
                     .allowEmptyShould(true)

@@ -173,6 +173,31 @@ export const routes: Routes = [
         loadComponent: () => import('./features/sales/dispatch-list.component').then((m) => m.DispatchListComponent),
       },
       {
+        path: 'insight/alerts',
+        title: 'Alerts',
+        canActivate: [permissionGuard('ALERT_VIEW')],
+        loadComponent: () => import('./features/insight/alerts-list.component').then((m) => m.AlertsListComponent),
+      },
+      {
+        path: 'insight/reports',
+        title: 'Reports',
+        canActivate: [permissionGuard('REPORT_VIEW')],
+        loadComponent: () => import('./features/insight/reports.component').then((m) => m.ReportsComponent),
+      },
+      {
+        path: 'insight/traceability',
+        title: 'Traceability',
+        canActivate: [permissionGuard('TRACEABILITY_VIEW')],
+        loadComponent: () => import('./features/insight/traceability.component').then((m) => m.TraceabilityComponent),
+      },
+      {
+        path: 'maintenance',
+        title: 'Maintenance',
+        canActivate: [permissionGuard('MAINTENANCE_VIEW')],
+        loadComponent: () =>
+          import('./features/maintenance/maintenance-list.component').then((m) => m.MaintenanceListComponent),
+      },
+      {
         path: 'admin/users',
         title: 'Users',
         canActivate: [permissionGuard('IAM_USER_MANAGE')],
@@ -190,6 +215,13 @@ export const routes: Routes = [
         canActivate: [permissionGuard('IAM_AUDIT_VIEW')],
         loadComponent: () =>
           import('./features/admin/audit/audit-log-list.component').then((m) => m.AuditLogListComponent),
+      },
+      {
+        path: 'admin/settings',
+        title: 'System Settings',
+        canActivate: [permissionGuard('ADMIN')],
+        loadComponent: () =>
+          import('./features/admin/settings/system-settings.component').then((m) => m.SystemSettingsComponent),
       },
     ],
   },
