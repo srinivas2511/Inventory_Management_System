@@ -1696,6 +1696,7 @@ MrpRunService.runMrp(horizonDays):
    netQty = grossQty
            - available_stock(product, AVAILABLE)
            - open_production_order_planned_qty(product, expected_completion <= need_date)
+           - open_po_pr_supply(item, expected_delivery <= need_date)   -- open PO lines (ordered - received) and open PRs
    if netQty <= 0: continue
    
    applyLotSizing(product, netQty) -> proposedQty
@@ -1979,6 +1980,8 @@ CREATE TABLE transfer_order_lines (
   UNIQUE (transfer_order_id, line_no)
 );
 ```
+
+**Bin capacity enforcement (decision #15):** capacity checks (weight, volume, allowed material types) are advisory by default — a breach returns a warning and the put-away/transfer proceeds. When system setting `wms.bin_capacity.enforce=true` (default `false`) a breach is rejected with a business-rule error.
 
 ### 20.2 WMS put-away algorithm
 

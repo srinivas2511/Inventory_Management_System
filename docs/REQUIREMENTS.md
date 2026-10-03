@@ -390,7 +390,7 @@ ECO_CREATE ECO_APPROVE DRAWING_MANAGE SPECIFICATION_MANAGE
 
 **PLM-002:** Each ECO shall record: change description, affected products/BOMs, reason, impact assessment, effectivity date.
 
-**PLM-003:** On ECO approval, the system shall automatically create a new BOM revision for affected products.
+**PLM-003:** On ECO implementation (after approval), the system shall automatically create a new DRAFT BOM revision for each affected product.
 
 **PLM-004:** Drawing and document attachments shall be supported on products, BOMs, and ECOs (file references, not file storage — files stored externally via DOC module).
 
