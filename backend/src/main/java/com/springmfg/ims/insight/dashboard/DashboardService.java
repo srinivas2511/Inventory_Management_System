@@ -8,6 +8,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.springmfg.ims.common.settings.SystemSettingService;
 import com.springmfg.ims.inventory.repository.AlertRepository;
 import com.springmfg.ims.inventory.repository.InventoryBalanceRepository;
 import com.springmfg.ims.procurement.repository.PurchaseOrderRepository;
@@ -24,19 +25,22 @@ public class DashboardService {
     private final PurchaseOrderRepository poRepo;
     private final SalesOrderRepository salesRepo;
     private final AlertRepository alertRepo;
+    private final SystemSettingService settings;
 
     public DashboardService(InventoryBalanceRepository balanceRepo,
                             ProductionOrderRepository productionRepo,
                             QualityInspectionRepository inspectionRepo,
                             PurchaseOrderRepository poRepo,
                             SalesOrderRepository salesRepo,
-                            AlertRepository alertRepo) {
+                            AlertRepository alertRepo,
+                            SystemSettingService settings) {
         this.balanceRepo = balanceRepo;
         this.productionRepo = productionRepo;
         this.inspectionRepo = inspectionRepo;
         this.poRepo = poRepo;
         this.salesRepo = salesRepo;
         this.alertRepo = alertRepo;
+        this.settings = settings;
     }
 
     @Cacheable("dashboardKpis")
@@ -57,6 +61,11 @@ public class DashboardService {
                 ? good.divide(planned, 4, RoundingMode.HALF_UP)
                         .multiply(BigDecimal.valueOf(100))
                         .setScale(2, RoundingMode.HALF_UP)
+                : BigDecimal.ZERO;
+
+        BigDecimal target = settings.getDecimal("production.monthly_target", BigDecimal.ZERO);
+        BigDecimal attainmentPct = target.signum() > 0
+                ? good.multiply(BigDecimal.valueOf(100)).divide(target, 2, RoundingMode.HALF_UP)
                 : BigDecimal.ZERO;
 
         // quality
@@ -80,7 +89,7 @@ public class DashboardService {
 
         return new DashboardKpiDto(
                 new DashboardKpiDto.InventoryKpi(itemsWithStock, totalValue),
-                new DashboardKpiDto.ProductionKpi(ordersInProgress, planned, good, yieldPct),
+                new DashboardKpiDto.ProductionKpi(ordersInProgress, planned, good, yieldPct, target, attainmentPct),
                 new DashboardKpiDto.QualityKpi(pending, passRate),
                 new DashboardKpiDto.ProcurementKpi(openPOs, overduePOs),
                 new DashboardKpiDto.SalesKpi(openOrders, dispatched),

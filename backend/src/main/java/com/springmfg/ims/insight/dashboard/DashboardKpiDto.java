@@ -13,7 +13,8 @@ public record DashboardKpiDto(
     public record InventoryKpi(long itemsWithStock, BigDecimal totalValueInr) {}
 
     public record ProductionKpi(long ordersInProgress, BigDecimal plannedQtyMonth,
-                                BigDecimal goodQtyMonth, BigDecimal yieldPct) {}
+                                BigDecimal goodQtyMonth, BigDecimal yieldPct,
+                                BigDecimal monthlyTarget, BigDecimal targetAttainmentPct) {}
 
     public record QualityKpi(long pendingInspections, BigDecimal passRateMonth) {}
 

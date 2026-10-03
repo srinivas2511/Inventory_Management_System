@@ -6,7 +6,14 @@ import { DashboardComponent } from './dashboard.component';
 
 const mockKpis = {
   inventory: { itemsWithStock: 12, totalValueInr: 500000 },
-  production: { ordersInProgress: 3, plannedQtyMonth: 1000, goodQtyMonth: 950, yieldPct: 95.0 },
+  production: {
+    ordersInProgress: 3,
+    plannedQtyMonth: 1000,
+    goodQtyMonth: 950,
+    yieldPct: 95.0,
+    monthlyTarget: 1900,
+    targetAttainmentPct: 50.0,
+  },
   quality: { pendingInspections: 2, passRateMonth: 97.5 },
   procurement: { openPOs: 5, overduePOs: 1 },
   sales: { openOrders: 8, dispatchedThisMonth: 4 },
@@ -43,6 +50,21 @@ describe('DashboardComponent', () => {
     expect(text).toContain('Quality');
     expect(text).toContain('Procurement');
     expect(text).toContain('Alerts');
+  });
+
+  it('shows target attainment only when a monthly production target is set', () => {
+    backend.expectOne('/api/dashboard/kpis').flush(mockKpis);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent as string).toContain('Target attainment');
+    expect(fixture.nativeElement.textContent as string).toContain('50.0%');
+  });
+
+  it('hides target attainment when no monthly production target is configured', () => {
+    backend
+      .expectOne('/api/dashboard/kpis')
+      .flush({ ...mockKpis, production: { ...mockKpis.production, monthlyTarget: 0, targetAttainmentPct: 0 } });
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent as string).not.toContain('Target attainment');
   });
 
   it('hides spinner on API error', () => {

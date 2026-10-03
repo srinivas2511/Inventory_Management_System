@@ -1724,6 +1724,17 @@ MrpRunService.runMrp(horizonDays):
 - `POST /api/mrp/proposals/{id}/convert-to-production-order` → creates `production_orders` row referencing `mrp_proposal.id`
 - Batch conversion: `POST /api/mrp/runs/{runId}/convert-all?type=PURCHASE` → converts all open purchase proposals in one request
 
+### 17.4 As built (R11, migration V22)
+
+- **Tables:** `mrp_runs`, `mrp_proposals`, `demand_forecasts` (unique per product and date) and `mrp_planning_params` (per material or product: `planning_strategy` MTS/MTO, `lot_size_rule` EXACT/FIXED/MIN_MAX/EOQ with their quantities, optional `lead_time_days`). `mrp_proposals` adds `bom_id`, `uom`, `lead_time_days`, `lead_time_adjusted`, `machine_hours_required`, `capacity_overload`, `discard_reason`; `converted_document_type` is `PR` or `PRODUCTION_ORDER` (VARCHAR(20)).
+- **Engine:** `mrp.engine.MrpEngine` is pure (no Spring, no SQL). `MrpSourceDataRepository` reads demand and supply with SQL; `MrpRunService` runs everything in one transaction guarded by a transaction-scoped advisory lock (one run at a time). A failed run is recorded as FAILED in its own transaction.
+- **Demand:** approved sales order lines (open qty, status ORDERED/APPROVED/ALLOCATED/PARTIALLY_DISPATCHED, dated by `required_date`, overdue demand planned from today), forecasts inside the horizon, material demand of existing production orders (RELEASED/IN_PROGRESS from the material snapshot, DRAFT/APPROVED by exploding the order's BOM), and optional safety stock (`materials.min_stock`, `products.reorder_level`) dated today. MTO products use sales-order demand only and are not netted against stock.
+- **Supply:** AVAILABLE stock (materials net of reservations; finished goods gross, because their reservations belong to the demand being netted), open production orders (DRAFT to IN_PROGRESS, planned - good qty, dated by expected completion), open POs (SUBMITTED to PARTIALLY_RECEIVED, ordered - received, dated by expected delivery) and OPEN PRs. Supply counts against a demand only if it arrives on or before the need date. Lot-size surplus is carried forward as planned supply.
+- **Lead times (rule 21):** order date is never before today and need date never before order date + lead time; when demand is due sooner the need date moves to the earliest feasible date and `lead_time_adjusted` is set. Purchase lead time = planning parameter, else preferred supplier lead time, else `mrp.default_purchase_lead_days`; production lead time = planning parameter, else `mrp.default_production_lead_days`.
+- **BOM explosion:** proposed qty x line qty / `base_quantity` x (1 + scrap%), rounded up to 3 decimals. BOM lines reference materials only, so explosion is single-level.
+- **Capacity:** per machine and ISO week (Monday start) the run's own production proposals are accumulated against setting `mrp.machine_hours_per_week` (default 80); a proposal that pushes any of its machines over is flagged `capacity_overload`.
+- **Conversion:** `convert-to-pr` creates an OPEN purchase requisition through `PurchaseRequisitionService`; `convert-to-production-order` creates a DRAFT order through `ProductionOrderService` (BOM must still be ACTIVE). The link is stored on the proposal; the PR/order is not altered. Batch conversion is atomic. Proposals can be discarded with a reason. Permissions: `MRP_VIEW`, `MRP_RUN` (run, discard), `DEMAND_PLAN` (forecasts, planning parameters), `PURCHASE_PROPOSAL`, `PRODUCTION_PROPOSAL`; role `PLANNER`.
+
 ---
 
 ## 18. CRM Module Design (R12)

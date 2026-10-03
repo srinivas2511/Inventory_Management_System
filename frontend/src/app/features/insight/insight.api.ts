@@ -4,7 +4,14 @@ import { Observable } from 'rxjs';
 
 export interface DashboardKpiDto {
   inventory: { itemsWithStock: number; totalValueInr: number };
-  production: { ordersInProgress: number; plannedQtyMonth: number; goodQtyMonth: number; yieldPct: number };
+  production: {
+    ordersInProgress: number;
+    plannedQtyMonth: number;
+    goodQtyMonth: number;
+    yieldPct: number;
+    monthlyTarget: number;
+    targetAttainmentPct: number;
+  };
   quality: { pendingInspections: number; passRateMonth: number };
   procurement: { openPOs: number; overduePOs: number };
   sales: { openOrders: number; dispatchedThisMonth: number };

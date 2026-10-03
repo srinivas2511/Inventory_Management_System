@@ -36,3 +36,13 @@ KNOWN DEVIATION (not changed here): document numbers are PREFIX/YY/NNNNN (Docume
 2. ECO (R15): approval does NOT create a BOM revision; `EcoService.implement` creates the new DRAFT BOM revision per affected product. PLAN Gate M15, R15-3.1 and the traceability row aligned; REQUIREMENTS PLM-003 wording changed from "on ECO approval" to "on ECO implementation (after approval)" because the clause itself contradicted the plan.
 3. MRP performance: R11-3.2 target = 1,000 active sales order lines in < 30 s; Gate M11 = a run with 100+ items completes. The 500-lines/60 s figure in PLAN section 27 was updated to match.
 4. MRP netting: net requirement = gross - available stock - open production order planned qty - open PO/PR supply arriving by need date. DESIGN section 17.2 pseudocode corrected (MRP-001 already required existing POs).
+
+## R11 MRP (2026-10-03)
+- Planning strategy and lot sizing live in a separate `mrp_planning_params` table (per material or product) instead of new columns on the product/material masters, so the master-data DTOs and UI stay untouched. Items without a row plan as MTS with EXACT lot sizing.
+- Safety stock: materials use `min_stock`, products use `reorder_level` (products have no minimum-stock column). Safety stock is optional per run (`includeSafetyStock`).
+- Conversion back-reference is stored on the proposal (`converted_document_type/id`); `purchase_requisitions` and `production_orders` get no `mrp_proposal_id` column (DESIGN 17.3 implied one). The PR reason / order remarks name the proposal.
+- BOM explosion depth: BOM lines reference materials only, so explosion is single-level; the "max depth 10" default is not applicable until sub-assemblies exist and no setting was added for it.
+- Rough-cut capacity counts only the run's own proposals against `mrp.machine_hours_per_week` (default 80 per machine per ISO week); existing production order load is not included.
+- Production targets (decision #17, R11-4.3): kept the system setting `production.monthly_target` (0 = not set), now shown as target attainment on the production dashboard. Per-product period targets are modelled as `demand_forecasts`, which MRP consumes. A `production_targets` table was not needed; revisit if per-plant or per-line targets are required.
+- The `PLANNER` role is seeded but, as for `CONTROLLER` in R10, no demo user is created because the repository has no demo-user mechanism.
+- Run numbers follow the implemented format `MRP/YY/NNNNN` (see the document-number deviation above).

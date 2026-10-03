@@ -52,6 +52,12 @@ import { DashboardKpiDto, InsightApi } from '../insight/insight.api';
             <div class="kpi-row">
               <span>Good qty</span><strong>{{ k.production.goodQtyMonth | number: '1.0-0' }}</strong>
             </div>
+            @if (k.production.monthlyTarget > 0) {
+              <div class="kpi-row">
+                <span>Target attainment ({{ k.production.monthlyTarget | number: '1.0-0' }})</span
+                ><strong>{{ k.production.targetAttainmentPct | number: '1.1-1' }}%</strong>
+              </div>
+            }
           </mat-card-content>
           <mat-card-actions><a mat-button routerLink="/production/orders">View Orders</a></mat-card-actions>
         </mat-card>

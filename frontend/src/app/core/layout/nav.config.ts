@@ -271,6 +271,27 @@ export const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
+    label: 'Planning (MRP)',
+    items: [
+      { label: 'MRP Runs', icon: 'event_repeat', route: '/mrp/runs', permission: 'MRP_VIEW', enabled: true },
+      {
+        label: 'MRP Proposals',
+        icon: 'playlist_add_check',
+        route: '/mrp/proposals',
+        permission: 'MRP_VIEW',
+        enabled: true,
+      },
+      {
+        label: 'Demand Forecasts',
+        icon: 'trending_up',
+        route: '/mrp/forecasts',
+        permission: 'MRP_VIEW',
+        enabled: true,
+      },
+      { label: 'Planning Parameters', icon: 'tune', route: '/mrp/planning', permission: 'MRP_VIEW', enabled: true },
+    ],
+  },
+  {
     label: 'Maintenance',
     items: [
       { label: 'Maintenance', icon: 'build', route: '/maintenance', permission: 'MAINTENANCE_VIEW', enabled: true },

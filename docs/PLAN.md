@@ -736,7 +736,7 @@ REQUIREMENTS clauses tagged *[Implemented R1–R8]* whose PLAN tasks do not expl
 
 | Task ID | Task | DESIGN ref | Effort |
 |---|---|---|---|
-| R11-1.1 | `mrp_runs`, `mrp_proposals`, `demand_forecasts` (V21) | DESIGN §17.1 | 2 pd |
+| R11-1.1 | `mrp_runs`, `mrp_proposals`, `demand_forecasts`, `mrp_planning_params` (V22) | DESIGN §17.1 | 2 pd |
 | R11-1.2 | `MrpRunService.runMrp(horizonDays)` — demand collection (sales orders, production orders, forecasts, safety stock), net requirements against on-hand stock **and open POs/production orders** (MRP-001), BOM explosion, lot sizing rules fixed lot / min-max / EOQ / exact (MRP-003), supplier and production lead times respected (rule 21) | DESIGN §17.2 | 8 pd |
 | R11-1.3 | Rough-cut capacity check: machine hours per period; flag overloaded proposals | DESIGN §17.2 | 3 pd |
 | R11-2.1 | MRP proposal conversion: PR for PURCHASE, production order for PRODUCTION | DESIGN §17.3 | 3 pd |
@@ -750,6 +750,8 @@ REQUIREMENTS clauses tagged *[Implemented R1–R8]* whose PLAN tasks do not expl
 | R11-4.3 | Production targets source decision (REQUIREMENTS §26): decide `system_settings` vs `production_targets` table and implement; feeds dashboards and MRP | DESIGN §17 | 2 pd |
 
 **Gate M11:** MRP run with 100+ items completes; proposals convertible to PRs and production orders; capacity overloads flagged.
+
+**Status: complete, Gate M11 passed 2026-10-03.** `mvn verify` green (MrpEngineTest 15, MrpArchTest 4, MrpSecurityMatrixTest 55, MrpIT 14, 0 skipped); the 1,000-line run (2,924 proposals) takes about 5 s on the Docker test database. Migration V22 (not V21, which R10 used). See DESIGN 17.4 and decisions.md for as-built details.
 
 ---
 

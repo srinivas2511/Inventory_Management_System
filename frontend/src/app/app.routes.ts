@@ -280,6 +280,32 @@ export const routes: Routes = [
           import('./features/controlling/controlling-reports.component').then((m) => m.ControllingReportsComponent),
       },
       {
+        path: 'mrp/runs',
+        title: 'MRP Runs',
+        canActivate: [permissionGuard('MRP_VIEW')],
+        loadComponent: () => import('./features/mrp/mrp-run-list.component').then((m) => m.MrpRunListComponent),
+      },
+      {
+        path: 'mrp/proposals',
+        title: 'MRP Proposals',
+        canActivate: [permissionGuard('MRP_VIEW')],
+        loadComponent: () =>
+          import('./features/mrp/mrp-proposal-list.component').then((m) => m.MrpProposalListComponent),
+      },
+      {
+        path: 'mrp/forecasts',
+        title: 'Demand Forecasts',
+        canActivate: [permissionGuard('MRP_VIEW')],
+        loadComponent: () =>
+          import('./features/mrp/demand-forecast-list.component').then((m) => m.DemandForecastListComponent),
+      },
+      {
+        path: 'mrp/planning',
+        title: 'Planning Parameters',
+        canActivate: [permissionGuard('MRP_VIEW')],
+        loadComponent: () => import('./features/mrp/planning-params.component').then((m) => m.PlanningParamsComponent),
+      },
+      {
         path: 'admin/users',
         title: 'Users',
         canActivate: [permissionGuard('IAM_USER_MANAGE')],
