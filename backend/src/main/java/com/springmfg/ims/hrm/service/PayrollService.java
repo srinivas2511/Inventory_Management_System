@@ -58,6 +58,10 @@ import com.springmfg.ims.hrm.repository.PayrollSlipRepository;
 @Service
 public class PayrollService {
 
+    static final String UNRECORDED_POLICY_KEY = "hrm.payroll.unrecorded_day_policy";
+    private static final String UNRECORDED_ABSENT = "ABSENT";
+    private static final String UNRECORDED_PRESENT = "PRESENT";
+
     static final String SALARY_EXPENSE = "5201";
     static final String EMPLOYER_PF_EXPENSE = "5205";
     static final String EMPLOYER_ESI_EXPENSE = "5206";
@@ -162,6 +166,8 @@ public class PayrollService {
         requireOpenPeriod(last);
 
         PayrollSettings s = PayrollSettings.load(settings);
+        String policy = unrecordedDayPolicy();
+        LocalDate unrecordedBefore = UNRECORDED_ABSENT.equals(policy) ? LocalDate.now(calendar.zone()) : null;
         Set<DayOfWeek> weeklyOff = calendar.weeklyOff();
         Map<Long, List<Attendance>> attendance = attendanceRepo.findByAttendanceDateBetween(first, last).stream()
                 .collect(Collectors.groupingBy(Attendance::getEmployeeId));
@@ -177,7 +183,7 @@ public class PayrollService {
         for (Employee e : employeeRepo.findEmployedDuring(first, last)) {
             PayrollCalculator.Result r = PayrollCalculator.calculate(
                     inputs(e, ym, weeklyOff, attendance.getOrDefault(e.getId(), List.of()),
-                            leaves.getOrDefault(e.getId(), List.of()), leaveTypes), s);
+                            leaves.getOrDefault(e.getId(), List.of()), leaveTypes, unrecordedBefore), s);
             if (r.grossPay().signum() == 0) {
                 continue;
             }
@@ -199,7 +205,7 @@ public class PayrollService {
         run = runRepo.save(run);
         auditService.record("PAYROLL_CALCULATE", "PAYROLL_RUN", String.valueOf(id), null,
                 slips.size() + " slips; gross " + run.getTotalGross().toPlainString() + "; net "
-                        + run.getTotalNet().toPlainString(), null);
+                        + run.getTotalNet().toPlainString() + "; unrecorded-day policy " + policy, null);
         return toDto(run, false);
     }
 
@@ -258,9 +264,19 @@ public class PayrollService {
 
     // ---- internals ----------------------------------------------------------------------------------------
 
+    /** ABSENT (default): working days with no attendance or leave record are LOP; PRESENT: they are paid. */
+    private String unrecordedDayPolicy() {
+        String raw = settings.get(UNRECORDED_POLICY_KEY, UNRECORDED_ABSENT).trim().toUpperCase();
+        if (!UNRECORDED_ABSENT.equals(raw) && !UNRECORDED_PRESENT.equals(raw)) {
+            throw new BusinessRuleException(ErrorCode.VALIDATION_FAILED,
+                    "Setting " + UNRECORDED_POLICY_KEY + " must be ABSENT or PRESENT, not " + raw);
+        }
+        return raw;
+    }
+
     private PayrollCalculator.Inputs inputs(Employee e, YearMonth ym, Set<DayOfWeek> weeklyOff,
                                             List<Attendance> rows, List<LeaveApplication> leaves,
-                                            Map<Long, LeaveType> leaveTypes) {
+                                            Map<Long, LeaveType> leaveTypes, LocalDate unrecordedBefore) {
         Map<AttendanceStatus, Set<LocalDate>> byStatus = new EnumMap<>(AttendanceStatus.class);
         for (Attendance a : rows) {
             byStatus.computeIfAbsent(AttendanceStatus.valueOf(a.getStatus()), k -> new HashSet<>())
@@ -269,6 +285,10 @@ public class PayrollService {
         Set<LocalDate> halfDays = new HashSet<>(byStatus.getOrDefault(AttendanceStatus.HALF_DAY, Set.of()));
         Set<LocalDate> paidLeave = new HashSet<>();
         Set<LocalDate> unpaidLeave = new HashSet<>();
+        Set<LocalDate> recorded = new HashSet<>();
+        for (Attendance a : rows) {
+            recorded.add(a.getAttendanceDate());
+        }
         LocalDate first = ym.atDay(1);
         LocalDate last = ym.atEndOfMonth();
         for (LeaveApplication l : leaves) {
@@ -276,6 +296,7 @@ public class PayrollService {
             LocalDate from = l.getFromDate().isBefore(first) ? first : l.getFromDate();
             LocalDate to = l.getToDate().isAfter(last) ? last : l.getToDate();
             for (LocalDate d = from; !d.isAfter(to); d = d.plusDays(1)) {
+                recorded.add(d);
                 if (l.isHalfDay()) {
                     if (!paid) {
                         halfDays.add(d);
@@ -290,7 +311,7 @@ public class PayrollService {
         return new PayrollCalculator.Inputs(ym, e.getDateOfJoining(), e.getDateOfLeaving(), weeklyOff,
                 byStatus.getOrDefault(AttendanceStatus.HOLIDAY, Set.of()),
                 byStatus.getOrDefault(AttendanceStatus.ABSENT, Set.of()), halfDays, paidLeave, unpaidLeave,
-                e.getBasicPay(), e.getFixedTravelAllowance(), e.getFixedOtherAllowances());
+                recorded, unrecordedBefore, e.getBasicPay(), e.getFixedTravelAllowance(), e.getFixedOtherAllowances());
     }
 
     private static PayrollSlip slip(PayrollRun run, Employee e, PayrollCalculator.Result r) {

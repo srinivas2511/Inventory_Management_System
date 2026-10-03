@@ -40,7 +40,7 @@ class PayrollCalculatorTest {
     }
 
     private static Inputs full(String basic) {
-        return new Inputs(SEP, LocalDate.of(2020, 1, 1), null, SUNDAY_OFF, NONE, NONE, NONE, NONE, NONE, bd(basic),
+        return new Inputs(SEP, LocalDate.of(2020, 1, 1), null, SUNDAY_OFF, NONE, NONE, NONE, NONE, NONE, NONE, null, bd(basic),
                 BigDecimal.ZERO, BigDecimal.ZERO);
     }
 
@@ -48,7 +48,7 @@ class PayrollCalculatorTest {
                                Set<LocalDate> absent, Set<LocalDate> half, Set<LocalDate> paidLeave,
                                Set<LocalDate> unpaidLeave) {
         return new Inputs(base.month(), joined, left, base.weeklyOff(), holidays, absent, half, paidLeave,
-                unpaidLeave, base.basicPay(), base.fixedTravelAllowance(), base.fixedOtherAllowances());
+                unpaidLeave, base.recorded(), base.unrecordedBefore(), base.basicPay(), base.fixedTravelAllowance(), base.fixedOtherAllowances());
     }
 
     @Test
@@ -191,7 +191,7 @@ class PayrollCalculatorTest {
     @Test
     void fixed_allowances_prorate_with_attendance_and_enter_gross() {
         Inputs in = new Inputs(SEP, LocalDate.of(2020, 1, 1), null, SUNDAY_OFF, NONE,
-                Set.of(LocalDate.of(2026, 9, 2), LocalDate.of(2026, 9, 3)), NONE, NONE, NONE, bd("26000"), bd("2600"),
+                Set.of(LocalDate.of(2026, 9, 2), LocalDate.of(2026, 9, 3)), NONE, NONE, NONE, NONE, null, bd("26000"), bd("2600"),
                 bd("1300"));
         Result r = PayrollCalculator.calculate(in, defaults());
 
@@ -237,7 +237,7 @@ class PayrollCalculatorTest {
         PayrollSettings s = defaults();
         Inputs low = full("5000");
         Result lowResult = PayrollCalculator.calculate(
-                new Inputs(low.month(), low.dateOfJoining(), null, SUNDAY_OFF, NONE, NONE, NONE, NONE, NONE, bd("5000"),
+                new Inputs(low.month(), low.dateOfJoining(), null, SUNDAY_OFF, NONE, NONE, NONE, NONE, NONE, NONE, null, bd("5000"),
                         BigDecimal.ZERO, BigDecimal.ZERO), s);
         assertThat(lowResult.grossPay()).isEqualByComparingTo("7000.00");
         assertThat(lowResult.professionalTax()).isEqualByComparingTo("0.00");
@@ -259,5 +259,98 @@ class PayrollCalculatorTest {
                 .isInstanceOf(BusinessRuleException.class);
         assertThatThrownBy(() -> PayrollSettings.parseSlabs("k", "7500"))
                 .isInstanceOf(BusinessRuleException.class);
+    }
+
+    private static Set<LocalDate> workingDaysExcept(LocalDate... skipped) {
+        Set<LocalDate> skip = Set.of(skipped);
+        Set<LocalDate> days = new java.util.HashSet<>();
+        for (LocalDate d = SEP.atDay(1); !d.isAfter(SEP.atEndOfMonth()); d = d.plusDays(1)) {
+            if (d.getDayOfWeek() != DayOfWeek.SUNDAY && !skip.contains(d)) {
+                days.add(d);
+            }
+        }
+        return days;
+    }
+
+    private static Inputs withRecords(Inputs base, Set<LocalDate> holidays, Set<LocalDate> paidLeave,
+                                      Set<LocalDate> recorded, LocalDate unrecordedBefore) {
+        return new Inputs(base.month(), base.dateOfJoining(), null, base.weeklyOff(), holidays, NONE, NONE, paidLeave,
+                NONE, recorded, unrecordedBefore, base.basicPay(), base.fixedTravelAllowance(),
+                base.fixedOtherAllowances());
+    }
+
+    private static final LocalDate AFTER_SEP = LocalDate.of(2026, 10, 3);
+
+    @Test
+    void unrecorded_workdays_are_loss_of_pay_under_the_absent_policy() {
+        Inputs in = withRecords(full("26000"), NONE, NONE, workingDaysExcept(LocalDate.of(2026, 9, 2),
+                LocalDate.of(2026, 9, 3)), AFTER_SEP);
+
+        Result r = PayrollCalculator.calculate(in, defaults());
+
+        assertThat(r.workingDays()).isEqualByComparingTo("26.0");
+        assertThat(r.paidDays()).isEqualByComparingTo("24.0");
+        assertThat(r.lopDays()).isEqualByComparingTo("2.0");
+        assertThat(r.basicPay()).isEqualByComparingTo("24000.00");
+    }
+
+    @Test
+    void the_present_policy_still_pays_unrecorded_workdays() {
+        Inputs in = withRecords(full("26000"), NONE, NONE, NONE, null);
+
+        Result r = PayrollCalculator.calculate(in, defaults());
+
+        assertThat(r.paidDays()).isEqualByComparingTo("26.0");
+        assertThat(r.lopDays()).isEqualByComparingTo("0.0");
+        assertThat(r.basicPay()).isEqualByComparingTo("26000.00");
+    }
+
+    @Test
+    void an_employee_with_no_records_at_all_earns_nothing_under_the_absent_policy() {
+        Inputs in = withRecords(full("26000"), NONE, NONE, NONE, AFTER_SEP);
+
+        Result r = PayrollCalculator.calculate(in, defaults());
+
+        assertThat(r.paidDays()).isEqualByComparingTo("0.0");
+        assertThat(r.grossPay()).isEqualByComparingTo("0.00");
+        assertThat(r.netPay()).isEqualByComparingTo("0.00");
+    }
+
+    @Test
+    void weekly_offs_and_holidays_are_never_penalised_as_unrecorded() {
+        LocalDate holiday = LocalDate.of(2026, 9, 9);
+        Inputs in = withRecords(full("25000"), Set.of(holiday), NONE, workingDaysExcept(holiday), AFTER_SEP);
+
+        Result r = PayrollCalculator.calculate(in, defaults());
+
+        assertThat(r.workingDays()).isEqualByComparingTo("25.0");
+        assertThat(r.paidDays()).isEqualByComparingTo("25.0");
+        assertThat(r.lopDays()).isEqualByComparingTo("0.0");
+    }
+
+    @Test
+    void approved_paid_leave_including_a_paid_half_day_is_not_unrecorded() {
+        LocalDate fullLeave = LocalDate.of(2026, 9, 10);
+        LocalDate halfLeave = LocalDate.of(2026, 9, 11);
+        Set<LocalDate> recorded = workingDaysExcept(fullLeave, halfLeave);
+        recorded.add(fullLeave);
+        recorded.add(halfLeave);
+        Inputs in = withRecords(full("26000"), NONE, Set.of(fullLeave), recorded, AFTER_SEP);
+
+        Result r = PayrollCalculator.calculate(in, defaults());
+
+        assertThat(r.paidDays()).isEqualByComparingTo("26.0");
+        assertThat(r.lopDays()).isEqualByComparingTo("0.0");
+    }
+
+    @Test
+    void days_from_the_cutoff_onwards_are_not_penalised_so_a_mid_month_run_stays_fair() {
+        Inputs in = withRecords(full("26000"), NONE, NONE, NONE, LocalDate.of(2026, 9, 16));
+
+        Result r = PayrollCalculator.calculate(in, defaults());
+
+        // 1-15 September has 15 days with Sundays on the 6th and 13th: 13 unrecorded working days are loss of pay.
+        assertThat(r.lopDays()).isEqualByComparingTo("13.0");
+        assertThat(r.paidDays()).isEqualByComparingTo("13.0");
     }
 }

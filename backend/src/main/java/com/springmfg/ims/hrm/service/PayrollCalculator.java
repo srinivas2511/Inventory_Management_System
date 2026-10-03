@@ -28,7 +28,9 @@ public final class PayrollCalculator {
     /**
      * Attendance facts for one employee and month. Dates in {@code absent}, {@code halfDays} and {@code holidays}
      * come from attendance rows; {@code paidLeave} and {@code unpaidLeave} from approved leave applications.
-     * Days with no record are treated as present: only explicit exceptions reduce pay.
+     * {@code recorded} holds every date that has an attendance row or is covered by approved leave. When
+     * {@code unrecordedBefore} is set, a working day before that date with no record counts as absent (LOP); when it is
+     * null, unrecorded days count as present and only explicit exceptions reduce pay.
      */
     public record Inputs(
             YearMonth month,
@@ -40,6 +42,8 @@ public final class PayrollCalculator {
             Set<LocalDate> halfDays,
             Set<LocalDate> paidLeave,
             Set<LocalDate> unpaidLeave,
+            Set<LocalDate> recorded,
+            LocalDate unrecordedBefore,
             BigDecimal basicPay,
             BigDecimal fixedTravelAllowance,
             BigDecimal fixedOtherAllowances) {}
@@ -92,6 +96,9 @@ public final class PayrollCalculator {
                 lop = lop.add(BigDecimal.ONE);
             } else if (in.halfDays().contains(d)) {
                 lop = lop.add(HALF);
+            } else if (in.unrecordedBefore() != null && d.isBefore(in.unrecordedBefore())
+                    && !in.recorded().contains(d)) {
+                lop = lop.add(BigDecimal.ONE);
             }
         }
 

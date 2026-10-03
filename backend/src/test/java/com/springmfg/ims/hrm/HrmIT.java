@@ -68,6 +68,7 @@ import com.springmfg.ims.support.TestData;
 class HrmIT extends AbstractIntegrationTest {
 
     private static final LocalDate JOINED = LocalDate.of(2025, 1, 1);
+    private static final String POLICY_KEY = "hrm.payroll.unrecorded_day_policy";
 
     @Autowired EmployeeService employeeService;
     @Autowired AttendanceService attendanceService;
@@ -82,11 +83,14 @@ class HrmIT extends AbstractIntegrationTest {
     @Autowired ProductionOrderRepository orderRepo;
     @Autowired ProductionOperationRepository opRepo;
     @Autowired JdbcTemplate jdbc;
+    @Autowired org.springframework.cache.CacheManager cacheManager;
+    @Autowired com.springmfg.ims.common.settings.SystemSettingService systemSettings;
     @Autowired TestData td;
 
     @AfterEach
     void clearSecurity() {
         SecurityContextHolder.clearContext();
+        cacheManager.getCache("systemSettings").evict(POLICY_KEY);
     }
 
     // ---- helpers ------------------------------------------------------------------------------------------
@@ -123,9 +127,28 @@ class HrmIT extends AbstractIntegrationTest {
         periodService.finalizePeriodClose(p.getId());
     }
 
+    /** Pins the legacy PRESENT policy so tests about other payroll rules need no attendance for every workday. */
     private PayrollRunDto run(int month, int year) {
+        return run("PRESENT", month, year);
+    }
+
+    private PayrollRunDto run(String unrecordedPolicy, int month, int year) {
+        systemSettings.update(POLICY_KEY, unrecordedPolicy);
         PayrollRunDto run = payrollService.initiate(new InitiatePayrollRequest(month, year));
         return payrollService.calculate(run.id());
+    }
+
+    /** Marks the employee PRESENT on every August 2026 working day (Sundays off) except the listed days. */
+    private void presentOnAugustWorkdaysExcept(EmployeeDto e, int... skippedDays) {
+        for (int day = 1; day <= 31; day++) {
+            LocalDate d = LocalDate.of(2026, 8, day);
+            int dayOfMonth = day;
+            boolean skipped = Arrays.stream(skippedDays).anyMatch(x -> x == dayOfMonth);
+            if (d.getDayOfWeek() != java.time.DayOfWeek.SUNDAY && !skipped) {
+                attendanceService.record(new RecordAttendanceRequest(e.id(), d, null, null, null,
+                        AttendanceStatus.PRESENT, null));
+            }
+        }
     }
 
     private PayrollSlip slipOf(Long runId, Long employeeId) {
@@ -259,6 +282,75 @@ class HrmIT extends AbstractIntegrationTest {
         assertThat(slip.getPaidDays()).isEqualByComparingTo("24.0");
         assertThat(slip.getLopDays()).isEqualByComparingTo("2.0");
         assertThat(slip.getBasicPay()).isEqualByComparingTo("24000.00");
+    }
+
+
+    @Test
+    @Transactional
+    @DisplayName("Absent policy: two unrecorded working days are loss of pay (24/26 of basic); present policy pays them")
+    void unrecordedWorkdaysAreLossOfPayUnderTheAbsentPolicy() {
+        EmployeeDto e = employee("26000", null, null);
+        presentOnAugustWorkdaysExcept(e, 3, 4);
+
+        PayrollRunDto absentRun = run("ABSENT", 8, 2026);
+        PayrollSlip slip = slipOf(absentRun.id(), e.id());
+        assertThat(slip.getPaidDays()).isEqualByComparingTo("24.0");
+        assertThat(slip.getLopDays()).isEqualByComparingTo("2.0");
+        assertThat(slip.getBasicPay()).isEqualByComparingTo("24000.00");
+
+        systemSettings.update(POLICY_KEY, "PRESENT");
+        PayrollRunDto presentRun = payrollService.calculate(absentRun.id());
+        PayrollSlip paid = slipOf(presentRun.id(), e.id());
+        assertThat(paid.getPaidDays()).isEqualByComparingTo("26.0");
+        assertThat(paid.getBasicPay()).isEqualByComparingTo("26000.00");
+    }
+
+    @Test
+    @Transactional
+    @DisplayName("Absent policy: an employee with no attendance records gets no slip while a fully recorded one does")
+    void employeeWithNoRecordsEarnsNothingUnderTheAbsentPolicy() {
+        EmployeeDto recorded = employee("26000", null, null);
+        EmployeeDto none = employee("26000", null, null);
+        presentOnAugustWorkdaysExcept(recorded);
+
+        PayrollRunDto run = run("ABSENT", 8, 2026);
+
+        assertThat(slipOf(run.id(), recorded.id()).getPaidDays()).isEqualByComparingTo("26.0");
+        assertThat(slipRepo.findByPayrollRunIdOrderByEmployeeIdAsc(run.id()))
+                .extracting(PayrollSlip::getEmployeeId).doesNotContain(none.id());
+    }
+
+    @Test
+    @Transactional
+    @DisplayName("Absent policy: a holiday, Sundays and an approved paid leave day are not penalised")
+    void holidaysWeeklyOffsAndPaidLeaveAreNotPenalised() {
+        Long applicantUser = user();
+        EmployeeDto e = employee("25000", applicantUser, null);
+        attendanceService.record(new RecordAttendanceRequest(e.id(), LocalDate.of(2026, 8, 12), null, null, null,
+                AttendanceStatus.HOLIDAY, null));
+        as(applicantUser, "LEAVE_APPLY");
+        LeaveApplicationDto applied = leaveService.apply(leave("CL", LocalDate.of(2026, 8, 13), LocalDate.of(2026, 8, 13)));
+        as(user(), "LEAVE_APPROVE");
+        leaveService.approve(applied.id(), null);
+        SecurityContextHolder.clearContext();
+        presentOnAugustWorkdaysExcept(e, 12, 13);
+
+        PayrollSlip slip = slipOf(run("ABSENT", 8, 2026).id(), e.id());
+
+        assertThat(slip.getWorkingDays()).isEqualByComparingTo("25.0");
+        assertThat(slip.getPaidDays()).isEqualByComparingTo("25.0");
+        assertThat(slip.getLopDays()).isEqualByComparingTo("0.0");
+        assertThat(slip.getBasicPay()).isEqualByComparingTo("25000.00");
+    }
+
+    @Test
+    @Transactional
+    @DisplayName("An unknown unrecorded-day policy value is refused")
+    void unknownPolicyIsRefused() {
+        employee("12000", null, null);
+
+        assertThatThrownBy(() -> run("SOMETIMES", 8, 2026))
+                .isInstanceOf(BusinessRuleException.class);
     }
 
     // ---- leave --------------------------------------------------------------------------------------------
