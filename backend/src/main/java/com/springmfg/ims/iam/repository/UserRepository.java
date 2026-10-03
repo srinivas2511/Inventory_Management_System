@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import com.springmfg.ims.common.search.SearchText;
 import com.springmfg.ims.iam.domain.User;
 
 public interface UserRepository extends JpaRepository<User, Long> {
@@ -21,14 +22,18 @@ public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByEmail(String email);
 
     @Query("SELECT u FROM User u WHERE " +
-           "(:search IS NULL OR LOWER(u.username) LIKE LOWER(CONCAT('%',:search,'%')) " +
+           "(:search = '' OR LOWER(u.username) LIKE LOWER(CONCAT('%',:search,'%')) " +
            "  OR LOWER(u.fullName) LIKE LOWER(CONCAT('%',:search,'%')) " +
            "  OR LOWER(u.email) LIKE LOWER(CONCAT('%',:search,'%'))) " +
            "AND (:active IS NULL OR u.active = :active)")
-    Page<User> search(@Param("search") String search,
+    Page<User> searchNormalised(@Param("search") String search,
                       @Param("active") Boolean active,
                       Pageable pageable);
 
     @Query("SELECT COUNT(u) FROM User u JOIN u.roles r WHERE r.code = 'ADMIN' AND u.active = true")
     long countActiveAdmins();
+
+    default Page<User> search(String search, Boolean active, Pageable pageable) {
+        return searchNormalised(SearchText.normalise(search), active, pageable);
+    }
 }

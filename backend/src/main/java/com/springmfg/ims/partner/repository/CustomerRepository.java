@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.Optional;
 
+import com.springmfg.ims.common.search.SearchText;
 import com.springmfg.ims.partner.domain.Customer;
 
 public interface CustomerRepository extends JpaRepository<Customer, Long> {
@@ -17,10 +18,14 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
     Optional<Customer> findByCustomerCode(String customerCode);
 
     @Query("SELECT c FROM Customer c WHERE " +
-           "(:q IS NULL OR LOWER(c.name) LIKE LOWER(CONCAT('%', :q, '%')) " +
+           "(:q = '' OR LOWER(c.name) LIKE LOWER(CONCAT('%', :q, '%')) " +
            "   OR LOWER(c.customerCode) LIKE LOWER(CONCAT('%', :q, '%'))) " +
            "AND (:status IS NULL OR c.status = :status)")
-    Page<Customer> search(@Param("q") String q,
+    Page<Customer> searchNormalised(@Param("q") String q,
                           @Param("status") String status,
                           Pageable pageable);
+
+    default Page<Customer> search(String q, String status, Pageable pageable) {
+        return searchNormalised(SearchText.normalise(q), status, pageable);
+    }
 }
