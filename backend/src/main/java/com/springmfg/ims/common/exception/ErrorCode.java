@@ -68,6 +68,11 @@ public enum ErrorCode {
     LEAVE_OVERLAP(HttpStatus.UNPROCESSABLE_ENTITY, "Leave overlaps an existing application"),
     PAYROLL_LOCKED(HttpStatus.UNPROCESSABLE_ENTITY, "Payroll for this period is already approved"),
 
+    // 422 - WMS rules (R14+)
+    BIN_CAPACITY_EXCEEDED(HttpStatus.UNPROCESSABLE_ENTITY, "Bin capacity exceeded"),
+    SCAN_MISMATCH(HttpStatus.UNPROCESSABLE_ENTITY, "Scanned code does not match the task"),
+    PUTAWAY_BLOCKED(HttpStatus.UNPROCESSABLE_ENTITY, "Stock cannot be put away yet"),
+
     // 500
     INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "Internal error");
 

@@ -49,6 +49,12 @@ const STATUS_MAP: Record<string, { color: StatusColor; icon: string; label?: str
   NOT_RECORDED: { color: 'grey', icon: 'radio_button_unchecked', label: 'Not recorded' },
   PAID: { color: 'green', icon: 'payments' },
   PLANNED: { color: 'grey', icon: 'event' },
+  CREATED: { color: 'grey', icon: 'radio_button_unchecked' },
+  OPEN: { color: 'blue', icon: 'radio_button_unchecked' },
+  PARTIAL: { color: 'amber', icon: 'timelapse' },
+  CONFIRMED: { color: 'green', icon: 'check_circle' },
+  REVIEW: { color: 'amber', icon: 'rule' },
+  POSTED: { color: 'teal', icon: 'task_alt' },
   NO_SHOW: { color: 'red', icon: 'person_off', label: 'No show' },
 };
 

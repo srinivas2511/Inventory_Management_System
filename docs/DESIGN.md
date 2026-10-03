@@ -2037,6 +2037,12 @@ PutAwayService.createPutAwayTasks(goodsReceiptId):
 
 ---
 
+### 20.3 As implemented (R14)
+
+The schema above is the starting design; `V27__wms.sql` and `docs/decisions.md` (section "R14 WMS") record the differences. In short: every bin is backed by a `warehouse_locations` row (`warehouse_bins.location_id`) so the ledger keeps one location key; zone type `STAGING` and bin columns `aisle`, `rack`, `level`, `bin_position` were added; transfer-order lines carry `from_location_id` and `to_location_id`; new tables are `putaway_strategy_rules` (put-away strategy per warehouse and material type), `pick_waves` and `pick_wave_orders` (multi-order waves), `cycle_counts` and `cycle_count_lines`; the transfer-order header gained `wave_id`, `cross_dock_target_type`, `cross_dock_target_id` and the movement type `CROSS_DOCK`. Settings: `wms.bin_capacity.enforce`, `wms.putaway.default_strategy`, `wms.putaway.auto_create`, `wms.picking.auto_create`, `wms.cycle_count.abc_*`.
+
+**Confirmation algorithm** (`TransferOrderService.confirm`): lock the order; for each line in line order check the remaining quantity and the scanned codes, resolve the destination bin (explicit, planned or scanned), refuse stock that still awaits inspection unless the destination is a quarantine or QC area, check bin capacity (warn, or reject when enforced), pick the stock row with enough unreserved quantity, post STOCK_TRANSFER through `InventoryPostingService` and update the line; then complete the order when every line is confirmed, refresh the cached weights of the bins touched, and complete the wave when all its orders are closed. A picking line without a destination posts nothing.
+
 ## 21. PLM Module Design (R15)
 
 ### 21.1 ECO tables

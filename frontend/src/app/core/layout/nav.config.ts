@@ -322,6 +322,25 @@ export const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
+    label: 'Warehouse Operations',
+    items: [
+      { label: 'Zones & Bins', icon: 'grid_view', route: '/wms/bins', permission: 'WMS_VIEW', enabled: true },
+      { label: 'Bin View', icon: 'inventory', route: '/wms/bin-view', permission: 'WMS_VIEW', enabled: true },
+      { label: 'Put-away', icon: 'move_to_inbox', route: '/wms/putaway', permission: 'WMS_VIEW', enabled: true },
+      {
+        label: 'Picking',
+        icon: 'shopping_cart_checkout',
+        route: '/wms/picking',
+        permission: 'WMS_VIEW',
+        enabled: true,
+      },
+      { label: 'Pick Waves', icon: 'waves', route: '/wms/waves', permission: 'WMS_VIEW', enabled: true },
+      { label: 'Transfers', icon: 'swap_horiz', route: '/wms/transfers', permission: 'WMS_VIEW', enabled: true },
+      { label: 'Cross-dock', icon: 'sync_alt', route: '/wms/cross-dock', permission: 'WMS_VIEW', enabled: true },
+      { label: 'Cycle Counts', icon: 'fact_check', route: '/wms/cycle-counts', permission: 'WMS_VIEW', enabled: true },
+    ],
+  },
+  {
     label: 'Maintenance',
     items: [
       { label: 'Maintenance', icon: 'build', route: '/maintenance', permission: 'MAINTENANCE_VIEW', enabled: true },

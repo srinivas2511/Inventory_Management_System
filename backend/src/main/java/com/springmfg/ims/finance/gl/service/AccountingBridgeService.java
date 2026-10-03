@@ -37,6 +37,10 @@ public class AccountingBridgeService {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onStockPosted(StockPostedEvent event) {
         var tx = event.transaction();
+        // A transfer only moves stock between locations of the same valuation, so it has no accounting effect.
+        if ("STOCK_TRANSFER".equals(tx.getTransactionType())) {
+            return;
+        }
         try {
             Optional<InventoryAccountAssignment> assignmentOpt =
                     assignmentRepo.findByCompanyIdAndTransactionTypeAndItemType(

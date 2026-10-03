@@ -37,19 +37,22 @@ public class SalesOrderService {
     private final ProductRepository productRepo;
     private final DocumentNumberService numberService;
     private final AuditService auditService;
+    private final org.springframework.context.ApplicationEventPublisher eventPublisher;
 
     public SalesOrderService(SalesOrderRepository orderRepo,
                              SalesOrderItemRepository itemRepo,
                              CustomerRepository customerRepo,
                              ProductRepository productRepo,
                              DocumentNumberService numberService,
-                             AuditService auditService) {
+                             AuditService auditService,
+                             org.springframework.context.ApplicationEventPublisher eventPublisher) {
         this.orderRepo = orderRepo;
         this.itemRepo = itemRepo;
         this.customerRepo = customerRepo;
         this.productRepo = productRepo;
         this.numberService = numberService;
         this.auditService = auditService;
+        this.eventPublisher = eventPublisher;
     }
 
     public SalesOrderDto create(CreateSalesOrderRequest req) {
@@ -123,6 +126,7 @@ public class SalesOrderService {
         order.setApprovedBy(currentUserId());
         order.setApprovedAt(Instant.now());
         auditService.record("SO_APPROVED", "SALES_ORDER", "ORDERED", "APPROVED", String.valueOf(orderId), null);
+        eventPublisher.publishEvent(new com.springmfg.ims.sales.event.SalesOrderApprovedEvent(orderId));
         return toDto(order, itemRepo.findBySalesOrderId(orderId));
     }
 

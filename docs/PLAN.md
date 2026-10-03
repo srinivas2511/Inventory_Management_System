@@ -814,14 +814,14 @@ REQUIREMENTS clauses tagged *[Implemented R1–R8]* whose PLAN tasks do not expl
 
 | Task ID | Task | DESIGN ref | Effort |
 |---|---|---|---|
-| R14-1.1 | `warehouse_zones`, `warehouse_bins` (with explicit aisle, rack, level columns: Warehouse → Zone → Aisle → Rack → Bin), `bin_item_assignments` (V25) | DESIGN §20.1 | 2 pd |
+| R14-1.1 | `warehouse_zones`, `warehouse_bins` (with explicit aisle, rack, level columns: Warehouse → Zone → Aisle → Rack → Bin), `bin_item_assignments` (V27) | DESIGN §20.1 | 2 pd |
 | R14-1.2 | Bin master CRUD; zone and bin capacity configuration UI | | 3 pd |
-| R14-2.1 | `transfer_orders`, `transfer_order_lines` (V25); `TransferOrderService` | DESIGN §20 | 3 pd |
+| R14-2.1 | `transfer_orders`, `transfer_order_lines` (V27); `TransferOrderService` | DESIGN §20 | 3 pd |
 | R14-2.2 | `PutAwayService.createPutAwayTasks(goodsReceiptId)` — nearest-bin strategy | DESIGN §20.2 | 3 pd |
 | R14-2.3 | Picking task generation from dispatch: FEFO bin picking, generate TO lines | DESIGN §20 | 3 pd |
 | R14-3.1 | TO confirmation: scan-based (bin_code + batch_code) or manual qty; posts STOCK_TRANSFER on confirm | | 3 pd |
 | R14-3.2 | WMS UI: put-away task list, picking list, bin view (current inventory), TO confirmation screen | | 4 pd |
-| R14-4.1 | Cycle count: `cycle_counts`, `cycle_count_lines` (V25); count by zone, ABC classification (frequency-based) or random sample | | 3 pd |
+| R14-4.1 | Cycle count: `cycle_counts`, `cycle_count_lines` (V27); count by zone, ABC classification (frequency-based) or random sample | | 3 pd |
 | R14-4.2 | Cycle count UI: create count, count entry, variance review, post adjustments | | 2 pd |
 | R14-5.1 | Integration tests: GR → put-away TO created; dispatch → picking TO created; cycle count → adjustment | ARCH §23 | 2 pd |
 | R14-5.2 | Permissions `BIN_MANAGE`, `PUTAWAY_MANAGE`, `PICKING_MANAGE`, `WAVE_MANAGE`; seed `WAREHOUSE_MANAGER` role + demo user; 403 matrix for WMS endpoints | ARCH §10 | 1 pd |
@@ -830,6 +830,8 @@ REQUIREMENTS clauses tagged *[Implemented R1–R8]* whose PLAN tasks do not expl
 | R14-6.3 | Cross-docking: goods received against a PO staged directly to a production order or dispatch without put-away; transfer order flagged CROSS_DOCK | DESIGN §20 | 3 pd |
 
 **Gate M14:** GR triggers put-away task; dispatch triggers picking task; cycle count posts to stock adjustment workflow; bin capacity breaches raise an advisory warning by default and are rejected when `wms.bin_capacity.enforce=true`.
+
+**Status: complete, Gate M14 passed 2026-10-03.** `mvn verify` green in one run (640 unit/ArchUnit/web-slice tests incl. WmsRulesTest 12, WmsArchTest 5, WmsSecurityMatrixTest 118; 130 integration tests incl. WmsIT 18; 0 skipped); frontend 109/109, lint, format and production build clean. Migration V27 (PLAN rows below say V25). Deviations are in docs/decisions.md (section R14 WMS), notably: picking is planned at sales-order approval because the existing dispatch is atomic, a picking line without a destination is a verified pick that posts nothing, put-away of uninspected stock into storage is blocked until inspection, volume capacity is stored but not checked, and no demo warehouse-manager user exists.
 
 ---
 
