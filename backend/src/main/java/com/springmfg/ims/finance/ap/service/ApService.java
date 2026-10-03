@@ -210,8 +210,8 @@ public class ApService {
     private Long currentUserId() {
         try {
             var auth = SecurityContextHolder.getContext().getAuthentication();
-            if (auth != null && auth.getPrincipal() instanceof com.springmfg.ims.iam.domain.User user) {
-                return user.getId();
+            if (auth != null && auth.getPrincipal() instanceof com.springmfg.ims.auth.service.UserPermissionCache.CachedUser user) {
+                return user.id();
             }
         } catch (Exception ignored) {}
         return -1L;

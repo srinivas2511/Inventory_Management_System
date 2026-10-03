@@ -19,7 +19,6 @@ import com.springmfg.ims.common.exception.ErrorCode;
 import com.springmfg.ims.common.exception.NotFoundException;
 import com.springmfg.ims.common.numbering.DocumentNumberService;
 import com.springmfg.ims.common.settings.SystemSettingService;
-import com.springmfg.ims.iam.domain.User;
 import com.springmfg.ims.inventory.domain.StockAdjustment;
 import com.springmfg.ims.inventory.dto.PostingCommand;
 import com.springmfg.ims.inventory.dto.StockAdjustmentDto;
@@ -203,8 +202,8 @@ public class StockAdjustmentService {
     private Long currentUserId() {
         try {
             var auth = SecurityContextHolder.getContext().getAuthentication();
-            if (auth != null && auth.getPrincipal() instanceof User user) {
-                return user.getId();
+            if (auth != null && auth.getPrincipal() instanceof com.springmfg.ims.auth.service.UserPermissionCache.CachedUser user) {
+                return user.id();
             }
         } catch (Exception ignored) {}
         return -1L;

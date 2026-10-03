@@ -463,8 +463,8 @@ public class FinalInspectionService {
     private Long currentUserId() {
         try {
             var auth = SecurityContextHolder.getContext().getAuthentication();
-            if (auth != null && auth.getPrincipal() instanceof com.springmfg.ims.iam.domain.User u) {
-                return u.getId();
+            if (auth != null && auth.getPrincipal() instanceof com.springmfg.ims.auth.service.UserPermissionCache.CachedUser u) {
+                return u.id();
             }
         } catch (Exception ignored) {}
         return null;
