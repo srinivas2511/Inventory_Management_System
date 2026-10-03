@@ -1817,6 +1817,17 @@ CREATE TABLE crm_activities (
 // 6. Return created sales order
 ```
 
+Implemented as `V23__crm.sql` (see decisions.md "R12 CRM" for the rules below). In step 3 the sales order line carries the **net** unit price (`unit_price x (100 - discount_pct) / 100`, rounded half-up to 4 places), and `line_total` is quantity x that net price, so the order totals exactly the quotation. The opportunity linked to the quotation gets `converted_quotation_id` and is closed WON when it was in PROPOSAL or NEGOTIATION.
+
+### 18.3 Additions to the 18.1 schema
+
+- `crm_leads.disqualify_reason`; `crm_quotations.payment_terms`, `notes`, `sent_at`, `responded_at`, `reject_reason`.
+- Constraints: an activity must reference a customer, contact, lead or opportunity; an opportunity needs a lead or a customer and a reason when CLOSED_LOST; a sales order can come from at most one quotation (unique index on `converted_sales_order_id`).
+- `customer_prices(customer_id NULL = standard, product_id, unit_price, min_qty, valid_from, valid_to, active)` for R12-4.1. Resolution: rows valid on the date with `min_qty <= quantity`; customer-specific beats standard, then highest `min_qty`, then latest `valid_from`.
+- `customer_tags(tag_group, name)` and `customer_tag_assignments(customer_id, tag_id)` for R12-4.2.
+- Permissions `CRM_VIEW`, `LEAD_MANAGE`, `OPPORTUNITY_MANAGE`, `QUOTATION_CREATE`, `CUSTOMER_ACTIVITY`, `PRICE_LIST_MANAGE`, `CUSTOMER_TAG_MANAGE`; role `CRM_AGENT`.
+- API: `/api/crm/{contacts,leads,opportunities,quotations,activities,prices,tags,customers}`; lead transitions are `POST /leads/{id}/{contact|qualify|disqualify|convert-to-opportunity}`, opportunities move with `POST /opportunities/{id}/advance`, quotations with `POST /quotations/{id}/{send|accept|reject|convert-to-sales-order}`.
+
 ---
 
 ## 19. HRM Module Design (R13)

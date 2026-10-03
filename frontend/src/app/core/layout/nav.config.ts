@@ -292,6 +292,25 @@ export const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
+    label: 'CRM',
+    items: [
+      { label: 'Leads', icon: 'person_search', route: '/crm/leads', permission: 'CRM_VIEW', enabled: true },
+      {
+        label: 'Opportunities',
+        icon: 'view_kanban',
+        route: '/crm/opportunities',
+        permission: 'CRM_VIEW',
+        enabled: true,
+      },
+      { label: 'Quotations', icon: 'request_quote', route: '/crm/quotations', permission: 'CRM_VIEW', enabled: true },
+      { label: 'Contacts', icon: 'contacts', route: '/crm/contacts', permission: 'CRM_VIEW', enabled: true },
+      { label: 'Customer Activity', icon: 'history', route: '/crm/activities', permission: 'CRM_VIEW', enabled: true },
+      { label: 'Customer Segments', icon: 'label', route: '/crm/customers', permission: 'CRM_VIEW', enabled: true },
+      { label: 'Price Lists', icon: 'sell', route: '/crm/prices', permission: 'CRM_VIEW', enabled: true },
+      { label: 'Sales Pipeline', icon: 'filter_alt', route: '/crm/pipeline', permission: 'CRM_VIEW', enabled: true },
+    ],
+  },
+  {
     label: 'Maintenance',
     items: [
       { label: 'Maintenance', icon: 'build', route: '/maintenance', permission: 'MAINTENANCE_VIEW', enabled: true },

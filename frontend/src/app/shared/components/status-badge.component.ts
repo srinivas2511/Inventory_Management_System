@@ -28,6 +28,19 @@ const STATUS_MAP: Record<string, { color: StatusColor; icon: string; label?: str
   SUBMITTED: { color: 'grey', icon: 'radio_button_unchecked' },
   OBSOLETE: { color: 'grey', icon: 'block' },
   INACTIVE: { color: 'grey', icon: 'block' },
+  NEW: { color: 'blue', icon: 'fiber_new' },
+  CONTACTED: { color: 'amber', icon: 'call' },
+  QUALIFIED: { color: 'teal', icon: 'verified' },
+  UNQUALIFIED: { color: 'red', icon: 'cancel' },
+  CONVERTED: { color: 'green', icon: 'check_circle' },
+  PROSPECT: { color: 'grey', icon: 'radio_button_unchecked' },
+  PROPOSAL: { color: 'blue', icon: 'description' },
+  NEGOTIATION: { color: 'amber', icon: 'handshake' },
+  CLOSED_WON: { color: 'green', icon: 'emoji_events', label: 'Won' },
+  CLOSED_LOST: { color: 'red', icon: 'cancel', label: 'Lost' },
+  SENT: { color: 'blue', icon: 'send' },
+  ACCEPTED: { color: 'green', icon: 'thumb_up' },
+  EXPIRED: { color: 'orange', icon: 'schedule' },
 };
 
 @Component({

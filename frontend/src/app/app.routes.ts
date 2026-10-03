@@ -306,6 +306,79 @@ export const routes: Routes = [
         loadComponent: () => import('./features/mrp/planning-params.component').then((m) => m.PlanningParamsComponent),
       },
       {
+        path: 'crm/leads',
+        title: 'Leads',
+        canActivate: [permissionGuard('CRM_VIEW')],
+        loadComponent: () => import('./features/crm/crm-lead-list.component').then((m) => m.CrmLeadListComponent),
+      },
+      {
+        path: 'crm/leads/:id',
+        title: 'Lead',
+        canActivate: [permissionGuard('CRM_VIEW')],
+        loadComponent: () => import('./features/crm/crm-lead-detail.component').then((m) => m.CrmLeadDetailComponent),
+      },
+      {
+        path: 'crm/opportunities',
+        title: 'Opportunities',
+        canActivate: [permissionGuard('CRM_VIEW')],
+        loadComponent: () =>
+          import('./features/crm/crm-opportunity-board.component').then((m) => m.CrmOpportunityBoardComponent),
+      },
+      {
+        path: 'crm/quotations',
+        title: 'Quotations',
+        canActivate: [permissionGuard('CRM_VIEW')],
+        loadComponent: () =>
+          import('./features/crm/crm-quotation-list.component').then((m) => m.CrmQuotationListComponent),
+      },
+      {
+        path: 'crm/quotations/new',
+        title: 'New Quotation',
+        canActivate: [permissionGuard('QUOTATION_CREATE')],
+        loadComponent: () =>
+          import('./features/crm/crm-quotation-form.component').then((m) => m.CrmQuotationFormComponent),
+      },
+      {
+        path: 'crm/quotations/:id/edit',
+        title: 'Edit Quotation',
+        canActivate: [permissionGuard('QUOTATION_CREATE')],
+        loadComponent: () =>
+          import('./features/crm/crm-quotation-form.component').then((m) => m.CrmQuotationFormComponent),
+      },
+      {
+        path: 'crm/contacts',
+        title: 'Contacts',
+        canActivate: [permissionGuard('CRM_VIEW')],
+        loadComponent: () => import('./features/crm/crm-contact-list.component').then((m) => m.CrmContactListComponent),
+      },
+      {
+        path: 'crm/activities',
+        title: 'Customer Activity',
+        canActivate: [permissionGuard('CRM_VIEW')],
+        loadComponent: () =>
+          import('./features/crm/crm-activity-page.component').then((m) => m.CrmActivityPageComponent),
+      },
+      {
+        path: 'crm/customers',
+        title: 'Customer Segments',
+        canActivate: [permissionGuard('CRM_VIEW')],
+        loadComponent: () =>
+          import('./features/crm/crm-customer-segments.component').then((m) => m.CrmCustomerSegmentsComponent),
+      },
+      {
+        path: 'crm/prices',
+        title: 'Price Lists',
+        canActivate: [permissionGuard('CRM_VIEW')],
+        loadComponent: () => import('./features/crm/crm-price-list.component').then((m) => m.CrmPriceListComponent),
+      },
+      {
+        path: 'crm/pipeline',
+        title: 'Sales Pipeline',
+        canActivate: [permissionGuard('CRM_VIEW')],
+        loadComponent: () =>
+          import('./features/crm/crm-pipeline-report.component').then((m) => m.CrmPipelineReportComponent),
+      },
+      {
         path: 'admin/users',
         title: 'Users',
         canActivate: [permissionGuard('IAM_USER_MANAGE')],
