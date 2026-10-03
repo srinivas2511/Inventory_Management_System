@@ -29,6 +29,8 @@ import com.springmfg.ims.production.domain.ProductionOutput;
 import com.springmfg.ims.production.dto.ProductionOperationDto;
 import com.springmfg.ims.production.dto.RecordOutputRequest;
 import com.springmfg.ims.production.event.FinalInspectionRequiredEvent;
+import com.springmfg.ims.production.event.OperationCompletedEvent;
+import com.springmfg.ims.production.event.OperationStartedEvent;
 import com.springmfg.ims.production.repository.ProductionOperationRepository;
 import com.springmfg.ims.production.repository.ProductionOrderMaterialRepository;
 import com.springmfg.ims.production.repository.ProductionOrderRepository;
@@ -105,6 +107,8 @@ public class OperationExecutionService {
         opRepo.save(op);
         orderService.moveToInProgressIfNeeded(op.getProductionOrderId());
         auditService.record("OP_START", "ProductionOperation", String.valueOf(operationId), "PENDING", "IN_PROGRESS", null);
+        eventPublisher.publishEvent(new OperationStartedEvent(operationId, op.getProductionOrderId(),
+                operatorOf(op), op.getStartedAt()));
         return toDto(op);
     }
 
@@ -146,6 +150,8 @@ public class OperationExecutionService {
         opRepo.save(op);
         auditService.record("OP_COMPLETE", "ProductionOperation", String.valueOf(operationId),
                 "IN_PROGRESS", "COMPLETED", null);
+        eventPublisher.publishEvent(new OperationCompletedEvent(operationId, op.getProductionOrderId(),
+                operatorOf(op), op.getCompletedAt()));
 
         checkAndCompleteOrder(op.getProductionOrderId(), op);
         return toDto(op);
@@ -330,6 +336,13 @@ public class OperationExecutionService {
 
     private Long getProductId(Long orderId) {
         return orderRepo.findById(orderId).map(ProductionOrder::getProductId).orElse(null);
+    }
+
+    /** The assigned operator, else the authenticated user doing the work; null for background callers. */
+    private static Long operatorOf(ProductionOperation op) {
+        if (op.getAssignedOperatorId() != null) return op.getAssignedOperatorId();
+        var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        return auth != null && auth.getPrincipal() instanceof CachedUser u ? u.id() : null;
     }
 
     private ProductionOperation findOp(Long id) {

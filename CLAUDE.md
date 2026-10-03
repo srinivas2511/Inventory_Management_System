@@ -14,10 +14,10 @@ Stack: Java 17+ / Spring Boot 3 / PostgreSQL / Angular 18+ (Angular Material) / 
 Before any task: read the DESIGN/ARCHITECTURE sections the PLAN task references. If code and docs disagree, stop and flag it rather than guessing.
 
 ## Current status
-- **R1–R12 COMPLETE — gate M12 passed (2026-10-03). 167 unit/ArchUnit/slice tests (agent-reported) + 85 integration tests (10 IT classes) against real PostgreSQL, 0 skipped. Frontend: 76/76 unit tests, lint clean, format clean, prod build green. Note: in the single full `mvn verify` run InventoryPostingIT.parallelIssues_neverOversell hit a Hikari pool timeout under heavy machine memory pressure; it passed 11/11 on isolated rerun. Watch for flakiness.**
+- **R1–R13 COMPLETE — gate M13 passed (2026-10-03). `mvn verify`: 499 unit/ArchUnit/web-slice tests + 106 integration tests (12 IT classes) against real PostgreSQL, 0 skipped, 0 failed. Frontend: 89/89 unit tests, lint clean, format clean, prod build green.**
 - **Docs: v2.0 — expanded to SAP-class ERP platform scope (R9–R20 planned, 2026-10-02); R11/R14/R15 plan contradictions resolved in docs/decisions.md (2026-10-03).**
-- IT counts: ControllingIT 13, CrmIT 23, FinanceIT 4, InventoryPostingIT 11, MrpIT 14, ProcurementIT 2, ProductionIT 4, FinalInspectionIT 5, SalesDispatchIT 6, SystemControllerIT 3.
-- Migrations: V1–V23 (V23 CRM tables + CRM permissions; V19 cost/profit centres + journal dimensions + controlling permissions, V20 product costing, V21 production variance, V22 MRP runs/proposals/forecasts/planning params + MRP permissions). Next release: R13 HRM → V24+ (PLAN's migration numbers for R12–R20 are one behind; renumber when each release starts).
+- IT counts: ControllingIT 13, CrmIT 23, FinanceIT 4, HrmIT 13, InventoryPostingIT 11, MrpIT 14, ProcurementIT 2, ProductionIT 4, FinalInspectionIT 5, SalesDispatchIT 6, SearchIT 8, SystemControllerIT 3. Tests are heavy on a memory-constrained machine: run one build at a time; if InventoryPostingIT.parallelIssues_neverOversell times out on a Hikari pool, rerun it alone before suspecting code.
+- Migrations: V1–V25 (V19 cost/profit centres + journal dimensions + controlling permissions, V20 product costing, V21 production variance, V22 MRP, V23 CRM, V24 HRM core: shifts/employees/skills/attendance/leave/training + HR permissions and HR_MANAGER, V25 payroll runs/slips + `hrm.payroll.*` settings + payroll GL accounts). Next release: R14 WMS -> V26+ (PLAN's migration numbers for R14–R20 are behind; renumber when each release starts).
 - Update this line at every milestone gate (M0…M20).
 
 ## Non-negotiable rules

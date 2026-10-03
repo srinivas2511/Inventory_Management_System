@@ -2,6 +2,7 @@ package com.springmfg.ims.audit.service;
 
 import java.time.Instant;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.MDC;
 import org.springframework.data.domain.Page;
@@ -24,7 +25,7 @@ import jakarta.servlet.http.HttpServletRequest;
 @Service
 public class AuditService {
 
-    private static final ObjectMapper JSON = new ObjectMapper();
+    private static final ObjectMapper JSON = new ObjectMapper().enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS);
 
     private final AuditLogRepository repository;
 
@@ -68,8 +69,12 @@ public class AuditService {
             asJson(oldValue), asJson(newValue), reason, ip, correlationId));
     }
 
-    /** old_value/new_value are JSONB: pass valid JSON through, wrap plain text (e.g. a status) as a JSON string. */
-    private static String asJson(String value) {
+    /**
+     * old_value/new_value are JSONB: pass valid JSON through, wrap plain text (e.g. a status) as a JSON string.
+     * Trailing tokens must fail validation, otherwise text that merely starts with a number or literal (such as
+     * "2 slips; gross 10") is mistaken for JSON and rejected by PostgreSQL.
+     */
+    static String asJson(String value) {
         if (value == null) {
             return null;
         }

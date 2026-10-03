@@ -311,6 +311,17 @@ export const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
+    label: 'HR',
+    items: [
+      { label: 'Employees', icon: 'badge', route: '/hrm/employees', permission: 'HR_VIEW', enabled: true },
+      { label: 'Attendance', icon: 'event_available', route: '/hrm/attendance', permission: 'HR_VIEW', enabled: true },
+      { label: 'Shifts', icon: 'schedule', route: '/hrm/shifts', permission: 'HR_VIEW', enabled: true },
+      { label: 'Leave', icon: 'beach_access', route: '/hrm/leave', permission: 'LEAVE_APPLY', enabled: true },
+      { label: 'Training', icon: 'school', route: '/hrm/training', permission: 'HR_VIEW', enabled: true },
+      { label: 'Payroll', icon: 'payments', route: '/hrm/payroll', permission: 'PAYROLL_RUN', enabled: true },
+    ],
+  },
+  {
     label: 'Maintenance',
     items: [
       { label: 'Maintenance', icon: 'build', route: '/maintenance', permission: 'MAINTENANCE_VIEW', enabled: true },

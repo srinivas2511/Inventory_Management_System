@@ -63,6 +63,11 @@ public enum ErrorCode {
     PERIOD_CLOSED(HttpStatus.UNPROCESSABLE_ENTITY, "Fiscal period is closed"),
     JOURNAL_NOT_BALANCED(HttpStatus.UNPROCESSABLE_ENTITY, "Journal entry does not balance (Dr ≠ Cr)"),
 
+    // 422 - HRM rules (R13+)
+    LEAVE_BALANCE_INSUFFICIENT(HttpStatus.UNPROCESSABLE_ENTITY, "Insufficient leave balance"),
+    LEAVE_OVERLAP(HttpStatus.UNPROCESSABLE_ENTITY, "Leave overlaps an existing application"),
+    PAYROLL_LOCKED(HttpStatus.UNPROCESSABLE_ENTITY, "Payroll for this period is already approved"),
+
     // 500
     INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "Internal error");
 

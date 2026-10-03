@@ -1942,6 +1942,18 @@ PayrollService.calculateSlip(employee, payrollRun):
 
 ---
 
+### 19.3 Implementation notes [Implemented R13]
+
+Built as `V24__hrm_core.sql` and `V25__payroll.sql`. Additions to the tables above (full list and rationale in decisions.md, "R13 HRM"):
+
+- `employees`: `date_of_leaving`, `fixed_travel_allowance`, `fixed_other_allowances`, `default_shift`.
+- New tables: `shifts`, `leave_balances`, `training_records` (shaped from HRM-006; section 19.1 names it without columns).
+- `attendance.source` (MANUAL | AUTO); `leave_types.paid`, `max_carry_forward_days`; `leave_applications.half_day`, `decided_by`, `decided_at`, `decision_reason` instead of `approved_by`/`approved_at`.
+- `payroll_slips.da`, `cost_centre_id`; `payroll_runs.approved_by`, `paid_at`, `paid_by`, `payment_journal_header_id`.
+- Payroll states: DRAFT -> COMPLETED -> PAID (PROCESSING unused). Statutory rates and slabs are `system_settings` rows named `hrm.payroll.*`.
+- Payroll journal accounts: Dr 5201, 5205, 5206 (per cost centre); Cr 2501-2505; payment Dr 2501 / Cr 1201.
+- Attendance auto-capture is driven by `OperationStartedEvent` / `OperationCompletedEvent` from the production module.
+
 ## 20. WMS Module Design (R14)
 
 ### 20.1 WMS schema additions

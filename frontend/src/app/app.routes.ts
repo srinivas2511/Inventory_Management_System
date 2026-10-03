@@ -379,6 +379,62 @@ export const routes: Routes = [
           import('./features/crm/crm-pipeline-report.component').then((m) => m.CrmPipelineReportComponent),
       },
       {
+        path: 'hrm/employees',
+        title: 'Employees',
+        canActivate: [permissionGuard('HR_VIEW')],
+        loadComponent: () => import('./features/hrm/employee-list.component').then((m) => m.EmployeeListComponent),
+      },
+      {
+        path: 'hrm/employees/:id',
+        title: 'Employee',
+        canActivate: [permissionGuard('HR_VIEW')],
+        loadComponent: () => import('./features/hrm/employee-detail.component').then((m) => m.EmployeeDetailComponent),
+      },
+      {
+        path: 'hrm/attendance',
+        title: 'Attendance',
+        canActivate: [permissionGuard('HR_VIEW')],
+        loadComponent: () => import('./features/hrm/attendance-page.component').then((m) => m.AttendancePageComponent),
+      },
+      {
+        path: 'hrm/shifts',
+        title: 'Shifts',
+        canActivate: [permissionGuard('HR_VIEW')],
+        loadComponent: () => import('./features/hrm/shift-list.component').then((m) => m.ShiftListComponent),
+      },
+      {
+        path: 'hrm/leave',
+        title: 'Leave',
+        canActivate: [permissionGuard('LEAVE_APPLY')],
+        loadComponent: () => import('./features/hrm/leave-page.component').then((m) => m.LeavePageComponent),
+      },
+      {
+        path: 'hrm/training',
+        title: 'Training Renewals',
+        canActivate: [permissionGuard('HR_VIEW')],
+        loadComponent: () =>
+          import('./features/hrm/training-renewals.component').then((m) => m.TrainingRenewalsComponent),
+      },
+      {
+        path: 'hrm/payroll',
+        title: 'Payroll',
+        canActivate: [permissionGuard('PAYROLL_RUN')],
+        loadComponent: () => import('./features/hrm/payroll-run-list.component').then((m) => m.PayrollRunListComponent),
+      },
+      {
+        path: 'hrm/payroll/slips/:id',
+        title: 'Pay Slip',
+        canActivate: [permissionGuard('PAYROLL_RUN')],
+        loadComponent: () => import('./features/hrm/payslip.component').then((m) => m.PayslipComponent),
+      },
+      {
+        path: 'hrm/payroll/:id',
+        title: 'Payroll Run',
+        canActivate: [permissionGuard('PAYROLL_RUN')],
+        loadComponent: () =>
+          import('./features/hrm/payroll-run-detail.component').then((m) => m.PayrollRunDetailComponent),
+      },
+      {
         path: 'admin/users',
         title: 'Users',
         canActivate: [permissionGuard('IAM_USER_MANAGE')],

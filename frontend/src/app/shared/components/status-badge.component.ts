@@ -41,6 +41,15 @@ const STATUS_MAP: Record<string, { color: StatusColor; icon: string; label?: str
   SENT: { color: 'blue', icon: 'send' },
   ACCEPTED: { color: 'green', icon: 'thumb_up' },
   EXPIRED: { color: 'orange', icon: 'schedule' },
+  PRESENT: { color: 'green', icon: 'check_circle' },
+  ABSENT: { color: 'red', icon: 'cancel' },
+  HALF_DAY: { color: 'amber', icon: 'timelapse', label: 'Half day' },
+  HOLIDAY: { color: 'blue', icon: 'beach_access' },
+  LEAVE: { color: 'teal', icon: 'event_busy' },
+  NOT_RECORDED: { color: 'grey', icon: 'radio_button_unchecked', label: 'Not recorded' },
+  PAID: { color: 'green', icon: 'payments' },
+  PLANNED: { color: 'grey', icon: 'event' },
+  NO_SHOW: { color: 'red', icon: 'person_off', label: 'No show' },
 };
 
 @Component({

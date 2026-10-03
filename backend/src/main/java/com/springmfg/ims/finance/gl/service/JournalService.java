@@ -79,7 +79,20 @@ public class JournalService {
     /** Called from an AFTER_COMMIT listener: the originating transaction is already committed, so this must start its own. */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public JournalHeaderDto postAutoJournal(AutoJournalRequest req) {
+        return createPostedJournal(req);
+    }
+
+    /**
+     * Posts a balanced journal inside the caller's transaction, so the journal and the business document that
+     * caused it (for example a payroll run) commit or roll back together. Fiscal-period gating and Dr = Cr apply.
+     */
+    public JournalHeaderDto postSourceJournal(AutoJournalRequest req) {
+        return createPostedJournal(req);
+    }
+
+    private JournalHeaderDto createPostedJournal(AutoJournalRequest req) {
         FiscalPeriod period = findOpenPeriod(req.postingDate());
+        validateBalance(req.lines());
 
         JournalHeader header = new JournalHeader();
         header.setJournalNumber(numberService.next("JNL"));
@@ -99,8 +112,8 @@ public class JournalService {
         header.setPostedAt(Instant.now());
         header = journalHeaderRepo.save(header);
 
-        buildLines(header, req.lines());
-        return toDto(journalHeaderRepo.findById(header.getId()).orElseThrow());
+        header.setLines(buildLines(header, req.lines()));
+        return toDto(header);
     }
 
     public JournalHeaderDto submit(Long id) {
