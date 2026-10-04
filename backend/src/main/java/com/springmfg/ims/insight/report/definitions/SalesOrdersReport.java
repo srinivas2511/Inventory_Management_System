@@ -33,12 +33,14 @@ public class SalesOrdersReport implements ReportDefinition {
     public List<Map<String, Object>> runQuery(ReportRequest req) {
         String sql = """
                 SELECT so.order_number, c.name AS customer_name, so.status,
-                       so.order_date, so.required_by_date, so.total_amount
+                       so.order_date, so.required_date AS required_by_date,
+                       COALESCE((SELECT SUM(i.unit_price * i.ordered_qty) FROM ims.sales_order_items i
+                                 WHERE i.sales_order_id = so.id AND i.unit_price IS NOT NULL), 0) AS total_amount
                 FROM ims.sales_orders so
                 JOIN ims.customers c ON c.id = so.customer_id
-                WHERE (:from IS NULL OR so.order_date >= :from::date)
-                  AND (:to   IS NULL OR so.order_date <= :to::date)
-                  AND (:status IS NULL OR so.status = :status)
+                WHERE (CAST(:from AS date) IS NULL OR so.order_date >= CAST(:from AS date))
+                  AND (CAST(:to AS date) IS NULL OR so.order_date <= CAST(:to AS date))
+                  AND (CAST(:status AS varchar) IS NULL OR so.status = CAST(:status AS varchar))
                 ORDER BY so.order_date DESC
                 LIMIT :size OFFSET :offset
                 """;

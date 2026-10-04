@@ -9,6 +9,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import com.springmfg.ims.common.search.QueryBounds;
+
 import com.springmfg.ims.sales.domain.SalesOrder;
 
 public interface SalesOrderRepository extends JpaRepository<SalesOrder, Long> {
@@ -20,14 +22,19 @@ public interface SalesOrderRepository extends JpaRepository<SalesOrder, Long> {
     @Query("SELECT o FROM SalesOrder o WHERE " +
            "(:customerId IS NULL OR o.customerId = :customerId) AND " +
            "(:status IS NULL OR o.status = :status) AND " +
-           "(:from IS NULL OR o.orderDate >= :from) AND " +
-           "(:to IS NULL OR o.orderDate <= :to)")
-    Page<SalesOrder> search(
+           "o.orderDate >= :from AND " +
+           "o.orderDate <= :to")
+    Page<SalesOrder> searchBounded(
             @Param("customerId") Long customerId,
             @Param("status") String status,
             @Param("from") LocalDate from,
             @Param("to") LocalDate to,
             Pageable pageable);
+
+    default Page<SalesOrder> search(Long customerId, String status, LocalDate from, LocalDate to,
+            Pageable pageable) {
+        return searchBounded(customerId, status, QueryBounds.from(from), QueryBounds.to(to), pageable);
+    }
 
     @Query("SELECT COUNT(o) FROM SalesOrder o WHERE o.status NOT IN ('CLOSED','CANCELLED')")
     long countOpen();

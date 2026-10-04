@@ -33,14 +33,14 @@ public class PurchaseOrdersReport implements ReportDefinition {
     public List<Map<String, Object>> runQuery(ReportRequest req) {
         String sql = """
                 SELECT po.po_number, s.name AS supplier_name, po.status,
-                       po.order_date, po.expected_delivery_date,
-                       po.total_amount
+                       po.po_date AS order_date, po.expected_delivery_date,
+                       po.grand_total AS total_amount
                 FROM ims.purchase_orders po
                 JOIN ims.suppliers s ON s.id = po.supplier_id
-                WHERE (:from IS NULL OR po.order_date >= :from::date)
-                  AND (:to   IS NULL OR po.order_date <= :to::date)
-                  AND (:status IS NULL OR po.status = :status)
-                ORDER BY po.order_date DESC
+                WHERE (CAST(:from AS date) IS NULL OR po.po_date >= CAST(:from AS date))
+                  AND (CAST(:to AS date) IS NULL OR po.po_date <= CAST(:to AS date))
+                  AND (CAST(:status AS varchar) IS NULL OR po.status = CAST(:status AS varchar))
+                ORDER BY po.po_date DESC
                 LIMIT :size OFFSET :offset
                 """;
         var query = em.createNativeQuery(sql);

@@ -2,6 +2,10 @@ package com.springmfg.ims.quality;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -9,9 +13,11 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.springmfg.ims.common.exception.BusinessRuleException;
+import com.springmfg.ims.production.event.FinalInspectionRequiredEvent;
 import com.springmfg.ims.inventory.domain.FgBatch;
 import com.springmfg.ims.inventory.repository.FgBatchRepository;
 import com.springmfg.ims.product.domain.Product;
@@ -212,5 +218,34 @@ class FinalInspectionIT extends AbstractIntegrationTest {
 
         assertThatThrownBy(() -> finalService.completeFinalInspection(insp.getId(), req))
                 .isInstanceOf(BusinessRuleException.class);
+    }
+
+    // ── Duplicate open FINAL inspections must neither be created nor break the batch list ───────────
+
+    @Test
+    @Transactional
+    void repeated_final_inspection_event_creates_a_single_open_inspection() {
+        FgBatch batch = createTestBatch("FG-IT-DUP-1");
+        var event = new FinalInspectionRequiredEvent(batch.getProductionOrderId(), batch.getProduct().getId(),
+                "PO-DUP", new BigDecimal("100.000"), new BigDecimal("100.000"), batch.getId());
+
+        finalService.onFinalInspectionRequired(event);
+        finalService.onFinalInspectionRequired(event);
+
+        assertThat(inspectionRepo.findOpenFinalsByFgBatch(batch.getId())).hasSize(1);
+    }
+
+    @Test
+    @Transactional
+    void fg_batch_list_survives_a_batch_with_two_open_final_inspections() throws Exception {
+        FgBatch batch = createTestBatch("FG-IT-DUP-2");
+        QualityInspection first = createPendingFinalInspection(batch);
+        createPendingFinalInspection(batch); // legacy duplicate
+
+        mockMvc.perform(get("/api/quality/fg-batches").param("size", "1000")
+                        .with(user("qa").authorities(new SimpleGrantedAuthority("QUALITY_VIEW"))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[?(@.batchNumber=='FG-IT-DUP-2')].pendingInspectionId")
+                        .value(first.getId().intValue()));
     }
 }

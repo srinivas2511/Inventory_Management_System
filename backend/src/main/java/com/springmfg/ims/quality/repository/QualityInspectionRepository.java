@@ -27,8 +27,13 @@ public interface QualityInspectionRepository extends JpaRepository<QualityInspec
     Optional<QualityInspection> findOpenIncomingByBatch(@Param("batchId") Long batchId);
 
     @Query("SELECT q FROM QualityInspection q WHERE q.inspectionType = 'FINAL' " +
-           "AND q.fgBatchId = :fgBatchId AND q.status NOT IN ('APPROVED','REJECTED','HOLD')")
-    Optional<QualityInspection> findOpenFinalByFgBatch(@Param("fgBatchId") Long fgBatchId);
+           "AND q.fgBatchId = :fgBatchId AND q.status NOT IN ('APPROVED','REJECTED','HOLD') ORDER BY q.id")
+    List<QualityInspection> findOpenFinalsByFgBatch(@Param("fgBatchId") Long fgBatchId);
+
+    /** The oldest open final inspection; tolerant of legacy duplicates so one bad batch cannot fail a whole list. */
+    default Optional<QualityInspection> findOpenFinalByFgBatch(Long fgBatchId) {
+        return findOpenFinalsByFgBatch(fgBatchId).stream().findFirst();
+    }
 
     @Query("SELECT q FROM QualityInspection q WHERE (:type IS NULL OR q.inspectionType = :type) " +
            "AND (:status IS NULL OR q.status = :status)")
@@ -47,7 +52,7 @@ public interface QualityInspectionRepository extends JpaRepository<QualityInspec
     @Query("SELECT CASE WHEN COUNT(q) = 0 THEN CAST(0.0 AS java.math.BigDecimal) " +
            "ELSE CAST((SUM(CASE WHEN q.status = 'APPROVED' THEN 1.0 ELSE 0.0 END) / COUNT(q)) * 100 AS java.math.BigDecimal) END " +
            "FROM QualityInspection q WHERE q.status IN ('APPROVED','REJECTED') " +
-           "AND FUNCTION('MONTH', q.createdAt) = FUNCTION('MONTH', CURRENT_DATE) " +
-           "AND FUNCTION('YEAR', q.createdAt) = FUNCTION('YEAR', CURRENT_DATE)")
+           "AND MONTH(q.createdAt) = MONTH(CURRENT_DATE) " +
+           "AND YEAR(q.createdAt) = YEAR(CURRENT_DATE)")
     java.math.BigDecimal passRateThisMonth();
 }

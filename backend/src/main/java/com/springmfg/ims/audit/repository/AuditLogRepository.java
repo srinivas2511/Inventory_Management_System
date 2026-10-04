@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import com.springmfg.ims.audit.domain.AuditLog;
+import com.springmfg.ims.common.search.QueryBounds;
 
 public interface AuditLogRepository extends JpaRepository<AuditLog, Long> {
 
@@ -16,13 +17,18 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, Long> {
            "(:userId IS NULL OR a.userId = :userId) " +
            "AND (:entity IS NULL OR a.entity = :entity) " +
            "AND (:action IS NULL OR a.action = :action) " +
-           "AND (:from IS NULL OR a.occurredAt >= :from) " +
-           "AND (:to IS NULL OR a.occurredAt <= :to) " +
+           "AND a.occurredAt >= :from " +
+           "AND a.occurredAt <= :to " +
            "ORDER BY a.occurredAt DESC")
-    Page<AuditLog> search(@Param("userId") Long userId,
-                          @Param("entity") String entity,
-                          @Param("action") String action,
-                          @Param("from") Instant from,
-                          @Param("to") Instant to,
-                          Pageable pageable);
+    Page<AuditLog> searchBounded(@Param("userId") Long userId,
+                                 @Param("entity") String entity,
+                                 @Param("action") String action,
+                                 @Param("from") Instant from,
+                                 @Param("to") Instant to,
+                                 Pageable pageable);
+
+    default Page<AuditLog> search(Long userId, String entity, String action, Instant from, Instant to,
+                                  Pageable pageable) {
+        return searchBounded(userId, entity, action, QueryBounds.from(from), QueryBounds.to(to), pageable);
+    }
 }

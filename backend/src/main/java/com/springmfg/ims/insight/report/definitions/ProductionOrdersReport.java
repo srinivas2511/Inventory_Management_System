@@ -36,9 +36,9 @@ public class ProductionOrdersReport implements ReportDefinition {
                        po.planned_qty, po.good_qty, po.rejected_qty, po.expected_completion_date
                 FROM ims.production_orders po
                 JOIN ims.products p ON p.id = po.product_id
-                WHERE (:from IS NULL OR po.created_at::date >= :from::date)
-                  AND (:to   IS NULL OR po.created_at::date <= :to::date)
-                  AND (:status IS NULL OR po.status = :status)
+                WHERE (CAST(:from AS date) IS NULL OR po.created_at::date >= CAST(:from AS date))
+                  AND (CAST(:to AS date) IS NULL OR po.created_at::date <= CAST(:to AS date))
+                  AND (CAST(:status AS varchar) IS NULL OR po.status = CAST(:status AS varchar))
                 ORDER BY po.created_at DESC
                 LIMIT :size OFFSET :offset
                 """;

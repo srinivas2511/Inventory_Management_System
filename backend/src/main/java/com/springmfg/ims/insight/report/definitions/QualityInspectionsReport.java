@@ -32,12 +32,14 @@ public class QualityInspectionsReport implements ReportDefinition {
     @SuppressWarnings("unchecked")
     public List<Map<String, Object>> runQuery(ReportRequest req) {
         String sql = """
-                SELECT qi.inspection_number, qi.inspection_type, qi.status, qi.result,
+                SELECT qi.inspection_number, qi.inspection_type, qi.status,
+                       CASE qi.status WHEN 'APPROVED' THEN 'PASS' WHEN 'REJECTED' THEN 'FAIL'
+                                      WHEN 'HOLD' THEN 'HOLD' ELSE NULL END AS result,
                        qi.inspected_qty, qi.rejected_qty, qi.created_at::date AS inspection_date
                 FROM ims.quality_inspections qi
-                WHERE (:from IS NULL OR qi.created_at::date >= :from::date)
-                  AND (:to   IS NULL OR qi.created_at::date <= :to::date)
-                  AND (:status IS NULL OR qi.status = :status)
+                WHERE (CAST(:from AS date) IS NULL OR qi.created_at::date >= CAST(:from AS date))
+                  AND (CAST(:to AS date) IS NULL OR qi.created_at::date <= CAST(:to AS date))
+                  AND (CAST(:status AS varchar) IS NULL OR qi.status = CAST(:status AS varchar))
                 ORDER BY qi.created_at DESC
                 LIMIT :size OFFSET :offset
                 """;

@@ -10,6 +10,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import com.springmfg.ims.common.search.QueryBounds;
+
 import com.springmfg.ims.inventory.domain.InventoryTransaction;
 
 public interface InventoryTransactionRepository extends JpaRepository<InventoryTransaction, Long> {
@@ -23,10 +25,10 @@ public interface InventoryTransactionRepository extends JpaRepository<InventoryT
            "(:prodId IS NULL OR t.productId = :prodId) AND " +
            "(:wh IS NULL OR t.warehouseId = :wh) AND " +
            "(:type IS NULL OR t.transactionType = :type) AND " +
-           "(:from IS NULL OR t.transactionDate >= :from) AND " +
-           "(:to IS NULL OR t.transactionDate <= :to) " +
+           "t.transactionDate >= :from AND " +
+           "t.transactionDate <= :to " +
            "ORDER BY t.transactionDate DESC")
-    Page<InventoryTransaction> search(
+    Page<InventoryTransaction> searchBounded(
             @Param("matId") Long materialId,
             @Param("prodId") Long productId,
             @Param("wh") Long warehouseId,
@@ -34,6 +36,12 @@ public interface InventoryTransactionRepository extends JpaRepository<InventoryT
             @Param("from") Instant from,
             @Param("to") Instant to,
             Pageable pageable);
+
+    default Page<InventoryTransaction> search(Long materialId, Long productId, Long warehouseId,
+            String transactionType, Instant from, Instant to, Pageable pageable) {
+        return searchBounded(materialId, productId, warehouseId, transactionType,
+                QueryBounds.from(from), QueryBounds.to(to), pageable);
+    }
 
     @Query("SELECT COALESCE(SUM(t.quantity), 0) FROM InventoryTransaction t WHERE " +
            "t.materialId = :matId AND t.warehouseId = :wh AND t.locationId = :loc AND t.stockStatus = :status AND t.transactionDate <= :asOf")

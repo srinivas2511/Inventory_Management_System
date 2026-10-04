@@ -200,6 +200,7 @@ class RoleAccessIT extends AbstractIntegrationTest {
         return "rbac_" + role.toLowerCase() + "_" + runId;
     }
 
+    /** Permitted callers must never provoke a server error; forbidden callers are stopped with 403 before any query. */
     private int status(String role, Probe probe) throws Exception {
         var req = request(probe.method(), probe.path()).header("Authorization", "Bearer " + tokenByRole.get(role));
         if (probe.body() != null) {
@@ -215,7 +216,13 @@ class RoleAccessIT extends AbstractIntegrationTest {
                         role + " may " + probe.method() + " " + probe.path(), () -> {
                             int status = status(role, probe);
                             assertThat(status).as("%s %s as %s", probe.method(), probe.path(), role)
-                                    .isNotIn(401, 403);
+                                    .isNotIn(401, 403).isLessThan(500);
+                            if (probe.method() == HttpMethod.GET) {
+                                // a list or report must succeed; a by-id read of a missing id answers 404
+                                boolean byMissingId = probe.path().endsWith("/" + MISSING);
+                                assertThat(status).as("%s %s as %s", probe.method(), probe.path(), role)
+                                        .isIn(byMissingId ? List.of(200, 404) : List.of(200));
+                            }
                         })),
                 probe.forbidden().stream().map(role -> DynamicTest.dynamicTest(
                         role + " must not " + probe.method() + " " + probe.path(), () -> {

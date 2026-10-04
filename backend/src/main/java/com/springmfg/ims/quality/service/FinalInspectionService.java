@@ -90,6 +90,8 @@ public class FinalInspectionService {
     public void onFinalInspectionRequired(FinalInspectionRequiredEvent event) {
         FgBatch batch = fgBatchRepo.findById(event.fgBatchId()).orElse(null);
         if (batch == null) return;
+        // idempotent: a repeated event, or a manually created inspection, must not add a second open one
+        if (inspectionRepo.findOpenFinalByFgBatch(event.fgBatchId()).isPresent()) return;
 
         batch.setQualityStatus("QUALITY_PENDING");
         fgBatchRepo.save(batch);
