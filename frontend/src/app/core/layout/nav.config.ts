@@ -403,7 +403,13 @@ export const NAV_GROUPS: NavGroup[] = [
         permission: 'NOTIFICATION_MANAGE',
         enabled: true,
       },
-      { label: 'System Settings', icon: 'settings', route: '/admin/settings', permission: 'ADMIN', enabled: true },
+      {
+        label: 'System Settings',
+        icon: 'settings',
+        route: '/admin/settings',
+        permission: 'SETTINGS_MANAGE',
+        enabled: true,
+      },
     ],
   },
 ];

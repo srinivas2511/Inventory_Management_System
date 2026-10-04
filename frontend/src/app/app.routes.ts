@@ -651,7 +651,7 @@ export const routes: Routes = [
       {
         path: 'admin/settings',
         title: 'System Settings',
-        canActivate: [permissionGuard('ADMIN')],
+        canActivate: [permissionGuard('SETTINGS_MANAGE')],
         loadComponent: () =>
           import('./features/admin/settings/system-settings.component').then((m) => m.SystemSettingsComponent),
       },
