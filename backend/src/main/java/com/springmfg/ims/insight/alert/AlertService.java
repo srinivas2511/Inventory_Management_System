@@ -66,6 +66,20 @@ public class AlertService {
         return AlertDto.from(repo.save(a));
     }
 
+    /** Closes the open alerts of this type for the entity once the underlying problem has been fixed. */
+    @Transactional
+    public int resolveOpen(String alertType, String entityType, Long entityId, String note) {
+        List<Alert> open = repo.findOpenByTypeAndEntity(alertType, entityType, entityId);
+        for (Alert a : open) {
+            a.setResolvedAt(Instant.now());
+            a.setResolvedBy(currentUserId());
+            a.setResolutionNote(note);
+            a.setStatus("RESOLVED");
+            repo.save(a);
+        }
+        return open.size();
+    }
+
     @Transactional(readOnly = true)
     public Page<AlertDto> search(String status, String severity, String alertType, Pageable pageable) {
         return repo.search(status, severity, alertType, pageable).map(AlertDto::from);

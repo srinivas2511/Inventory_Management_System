@@ -16,6 +16,7 @@ import com.springmfg.ims.finance.ap.repository.ApPaymentRepository;
 import com.springmfg.ims.finance.gl.dto.AutoJournalRequest;
 import com.springmfg.ims.finance.gl.dto.JournalLineRequest;
 import com.springmfg.ims.finance.gl.repository.FiscalPeriodRepository;
+import com.springmfg.ims.finance.gl.service.GlAccountResolver;
 import com.springmfg.ims.finance.gl.service.JournalService;
 import com.springmfg.ims.partner.domain.Supplier;
 import com.springmfg.ims.partner.repository.SupplierRepository;
@@ -35,10 +36,10 @@ import java.util.stream.Collectors;
 @Transactional
 public class ApService {
 
-    // GL account IDs seeded in V16 (2401=AP Control, 2402=AP Payable, 1201=Bank)
-    private static final long GL_AP_CONTROL = 2401L;
-    private static final long GL_AP_PAYABLE = 2402L;
-    private static final long GL_BANK = 1201L;
+    // Chart-of-accounts codes seeded in V15: 2401 GR/IR Clearing, 2402 Accounts Payable Control, 1201 Main Bank.
+    private static final String GR_IR_CLEARING = "2401";
+    private static final String AP_CONTROL = "2402";
+    private static final String BANK = "1201";
 
     private final ApInvoiceRepository apInvoiceRepo;
     private final ApPaymentRepository apPaymentRepo;
@@ -47,6 +48,7 @@ public class ApService {
     private final DocumentNumberService numberService;
     private final AuditService auditService;
     private final SupplierRepository supplierRepo;
+    private final GlAccountResolver glAccounts;
 
     public ApService(ApInvoiceRepository apInvoiceRepo,
                      ApPaymentRepository apPaymentRepo,
@@ -54,7 +56,8 @@ public class ApService {
                      JournalService journalService,
                      DocumentNumberService numberService,
                      AuditService auditService,
-                     SupplierRepository supplierRepo) {
+                     SupplierRepository supplierRepo,
+                     GlAccountResolver glAccounts) {
         this.apInvoiceRepo = apInvoiceRepo;
         this.apPaymentRepo = apPaymentRepo;
         this.periodRepo = periodRepo;
@@ -62,6 +65,7 @@ public class ApService {
         this.numberService = numberService;
         this.auditService = auditService;
         this.supplierRepo = supplierRepo;
+        this.glAccounts = glAccounts;
     }
 
     public ApInvoiceDto createInvoice(ApInvoiceCreateRequest req) {
@@ -105,13 +109,13 @@ public class ApService {
                 "AP Invoice " + inv.getInvoiceNumber(),
                 currentUserId(),
                 List.of(
-                        new JournalLineRequest(GL_AP_CONTROL, inv.getTotalAmount(), BigDecimal.ZERO,
+                        new JournalLineRequest(glAccounts.idOf(GR_IR_CLEARING), inv.getTotalAmount(), BigDecimal.ZERO,
                                 "AP Invoice Dr"),
-                        new JournalLineRequest(GL_AP_PAYABLE, BigDecimal.ZERO, inv.getTotalAmount(),
+                        new JournalLineRequest(glAccounts.idOf(AP_CONTROL), BigDecimal.ZERO, inv.getTotalAmount(),
                                 "AP Invoice Cr")
                 )
         );
-        var jnl = journalService.postAutoJournal(jnlReq);
+        var jnl = journalService.postSourceJournal(jnlReq);
 
         inv.setStatus("OPEN");
         inv.setJournalHeaderId(jnl.id());
@@ -122,7 +126,7 @@ public class ApService {
 
     public ApInvoiceDto recordPayment(Long invoiceId, ApPaymentRequest req) {
         ApInvoice inv = findInvoice(invoiceId);
-        if (!"OPEN".equals(inv.getStatus()) && !"PARTIAL".equals(inv.getStatus())) {
+        if (!"OPEN".equals(inv.getStatus()) && !"PARTIALLY_PAID".equals(inv.getStatus())) {
             throw new BusinessRuleException(ErrorCode.ILLEGAL_STATE_TRANSITION,
                     "Invoice " + inv.getInvoiceNumber() + " is not payable");
         }
@@ -138,11 +142,11 @@ public class ApService {
                 "AP Payment for " + inv.getInvoiceNumber(),
                 currentUserId(),
                 List.of(
-                        new JournalLineRequest(GL_AP_PAYABLE, req.amount(), BigDecimal.ZERO, "Payment Dr"),
-                        new JournalLineRequest(GL_BANK, BigDecimal.ZERO, req.amount(), "Payment Cr")
+                        new JournalLineRequest(glAccounts.idOf(AP_CONTROL), req.amount(), BigDecimal.ZERO, "Payment Dr"),
+                        new JournalLineRequest(glAccounts.idOf(BANK), BigDecimal.ZERO, req.amount(), "Payment Cr")
                 )
         );
-        var jnl = journalService.postAutoJournal(jnlReq);
+        var jnl = journalService.postSourceJournal(jnlReq);
 
         ApPayment payment = new ApPayment();
         payment.setPaymentNumber(numberService.next("APPMT"));
@@ -156,7 +160,7 @@ public class ApService {
 
         BigDecimal newPaid = inv.getPaidAmount().add(req.amount());
         inv.setPaidAmount(newPaid);
-        inv.setStatus(newPaid.compareTo(inv.getTotalAmount()) >= 0 ? "PAID" : "PARTIAL");
+        inv.setStatus(newPaid.compareTo(inv.getTotalAmount()) >= 0 ? "PAID" : "PARTIALLY_PAID");
         return toDto(apInvoiceRepo.save(inv));
     }
 
@@ -167,7 +171,7 @@ public class ApService {
 
     @Transactional(readOnly = true)
     public List<ApAgeingRow> getAgeing() {
-        List<ApInvoice> openInvoices = apInvoiceRepo.findByStatusIn(List.of("OPEN", "PARTIAL"));
+        List<ApInvoice> openInvoices = apInvoiceRepo.findByStatusIn(List.of("OPEN", "PARTIALLY_PAID"));
         LocalDate today = LocalDate.now();
 
         Map<Long, List<ApInvoice>> bySupplier = openInvoices.stream()

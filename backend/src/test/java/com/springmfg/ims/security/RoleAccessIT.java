@@ -46,7 +46,7 @@ class RoleAccessIT extends AbstractIntegrationTest {
 
     private static final List<String> ROLES = List.of("ADMIN", "ENGINEER", "PRODUCTION_MANAGER", "SUPERVISOR",
             "OPERATOR", "QUALITY_MANAGER", "STORE_MANAGER", "PURCHASE_MANAGER", "SALES", "DISPATCH", "MAINTENANCE",
-            "STORE_OPERATOR", "MANAGEMENT");
+            "STORE_OPERATOR", "MANAGEMENT", "FINANCE_MANAGER", "ACCOUNTANT");
 
     private static final Set<String> DOCUMENT_READERS = Set.of("ADMIN", "ENGINEER", "PRODUCTION_MANAGER", "SUPERVISOR",
             "QUALITY_MANAGER", "STORE_MANAGER", "PURCHASE_MANAGER", "MAINTENANCE", "MANAGEMENT");
@@ -102,10 +102,16 @@ class RoleAccessIT extends AbstractIntegrationTest {
             // alerts
             Probe.of(HttpMethod.GET, "/api/alerts",
                     Set.of("ADMIN", "PRODUCTION_MANAGER", "QUALITY_MANAGER", "STORE_MANAGER", "PURCHASE_MANAGER",
-                            "MANAGEMENT"),
+                            "MANAGEMENT", "FINANCE_MANAGER", "ACCOUNTANT"),
                     Set.of("OPERATOR", "SALES")),
-            Probe.of(HttpMethod.PUT, "/api/alerts/" + MISSING + "/acknowledge", Set.of("ADMIN", "STORE_MANAGER"),
-                    Set.of("MANAGEMENT", "OPERATOR")),
+            Probe.of(HttpMethod.PUT, "/api/alerts/" + MISSING + "/acknowledge",
+                    Set.of("ADMIN", "STORE_MANAGER", "FINANCE_MANAGER"),
+                    Set.of("MANAGEMENT", "OPERATOR", "ACCOUNTANT")),
+            // AR reconciliation: any AR user may see the dispatches without an invoice, only finance managers retry
+            Probe.of(HttpMethod.GET, "/api/ar/reconciliation/missing-invoices",
+                    Set.of("ADMIN", "FINANCE_MANAGER", "ACCOUNTANT"), Set.of("OPERATOR", "SALES", "MANAGEMENT")),
+            Probe.of(HttpMethod.POST, "/api/ar/reconciliation/missing-invoices/retry",
+                    Set.of("ADMIN", "FINANCE_MANAGER"), Set.of("ACCOUNTANT", "OPERATOR", "SALES")),
             // goods receipt
             Probe.of(HttpMethod.GET, "/api/procurement/goods-receipts/" + MISSING,
                     Set.of("ADMIN", "STORE_OPERATOR", "PURCHASE_MANAGER"), Set.of("OPERATOR", "SALES")),

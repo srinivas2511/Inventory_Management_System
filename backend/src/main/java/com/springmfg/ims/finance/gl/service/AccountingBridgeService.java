@@ -27,11 +27,14 @@ public class AccountingBridgeService {
 
     private final InventoryAccountAssignmentRepository assignmentRepo;
     private final JournalService journalService;
+    private final AccountingFailureReporter failureReporter;
 
     public AccountingBridgeService(InventoryAccountAssignmentRepository assignmentRepo,
-                                   JournalService journalService) {
+                                   JournalService journalService,
+                                   AccountingFailureReporter failureReporter) {
         this.assignmentRepo = assignmentRepo;
         this.journalService = journalService;
+        this.failureReporter = failureReporter;
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
@@ -54,6 +57,7 @@ public class AccountingBridgeService {
             if (assignmentOpt.isEmpty()) {
                 log.warn("No account assignment for transactionType={} itemType={}; skipping auto-journal",
                         tx.getTransactionType(), tx.getItemType());
+                report(tx, "no GL account assignment for " + tx.getTransactionType() + "/" + tx.getItemType());
                 return;
             }
 
@@ -88,6 +92,17 @@ public class AccountingBridgeService {
         } catch (Exception e) {
             log.error("AccountingBridgeService failed for transaction {} — GL entry skipped: {}",
                     tx.getTransactionNumber(), e.getMessage(), e);
+            report(tx, e.getMessage());
+        }
+    }
+
+    /** The stock movement already committed, so the gap is made visible as an alert instead of an error. */
+    private void report(com.springmfg.ims.inventory.domain.InventoryTransaction tx, String reason) {
+        try {
+            failureReporter.missingJournal(tx.getId(), tx.getTransactionType(), tx.getTransactionNumber(), reason);
+        } catch (Exception alertFailure) {
+            log.error("Could not raise the MISSING_JOURNAL alert for transaction {}: {}", tx.getTransactionNumber(),
+                    alertFailure.getMessage(), alertFailure);
         }
     }
 }

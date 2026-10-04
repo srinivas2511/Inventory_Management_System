@@ -15,18 +15,23 @@ import com.springmfg.ims.finance.ar.repository.ArReceiptRepository;
 import com.springmfg.ims.finance.gl.dto.AutoJournalRequest;
 import com.springmfg.ims.finance.gl.dto.JournalLineRequest;
 import com.springmfg.ims.finance.gl.repository.FiscalPeriodRepository;
+import com.springmfg.ims.finance.gl.service.GlAccountResolver;
 import com.springmfg.ims.finance.gl.service.JournalService;
 import com.springmfg.ims.partner.domain.Customer;
 import com.springmfg.ims.partner.repository.CustomerRepository;
 import com.springmfg.ims.sales.domain.Dispatch;
+import com.springmfg.ims.sales.domain.DispatchItem;
+import com.springmfg.ims.sales.repository.DispatchItemRepository;
 import com.springmfg.ims.sales.repository.DispatchRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -37,41 +42,55 @@ import java.util.stream.Collectors;
 @Transactional
 public class ArService {
 
-    // GL account IDs seeded in V15 (1101=AR Control, 4001=Revenue, 1201=Bank)
-    private static final long GL_AR_CONTROL = 1101L;
-    private static final long GL_REVENUE = 4001L;
-    private static final long GL_BANK = 1201L;
+    // Chart-of-accounts codes seeded in V15: 1101 Accounts Receivable Control, 4001 Sales Revenue, 1201 Main Bank.
+    private static final String AR_CONTROL = "1101";
+    private static final String REVENUE = "4001";
+    private static final String BANK = "1201";
 
     private final ArInvoiceRepository arInvoiceRepo;
     private final ArReceiptRepository arReceiptRepo;
     private final DispatchRepository dispatchRepo;
+    private final DispatchItemRepository dispatchItemRepo;
     private final FiscalPeriodRepository periodRepo;
     private final JournalService journalService;
     private final DocumentNumberService numberService;
     private final AuditService auditService;
     private final CustomerRepository customerRepo;
+    private final GlAccountResolver glAccounts;
 
     public ArService(ArInvoiceRepository arInvoiceRepo,
                      ArReceiptRepository arReceiptRepo,
                      DispatchRepository dispatchRepo,
+                     DispatchItemRepository dispatchItemRepo,
                      FiscalPeriodRepository periodRepo,
                      JournalService journalService,
                      DocumentNumberService numberService,
                      AuditService auditService,
-                     CustomerRepository customerRepo) {
+                     CustomerRepository customerRepo,
+                     GlAccountResolver glAccounts) {
         this.arInvoiceRepo = arInvoiceRepo;
         this.arReceiptRepo = arReceiptRepo;
         this.dispatchRepo = dispatchRepo;
+        this.dispatchItemRepo = dispatchItemRepo;
         this.periodRepo = periodRepo;
         this.journalService = journalService;
         this.numberService = numberService;
         this.auditService = auditService;
         this.customerRepo = customerRepo;
+        this.glAccounts = glAccounts;
     }
 
+    /**
+     * Invoices a dispatch: one invoice per dispatch, created together with its Dr AR Control / Cr Revenue journal in a
+     * transaction of its own. It runs after the dispatch has committed (and from the reconciliation retry), so a failure
+     * here rolls back only the invoice and never the dispatch. A dispatch worth nothing (free samples) gets a settled
+     * zero-value invoice and no journal, because there is nothing to account for.
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public ArInvoiceDto autoCreateFromDispatch(Long dispatchId) {
-        if (arInvoiceRepo.findByDispatchId(dispatchId).isPresent()) {
-            return toDto(arInvoiceRepo.findByDispatchId(dispatchId).get());
+        var existing = arInvoiceRepo.findByDispatchId(dispatchId);
+        if (existing.isPresent()) {
+            return toDto(existing.get());
         }
 
         Dispatch dispatch = dispatchRepo.findById(dispatchId)
@@ -82,44 +101,47 @@ public class ArService {
                 .orElseThrow(() -> new BusinessRuleException(ErrorCode.PERIOD_CLOSED,
                         "No open period for " + invoiceDate));
 
-        BigDecimal invoiceValue = computeDispatchValue(dispatch);
-        LocalDate dueDate = invoiceDate.plusDays(30);
+        BigDecimal invoiceValue = computeDispatchValue(dispatchId);
+        boolean worthNothing = invoiceValue.signum() == 0;
 
         ArInvoice inv = new ArInvoice();
         inv.setInvoiceNumber(numberService.next("ARINV"));
         inv.setCustomerId(dispatch.getCustomerId());
         inv.setDispatchId(dispatchId);
         inv.setInvoiceDate(invoiceDate);
-        inv.setDueDate(dueDate);
+        inv.setDueDate(invoiceDate.plusDays(30));
         inv.setSubtotal(invoiceValue);
+        // Dispatch lines carry no tax data; GST is added when the tax engine (R9-7.2) lands.
         inv.setTaxTotal(BigDecimal.ZERO);
         inv.setTotalAmount(invoiceValue);
         inv.setReceivedAmount(BigDecimal.ZERO);
-        inv.setStatus("OPEN");
+        inv.setStatus(worthNothing ? "PAID" : "OPEN");
         inv.setPeriodId(period.getId());
         inv = arInvoiceRepo.save(inv);
 
-        var jnlReq = new AutoJournalRequest(
-                "AR_INVOICE", "SALES", "DISPATCH", dispatchId,
-                invoiceDate,
-                "AR Invoice " + inv.getInvoiceNumber() + " for dispatch " + dispatch.getDispatchNumber(),
-                currentUserId(),
-                List.of(
-                        new JournalLineRequest(GL_AR_CONTROL, invoiceValue, BigDecimal.ZERO, "AR Dr"),
-                        new JournalLineRequest(GL_REVENUE, BigDecimal.ZERO, invoiceValue, "Revenue Cr")
-                )
-        );
-        var jnl = journalService.postAutoJournal(jnlReq);
-        inv.setJournalHeaderId(jnl.id());
+        if (!worthNothing) {
+            var jnlReq = new AutoJournalRequest(
+                    "AR_INVOICE", "SALES", "DISPATCH", dispatchId,
+                    invoiceDate,
+                    "AR Invoice " + inv.getInvoiceNumber() + " for dispatch " + dispatch.getDispatchNumber(),
+                    currentUserId(),
+                    List.of(
+                            new JournalLineRequest(glAccounts.idOf(AR_CONTROL), invoiceValue, BigDecimal.ZERO, "AR Dr"),
+                            new JournalLineRequest(glAccounts.idOf(REVENUE), BigDecimal.ZERO, invoiceValue, "Revenue Cr")
+                    )
+            );
+            // Same transaction as the invoice: an invoice without its journal (or the reverse) must never be committed.
+            inv.setJournalHeaderId(journalService.postSourceJournal(jnlReq).id());
+        }
 
         auditService.record("AR_INVOICE_CREATED", "AR_INVOICE", String.valueOf(inv.getId()),
-                null, "OPEN", null);
+                null, worthNothing ? "PAID (zero value)" : "OPEN", null);
         return toDto(arInvoiceRepo.save(inv));
     }
 
     public ArInvoiceDto recordReceipt(Long invoiceId, ArReceiptRequest req) {
         ArInvoice inv = findInvoice(invoiceId);
-        if (!"OPEN".equals(inv.getStatus()) && !"PARTIAL".equals(inv.getStatus())) {
+        if (!"OPEN".equals(inv.getStatus()) && !"PARTIALLY_PAID".equals(inv.getStatus())) {
             throw new BusinessRuleException(ErrorCode.ILLEGAL_STATE_TRANSITION,
                     "Invoice " + inv.getInvoiceNumber() + " is not receivable");
         }
@@ -135,11 +157,11 @@ public class ArService {
                 "AR Receipt for " + inv.getInvoiceNumber(),
                 currentUserId(),
                 List.of(
-                        new JournalLineRequest(GL_BANK, req.amount(), BigDecimal.ZERO, "Receipt Dr"),
-                        new JournalLineRequest(GL_AR_CONTROL, BigDecimal.ZERO, req.amount(), "Receipt Cr")
+                        new JournalLineRequest(glAccounts.idOf(BANK), req.amount(), BigDecimal.ZERO, "Receipt Dr"),
+                        new JournalLineRequest(glAccounts.idOf(AR_CONTROL), BigDecimal.ZERO, req.amount(), "Receipt Cr")
                 )
         );
-        var jnl = journalService.postAutoJournal(jnlReq);
+        var jnl = journalService.postSourceJournal(jnlReq);
 
         ArReceipt receipt = new ArReceipt();
         receipt.setReceiptNumber(numberService.next("ARRCT"));
@@ -153,7 +175,7 @@ public class ArService {
 
         BigDecimal newReceived = inv.getReceivedAmount().add(req.amount());
         inv.setReceivedAmount(newReceived);
-        inv.setStatus(newReceived.compareTo(inv.getTotalAmount()) >= 0 ? "PAID" : "PARTIAL");
+        inv.setStatus(newReceived.compareTo(inv.getTotalAmount()) >= 0 ? "PAID" : "PARTIALLY_PAID");
         return toDto(arInvoiceRepo.save(inv));
     }
 
@@ -164,7 +186,7 @@ public class ArService {
 
     @Transactional(readOnly = true)
     public List<ArAgeingRow> getAgeing() {
-        List<ArInvoice> openInvoices = arInvoiceRepo.findByStatusIn(List.of("OPEN", "PARTIAL"));
+        List<ArInvoice> openInvoices = arInvoiceRepo.findByStatusIn(List.of("OPEN", "PARTIALLY_PAID"));
         LocalDate today = LocalDate.now();
 
         Map<Long, List<ArInvoice>> byCustomer = openInvoices.stream()
@@ -191,10 +213,16 @@ public class ArService {
         }).toList();
     }
 
-    private BigDecimal computeDispatchValue(Dispatch dispatch) {
-        // Use invoice reference as value hint; default to zero if unavailable
-        // Actual value comes from dispatch items in a full implementation
-        return BigDecimal.ZERO;
+    /** Sum of quantity x unit price per dispatched line, each line rounded to 4 dp half-up (money scale). */
+    private BigDecimal computeDispatchValue(Long dispatchId) {
+        BigDecimal total = BigDecimal.ZERO;
+        for (DispatchItem item : dispatchItemRepo.findByDispatchId(dispatchId)) {
+            if (item.getUnitPrice() == null) {
+                continue;
+            }
+            total = total.add(item.getQuantity().multiply(item.getUnitPrice()).setScale(4, RoundingMode.HALF_UP));
+        }
+        return total;
     }
 
     private ArInvoice findInvoice(Long id) {

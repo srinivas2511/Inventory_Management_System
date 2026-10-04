@@ -7,6 +7,7 @@ import com.springmfg.ims.finance.ap.dto.ApInvoiceDto;
 import com.springmfg.ims.finance.ap.service.ApService;
 import com.springmfg.ims.finance.gl.domain.FiscalPeriod;
 import com.springmfg.ims.finance.gl.domain.JournalHeader;
+import com.springmfg.ims.finance.gl.dto.AutoJournalRequest;
 import com.springmfg.ims.finance.gl.dto.JournalCreateRequest;
 import com.springmfg.ims.finance.gl.dto.JournalHeaderDto;
 import com.springmfg.ims.finance.gl.dto.JournalLineRequest;
@@ -154,5 +155,64 @@ class FinanceIT extends AbstractIntegrationTest {
         assertThat(dto.totalAmount()).isEqualByComparingTo(new BigDecimal("11800.0000"));
         assertThat(dto.paidAmount()).isEqualByComparingTo(BigDecimal.ZERO);
         assertThat(dto.balanceAmount()).isEqualByComparingTo(new BigDecimal("11800.0000"));
+    }
+
+    private static BigDecimal bd(String v) {
+        return new BigDecimal(v);
+    }
+
+    @Test
+    @DisplayName("Journal lines: a machine-built journal drops zero-amount lines and keeps the rest balanced")
+    void autoJournalDropsZeroLines() {
+        var req = new AutoJournalRequest("AUTO", "TEST", "ZERO_LINES", 1L, LocalDate.of(2026, 4, 15),
+                "Zero line dropped", null,
+                List.of(new JournalLineRequest(acct("1401"), bd("100.00"), BigDecimal.ZERO, "Dr"),
+                        new JournalLineRequest(acct("2401"), BigDecimal.ZERO, BigDecimal.ZERO, "Nothing to account"),
+                        new JournalLineRequest(acct("2401"), BigDecimal.ZERO, bd("100.00"), "Cr")));
+
+        JournalHeaderDto j = journalService.postAutoJournal(req);
+
+        assertThat(j.status()).isEqualTo("POSTED");
+        assertThat(j.lines()).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Journal lines: a machine-built journal with fewer than two non-zero lines is rejected clearly")
+    void autoJournalWithOneNonZeroLineIsRejected() {
+        var req = new AutoJournalRequest("AUTO", "TEST", "ZERO_LINES", 2L, LocalDate.of(2026, 4, 15),
+                "All zero", null,
+                List.of(new JournalLineRequest(acct("1401"), BigDecimal.ZERO, BigDecimal.ZERO, "Dr"),
+                        new JournalLineRequest(acct("2401"), BigDecimal.ZERO, BigDecimal.ZERO, "Cr")));
+
+        assertThatThrownBy(() -> journalService.postAutoJournal(req))
+                .isInstanceOf(BusinessRuleException.class)
+                .satisfies(e -> assertThat(((BusinessRuleException) e).getCode()).isEqualTo(ErrorCode.VALIDATION_FAILED));
+    }
+
+    @Test
+    @DisplayName("Journal lines: a hand-entered line with neither debit nor credit is a validation error, not a 500")
+    @Transactional
+    void manualJournalWithEmptyLineIsRejected() {
+        var req = new JournalCreateRequest("MANUAL", LocalDate.of(2026, 4, 15), "Empty line", "INR",
+                List.of(new JournalLineRequest(acct("1401"), bd("100.00"), BigDecimal.ZERO, "Dr"),
+                        new JournalLineRequest(acct("2401"), BigDecimal.ZERO, bd("100.00"), "Cr"),
+                        new JournalLineRequest(acct("2401"), BigDecimal.ZERO, BigDecimal.ZERO, "Blank")));
+
+        assertThatThrownBy(() -> journalService.createDraft(req))
+                .isInstanceOf(BusinessRuleException.class)
+                .satisfies(e -> assertThat(((BusinessRuleException) e).getCode()).isEqualTo(ErrorCode.VALIDATION_FAILED));
+    }
+
+    @Test
+    @DisplayName("Journal lines: a line carrying both a debit and a credit is a validation error")
+    @Transactional
+    void manualJournalWithTwoSidedLineIsRejected() {
+        var req = new JournalCreateRequest("MANUAL", LocalDate.of(2026, 4, 15), "Two-sided line", "INR",
+                List.of(new JournalLineRequest(acct("1401"), bd("100.00"), bd("100.00"), "Both"),
+                        new JournalLineRequest(acct("2401"), BigDecimal.ZERO, bd("100.00"), "Cr")));
+
+        assertThatThrownBy(() -> journalService.createDraft(req))
+                .isInstanceOf(BusinessRuleException.class)
+                .satisfies(e -> assertThat(((BusinessRuleException) e).getCode()).isEqualTo(ErrorCode.VALIDATION_FAILED));
     }
 }

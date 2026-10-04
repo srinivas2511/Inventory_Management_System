@@ -56,7 +56,8 @@ public class JournalService {
     }
 
     public JournalHeaderDto createDraft(JournalCreateRequest req) {
-        validateBalance(req.lines());
+        List<JournalLineRequest> requestLines = normaliseLines(req.lines(), false);
+        validateBalance(requestLines);
         FiscalPeriod period = findOpenPeriod(req.postingDate());
 
         JournalHeader header = new JournalHeader();
@@ -70,7 +71,7 @@ public class JournalService {
         header.setPreparedBy(currentUserId());
         header = journalHeaderRepo.save(header);
 
-        List<JournalLine> lines = buildLines(header, req.lines());
+        List<JournalLine> lines = buildLines(header, requestLines);
         header.setLines(lines);
 
         return toDto(header);
@@ -92,7 +93,8 @@ public class JournalService {
 
     private JournalHeaderDto createPostedJournal(AutoJournalRequest req) {
         FiscalPeriod period = findOpenPeriod(req.postingDate());
-        validateBalance(req.lines());
+        List<JournalLineRequest> requestLines = normaliseLines(req.lines(), true);
+        validateBalance(requestLines);
 
         JournalHeader header = new JournalHeader();
         header.setJournalNumber(numberService.next("JNL"));
@@ -112,7 +114,7 @@ public class JournalService {
         header.setPostedAt(Instant.now());
         header = journalHeaderRepo.save(header);
 
-        header.setLines(buildLines(header, req.lines()));
+        header.setLines(buildLines(header, requestLines));
         return toDto(header);
     }
 
@@ -213,6 +215,36 @@ public class JournalService {
                     acc != null ? acc.getAccountType() : "",
                     dr, cr, balance);
         }).toList();
+    }
+
+    /**
+     * A journal line carries exactly one of debit or credit, and a journal needs at least two such lines. Machine-built
+     * journals drop lines whose amount is zero (a zero-priced item has nothing to account for); a hand-entered journal
+     * with such a line is a mistake the user must see, so it is rejected rather than silently changed.
+     */
+    private List<JournalLineRequest> normaliseLines(List<JournalLineRequest> lines, boolean dropZeroLines) {
+        List<JournalLineRequest> kept = new ArrayList<>();
+        for (JournalLineRequest l : lines) {
+            BigDecimal dr = l.debitAmount() != null ? l.debitAmount() : BigDecimal.ZERO;
+            BigDecimal cr = l.creditAmount() != null ? l.creditAmount() : BigDecimal.ZERO;
+            if (dr.signum() > 0 && cr.signum() > 0) {
+                throw new BusinessRuleException(ErrorCode.VALIDATION_FAILED,
+                        "A journal line carries either a debit or a credit, not both");
+            }
+            if (dr.signum() == 0 && cr.signum() == 0) {
+                if (dropZeroLines) {
+                    continue;
+                }
+                throw new BusinessRuleException(ErrorCode.VALIDATION_FAILED,
+                        "A journal line must carry a debit or a credit amount");
+            }
+            kept.add(l);
+        }
+        if (kept.size() < 2) {
+            throw new BusinessRuleException(ErrorCode.VALIDATION_FAILED,
+                    "A journal needs at least two lines with a non-zero amount");
+        }
+        return kept;
     }
 
     private void validateBalance(List<JournalLineRequest> lines) {
