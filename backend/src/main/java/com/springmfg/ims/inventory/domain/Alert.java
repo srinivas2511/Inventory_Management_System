@@ -1,13 +1,22 @@
 package com.springmfg.ims.inventory.domain;
 
 import java.time.Instant;
+import java.util.Collection;
+import java.util.List;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.PostPersist;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
+
+import org.springframework.data.domain.AfterDomainEventPublication;
+import org.springframework.data.domain.DomainEvents;
+
+import com.springmfg.ims.common.event.AlertRaisedEvent;
 
 @Entity
 @Table(name = "alerts", schema = "ims")
@@ -59,7 +68,26 @@ public class Alert {
     @Column(name = "resolution_note", length = 300)
     private String resolutionNote;
 
+    @Transient
+    private AlertRaisedEvent raised;
+
     public Alert() {}
+
+    /** Only a newly inserted alert announces itself; saving an existing one (a repeat sighting) does not. */
+    @PostPersist
+    void onPersisted() {
+        this.raised = new AlertRaisedEvent(id, alertType, severity, entityType, entityId, message);
+    }
+
+    @DomainEvents
+    Collection<Object> domainEvents() {
+        return raised == null ? List.of() : List.of(raised);
+    }
+
+    @AfterDomainEventPublication
+    void clearDomainEvents() {
+        this.raised = null;
+    }
 
     public Long getId() { return id; }
     public String getAlertType() { return alertType; }

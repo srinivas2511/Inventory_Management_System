@@ -73,6 +73,10 @@ public enum ErrorCode {
     SCAN_MISMATCH(HttpStatus.UNPROCESSABLE_ENTITY, "Scanned code does not match the task"),
     PUTAWAY_BLOCKED(HttpStatus.UNPROCESSABLE_ENTITY, "Stock cannot be put away yet"),
 
+    // 413 / 415 - document uploads (R17+)
+    FILE_TOO_LARGE(HttpStatus.PAYLOAD_TOO_LARGE, "File is larger than the configured limit"),
+    FILE_TYPE_NOT_ALLOWED(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "This file type is not accepted"),
+
     // 500
     INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "Internal error");
 

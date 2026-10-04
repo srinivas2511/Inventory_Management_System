@@ -3,6 +3,7 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
+import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -13,6 +14,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
+import { openDocumentsDialog } from '../documents/documents-dialog.component';
 
 export interface BomDto {
   id: number;
@@ -100,6 +102,15 @@ export interface BomDto {
         <ng-container matColumnDef="actions">
           <th mat-header-cell *matHeaderCellDef></th>
           <td mat-cell *matCellDef="let r">
+            <button
+              *appHasPermission="'DOCUMENT_VIEW'"
+              mat-icon-button
+              matTooltip="Documents"
+              aria-label="Documents"
+              (click)="openDocuments(r)"
+            >
+              <mat-icon>attach_file</mat-icon>
+            </button>
             @if (r.allowedActions?.includes('submit')) {
               <button
                 mat-icon-button
@@ -162,11 +173,16 @@ export interface BomDto {
 export class BomListComponent implements OnInit {
   private http = inject(HttpClient);
   private snack = inject(MatSnackBar);
+  private dialog = inject(MatDialog);
 
   columns = ['bomNumber', 'revision', 'productId', 'baseQuantity', 'effectiveFrom', 'status', 'actions'];
   rows = signal<BomDto[]>([]);
   loading = signal(false);
   statusCtrl = new FormControl<string | null>(null);
+
+  openDocuments(bom: BomDto): void {
+    openDocumentsDialog(this.dialog, { entityType: 'BOM', entityId: bom.id, title: bom.bomNumber });
+  }
 
   ngOnInit(): void {
     this.statusCtrl.valueChanges.subscribe(() => this.load());

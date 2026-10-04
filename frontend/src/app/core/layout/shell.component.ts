@@ -14,6 +14,7 @@ import { AuthService } from '../auth/auth.service';
 import { SessionStore } from '../auth/session.store';
 import { AppConfigService } from '../config/app-config.service';
 import { LoadingService } from '../http/loading.service';
+import { NotificationBellComponent } from '../../features/notifications/notification-bell.component';
 import { visibleGroups } from './nav.config';
 
 @Component({
@@ -30,6 +31,7 @@ import { visibleGroups } from './nav.config';
     MatButtonModule,
     MatMenuModule,
     MatProgressBarModule,
+    NotificationBellComponent,
   ],
   templateUrl: './shell.component.html',
   styleUrl: './shell.component.scss',

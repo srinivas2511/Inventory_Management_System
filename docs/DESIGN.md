@@ -2245,6 +2245,34 @@ CREATE TABLE notifications (
 );
 ```
 
+### 23.3 As built (R17)
+
+The schema in 23.1 and 23.2 is the starting point; V31 differs as follows (reasons in docs/decisions.md, "R17 Documents and Notifications").
+
+**Documents.** `documents` keeps the header (number `DOC/yy/nnnnn`, category, title, description, `status`, `current_version_no`, approval). Each file is a row in `document_versions` (`version_no`, `revision_label` such as "B" for a drawing revision, `storage_key`, `original_filename`, server-chosen `mime_type`, `size_bytes`, `sha256`, `change_note`, uploader). A document can be attached to several records through `document_links` (`PRODUCT`, `BOM`, `ECO`, `SUPPLIER`, `MACHINE`, `CAPA`, `COMPLAINT`). `document_categories` gains `required_authority` (DRAWING needs `DRAWING_MANAGE`, SPECIFICATION needs `SPECIFICATION_MANAGE`). Content is written through the `DocumentStorage` interface; `LocalFileDocumentStorage` stores it under `ims.documents.storage-root` (env `DOCUMENTS_STORAGE_ROOT`).
+
+```
+POST   /api/documents                       multipart: part "meta" (JSON) + part "file"      DOCUMENT_UPLOAD
+POST   /api/documents/{id}/versions         multipart: part "meta" (optional) + part "file"  DOCUMENT_UPLOAD
+GET    /api/documents?q&category&status&entityType&entityId                                  DOCUMENT_VIEW
+GET    /api/documents/{id}   GET /api/documents/{id}/download?version=                       DOCUMENT_VIEW (+ per-link read access)
+POST   /api/documents/{id}/links   DELETE /api/documents/{id}/links/{linkId}   POST /{id}/submit   DOCUMENT_UPLOAD
+POST   /api/documents/{id}/approve | /reject | /obsolete                                     DOCUMENT_APPROVE
+GET/POST/PUT /api/document-categories                                                         DOCUMENT_VIEW / DOCUMENT_MANAGE
+```
+
+**Notifications.** `notifications` holds one row per recipient and channel (`IN_APP` or `EMAIL`) with `status` PENDING / SENT / FAILED / READ, `attempts`, `next_attempt_at`, `last_error` and a unique `dedup_key`; `user_id` is NULL and `recipient_email` set for an external recipient. `notification_subscriptions` has `enabled`; no row means every channel the template allows is on.
+
+```
+GET  /api/notifications?unreadOnly      GET /api/notifications/unread-count      POST /api/notifications/{id}/read | /read-all   signed-in user
+GET/PUT /api/notification-preferences                                                                                  signed-in user
+GET  /api/notification-templates   PUT /api/notification-templates/{id}   GET /api/notification-log?status&channel    NOTIFICATION_MANAGE
+```
+
+Settings: `documents.max_size_mb`, `documents.allowed_extensions`, `notification.email.max_attempts`, `notification.email.retry_base_seconds`, `notification.alert.email_min_severity`. Templates use `{{name}}` placeholders (a Mustache subset: variables and dotted paths only).
+
+Events: `AlertRaisedEvent` (from the `Alert` entity, for every new alert), `PurchaseOrderApprovedEvent` and `CapaAssignedEvent` (in `common.event`). Listeners run after commit and never fail the caller. Rules: other modules never call `NotificationService`; only `DocumentService` uses `DocumentStorage`; only `SmtpEmailSender` (and the password reset in `AuthService`) uses `JavaMailSender` (ArchUnit).
+
 ---
 
 ## 24. Advanced Manufacturing Design (R18)

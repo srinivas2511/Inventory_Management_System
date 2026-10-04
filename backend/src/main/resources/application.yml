@@ -37,6 +37,11 @@ spring:
     properties:
       mail.smtp.auth: false
       mail.smtp.starttls.enable: false
+  servlet:
+    multipart:
+      # Hard ceiling for the container; the enforced upload limit is the setting documents.max_size_mb.
+      max-file-size: 50MB
+      max-request-size: 52MB
 
 server:
   port: 8080
@@ -74,5 +79,10 @@ ims:
       access-token-minutes: 15
       refresh-token-days: 7
   frontend-url: ${FRONTEND_URL:http://localhost:4200}
+  documents:
+    storage-root: ${DOCUMENTS_STORAGE_ROOT:./data/documents}
+  notification:
+    from: ${NOTIFICATION_FROM:noreply@ims.local}
+    outbox-delay-ms: 30000
   demo:
     load-data: false           # true only under the dev/demo profile (Phase 8 loader)

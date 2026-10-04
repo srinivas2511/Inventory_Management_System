@@ -48,6 +48,12 @@ class RoleAccessIT extends AbstractIntegrationTest {
             "OPERATOR", "QUALITY_MANAGER", "STORE_MANAGER", "PURCHASE_MANAGER", "SALES", "DISPATCH", "MAINTENANCE",
             "STORE_OPERATOR", "MANAGEMENT");
 
+    private static final Set<String> DOCUMENT_READERS = Set.of("ADMIN", "ENGINEER", "PRODUCTION_MANAGER", "SUPERVISOR",
+            "QUALITY_MANAGER", "STORE_MANAGER", "PURCHASE_MANAGER", "MAINTENANCE", "MANAGEMENT");
+    private static final Set<String> DOCUMENT_NON_READERS = Set.of("OPERATOR", "SALES", "DISPATCH", "STORE_OPERATOR");
+    private static final Set<String> DOCUMENT_UPLOADERS = Set.of("ADMIN", "ENGINEER", "PRODUCTION_MANAGER",
+            "QUALITY_MANAGER", "PURCHASE_MANAGER", "MAINTENANCE");
+
     /** One probed endpoint: who must get in, and who must be stopped with 403. */
     private record Probe(HttpMethod method, String path, String body, Set<String> allowed, Set<String> forbidden) {
         static Probe of(HttpMethod method, String path, Set<String> allowed, Set<String> forbidden) {
@@ -153,7 +159,49 @@ class RoleAccessIT extends AbstractIntegrationTest {
             Probe.of(HttpMethod.POST, "/api/fai/" + MISSING + "/complete", Set.of("ADMIN", "QUALITY_MANAGER"),
                     Set.of("MANAGEMENT", "OPERATOR")),
             Probe.of(HttpMethod.GET, "/api/reports/QUAL_COMPLAINTS",
-                    Set.of("ADMIN", "QUALITY_MANAGER", "MANAGEMENT"), Set.of("OPERATOR", "SALES")));
+                    Set.of("ADMIN", "QUALITY_MANAGER", "MANAGEMENT"), Set.of("OPERATOR", "SALES")),
+
+            // documents (R17): reading is DOCUMENT_VIEW, uploading/linking/submitting DOCUMENT_UPLOAD, approval
+            // DOCUMENT_APPROVE, categories DOCUMENT_MANAGE. Multipart uploads are probed in DocumentIT.
+            Probe.of(HttpMethod.GET, "/api/documents", DOCUMENT_READERS, DOCUMENT_NON_READERS),
+            Probe.of(HttpMethod.GET, "/api/documents/" + MISSING, DOCUMENT_READERS, DOCUMENT_NON_READERS),
+            Probe.of(HttpMethod.GET, "/api/documents/" + MISSING + "/download", DOCUMENT_READERS,
+                    DOCUMENT_NON_READERS),
+            Probe.of(HttpMethod.GET, "/api/document-categories", DOCUMENT_READERS, DOCUMENT_NON_READERS),
+            Probe.withBody(HttpMethod.POST, "/api/documents/" + MISSING + "/links",
+                    "{\"entityType\":\"PRODUCT\",\"entityId\":1}", DOCUMENT_UPLOADERS,
+                    Set.of("SUPERVISOR", "STORE_MANAGER", "MANAGEMENT", "OPERATOR", "SALES")),
+            Probe.of(HttpMethod.DELETE, "/api/documents/" + MISSING + "/links/" + MISSING, DOCUMENT_UPLOADERS,
+                    Set.of("SUPERVISOR", "STORE_MANAGER", "MANAGEMENT", "OPERATOR")),
+            Probe.of(HttpMethod.POST, "/api/documents/" + MISSING + "/submit", DOCUMENT_UPLOADERS,
+                    Set.of("SUPERVISOR", "STORE_MANAGER", "MANAGEMENT", "OPERATOR")),
+            Probe.of(HttpMethod.POST, "/api/documents/" + MISSING + "/approve",
+                    Set.of("ADMIN", "PRODUCTION_MANAGER", "QUALITY_MANAGER"),
+                    Set.of("ENGINEER", "MAINTENANCE", "PURCHASE_MANAGER", "MANAGEMENT", "OPERATOR")),
+            Probe.withBody(HttpMethod.POST, "/api/documents/" + MISSING + "/reject", "{\"reason\":\"probe\"}",
+                    Set.of("ADMIN", "PRODUCTION_MANAGER", "QUALITY_MANAGER"),
+                    Set.of("ENGINEER", "MAINTENANCE", "MANAGEMENT", "OPERATOR")),
+            Probe.withBody(HttpMethod.POST, "/api/documents/" + MISSING + "/obsolete", "{\"reason\":\"probe\"}",
+                    Set.of("ADMIN", "PRODUCTION_MANAGER", "QUALITY_MANAGER"),
+                    Set.of("ENGINEER", "MAINTENANCE", "MANAGEMENT", "OPERATOR")),
+            Probe.withBody(HttpMethod.PUT, "/api/document-categories/" + MISSING,
+                    "{\"categoryCode\":\"PROBE\",\"name\":\"Probe\"}", Set.of("ADMIN"),
+                    Set.of("QUALITY_MANAGER", "ENGINEER", "PRODUCTION_MANAGER", "MANAGEMENT")),
+
+            // notifications (R17): a user's own inbox and preferences need only a signed-in user; templates and the
+            // delivery log are NOTIFICATION_MANAGE (administrators)
+            Probe.of(HttpMethod.GET, "/api/notifications", Set.copyOf(ROLES), Set.of()),
+            Probe.of(HttpMethod.GET, "/api/notifications/unread-count", Set.copyOf(ROLES), Set.of()),
+            Probe.of(HttpMethod.GET, "/api/notification-preferences", Set.copyOf(ROLES), Set.of()),
+            Probe.of(HttpMethod.POST, "/api/notifications/read-all", Set.copyOf(ROLES), Set.of()),
+            Probe.of(HttpMethod.POST, "/api/notifications/" + MISSING + "/read", Set.copyOf(ROLES), Set.of()),
+            Probe.of(HttpMethod.GET, "/api/notification-templates", Set.of("ADMIN"),
+                    Set.of("QUALITY_MANAGER", "MANAGEMENT", "ENGINEER", "OPERATOR")),
+            Probe.of(HttpMethod.GET, "/api/notification-log", Set.of("ADMIN"),
+                    Set.of("QUALITY_MANAGER", "MANAGEMENT", "ENGINEER", "OPERATOR")),
+            Probe.withBody(HttpMethod.PUT, "/api/notification-templates/" + MISSING,
+                    "{\"channel\":\"BOTH\",\"bodyTemplate\":\"x\"}", Set.of("ADMIN"),
+                    Set.of("QUALITY_MANAGER", "MANAGEMENT", "ENGINEER")));
 
     @Autowired UserAdminService userAdminService;
     @Autowired JdbcTemplate jdbc;
@@ -219,7 +267,7 @@ class RoleAccessIT extends AbstractIntegrationTest {
                                     .isNotIn(401, 403).isLessThan(500);
                             if (probe.method() == HttpMethod.GET) {
                                 // a list or report must succeed; a by-id read of a missing id answers 404
-                                boolean byMissingId = probe.path().endsWith("/" + MISSING);
+                                boolean byMissingId = probe.path().contains("/" + MISSING);
                                 assertThat(status).as("%s %s as %s", probe.method(), probe.path(), role)
                                         .isIn(byMissingId ? List.of(200, 404) : List.of(200));
                             }

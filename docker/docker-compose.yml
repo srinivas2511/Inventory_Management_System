@@ -30,6 +30,14 @@ services:
       DB_USER: ${DB_USER:-ims}
       DB_PASSWORD: ${DB_PASSWORD:-ims}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8081}
+      DOCUMENTS_STORAGE_ROOT: /data/documents
+      SMTP_HOST: ${SMTP_HOST:-localhost}
+      SMTP_PORT: ${SMTP_PORT:-1025}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      NOTIFICATION_FROM: ${NOTIFICATION_FROM:-noreply@ims.local}
+    volumes:
+      - documents:/data/documents
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health/readiness | grep -q UP"]
       interval: 10s
@@ -49,3 +57,4 @@ services:
 
 volumes:
   pgdata:
+  documents:

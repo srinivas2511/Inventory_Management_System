@@ -370,6 +370,48 @@ export const routes: Routes = [
         loadComponent: () => import('./features/mrp/planning-params.component').then((m) => m.PlanningParamsComponent),
       },
       {
+        path: 'documents',
+        title: 'Documents',
+        canActivate: [permissionGuard('DOCUMENT_VIEW')],
+        loadComponent: () =>
+          import('./features/documents/document-list.component').then((m) => m.DocumentListComponent),
+      },
+      {
+        path: 'documents/new',
+        title: 'Upload Document',
+        canActivate: [permissionGuard('DOCUMENT_UPLOAD')],
+        loadComponent: () =>
+          import('./features/documents/document-upload.component').then((m) => m.DocumentUploadComponent),
+      },
+      {
+        path: 'documents/:id',
+        title: 'Document',
+        canActivate: [permissionGuard('DOCUMENT_VIEW')],
+        loadComponent: () =>
+          import('./features/documents/document-detail.component').then((m) => m.DocumentDetailComponent),
+      },
+      {
+        path: 'notifications',
+        title: 'Notifications',
+        loadComponent: () =>
+          import('./features/notifications/notification-inbox.component').then((m) => m.NotificationInboxComponent),
+      },
+      {
+        path: 'notifications/preferences',
+        title: 'Notification Preferences',
+        loadComponent: () =>
+          import('./features/notifications/notification-preferences.component').then(
+            (m) => m.NotificationPreferencesComponent,
+          ),
+      },
+      {
+        path: 'admin/notifications',
+        title: 'Notification Administration',
+        canActivate: [permissionGuard('NOTIFICATION_MANAGE')],
+        loadComponent: () =>
+          import('./features/notifications/notification-admin.component').then((m) => m.NotificationAdminComponent),
+      },
+      {
         path: 'plm/ecos',
         title: 'Engineering Change Orders',
         canActivate: [permissionGuard('PLM_VIEW')],

@@ -5,6 +5,7 @@
   <span class="app-name">{{ appName }}</span>
   <span class="spacer"></span>
   @if (session.isLoggedIn()) {
+    <app-notification-bell />
     <button mat-button [matMenuTriggerFor]="userMenu" data-testid="user-menu-trigger">
       <mat-icon>account_circle</mat-icon>
       <span class="user-name">{{ session.user()?.fullName }}</span>

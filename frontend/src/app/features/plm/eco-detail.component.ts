@@ -25,6 +25,7 @@ import {
   ProductLifecycleRowDto,
   SaveEcoItemRequest,
 } from './plm.api';
+import { DocumentAttachmentsComponent } from '../documents/document-attachments.component';
 
 interface ItemRow extends SaveEcoItemRequest {
   productLabel: string;
@@ -36,6 +37,7 @@ interface ItemRow extends SaveEcoItemRequest {
   selector: 'app-eco-detail',
   standalone: true,
   imports: [
+    DocumentAttachmentsComponent,
     ReactiveFormsModule,
     RouterLink,
     DatePipe,
@@ -255,6 +257,9 @@ interface ItemRow extends SaveEcoItemRequest {
           </div>
         }
       }
+    }
+    @if (eco(); as e) {
+      <app-document-attachments entityType="ECO" [entityId]="e.id" />
     }
   `,
   styles: `

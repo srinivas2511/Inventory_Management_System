@@ -36,4 +36,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
     default Page<User> search(String search, Boolean active, Pageable pageable) {
         return searchNormalised(SearchText.normalise(search), active, pageable);
     }
+
+    /** Active users who hold a permission through any of their roles (notification routing). */
+    @Query("SELECT DISTINCT u.id FROM User u JOIN u.roles r JOIN r.permissions p "
+            + "WHERE u.active = true AND p.code = :code")
+    java.util.List<Long> findActiveIdsByPermission(@org.springframework.data.repository.query.Param("code") String code);
 }

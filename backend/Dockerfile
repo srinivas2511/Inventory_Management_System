@@ -12,6 +12,8 @@ FROM eclipse-temurin:17-jre-alpine
 RUN addgroup -S ims && adduser -S ims -G ims
 WORKDIR /app
 COPY --from=build /build/target/ims-backend-*.jar /app/app.jar
+# Document content volume (DOCUMENTS_STORAGE_ROOT); created here so a named volume inherits the owner.
+RUN mkdir -p /data/documents && chown -R ims:ims /data
 USER ims
 EXPOSE 8080
 ENV JAVA_OPTS="-XX:MaxRAMPercentage=75 -Djava.security.egd=file:/dev/./urandom"

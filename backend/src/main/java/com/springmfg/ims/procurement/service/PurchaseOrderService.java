@@ -17,6 +17,7 @@ import com.springmfg.ims.audit.service.AuditService;
 import com.springmfg.ims.common.exception.BusinessRuleException;
 import com.springmfg.ims.common.exception.ErrorCode;
 import com.springmfg.ims.common.exception.NotFoundException;
+import com.springmfg.ims.common.event.PurchaseOrderApprovedEvent;
 import com.springmfg.ims.common.numbering.DocumentNumberService;
 import com.springmfg.ims.procurement.domain.PurchaseOrder;
 import com.springmfg.ims.procurement.domain.PurchaseOrderItem;
@@ -139,6 +140,7 @@ public class PurchaseOrderService {
         po = poRepo.save(po);
         auditService.record("PO_APPROVED", "PURCHASE_ORDER", String.valueOf(id),
                 "SUBMITTED", "APPROVED", null);
+        eventPublisher.publishEvent(new PurchaseOrderApprovedEvent(po.getId()));
         return toDto(po);
     }
 

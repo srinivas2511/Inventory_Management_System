@@ -12,6 +12,8 @@ import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge.component';
+import { HasPermissionDirective } from '../../../shared/directives/has-permission.directive';
+import { openDocumentsDialog } from '../../documents/documents-dialog.component';
 import { ProductApi, ProductDto, SpringType, ProductStatus } from './product.api';
 import { ProductFormComponent } from './product-form.component';
 
@@ -19,6 +21,7 @@ import { ProductFormComponent } from './product-form.component';
   selector: 'app-product-list',
   standalone: true,
   imports: [
+    HasPermissionDirective,
     ReactiveFormsModule,
     MatTableModule,
     MatPaginatorModule,
@@ -95,6 +98,15 @@ import { ProductFormComponent } from './product-form.component';
           <td mat-cell *matCellDef="let r">
             <button mat-icon-button matTooltip="Edit" (click)="openForm(r)" [disabled]="r.status === 'OBSOLETE'">
               <mat-icon>edit</mat-icon>
+            </button>
+            <button
+              *appHasPermission="'DOCUMENT_VIEW'"
+              mat-icon-button
+              matTooltip="Documents"
+              aria-label="Documents"
+              (click)="openDocuments(r)"
+            >
+              <mat-icon>attach_file</mat-icon>
             </button>
           </td>
         </ng-container>
@@ -195,6 +207,10 @@ export class ProductListComponent implements OnInit {
   protected onPage(e: PageEvent): void {
     this.pageIndex.set(e.pageIndex);
     this.load();
+  }
+
+  protected openDocuments(product: ProductDto): void {
+    openDocumentsDialog(this.dialog, { entityType: 'PRODUCT', entityId: product.id, title: product.code });
   }
 
   protected openForm(product?: ProductDto): void {

@@ -9,6 +9,7 @@ services:
       SPRING_PROFILES_ACTIVE: dev
       SWAGGER_ENABLED: "true"
       CORS_ORIGINS: http://localhost:8081,http://localhost:4200
+      SMTP_HOST: mailhog
     ports:
       - "8080:8080"
 

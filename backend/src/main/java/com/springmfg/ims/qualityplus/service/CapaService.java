@@ -2,12 +2,14 @@ package com.springmfg.ims.qualityplus.service;
 
 import java.time.Instant;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.springmfg.ims.audit.service.AuditService;
+import com.springmfg.ims.common.event.CapaAssignedEvent;
 import com.springmfg.ims.common.exception.BusinessRuleException;
 import com.springmfg.ims.common.exception.ErrorCode;
 import com.springmfg.ims.common.exception.NotFoundException;
@@ -44,10 +46,12 @@ public class CapaService {
     private final SpcService spcService;
     private final DocumentNumberService numberService;
     private final AuditService auditService;
+    private final ApplicationEventPublisher events;
 
     public CapaService(CapaRecordRepository repo, CustomerComplaintRepository complaintRepo,
                        RejectionRepository rejectionRepo, RejectionReasonRepository reasonRepo,
-                       SpcService spcService, DocumentNumberService numberService, AuditService auditService) {
+                       SpcService spcService, DocumentNumberService numberService, AuditService auditService,
+                       ApplicationEventPublisher events) {
         this.repo = repo;
         this.complaintRepo = complaintRepo;
         this.rejectionRepo = rejectionRepo;
@@ -55,6 +59,7 @@ public class CapaService {
         this.spcService = spcService;
         this.numberService = numberService;
         this.auditService = auditService;
+        this.events = events;
     }
 
     // ---- queries ---------------------------------------------------------------------------------------------
@@ -134,11 +139,15 @@ public class CapaService {
         if (capa.getStatus() == CapaStatus.CLOSED) {
             throw new BusinessRuleException(ErrorCode.ILLEGAL_STATE_TRANSITION, "A closed CAPA cannot be edited");
         }
+        Long previousAssignee = capa.getAssignedTo();
         capa.setTitle(req.title().trim());
         capa.setDescription(req.description());
         copyEditable(capa, req);
         capa = repo.save(capa);
         auditService.record("CAPA_UPDATE", "CapaRecord", String.valueOf(id), null, capa.getCapaNumber(), null);
+        if (capa.getAssignedTo() != null && !capa.getAssignedTo().equals(previousAssignee)) {
+            announceAssignment(capa);
+        }
         return toDto(capa);
     }
 
@@ -201,7 +210,15 @@ public class CapaService {
         capa = repo.save(capa);
         auditService.record("CAPA_CREATE", "CapaRecord", String.valueOf(capa.getId()), null, capa.getCapaNumber(),
                 capa.getSourceType() + (capa.getSourceId() == null ? "" : " #" + capa.getSourceId()));
+        if (capa.getAssignedTo() != null) {
+            announceAssignment(capa);
+        }
         return capa;
+    }
+
+    private void announceAssignment(CapaRecord capa) {
+        events.publishEvent(new CapaAssignedEvent(capa.getId(), capa.getCapaNumber(), capa.getTitle(),
+                capa.getAssignedTo(), QualitySecurity.currentUserId()));
     }
 
     private static void copyEditable(CapaRecord capa, SaveCapaRequest req) {

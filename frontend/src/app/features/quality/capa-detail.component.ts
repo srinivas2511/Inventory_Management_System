@@ -12,6 +12,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
 import { CAPA_STATUSES, Capa, CapaStatus, QualityPlusApi } from './quality-plus.api';
+import { DocumentAttachmentsComponent } from '../documents/document-attachments.component';
 
 type NewSource = 'INTERNAL_AUDIT' | 'REJECTION_ANALYSIS';
 
@@ -19,6 +20,7 @@ type NewSource = 'INTERNAL_AUDIT' | 'REJECTION_ANALYSIS';
   selector: 'app-capa-detail',
   standalone: true,
   imports: [
+    DocumentAttachmentsComponent,
     ReactiveFormsModule,
     RouterLink,
     DatePipe,
@@ -170,6 +172,9 @@ type NewSource = 'INTERNAL_AUDIT' | 'REJECTION_ANALYSIS';
       } @else {
         <div class="loading-center"><mat-spinner diameter="40" /></div>
       }
+    }
+    @if (capa(); as c) {
+      <app-document-attachments entityType="CAPA" [entityId]="c.id" defaultCategory="CAPA_EVIDENCE" />
     }
   `,
   styles: `

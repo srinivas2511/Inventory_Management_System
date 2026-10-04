@@ -1,0 +1,6 @@
+ims:
+  documents:
+    storage-root: ${java.io.tmpdir}/ims-test-documents
+  notification:
+    # The outbox job never fires during a test run; tests drive NotificationOutboxJob.processDue() themselves.
+    outbox-delay-ms: 3600000

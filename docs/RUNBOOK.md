@@ -33,6 +33,20 @@ curl -f http://localhost:8080/actuator/health
 The backend applies Flyway migrations on startup. The first start creates all tables and seeds
 standard reference data (UOMs, roles, permissions, warehouses, operations, rejection reasons).
 
+### Documents and e-mail (R17)
+
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `DOCUMENTS_STORAGE_ROOT` | `/data/documents` in the compose files (`./data/documents` otherwise) | Directory that holds uploaded document content. The compose files mount the named volume `documents` here. |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD` | `localhost`, `1025`, empty, empty | Outgoing mail server. Dev compose points `SMTP_HOST` at the `mailhog` container. |
+| `NOTIFICATION_FROM` | `noreply@ims.local` | From address of notification e-mails. |
+
+`docker/.env.example` is not updated by this release (the file is outside the paths the release agent could edit);
+add the variables above to your `docker/.env` when you deploy.
+Settings (Administration → System Settings): `documents.max_size_mb` (default 25), `documents.allowed_extensions`,
+`notification.email.max_attempts` (default 5), `notification.email.retry_base_seconds` (default 60) and
+`notification.alert.email_min_severity` (default `HIGH`).
+
 ### Admin user
 
 Seeded by `V1__iam_platform.sql`:
@@ -171,6 +185,21 @@ docker exec -i ims-db pg_restore -U ims -d ims -n ims < ims_<date>.dump
 docker compose start backend
 ```
 
+### Document files (not in the database dump)
+
+Document **content** is not stored in PostgreSQL. The database holds metadata and a storage key per version
+(`document_versions.storage_key`); the bytes live in the `documents` volume (`DOCUMENTS_STORAGE_ROOT`). A database dump
+alone therefore cannot restore downloads: back the volume up together with the dump and restore both to the same point in
+time. A key whose file is missing answers `404` on download (and is not audited as a download).
+
+```bash
+# Back up the volume (stop uploads or accept a slightly inconsistent copy; files are written once and never modified)
+docker run --rm -v ims_documents:/data -v "$PWD":/backup alpine tar czf /backup/documents_$(date +%Y%m%d).tgz -C /data .
+
+# Restore
+docker run --rm -v ims_documents:/data -v "$PWD":/backup alpine tar xzf /backup/documents_<date>.tgz -C /data
+```
+
 ---
 
 ## 7. Monitoring alerts
@@ -206,3 +235,6 @@ Alerts are visible in **Insight → Alerts** and polled every 15 minutes by `Ale
 | "Insufficient stock" on material issue | Check `inventory_balances` for AVAILABLE batches; may need inspection to pass |
 | ShedLock job not running | Check if the lock row is stuck (`lock_until` in the past) — delete the row |
 | JWT expired errors | Verify `JWT_SECRET` hasn't changed; check system clock sync |
+| Notification e-mails not arriving | Administration → Notification Admin → Delivery log, filter `FAILED` or `PENDING`. `last_error` names the failure (no credentials are logged). A `PENDING` row is retried with back-off (60 s, 120 s, ... capped at 1 h) until `notification.email.max_attempts`, then becomes `FAILED` and is not retried by itself. Fix SMTP, then re-create the notification or set the row back to `PENDING` with `next_attempt_at = now()`. |
+| Document download answers 404 | The file is missing from `DOCUMENTS_STORAGE_ROOT` (volume not mounted, or restored without the files). See "Document files" in section 6. |
+| Upload answers 413 or 415 | 413: larger than `documents.max_size_mb`. 415: extension not in `documents.allowed_extensions`, or the content does not match the extension (a `.pdf` that is not a PDF). |

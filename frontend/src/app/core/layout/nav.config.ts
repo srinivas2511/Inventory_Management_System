@@ -16,7 +16,10 @@ export interface NavGroup {
 export const NAV_GROUPS: NavGroup[] = [
   {
     label: 'Overview',
-    items: [{ label: 'Dashboard', icon: 'dashboard', route: '/dashboard', enabled: true }],
+    items: [
+      { label: 'Dashboard', icon: 'dashboard', route: '/dashboard', enabled: true },
+      { label: 'Notifications', icon: 'notifications', route: '/notifications', enabled: true },
+    ],
   },
   {
     label: 'Master Data',
@@ -302,6 +305,12 @@ export const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
+    label: 'Documents',
+    items: [
+      { label: 'Documents', icon: 'folder_open', route: '/documents', permission: 'DOCUMENT_VIEW', enabled: true },
+    ],
+  },
+  {
     label: 'PLM',
     items: [
       {
@@ -387,6 +396,13 @@ export const NAV_GROUPS: NavGroup[] = [
         enabled: true,
       },
       { label: 'Audit Logs', icon: 'history', route: '/admin/audit-logs', permission: 'AUDIT_VIEW', enabled: true },
+      {
+        label: 'Notification Admin',
+        icon: 'mark_email_read',
+        route: '/admin/notifications',
+        permission: 'NOTIFICATION_MANAGE',
+        enabled: true,
+      },
       { label: 'System Settings', icon: 'settings', route: '/admin/settings', permission: 'ADMIN', enabled: true },
     ],
   },
