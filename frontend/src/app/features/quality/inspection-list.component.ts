@@ -56,6 +56,7 @@ export interface QualityInspectionDto {
           <mat-option value="INCOMING">Incoming</mat-option>
           <mat-option value="IN_PROCESS">In-Process</mat-option>
           <mat-option value="FINAL">Final</mat-option>
+          <mat-option value="FAI">First article</mat-option>
         </mat-select>
       </mat-form-field>
       <mat-form-field appearance="outline">

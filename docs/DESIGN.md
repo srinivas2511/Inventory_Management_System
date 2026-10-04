@@ -2179,6 +2179,13 @@ CREATE TABLE customer_complaints (
 );
 ```
 
+### 22.4 As built (R16)
+
+- Migration `V30__advanced_quality.sql` (not V27). Tables carry the section 1.1 standard columns. Differences from the DDL above: `chart_type` is limited to `XBAR_R`, `P`, `C`; `spc_control_charts` gains range-chart limits `cl_r`, `ucl_r`, `lcl_r`, `limits_established_at` and a partial unique index on (product, parameter) where active; `spc_data_points` gains `sample_size`, `defect_count`, `point_ucl`, `point_lcl` and a 60-character `violation_rule`; `capa_records` gains `verification_notes`; `customer_complaints` gains `category` and `resolution_notes` and uses status `IN_PROGRESS` (12 characters cannot hold `INVESTIGATING`); `first_article_inspections` is new (DESIGN had no table) with `trigger_type`, `trigger_reference` and a partial unique index allowing one open FAI per product.
+- Settings `spc.min_subgroups_for_limits` (20) and `spc.nelson_rule2_run_length` (9). Alert type `SPC_OUT_OF_CONTROL`. Inspection type `FAI`.
+- API: `/api/spc/charts` (list, get, create, update spec limits, add points, recalculate limits, capability), `/api/capa` (list, get, create, update, advance, close, from-rejection, from-spc-point, from-complaint), `/api/complaints` (list, get, create, update, transition, trace, customer lookup), `/api/fai` (list, get, report, create, start, results, complete), and report `QUAL_COMPLAINTS`.
+- The capability calculation in 22.2 is implemented as written. Decisions on limit establishment, the feed from inspections, the FAI triggers and the print-friendly FAI report are in docs/decisions.md, section "R16 Advanced Quality".
+
 ---
 
 ## 23. Document Management and Notifications (R17)

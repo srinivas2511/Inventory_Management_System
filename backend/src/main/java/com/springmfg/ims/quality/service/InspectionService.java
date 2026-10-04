@@ -3,6 +3,7 @@ package com.springmfg.ims.quality.service;
 import java.time.Instant;
 import java.util.List;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.springmfg.ims.audit.service.AuditService;
+import com.springmfg.ims.common.event.InspectionResultsSubmittedEvent;
 import com.springmfg.ims.common.exception.BusinessRuleException;
 import com.springmfg.ims.common.exception.ErrorCode;
 import com.springmfg.ims.common.exception.NotFoundException;
@@ -19,6 +21,7 @@ import com.springmfg.ims.inventory.domain.MaterialBatch;
 import com.springmfg.ims.inventory.repository.MaterialBatchRepository;
 import com.springmfg.ims.procurement.event.GoodsReceivedForInspectionEvent;
 import com.springmfg.ims.procurement.repository.PurchaseOrderItemRepository;
+import com.springmfg.ims.quality.domain.InspectionPlan;
 import com.springmfg.ims.quality.domain.InspectionPlanParameter;
 import com.springmfg.ims.quality.domain.QualityInspection;
 import com.springmfg.ims.quality.domain.QualityInspectionItem;
@@ -38,6 +41,7 @@ public class InspectionService {
     private final PurchaseOrderItemRepository poItemRepo;
     private final DocumentNumberService numberService;
     private final AuditService auditService;
+    private final ApplicationEventPublisher events;
 
     public InspectionService(
             QualityInspectionRepository inspectionRepo,
@@ -46,7 +50,8 @@ public class InspectionService {
             MaterialBatchRepository batchRepo,
             PurchaseOrderItemRepository poItemRepo,
             DocumentNumberService numberService,
-            AuditService auditService) {
+            AuditService auditService,
+            ApplicationEventPublisher events) {
         this.inspectionRepo = inspectionRepo;
         this.inspectionItemRepo = inspectionItemRepo;
         this.planRepo = planRepo;
@@ -54,6 +59,7 @@ public class InspectionService {
         this.poItemRepo = poItemRepo;
         this.numberService = numberService;
         this.auditService = auditService;
+        this.events = events;
     }
 
     /** Triggered by GoodsReceiptService after each GR item is saved. */
@@ -121,12 +127,14 @@ public class InspectionService {
         insp.setStatus("IN_PROGRESS");
         insp = inspectionRepo.save(insp);
 
+        events.publishEvent(new InspectionResultsSubmittedEvent(insp.getId()));
         return toDto(insp);
     }
 
     @Transactional
     public QualityInspectionDto accept(Long inspectionId) {
         QualityInspection insp = requireInspection(inspectionId);
+        rejectFirstArticle(insp);
         if (!"IN_PROGRESS".equals(insp.getStatus()) && !"PENDING".equals(insp.getStatus())) {
             throw new BusinessRuleException(ErrorCode.ILLEGAL_STATE_TRANSITION,
                     "Inspection must be in PENDING or IN_PROGRESS to accept");
@@ -166,6 +174,7 @@ public class InspectionService {
     @Transactional
     public QualityInspectionDto reject(Long inspectionId, String reason) {
         QualityInspection insp = requireInspection(inspectionId);
+        rejectFirstArticle(insp);
         if (!"IN_PROGRESS".equals(insp.getStatus()) && !"PENDING".equals(insp.getStatus())) {
             throw new BusinessRuleException(ErrorCode.ILLEGAL_STATE_TRANSITION,
                     "Inspection must be in PENDING or IN_PROGRESS to reject");
@@ -191,6 +200,115 @@ public class InspectionService {
         auditService.record("INSPECTION_REJECTED", "QUALITY_INSPECTION", String.valueOf(inspectionId),
                 "IN_PROGRESS", "REJECTED", reason);
         return toDto(insp);
+    }
+
+    /**
+     * Closes a first article inspection (R16-4.1): APPROVED when every item passed, REJECTED when any item failed.
+     * Mandatory items must have been measured. The FAI workflow is the only caller; the generic accept and reject
+     * endpoints refuse FAI inspections because they move incoming-batch stock status that an FAI does not have.
+     */
+    @Transactional
+    public QualityInspectionDto closeFirstArticle(Long inspectionId, String remarks) {
+        QualityInspection insp = requireInspection(inspectionId);
+        if (!"FAI".equals(insp.getInspectionType())) {
+            throw new BusinessRuleException(ErrorCode.VALIDATION_FAILED,
+                    "Inspection " + inspectionId + " is not a first article inspection");
+        }
+        if (!"IN_PROGRESS".equals(insp.getStatus())) {
+            throw new BusinessRuleException(ErrorCode.ILLEGAL_STATE_TRANSITION,
+                    "Results must be submitted before the first article inspection is closed");
+        }
+        List<QualityInspectionItem> items = inspectionItemRepo.findByInspectionId(inspectionId);
+        if (items.stream().filter(QualityInspectionItem::isMandatory)
+                .anyMatch(i -> "NOT_MEASURED".equals(i.getResult()))) {
+            throw new BusinessRuleException(ErrorCode.INSPECTION_INCOMPLETE,
+                    "All mandatory parameters must be measured before the first article inspection is closed");
+        }
+        boolean passed = items.stream().noneMatch(i -> "FAIL".equals(i.getResult()));
+        String target = passed ? "APPROVED" : "REJECTED";
+        insp.setStatus(target);
+        insp.setDecisionBy(currentUserId());
+        insp.setDecisionAt(Instant.now());
+        if (remarks != null && !remarks.isBlank()) {
+            insp.setRemarks(remarks);
+        }
+        insp = inspectionRepo.save(insp);
+        auditService.record("FAI_INSPECTION_CLOSED", "QUALITY_INSPECTION", String.valueOf(inspectionId),
+                "IN_PROGRESS", target, remarks);
+        return toDto(insp);
+    }
+
+    /**
+     * Creates the FAI-type inspection for the first article of a production order, with one item per plan parameter
+     * (R16-4.1). Called by the FAI workflow, which owns the requirement; results are then submitted like any other.
+     */
+    @Transactional
+    public Long createFirstArticleInspection(Long productionOrderId, InspectionPlan plan) {
+        QualityInspection insp = new QualityInspection();
+        insp.setInspectionNumber(numberService.next("QI"));
+        insp.setInspectionType("FAI");
+        insp.setStatus("PENDING");
+        insp.setProductionOrderId(productionOrderId);
+        insp.setInspectedQty(java.math.BigDecimal.ONE);
+        insp = inspectionRepo.save(insp);
+        int seq = 1;
+        for (InspectionPlanParameter param : plan.getParameters()) {
+            QualityInspectionItem item = new QualityInspectionItem();
+            item.setInspection(insp);
+            item.setSeq(seq++);
+            item.setParameterName(param.getParameterName());
+            item.setSpecification(param.getSpecification());
+            item.setLowerLimit(param.getLowerLimit());
+            item.setUpperLimit(param.getUpperLimit());
+            item.setUnit(param.getUnit());
+            item.setMandatory(param.isMandatory());
+            inspectionItemRepo.save(item);
+        }
+        auditService.record("FAI_INSPECTION_CREATED", "QUALITY_INSPECTION", String.valueOf(insp.getId()), null,
+                insp.getInspectionNumber(), "Plan " + plan.getPlanCode());
+        return insp.getId();
+    }
+
+    /**
+     * Saves measured values on a first article inspection and records the outcome quantities: the one article is
+     * accepted when no measured item failed, rejected otherwise. Item results are computed server-side from the
+     * plan limits, exactly as for any other inspection.
+     */
+    @Transactional
+    public QualityInspectionDto submitFirstArticleResults(Long inspectionId,
+                                                           java.util.Map<Long, java.math.BigDecimal> valuesByItem) {
+        QualityInspection insp = requireInspection(inspectionId);
+        if (!"FAI".equals(insp.getInspectionType())) {
+            throw new BusinessRuleException(ErrorCode.VALIDATION_FAILED,
+                    "Inspection " + inspectionId + " is not a first article inspection");
+        }
+        List<QualityInspectionItem> items = inspectionItemRepo.findByInspectionId(inspectionId);
+        boolean anyFail = false;
+        List<InspectionResultRequest.ItemResultRequest> results = new java.util.ArrayList<>();
+        for (QualityInspectionItem item : items) {
+            java.math.BigDecimal value = valuesByItem.get(item.getId());
+            if (value == null) {
+                continue;
+            }
+            item.setActualValue(value);
+            item.computeResult();
+            anyFail |= "FAIL".equals(item.getResult());
+            results.add(new InspectionResultRequest.ItemResultRequest(item.getId(), value, null, null));
+        }
+        if (results.isEmpty() || results.size() != valuesByItem.size()) {
+            throw new BusinessRuleException(ErrorCode.VALIDATION_FAILED,
+                    "Give a value for at least one item of this inspection and no item of another");
+        }
+        return submitResult(inspectionId, new InspectionResultRequest(
+                anyFail ? java.math.BigDecimal.ZERO : java.math.BigDecimal.ONE,
+                anyFail ? java.math.BigDecimal.ONE : java.math.BigDecimal.ZERO, null, results));
+    }
+
+    private static void rejectFirstArticle(QualityInspection insp) {
+        if ("FAI".equals(insp.getInspectionType())) {
+            throw new BusinessRuleException(ErrorCode.ILLEGAL_STATE_TRANSITION,
+                    "A first article inspection is completed through the FAI workflow");
+        }
     }
 
     @Transactional(readOnly = true)

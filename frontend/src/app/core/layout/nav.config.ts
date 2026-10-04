@@ -161,6 +161,16 @@ export const NAV_GROUPS: NavGroup[] = [
         permission: 'QUALITY_VIEW',
         enabled: true,
       },
+      { label: 'SPC Charts', icon: 'show_chart', route: '/quality/spc', permission: 'QUALITY_VIEW', enabled: true },
+      { label: 'CAPA', icon: 'assignment_late', route: '/quality/capa', permission: 'QUALITY_VIEW', enabled: true },
+      {
+        label: 'Complaints',
+        icon: 'report_problem',
+        route: '/quality/complaints',
+        permission: 'QUALITY_VIEW',
+        enabled: true,
+      },
+      { label: 'First Article', icon: 'rule', route: '/quality/fai', permission: 'QUALITY_VIEW', enabled: true },
     ],
   },
   {

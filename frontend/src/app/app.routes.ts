@@ -160,6 +160,70 @@ export const routes: Routes = [
           import('./features/quality/rejection-dashboard.component').then((m) => m.RejectionDashboardComponent),
       },
       {
+        path: 'quality/spc',
+        title: 'SPC Control Charts',
+        canActivate: [permissionGuard('QUALITY_VIEW')],
+        loadComponent: () => import('./features/quality/spc-chart-list.component').then((m) => m.SpcChartListComponent),
+      },
+      {
+        path: 'quality/spc/:id',
+        title: 'SPC Control Chart',
+        canActivate: [permissionGuard('QUALITY_VIEW')],
+        loadComponent: () =>
+          import('./features/quality/spc-chart-detail.component').then((m) => m.SpcChartDetailComponent),
+      },
+      {
+        path: 'quality/capa',
+        title: 'CAPA',
+        canActivate: [permissionGuard('QUALITY_VIEW')],
+        loadComponent: () => import('./features/quality/capa-list.component').then((m) => m.CapaListComponent),
+      },
+      {
+        path: 'quality/capa/new',
+        title: 'New CAPA',
+        canActivate: [permissionGuard('CAPA_MANAGE')],
+        loadComponent: () => import('./features/quality/capa-detail.component').then((m) => m.CapaDetailComponent),
+      },
+      {
+        path: 'quality/capa/:id',
+        title: 'CAPA',
+        canActivate: [permissionGuard('QUALITY_VIEW')],
+        loadComponent: () => import('./features/quality/capa-detail.component').then((m) => m.CapaDetailComponent),
+      },
+      {
+        path: 'quality/complaints',
+        title: 'Customer Complaints',
+        canActivate: [permissionGuard('QUALITY_VIEW')],
+        loadComponent: () =>
+          import('./features/quality/complaint-list.component').then((m) => m.ComplaintListComponent),
+      },
+      {
+        path: 'quality/complaints/new',
+        title: 'Register Complaint',
+        canActivate: [permissionGuard('COMPLAINT_MANAGE')],
+        loadComponent: () =>
+          import('./features/quality/complaint-detail.component').then((m) => m.ComplaintDetailComponent),
+      },
+      {
+        path: 'quality/complaints/:id',
+        title: 'Customer Complaint',
+        canActivate: [permissionGuard('QUALITY_VIEW')],
+        loadComponent: () =>
+          import('./features/quality/complaint-detail.component').then((m) => m.ComplaintDetailComponent),
+      },
+      {
+        path: 'quality/fai',
+        title: 'First Article Inspections',
+        canActivate: [permissionGuard('QUALITY_VIEW')],
+        loadComponent: () => import('./features/quality/fai-list.component').then((m) => m.FaiListComponent),
+      },
+      {
+        path: 'quality/fai/:id',
+        title: 'First Article Inspection',
+        canActivate: [permissionGuard('QUALITY_VIEW')],
+        loadComponent: () => import('./features/quality/fai-detail.component').then((m) => m.FaiDetailComponent),
+      },
+      {
         path: 'sales/orders',
         title: 'Sales Orders',
         canActivate: [permissionGuard('SALES_VIEW')],

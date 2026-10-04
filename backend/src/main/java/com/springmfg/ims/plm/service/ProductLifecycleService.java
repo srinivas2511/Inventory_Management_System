@@ -2,12 +2,14 @@ package com.springmfg.ims.plm.service;
 
 import java.util.List;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.springmfg.ims.audit.service.AuditService;
+import com.springmfg.ims.common.event.ProductLifecycleChangedEvent;
 import com.springmfg.ims.common.exception.BusinessRuleException;
 import com.springmfg.ims.common.exception.ErrorCode;
 import com.springmfg.ims.common.exception.NotFoundException;
@@ -28,12 +30,14 @@ public class ProductLifecycleService {
     private final ProductRepository productRepo;
     private final ProductLifecycleEventRepository eventRepo;
     private final AuditService auditService;
+    private final ApplicationEventPublisher events;
 
     public ProductLifecycleService(ProductRepository productRepo, ProductLifecycleEventRepository eventRepo,
-                                   AuditService auditService) {
+                                   AuditService auditService, ApplicationEventPublisher events) {
         this.productRepo = productRepo;
         this.eventRepo = eventRepo;
         this.auditService = auditService;
+        this.events = events;
     }
 
     @Transactional(readOnly = true)
@@ -76,6 +80,7 @@ public class ProductLifecycleService {
 
         auditService.record("PRODUCT_LIFECYCLE_CHANGE", "Product", String.valueOf(productId),
                 current.name(), target.name(), reason);
+        events.publishEvent(new ProductLifecycleChangedEvent(productId, current.name(), target.name()));
         return get(productId);
     }
 

@@ -61,6 +61,13 @@ const STATUS_MAP: Record<string, { color: StatusColor; icon: string; label?: str
   PROTOTYPE: { color: 'amber', icon: 'science' },
   PHASE_OUT: { color: 'orange', icon: 'trending_down', label: 'Phase out' },
   NO_SHOW: { color: 'red', icon: 'person_off', label: 'No show' },
+  ROOT_CAUSE_ANALYSIS: { color: 'amber', icon: 'search', label: 'Root cause analysis' },
+  ACTION_IN_PROGRESS: { color: 'blue', icon: 'build', label: 'Action in progress' },
+  VERIFICATION: { color: 'amber', icon: 'rule' },
+  RESOLVED: { color: 'teal', icon: 'task_alt' },
+  REQUIRED: { color: 'orange', icon: 'assignment_late' },
+  PASSED: { color: 'green', icon: 'check_circle' },
+  FAILED: { color: 'red', icon: 'cancel' },
 };
 
 @Component({

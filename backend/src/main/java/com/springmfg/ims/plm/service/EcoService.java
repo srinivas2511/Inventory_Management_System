@@ -8,12 +8,14 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.springmfg.ims.audit.service.AuditService;
+import com.springmfg.ims.common.event.EcoImplementedEvent;
 import com.springmfg.ims.common.exception.BusinessRuleException;
 import com.springmfg.ims.common.exception.ErrorCode;
 import com.springmfg.ims.common.exception.NotFoundException;
@@ -53,10 +55,12 @@ public class EcoService {
     private final ProductLifecycleService lifecycleService;
     private final DocumentNumberService numberService;
     private final AuditService auditService;
+    private final ApplicationEventPublisher events;
 
     public EcoService(EcoRepository ecoRepo, ProductRepository productRepo, BomRepository bomRepo,
                       BomService bomService, ProductLifecycleService lifecycleService,
-                      DocumentNumberService numberService, AuditService auditService) {
+                      DocumentNumberService numberService, AuditService auditService,
+                      ApplicationEventPublisher events) {
         this.ecoRepo = ecoRepo;
         this.productRepo = productRepo;
         this.bomRepo = bomRepo;
@@ -64,6 +68,7 @@ public class EcoService {
         this.lifecycleService = lifecycleService;
         this.numberService = numberService;
         this.auditService = auditService;
+        this.events = events;
     }
 
     // ---- queries ---------------------------------------------------------------------------------------------
@@ -188,6 +193,7 @@ public class EcoService {
         auditService.record("ECO_IMPLEMENT", "Eco", String.valueOf(id), EcoStatus.APPROVED.name(),
                 EcoStatus.IMPLEMENTED.name(),
                 created.isEmpty() ? "No BOM revisions required" : "Created DRAFT revisions: " + String.join(", ", created));
+        events.publishEvent(new EcoImplementedEvent(eco.getId(), eco.getEcoNumber(), productIds));
         return toDto(eco);
     }
 
