@@ -843,7 +843,7 @@ REQUIREMENTS clauses tagged *[Implemented R1–R8]* whose PLAN tasks do not expl
 
 | Task ID | Task | DESIGN ref | Effort |
 |---|---|---|---|
-| R15-1.1 | `ecos`, `eco_affected_items`, `product_lifecycle_events` (V26) | DESIGN §21.1 | 2 pd |
+| R15-1.1 | `ecos`, `eco_affected_items`, `product_lifecycle_events`, `products.lifecycle_status` (V28) | DESIGN §21.1 | 2 pd |
 | R15-1.2 | ECO CRUD; state machine: DRAFT → REVIEW → APPROVED → IMPLEMENTING → IMPLEMENTED | DESIGN §21 | 3 pd |
 | R15-1.3 | `EcoService.implement(ecoId)` — auto-create new BOM revision for each affected product | DESIGN §21.2 | 4 pd |
 | R15-2.1 | Product lifecycle states: DEVELOPMENT → PROTOTYPE → APPROVED → ACTIVE → PHASE_OUT → OBSOLETE | DESIGN §21 | 2 pd |

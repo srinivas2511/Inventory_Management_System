@@ -32,4 +32,15 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     default Page<Product> search(String q, String springType, String status, Boolean active, Pageable pageable) {
         return searchNormalised(SearchText.normalise(q), springType, status, active, pageable);
     }
+
+    @Query("SELECT p FROM Product p WHERE " +
+           "(:q = '' OR LOWER(p.name) LIKE LOWER(CONCAT('%', :q, '%')) " +
+           "   OR LOWER(p.productCode) LIKE LOWER(CONCAT('%', :q, '%'))) " +
+           "AND (:lifecycle = '' OR p.lifecycleStatus = :lifecycle)")
+    Page<Product> searchByLifecycleNormalised(@Param("q") String q, @Param("lifecycle") String lifecycle,
+                                              Pageable pageable);
+
+    default Page<Product> searchByLifecycle(String q, String lifecycle, Pageable pageable) {
+        return searchByLifecycleNormalised(SearchText.normalise(q), SearchText.normalise(lifecycle), pageable);
+    }
 }

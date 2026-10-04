@@ -142,11 +142,12 @@ public class BomService {
         Bom bom = bomRepo.findById(id).orElseThrow(() -> new NotFoundException("BOM not found: " + id));
         assertTransition(bom, "APPROVED", "ACTIVE");
 
-        // Supersede any existing ACTIVE BOM for same product
+        // Supersede any existing ACTIVE BOM for same product. Flushed before the new BOM becomes ACTIVE so the
+        // one-active-per-product index (ux_bom_one_active) never sees two ACTIVE rows, whatever the flush order.
         bomRepo.findByProductIdAndStatus(bom.getProductId(), "ACTIVE").ifPresent(prev -> {
             prev.setStatus("SUPERSEDED");
             prev.setEffectiveTo(LocalDate.now());
-            bomRepo.save(prev);
+            bomRepo.saveAndFlush(prev);
         });
 
         bom.setStatus("ACTIVE");
@@ -168,6 +169,12 @@ public class BomService {
 
     @Transactional
     public BomDto copyRevision(Long id) {
+        return copyRevision(id, null);
+    }
+
+    /** Copies an APPROVED or ACTIVE BOM into the next DRAFT revision; a null reason keeps the default wording. */
+    @Transactional
+    public BomDto copyRevision(Long id, String changeReason) {
         Bom source = bomRepo.findById(id).orElseThrow(() -> new NotFoundException("BOM not found: " + id));
         if (!"APPROVED".equals(source.getStatus()) && !"ACTIVE".equals(source.getStatus())) {
             throw new BusinessRuleException(ErrorCode.ILLEGAL_STATE_TRANSITION,
@@ -182,7 +189,7 @@ public class BomService {
         copy.setProductId(source.getProductId());
         copy.setStatus("DRAFT");
         copy.setBaseQuantity(source.getBaseQuantity());
-        copy.setChangeReason("Copied from revision " + source.getRevision());
+        copy.setChangeReason(changeReason != null ? changeReason : "Copied from revision " + source.getRevision());
         copy = bomRepo.save(copy);
 
         List<BomItem> copiedItems = new ArrayList<>();

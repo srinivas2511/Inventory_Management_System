@@ -96,6 +96,9 @@ public class Product extends BaseEntity {
     @Column(nullable = false, length = 15)
     private String status = "DRAFT";
 
+    @Column(name = "lifecycle_status", nullable = false, length = 15)
+    private String lifecycleStatus = "ACTIVE";
+
     @Column(name = "reorder_level", precision = 18, scale = 3)
     private BigDecimal reorderLevel = BigDecimal.ZERO;
 
@@ -136,6 +139,7 @@ public class Product extends BaseEntity {
     public String getDrawingRevision() { return drawingRevision; }
     public Customer getCustomer() { return customer; }
     public String getStatus() { return status; }
+    public String getLifecycleStatus() { return lifecycleStatus; }
     public BigDecimal getReorderLevel() { return reorderLevel; }
     public BigDecimal getStandardCost() { return standardCost; }
     public boolean isActive() { return active; }
@@ -167,6 +171,7 @@ public class Product extends BaseEntity {
     public void setDrawingRevision(String drawingRevision) { this.drawingRevision = drawingRevision; }
     public void setCustomer(Customer customer) { this.customer = customer; }
     public void setStatus(String status) { this.status = status; }
+    public void setLifecycleStatus(String lifecycleStatus) { this.lifecycleStatus = lifecycleStatus; }
     public void setReorderLevel(BigDecimal reorderLevel) { this.reorderLevel = reorderLevel; }
     public void setStandardCost(BigDecimal standardCost) { this.standardCost = standardCost; }
     public void setActive(boolean active) { this.active = active; }

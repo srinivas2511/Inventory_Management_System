@@ -2097,6 +2097,12 @@ EcoService.implement(ecoId):
 5. Audit all changes
 ```
 
+### 21.3 As built (R15)
+
+- Implementation creates the DRAFT revision only; activation (and so superseding the old ACTIVE BOM) is the normal BOM workflow, per the resolved decision on PLM-003. Step 2 above ends at "create the revision and record the change description in `change_reason`".
+- `products.lifecycle_status` carries the PLM-005 lifecycle; `product_lifecycle_events` gains a mandatory `reason`, and `ecos` gains `reason` (PLM-002) and `status_reason`. Items reference a product in every case.
+- Implementation runs under a row lock and is all or nothing; it refuses a product with no ACTIVE BOM or with an open revision. See docs/decisions.md, section "R15 PLM".
+
 ---
 
 ## 22. Advanced Quality Design (R16)

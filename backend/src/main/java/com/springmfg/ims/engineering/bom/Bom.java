@@ -19,7 +19,7 @@ import jakarta.persistence.Table;
 @Table(name = "bom", schema = "ims")
 public class Bom extends BaseEntity {
 
-    @Column(name = "bom_number", nullable = false, unique = true, length = 20)
+    @Column(name = "bom_number", nullable = false, length = 20)
     private String bomNumber;
 
     @Column(name = "revision", nullable = false, length = 5)

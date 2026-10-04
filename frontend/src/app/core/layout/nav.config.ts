@@ -292,6 +292,25 @@ export const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
+    label: 'PLM',
+    items: [
+      {
+        label: 'Change Orders',
+        icon: 'published_with_changes',
+        route: '/plm/ecos',
+        permission: 'PLM_VIEW',
+        enabled: true,
+      },
+      {
+        label: 'Product Lifecycle',
+        icon: 'timeline',
+        route: '/plm/lifecycle',
+        permission: 'PLM_VIEW',
+        enabled: true,
+      },
+    ],
+  },
+  {
     label: 'CRM',
     items: [
       { label: 'Leads', icon: 'person_search', route: '/crm/leads', permission: 'CRM_VIEW', enabled: true },

@@ -306,6 +306,30 @@ export const routes: Routes = [
         loadComponent: () => import('./features/mrp/planning-params.component').then((m) => m.PlanningParamsComponent),
       },
       {
+        path: 'plm/ecos',
+        title: 'Engineering Change Orders',
+        canActivate: [permissionGuard('PLM_VIEW')],
+        loadComponent: () => import('./features/plm/eco-list.component').then((m) => m.EcoListComponent),
+      },
+      {
+        path: 'plm/ecos/new',
+        title: 'New ECO',
+        canActivate: [permissionGuard('ECO_CREATE')],
+        loadComponent: () => import('./features/plm/eco-detail.component').then((m) => m.EcoDetailComponent),
+      },
+      {
+        path: 'plm/ecos/:id',
+        title: 'Engineering Change Order',
+        canActivate: [permissionGuard('PLM_VIEW')],
+        loadComponent: () => import('./features/plm/eco-detail.component').then((m) => m.EcoDetailComponent),
+      },
+      {
+        path: 'plm/lifecycle',
+        title: 'Product Lifecycle',
+        canActivate: [permissionGuard('PLM_VIEW')],
+        loadComponent: () => import('./features/plm/lifecycle-list.component').then((m) => m.LifecycleListComponent),
+      },
+      {
         path: 'crm/leads',
         title: 'Leads',
         canActivate: [permissionGuard('CRM_VIEW')],

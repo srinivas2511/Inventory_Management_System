@@ -55,6 +55,11 @@ const STATUS_MAP: Record<string, { color: StatusColor; icon: string; label?: str
   CONFIRMED: { color: 'green', icon: 'check_circle' },
   REVIEW: { color: 'amber', icon: 'rule' },
   POSTED: { color: 'teal', icon: 'task_alt' },
+  IMPLEMENTING: { color: 'blue', icon: 'engineering' },
+  IMPLEMENTED: { color: 'teal', icon: 'task_alt' },
+  DEVELOPMENT: { color: 'grey', icon: 'construction' },
+  PROTOTYPE: { color: 'amber', icon: 'science' },
+  PHASE_OUT: { color: 'orange', icon: 'trending_down', label: 'Phase out' },
   NO_SHOW: { color: 'red', icon: 'person_off', label: 'No show' },
 };
 
