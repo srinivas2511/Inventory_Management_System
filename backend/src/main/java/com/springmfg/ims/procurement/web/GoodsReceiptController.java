@@ -31,19 +31,19 @@ public class GoodsReceiptController {
 
     @PostMapping("/goods-receipts")
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAuthority('GOODS_RECEIVE')")
+    @PreAuthorize("hasAuthority('INVENTORY_RECEIVE')")
     public GoodsReceiptDto receive(@Valid @RequestBody CreateGrRequest req) {
         return service.receive(req);
     }
 
     @GetMapping("/goods-receipts/{id}")
-    @PreAuthorize("hasAnyAuthority('PURCHASE_VIEW','GOODS_RECEIVE')")
+    @PreAuthorize("hasAnyAuthority('PURCHASE_VIEW','INVENTORY_RECEIVE')")
     public GoodsReceiptDto get(@PathVariable Long id) {
         return service.findById(id);
     }
 
     @GetMapping("/purchase-orders/{poId}/goods-receipts")
-    @PreAuthorize("hasAnyAuthority('PURCHASE_VIEW','GOODS_RECEIVE')")
+    @PreAuthorize("hasAnyAuthority('PURCHASE_VIEW','INVENTORY_RECEIVE')")
     public Page<GoodsReceiptDto> listByPo(
             @PathVariable Long poId,
             @PageableDefault(size = 20) Pageable pageable) {

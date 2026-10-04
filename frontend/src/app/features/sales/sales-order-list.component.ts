@@ -104,7 +104,7 @@ import { SalesApi, SalesOrderDto } from './sales.api';
                 mat-icon-button
                 matTooltip="Cancel"
                 color="warn"
-                *appHasPermission="'SALES_MANAGE'"
+                *appHasPermission="'SALES_UPDATE'"
                 (click)="cancel(o)"
               >
                 <mat-icon>cancel</mat-icon>

@@ -33,7 +33,7 @@ public class CustomerController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('MASTER_CUSTOMER_VIEW','MASTER_CUSTOMER_MANAGE')")
+    @PreAuthorize("hasAnyAuthority('CUSTOMER_MANAGE','MASTERDATA_MANAGE')")
     public Page<CustomerDto> search(
             @RequestParam(required = false) String q,
             @RequestParam(required = false) String status,
@@ -42,33 +42,33 @@ public class CustomerController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('MASTER_CUSTOMER_VIEW','MASTER_CUSTOMER_MANAGE')")
+    @PreAuthorize("hasAnyAuthority('CUSTOMER_MANAGE','MASTERDATA_MANAGE')")
     public CustomerDto get(@PathVariable Long id) {
         return service.findById(id);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAuthority('MASTER_CUSTOMER_MANAGE')")
+    @PreAuthorize("hasAuthority('CUSTOMER_MANAGE')")
     public CustomerDto create(@Valid @RequestBody SaveCustomerRequest req) {
         return service.create(req);
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('MASTER_CUSTOMER_MANAGE')")
+    @PreAuthorize("hasAuthority('CUSTOMER_MANAGE')")
     public CustomerDto update(@PathVariable Long id, @Valid @RequestBody SaveCustomerRequest req) {
         return service.update(id, req);
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasAuthority('MASTER_CUSTOMER_MANAGE')")
+    @PreAuthorize("hasAuthority('CUSTOMER_MANAGE')")
     public void deactivate(@PathVariable Long id) {
         service.deactivate(id);
     }
 
     @PostMapping("/{id}/reactivate")
-    @PreAuthorize("hasAuthority('MASTER_CUSTOMER_MANAGE')")
+    @PreAuthorize("hasAuthority('CUSTOMER_MANAGE')")
     public CustomerDto reactivate(@PathVariable Long id) {
         service.reactivate(id);
         return service.findById(id);

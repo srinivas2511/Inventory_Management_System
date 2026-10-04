@@ -65,8 +65,8 @@ class PlmSecurityMatrixTest {
     private static final String APPROVE = "ECO_APPROVE";
     private static final String LIFECYCLE = "LIFECYCLE_MANAGE";
     private static final List<String> ALL_AUTHORITIES = List.of(VIEW, CREATE, APPROVE, LIFECYCLE, "DRAWING_MANAGE",
-            "SPECIFICATION_MANAGE", "BOM_VIEW", "BOM_APPROVE", "MASTER_PRODUCT_MANAGE", "CRM_VIEW", "HR_VIEW",
-            "REPORT_VIEW", "IAM_USER_MANAGE");
+            "SPECIFICATION_MANAGE", "BOM_VIEW", "BOM_APPROVE", "PRODUCT_UPDATE", "CRM_VIEW", "HR_VIEW",
+            "REPORT_VIEW", "USER_UPDATE");
 
     private static final String ECO_BODY =
             "{\"title\":\"Wire change\",\"reason\":\"Supplier change\",\"changeCategory\":\"BOM_CHANGE\"}";

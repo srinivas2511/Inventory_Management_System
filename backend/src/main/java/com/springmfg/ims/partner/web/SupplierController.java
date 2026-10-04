@@ -33,7 +33,7 @@ public class SupplierController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('MASTER_SUPPLIER_VIEW','MASTER_SUPPLIER_MANAGE')")
+    @PreAuthorize("hasAnyAuthority('SUPPLIER_MANAGE','MASTERDATA_MANAGE')")
     public Page<SupplierDto> search(
             @RequestParam(required = false) String q,
             @RequestParam(required = false) String status,
@@ -42,33 +42,33 @@ public class SupplierController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('MASTER_SUPPLIER_VIEW','MASTER_SUPPLIER_MANAGE')")
+    @PreAuthorize("hasAnyAuthority('SUPPLIER_MANAGE','MASTERDATA_MANAGE')")
     public SupplierDto get(@PathVariable Long id) {
         return service.findById(id);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAuthority('MASTER_SUPPLIER_MANAGE')")
+    @PreAuthorize("hasAuthority('SUPPLIER_MANAGE')")
     public SupplierDto create(@Valid @RequestBody SaveSupplierRequest req) {
         return service.create(req);
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('MASTER_SUPPLIER_MANAGE')")
+    @PreAuthorize("hasAuthority('SUPPLIER_MANAGE')")
     public SupplierDto update(@PathVariable Long id, @Valid @RequestBody SaveSupplierRequest req) {
         return service.update(id, req);
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasAuthority('MASTER_SUPPLIER_MANAGE')")
+    @PreAuthorize("hasAuthority('SUPPLIER_MANAGE')")
     public void deactivate(@PathVariable Long id) {
         service.deactivate(id);
     }
 
     @PostMapping("/{id}/reactivate")
-    @PreAuthorize("hasAuthority('MASTER_SUPPLIER_MANAGE')")
+    @PreAuthorize("hasAuthority('SUPPLIER_MANAGE')")
     public SupplierDto reactivate(@PathVariable Long id) {
         service.reactivate(id);
         return service.findById(id);

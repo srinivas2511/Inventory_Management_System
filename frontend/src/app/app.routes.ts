@@ -109,7 +109,7 @@ export const routes: Routes = [
       {
         path: 'procurement/goods-receipts',
         title: 'Goods Receipts',
-        canActivate: [permissionGuard('GOODS_RECEIVE')],
+        canActivate: [permissionGuard('INVENTORY_RECEIVE')],
         loadComponent: () =>
           import('./features/procurement/goods-receipt-list.component').then((m) => m.GoodsReceiptListComponent),
       },
@@ -122,7 +122,7 @@ export const routes: Routes = [
       {
         path: 'engineering/routing',
         title: 'Product Routing',
-        canActivate: [permissionGuard('ROUTING_VIEW')],
+        canActivate: [permissionGuard('PRODUCT_VIEW')],
         loadComponent: () =>
           import('./features/engineering/routing-editor.component').then((m) => m.RoutingEditorComponent),
       },
@@ -526,19 +526,19 @@ export const routes: Routes = [
       {
         path: 'admin/users',
         title: 'Users',
-        canActivate: [permissionGuard('IAM_USER_MANAGE')],
+        canActivate: [permissionGuard('USER_VIEW')],
         loadComponent: () => import('./features/admin/user/user-list.component').then((m) => m.UserListComponent),
       },
       {
         path: 'admin/roles',
         title: 'Roles',
-        canActivate: [permissionGuard('IAM_USER_MANAGE')],
+        canActivate: [permissionGuard('ROLE_MANAGE')],
         loadComponent: () => import('./features/admin/role/role-list.component').then((m) => m.RoleListComponent),
       },
       {
         path: 'admin/audit-logs',
         title: 'Audit Logs',
-        canActivate: [permissionGuard('IAM_AUDIT_VIEW')],
+        canActivate: [permissionGuard('AUDIT_VIEW')],
         loadComponent: () =>
           import('./features/admin/audit/audit-log-list.component').then((m) => m.AuditLogListComponent),
       },

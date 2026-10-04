@@ -45,7 +45,7 @@ describe('DispatchListComponent', () => {
       fullName: 'Test',
       email: 't@t.com',
       roles: [],
-      permissions: ['DISPATCH_VIEW', 'SALES_MANAGE'],
+      permissions: ['DISPATCH_VIEW', 'DISPATCH_CREATE'],
       mustChangePassword: false,
     });
 

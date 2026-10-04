@@ -45,7 +45,7 @@ export interface GoodsReceiptDto {
   template: `
     <div class="page-header">
       <h2 class="mat-h2">Goods Receipts</h2>
-      <button mat-raised-button color="primary" *appHasPermission="'GOODS_RECEIVE'">
+      <button mat-raised-button color="primary" *appHasPermission="'INVENTORY_RECEIVE'">
         <mat-icon>add</mat-icon> Receive Goods
       </button>
     </div>

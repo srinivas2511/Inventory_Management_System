@@ -23,19 +23,19 @@ public class RoleController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAuthority('IAM_USER_MANAGE')")
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGE','USER_CREATE','USER_UPDATE')")
     public List<RoleDto> list() {
         return service.listRoles();
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('IAM_USER_MANAGE')")
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGE','USER_CREATE','USER_UPDATE')")
     public RoleDto get(@PathVariable Long id) {
         return service.findById(id);
     }
 
     @GetMapping("/permissions")
-    @PreAuthorize("hasAuthority('IAM_USER_MANAGE')")
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGE','USER_CREATE','USER_UPDATE')")
     public List<PermissionDto> allPermissions() {
         return service.listAllPermissions();
     }

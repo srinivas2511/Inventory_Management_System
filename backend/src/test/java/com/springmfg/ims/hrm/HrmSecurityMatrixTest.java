@@ -78,7 +78,7 @@ class HrmSecurityMatrixTest {
     private static final String APPROVE = "LEAVE_APPROVE";
     private static final String PAYROLL = "PAYROLL_RUN";
     private static final List<String> ALL_AUTHORITIES = List.of(VIEW, EMPLOYEE, ATTENDANCE, APPLY, APPROVE, PAYROLL,
-            "CRM_VIEW", "SALES_VIEW", "MRP_VIEW", "REPORT_VIEW", "GL_VIEW", "IAM_USER_MANAGE");
+            "CRM_VIEW", "SALES_VIEW", "MRP_VIEW", "REPORT_VIEW", "GL_VIEW", "USER_UPDATE");
 
     private static final String EMPLOYEE_BODY =
             "{\"firstName\":\"Asha\",\"lastName\":\"Rao\",\"dateOfJoining\":\"2024-01-01\",\"employmentType\":\"PERMANENT\"}";

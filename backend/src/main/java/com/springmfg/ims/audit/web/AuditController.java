@@ -31,7 +31,7 @@ public class AuditController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAuthority('IAM_AUDIT_VIEW')")
+    @PreAuthorize("hasAuthority('AUDIT_VIEW')")
     public Page<AuditLogDto> search(
             @RequestParam(required = false) Long userId,
             @RequestParam(required = false) String entity,
@@ -43,7 +43,7 @@ public class AuditController {
     }
 
     @GetMapping("/export")
-    @PreAuthorize("hasAuthority('IAM_AUDIT_VIEW')")
+    @PreAuthorize("hasAuthority('AUDIT_VIEW')")
     public void export(
             @RequestParam(required = false) Long userId,
             @RequestParam(required = false) String entity,

@@ -61,7 +61,7 @@ describe('SalesOrderListComponent', () => {
       fullName: 'Test',
       email: 't@t.com',
       roles: [],
-      permissions: ['SALES_VIEW', 'SALES_CREATE', 'SALES_APPROVE', 'SALES_MANAGE'],
+      permissions: ['SALES_VIEW', 'SALES_CREATE', 'SALES_APPROVE', 'SALES_UPDATE'],
       mustChangePassword: false,
     });
 

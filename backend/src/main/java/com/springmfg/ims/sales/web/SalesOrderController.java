@@ -39,19 +39,19 @@ public class SalesOrderController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAnyAuthority('SALES_CREATE','SALES_MANAGE')")
+    @PreAuthorize("hasAnyAuthority('SALES_CREATE','SALES_UPDATE')")
     public SalesOrderDto create(@Valid @RequestBody CreateSalesOrderRequest req) {
         return service.create(req);
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('SALES_VIEW','SALES_CREATE','SALES_MANAGE','SALES_APPROVE')")
+    @PreAuthorize("hasAnyAuthority('SALES_VIEW','SALES_CREATE','SALES_UPDATE','SALES_APPROVE')")
     public SalesOrderDto getById(@PathVariable Long id) {
         return service.findById(id);
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('SALES_VIEW','SALES_CREATE','SALES_MANAGE','SALES_APPROVE')")
+    @PreAuthorize("hasAnyAuthority('SALES_VIEW','SALES_CREATE','SALES_UPDATE','SALES_APPROVE')")
     public Page<SalesOrderDto> search(
             @RequestParam(required = false) Long customerId,
             @RequestParam(required = false) String status,
@@ -62,7 +62,7 @@ public class SalesOrderController {
     }
 
     @PostMapping("/{id}/confirm")
-    @PreAuthorize("hasAnyAuthority('SALES_CREATE','SALES_MANAGE')")
+    @PreAuthorize("hasAnyAuthority('SALES_CREATE','SALES_UPDATE')")
     public SalesOrderDto confirm(@PathVariable Long id) {
         return service.confirm(id);
     }
@@ -74,19 +74,19 @@ public class SalesOrderController {
     }
 
     @PostMapping("/{id}/cancel")
-    @PreAuthorize("hasAnyAuthority('SALES_MANAGE','SALES_APPROVE')")
+    @PreAuthorize("hasAnyAuthority('SALES_UPDATE','SALES_APPROVE')")
     public SalesOrderDto cancel(@PathVariable Long id, @Valid @RequestBody CancelRequest req) {
         return service.cancel(id, req.reason());
     }
 
     @PostMapping("/{id}/items")
-    @PreAuthorize("hasAnyAuthority('SALES_CREATE','SALES_MANAGE')")
+    @PreAuthorize("hasAnyAuthority('SALES_CREATE','SALES_UPDATE')")
     public SalesOrderDto addItem(@PathVariable Long id, @Valid @RequestBody AddSalesOrderItemRequest req) {
         return service.addItem(id, req);
     }
 
     @DeleteMapping("/{id}/items/{itemId}")
-    @PreAuthorize("hasAnyAuthority('SALES_CREATE','SALES_MANAGE')")
+    @PreAuthorize("hasAnyAuthority('SALES_CREATE','SALES_UPDATE')")
     public SalesOrderDto removeItem(@PathVariable Long id, @PathVariable Long itemId) {
         return service.removeItem(id, itemId);
     }

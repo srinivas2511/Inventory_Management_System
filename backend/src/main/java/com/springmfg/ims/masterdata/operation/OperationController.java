@@ -26,13 +26,13 @@ public class OperationController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAuthority('MASTERDATA_VIEW')")
+    @PreAuthorize("hasAnyAuthority('OPERATION_MANAGE','MASTERDATA_MANAGE','PRODUCTION_VIEW','ROUTING_MANAGE')")
     public List<OperationDto> list(@RequestParam(defaultValue = "false") boolean activeOnly) {
         return activeOnly ? service.findActive() : service.findAll();
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('MASTERDATA_VIEW')")
+    @PreAuthorize("hasAnyAuthority('OPERATION_MANAGE','MASTERDATA_MANAGE','PRODUCTION_VIEW','ROUTING_MANAGE')")
     public OperationDto get(@PathVariable Long id) {
         return service.findById(id);
     }

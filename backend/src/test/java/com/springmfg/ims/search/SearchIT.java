@@ -111,7 +111,7 @@ class SearchIT extends AbstractIntegrationTest {
     @DisplayName("customers list works without q, blank q, matching and non-matching q")
     void customers() throws Exception {
         Customer c = data.customer();
-        assertSearchable("/api/customers", "MASTER_CUSTOMER_VIEW", "customerCode", c.getCustomerCode(),
+        assertSearchable("/api/customers", "CUSTOMER_MANAGE", "customerCode", c.getCustomerCode(),
                 c.getCustomerCode().toLowerCase(Locale.ROOT), "zzz-no-such-customer");
     }
 
@@ -119,7 +119,7 @@ class SearchIT extends AbstractIntegrationTest {
     @DisplayName("suppliers list works without q, blank q, matching and non-matching q")
     void suppliers() throws Exception {
         Supplier s = data.supplier();
-        assertSearchable("/api/suppliers", "MASTER_SUPPLIER_VIEW", "supplierCode", s.getSupplierCode(),
+        assertSearchable("/api/suppliers", "SUPPLIER_MANAGE", "supplierCode", s.getSupplierCode(),
                 s.getSupplierCode().toLowerCase(Locale.ROOT), "zzz-no-such-supplier");
     }
 
@@ -127,7 +127,7 @@ class SearchIT extends AbstractIntegrationTest {
     @DisplayName("materials list works without q, blank q, matching and non-matching q")
     void materials() throws Exception {
         Material m = data.material();
-        assertSearchable("/api/materials", "MASTER_MATERIAL_VIEW", "materialCode", m.getMaterialCode(),
+        assertSearchable("/api/materials", "MATERIAL_VIEW", "materialCode", m.getMaterialCode(),
                 m.getMaterialCode().toLowerCase(Locale.ROOT), "zzz-no-such-material");
     }
 
@@ -135,7 +135,7 @@ class SearchIT extends AbstractIntegrationTest {
     @DisplayName("products list works without q, blank q, matching and non-matching q")
     void products() throws Exception {
         Product p = data.product();
-        assertSearchable("/api/products", "MASTER_PRODUCT_VIEW", "productCode", p.getProductCode(),
+        assertSearchable("/api/products", "PRODUCT_VIEW", "productCode", p.getProductCode(),
                 p.getProductCode().toLowerCase(Locale.ROOT), "zzz-no-such-product");
     }
 
@@ -159,7 +159,7 @@ class SearchIT extends AbstractIntegrationTest {
         u.setPasswordChangedAt(Instant.now());
         u.setActive(true);
         userRepo.save(u);
-        assertSearchable("/api/admin/users", "IAM_USER_MANAGE", "username", username,
+        assertSearchable("/api/admin/users", "USER_VIEW", "username", username,
                 username.toUpperCase(Locale.ROOT), "zzz-no-such-user");
     }
 

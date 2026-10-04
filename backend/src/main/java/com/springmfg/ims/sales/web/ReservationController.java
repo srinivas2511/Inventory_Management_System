@@ -33,25 +33,25 @@ public class ReservationController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAnyAuthority('SALES_CREATE','SALES_MANAGE')")
+    @PreAuthorize("hasAnyAuthority('SALES_CREATE','RESERVE_FG')")
     public ReservationDto reserve(@Valid @RequestBody ReserveRequest req) {
         return service.reserve(req);
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('SALES_VIEW','SALES_CREATE','SALES_MANAGE')")
+    @PreAuthorize("hasAnyAuthority('SALES_VIEW','SALES_CREATE','RESERVE_FG')")
     public List<ReservationDto> listForItem(@RequestParam Long salesOrderItemId) {
         return service.findByOrderItem(salesOrderItemId);
     }
 
     @GetMapping("/available-batches")
-    @PreAuthorize("hasAnyAuthority('SALES_VIEW','SALES_CREATE','SALES_MANAGE')")
+    @PreAuthorize("hasAnyAuthority('SALES_VIEW','SALES_CREATE','RESERVE_FG')")
     public List<AvailableBatchDto> availableBatches(@RequestParam Long productId) {
         return service.findAvailableBatches(productId);
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('SALES_MANAGE','SALES_APPROVE')")
+    @PreAuthorize("hasAnyAuthority('RESERVE_FG','SALES_APPROVE')")
     public void release(@PathVariable Long id) {
         service.releaseReservation(id);
     }

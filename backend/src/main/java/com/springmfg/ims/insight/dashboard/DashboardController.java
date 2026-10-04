@@ -16,7 +16,7 @@ public class DashboardController {
     }
 
     @GetMapping("/kpis")
-    @PreAuthorize("hasAnyAuthority('DASHBOARD_VIEW','ADMIN')")
+    @PreAuthorize("hasAuthority('DASHBOARD_VIEW')")
     public DashboardKpiDto getKpis() {
         return service.getKpis();
     }

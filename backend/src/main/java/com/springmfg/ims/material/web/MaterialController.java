@@ -36,7 +36,7 @@ public class MaterialController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('MASTER_MATERIAL_VIEW','MASTER_MATERIAL_MANAGE')")
+    @PreAuthorize("hasAnyAuthority('MATERIAL_VIEW','MASTERDATA_MANAGE')")
     public Page<MaterialDto> search(
             @RequestParam(required = false) String q,
             @RequestParam(required = false) String type,
@@ -46,27 +46,27 @@ public class MaterialController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('MASTER_MATERIAL_VIEW','MASTER_MATERIAL_MANAGE')")
+    @PreAuthorize("hasAnyAuthority('MATERIAL_VIEW','MASTERDATA_MANAGE')")
     public MaterialDto get(@PathVariable Long id) {
         return service.findById(id);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAuthority('MASTER_MATERIAL_MANAGE')")
+    @PreAuthorize("hasAuthority('MASTERDATA_MANAGE')")
     public MaterialDto create(@Valid @RequestBody SaveMaterialRequest req) {
         return service.create(req);
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('MASTER_MATERIAL_MANAGE')")
+    @PreAuthorize("hasAuthority('MASTERDATA_MANAGE')")
     public MaterialDto update(@PathVariable Long id, @Valid @RequestBody SaveMaterialRequest req) {
         return service.update(id, req);
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasAuthority('MASTER_MATERIAL_MANAGE')")
+    @PreAuthorize("hasAuthority('MASTERDATA_MANAGE')")
     public void deactivate(@PathVariable Long id) {
         service.deactivate(id);
     }

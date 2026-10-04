@@ -28,20 +28,20 @@ public class CustomerProductSpecController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('SALES_VIEW','SALES_CREATE','SALES_MANAGE')")
+    @PreAuthorize("hasAnyAuthority('SALES_VIEW','SALES_CREATE','SALES_UPDATE')")
     public List<CustomerProductSpecDto> listByCustomer(@PathVariable Long customerId) {
         return service.findByCustomer(customerId);
     }
 
     @GetMapping("/{productId}")
-    @PreAuthorize("hasAnyAuthority('SALES_VIEW','SALES_CREATE','SALES_MANAGE')")
+    @PreAuthorize("hasAnyAuthority('SALES_VIEW','SALES_CREATE','SALES_UPDATE')")
     public CustomerProductSpecDto getByCustomerAndProduct(
             @PathVariable Long customerId, @PathVariable Long productId) {
         return service.findByCustomerAndProduct(customerId, productId);
     }
 
     @PutMapping("/{productId}")
-    @PreAuthorize("hasAnyAuthority('SALES_MANAGE','SALES_CREATE')")
+    @PreAuthorize("hasAnyAuthority('SALES_UPDATE','SALES_CREATE')")
     public CustomerProductSpecDto save(
             @PathVariable Long customerId, @PathVariable Long productId,
             @Valid @RequestBody SaveCustomerProductSpecRequest req) {
@@ -49,7 +49,7 @@ public class CustomerProductSpecController {
     }
 
     @DeleteMapping("/{productId}")
-    @PreAuthorize("hasAuthority('SALES_MANAGE')")
+    @PreAuthorize("hasAuthority('SALES_UPDATE')")
     public void deactivate(@PathVariable Long customerId, @PathVariable Long productId) {
         service.deactivate(customerId, productId);
     }

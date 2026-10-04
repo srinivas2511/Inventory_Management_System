@@ -154,7 +154,7 @@ export interface ProductionOrderDto {
                   <button
                     mat-stroked-button
                     color="warn"
-                    *appHasPermission="'PRODUCTION_MANAGE'"
+                    *appHasPermission="'PRODUCTION_UPDATE'"
                     (click)="doAction(row.id, 'cancel')"
                   >
                     <mat-icon>cancel</mat-icon> Cancel

@@ -28,13 +28,13 @@ public class SettingsController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAuthority('IAM_USER_MANAGE')")
+    @PreAuthorize("hasAuthority('SETTINGS_MANAGE')")
     public List<SystemSettingDto> list() {
         return service.findAll().stream().map(SystemSettingDto::from).toList();
     }
 
     @PutMapping("/{key}")
-    @PreAuthorize("hasAuthority('IAM_USER_MANAGE')")
+    @PreAuthorize("hasAuthority('SETTINGS_MANAGE')")
     public SystemSettingDto update(@PathVariable String key,
             @Valid @RequestBody UpdateSettingRequest req) {
         return SystemSettingDto.from(service.update(key, req.value()));

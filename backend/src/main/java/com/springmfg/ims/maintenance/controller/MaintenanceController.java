@@ -36,7 +36,7 @@ public class MaintenanceController {
     }
 
     @GetMapping("/requests")
-    @PreAuthorize("hasAnyAuthority('MAINTENANCE_VIEW','ADMIN')")
+    @PreAuthorize("hasAuthority('MAINTENANCE_VIEW')")
     public Page<MaintenanceRequestDto> list(
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String requestType,
@@ -45,14 +45,14 @@ public class MaintenanceController {
     }
 
     @GetMapping("/requests/{id}")
-    @PreAuthorize("hasAnyAuthority('MAINTENANCE_VIEW','ADMIN')")
+    @PreAuthorize("hasAuthority('MAINTENANCE_VIEW')")
     public MaintenanceRequestDto get(@PathVariable Long id) {
         return service.get(id);
     }
 
     @PostMapping("/requests")
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAuthority('MAINTENANCE_CREATE')")
+    @PreAuthorize("hasAuthority('MAINTENANCE_MANAGE')")
     public MaintenanceRequestDto create(@Valid @RequestBody CreateMaintenanceRequestDto dto) {
         return service.create(dto);
     }
@@ -67,7 +67,7 @@ public class MaintenanceController {
     }
 
     @GetMapping("/pm-schedules")
-    @PreAuthorize("hasAnyAuthority('MAINTENANCE_VIEW','ADMIN')")
+    @PreAuthorize("hasAuthority('MAINTENANCE_VIEW')")
     public List<PmScheduleDto> listPmSchedules() {
         return service.listPmSchedules();
     }

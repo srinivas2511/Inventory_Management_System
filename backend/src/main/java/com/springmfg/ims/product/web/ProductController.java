@@ -36,7 +36,7 @@ public class ProductController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('MASTER_PRODUCT_VIEW','MASTER_PRODUCT_MANAGE')")
+    @PreAuthorize("hasAuthority('PRODUCT_VIEW')")
     public Page<ProductDto> search(
             @RequestParam(required = false) String q,
             @RequestParam(required = false) String springType,
@@ -47,32 +47,32 @@ public class ProductController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('MASTER_PRODUCT_VIEW','MASTER_PRODUCT_MANAGE')")
+    @PreAuthorize("hasAuthority('PRODUCT_VIEW')")
     public ProductDto get(@PathVariable Long id) {
         return service.findById(id);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAuthority('MASTER_PRODUCT_MANAGE')")
+    @PreAuthorize("hasAuthority('PRODUCT_CREATE')")
     public ProductDto create(@Valid @RequestBody SaveProductRequest req) {
         return service.create(req);
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('MASTER_PRODUCT_MANAGE')")
+    @PreAuthorize("hasAuthority('PRODUCT_UPDATE')")
     public ProductDto update(@PathVariable Long id, @Valid @RequestBody SaveProductRequest req) {
         return service.update(id, req);
     }
 
     @PostMapping("/{id}/activate")
-    @PreAuthorize("hasAuthority('MASTER_PRODUCT_MANAGE')")
+    @PreAuthorize("hasAuthority('PRODUCT_UPDATE')")
     public ProductDto activate(@PathVariable Long id) {
         return service.activate(id);
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('MASTER_PRODUCT_MANAGE')")
+    @PreAuthorize("hasAuthority('PRODUCT_UPDATE')")
     public ProductDto obsolete(@PathVariable Long id) {
         return service.obsolete(id);
     }

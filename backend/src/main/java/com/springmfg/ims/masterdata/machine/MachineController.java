@@ -26,13 +26,13 @@ public class MachineController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAuthority('MASTERDATA_VIEW')")
+    @PreAuthorize("hasAnyAuthority('MACHINE_MANAGE','MASTERDATA_MANAGE','PRODUCTION_VIEW','MAINTENANCE_VIEW')")
     public List<MachineDto> list(@RequestParam(defaultValue = "false") boolean activeOnly) {
         return activeOnly ? service.findActive() : service.findAll();
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('MASTERDATA_VIEW')")
+    @PreAuthorize("hasAnyAuthority('MACHINE_MANAGE','MASTERDATA_MANAGE','PRODUCTION_VIEW','MAINTENANCE_VIEW')")
     public MachineDto get(@PathVariable Long id) {
         return service.findById(id);
     }

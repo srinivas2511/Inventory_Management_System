@@ -49,7 +49,7 @@ class ProcurementIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @WithMockUser(authorities = {"PURCHASE_CREATE", "PURCHASE_APPROVE", "GOODS_RECEIVE"})
+    @WithMockUser(authorities = {"PURCHASE_CREATE", "PURCHASE_APPROVE", "INVENTORY_RECEIVE"})
     void fullProcurementFlow_draftToPo_grCreatesQuarantineStock() {
         // Create PO
         CreatePoRequest poReq = new CreatePoRequest(
@@ -104,7 +104,7 @@ class ProcurementIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @WithMockUser(authorities = {"PURCHASE_CREATE", "PURCHASE_APPROVE", "GOODS_RECEIVE"})
+    @WithMockUser(authorities = {"PURCHASE_CREATE", "PURCHASE_APPROVE", "INVENTORY_RECEIVE"})
     void overReceipt_exceedingTolerance_throwsBusinessRuleException() {
         CreatePoRequest poReq = new CreatePoRequest(
                 SUPPLIER_ID, LocalDate.now(), null, null, null, null,

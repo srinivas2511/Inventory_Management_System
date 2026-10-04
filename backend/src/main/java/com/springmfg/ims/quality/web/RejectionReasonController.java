@@ -50,20 +50,20 @@ public class RejectionReasonController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAuthority('MASTER_DATA_MANAGE')")
+    @PreAuthorize("hasAuthority('REJECTION_REASON_MANAGE')")
     public RejectionReasonDto create(@Valid @RequestBody SaveRejectionReasonRequest req) {
         return service.create(req);
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('MASTER_DATA_MANAGE')")
+    @PreAuthorize("hasAuthority('REJECTION_REASON_MANAGE')")
     public RejectionReasonDto update(@PathVariable Long id, @Valid @RequestBody SaveRejectionReasonRequest req) {
         return service.update(id, req);
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasAuthority('MASTER_DATA_MANAGE')")
+    @PreAuthorize("hasAuthority('REJECTION_REASON_MANAGE')")
     public void deactivate(@PathVariable Long id) {
         service.deactivate(id);
     }

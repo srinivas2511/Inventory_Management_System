@@ -35,7 +35,7 @@ public class UserAdminController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAuthority('IAM_USER_MANAGE')")
+    @PreAuthorize("hasAuthority('USER_VIEW')")
     public Page<UserDto> search(
             @RequestParam(required = false) String q,
             @RequestParam(required = false) Boolean active,
@@ -44,39 +44,39 @@ public class UserAdminController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('IAM_USER_MANAGE')")
+    @PreAuthorize("hasAuthority('USER_VIEW')")
     public UserDto get(@PathVariable Long id) {
         return service.findById(id);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAuthority('IAM_USER_MANAGE')")
+    @PreAuthorize("hasAuthority('USER_CREATE')")
     public UserDto create(@Valid @RequestBody CreateUserRequest req) {
         return service.create(req);
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('IAM_USER_MANAGE')")
+    @PreAuthorize("hasAuthority('USER_UPDATE')")
     public UserDto update(@PathVariable Long id, @Valid @RequestBody UpdateUserRequest req) {
         return service.update(id, req);
     }
 
     @PutMapping("/{id}/roles")
-    @PreAuthorize("hasAuthority('IAM_USER_MANAGE')")
+    @PreAuthorize("hasAuthority('ROLE_MANAGE')")
     public UserDto assignRoles(@PathVariable Long id, @Valid @RequestBody AssignRolesRequest req) {
         return service.assignRoles(id, req.roleCodes());
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasAuthority('IAM_USER_MANAGE')")
+    @PreAuthorize("hasAuthority('USER_DELETE')")
     public void deactivate(@PathVariable Long id) {
         service.deactivate(id);
     }
 
     @PostMapping("/{id}/reactivate")
-    @PreAuthorize("hasAuthority('IAM_USER_MANAGE')")
+    @PreAuthorize("hasAuthority('USER_UPDATE')")
     public UserDto reactivate(@PathVariable Long id) {
         service.reactivate(id);
         return service.findById(id);

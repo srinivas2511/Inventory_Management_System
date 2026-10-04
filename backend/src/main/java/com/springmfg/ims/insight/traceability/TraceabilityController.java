@@ -17,13 +17,13 @@ public class TraceabilityController {
     }
 
     @GetMapping("/material-batch/{id}")
-    @PreAuthorize("hasAnyAuthority('TRACEABILITY_VIEW','ADMIN')")
+    @PreAuthorize("hasAuthority('TRACEABILITY_VIEW')")
     public TraceabilityDto traceMaterial(@PathVariable Long id) {
         return service.traceMaterialBatch(id);
     }
 
     @GetMapping("/fg-batch/{id}")
-    @PreAuthorize("hasAnyAuthority('TRACEABILITY_VIEW','ADMIN')")
+    @PreAuthorize("hasAuthority('TRACEABILITY_VIEW')")
     public TraceabilityDto traceFg(@PathVariable Long id) {
         return service.traceFgBatch(id);
     }

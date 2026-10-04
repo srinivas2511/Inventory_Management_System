@@ -48,7 +48,7 @@ export interface BomDto {
   template: `
     <div class="page-header">
       <h2 class="mat-h2">Bill of Materials</h2>
-      <button mat-raised-button color="primary" *appHasPermission="'BOM_MANAGE'" (click)="createBom()">
+      <button mat-raised-button color="primary" *appHasPermission="'BOM_CREATE'" (click)="createBom()">
         <mat-icon>add</mat-icon> New BOM
       </button>
     </div>
@@ -104,7 +104,7 @@ export interface BomDto {
               <button
                 mat-icon-button
                 matTooltip="Submit for Review"
-                *appHasPermission="'BOM_MANAGE'"
+                *appHasPermission="'BOM_CREATE'"
                 (click)="doAction(r.id, 'submit')"
               >
                 <mat-icon>send</mat-icon>
@@ -134,7 +134,7 @@ export interface BomDto {
               <button
                 mat-icon-button
                 matTooltip="Copy Revision"
-                *appHasPermission="'BOM_MANAGE'"
+                *appHasPermission="'BOM_UPDATE'"
                 (click)="doAction(r.id, 'copy-revision')"
               >
                 <mat-icon>copy_all</mat-icon>
@@ -144,7 +144,7 @@ export interface BomDto {
               <button
                 mat-icon-button
                 matTooltip="Recall"
-                *appHasPermission="'BOM_MANAGE'"
+                *appHasPermission="'BOM_CREATE'"
                 (click)="doAction(r.id, 'recall')"
               >
                 <mat-icon>undo</mat-icon>

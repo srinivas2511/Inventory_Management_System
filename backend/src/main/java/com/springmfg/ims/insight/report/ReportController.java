@@ -22,13 +22,13 @@ public class ReportController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('REPORT_VIEW','ADMIN')")
+    @PreAuthorize("hasAuthority('REPORT_VIEW')")
     public List<ReportService.ReportMeta> list() {
         return service.listReports();
     }
 
     @GetMapping("/{code}")
-    @PreAuthorize("hasAnyAuthority('REPORT_VIEW','ADMIN')")
+    @PreAuthorize("hasAuthority('REPORT_VIEW')")
     public ReportResult run(
             @PathVariable String code,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,

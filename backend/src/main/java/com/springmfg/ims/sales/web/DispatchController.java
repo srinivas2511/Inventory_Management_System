@@ -35,19 +35,19 @@ public class DispatchController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAnyAuthority('DISPATCH_CREATE','SALES_MANAGE')")
+    @PreAuthorize("hasAuthority('DISPATCH_CREATE')")
     public DispatchDto create(@Valid @RequestBody CreateDispatchRequest req) {
         return service.create(req);
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('DISPATCH_VIEW','DISPATCH_CREATE','SALES_MANAGE','SALES_VIEW')")
+    @PreAuthorize("hasAnyAuthority('DISPATCH_VIEW','DISPATCH_CREATE','SALES_VIEW')")
     public DispatchDto getById(@PathVariable Long id) {
         return service.findById(id);
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('DISPATCH_VIEW','DISPATCH_CREATE','SALES_MANAGE','SALES_VIEW')")
+    @PreAuthorize("hasAnyAuthority('DISPATCH_VIEW','DISPATCH_CREATE','SALES_VIEW')")
     public Page<DispatchDto> search(
             @RequestParam(required = false) Long customerId,
             @RequestParam(required = false) LocalDate from,
@@ -57,7 +57,7 @@ public class DispatchController {
     }
 
     @GetMapping("/{id}/dispatch-note")
-    @PreAuthorize("hasAnyAuthority('DISPATCH_VIEW','DISPATCH_CREATE','SALES_MANAGE')")
+    @PreAuthorize("hasAnyAuthority('DISPATCH_VIEW','DISPATCH_CREATE')")
     public DispatchNoteDto dispatchNote(@PathVariable Long id) {
         return service.generateDispatchNote(id);
     }
