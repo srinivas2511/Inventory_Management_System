@@ -368,7 +368,8 @@ public class ProductionOrderService {
                 op.getMachineId(), machineName, op.getAssignedOperatorId(),
                 op.isInspectionPoint(), op.getStatus(),
                 op.getInputQty(), op.getGoodQty(), op.getRejectedQty(), op.getScrapQty(),
-                op.getStartedAt(), op.getCompletedAt());
+                op.getStartedAt(), op.getCompletedAt(),
+                op.getScheduledStart(), op.getScheduledEnd());
     }
 
     private List<String> allowedActions(String status) {

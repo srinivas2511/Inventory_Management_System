@@ -52,6 +52,12 @@ public class ProductionOperation extends BaseEntity {
     @Column(name = "completed_at")
     private Instant completedAt;
 
+    @Column(name = "scheduled_start")
+    private Instant scheduledStart;
+
+    @Column(name = "scheduled_end")
+    private Instant scheduledEnd;
+
     public ProductionOperation() {}
 
     public Long getProductionOrderId() { return productionOrderId; }
@@ -92,4 +98,10 @@ public class ProductionOperation extends BaseEntity {
 
     public Instant getCompletedAt() { return completedAt; }
     public void setCompletedAt(Instant v) { this.completedAt = v; }
+
+    public Instant getScheduledStart() { return scheduledStart; }
+    public void setScheduledStart(Instant v) { this.scheduledStart = v; }
+
+    public Instant getScheduledEnd() { return scheduledEnd; }
+    public void setScheduledEnd(Instant v) { this.scheduledEnd = v; }
 }

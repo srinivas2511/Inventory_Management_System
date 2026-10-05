@@ -55,6 +55,17 @@ public class InventoryQueryService {
                 .toList();
     }
 
+    /** Available on-hand quantity per material (0 when the material has no available stock). */
+    @Transactional(readOnly = true)
+    public Map<Long, BigDecimal> availableQtyByMaterial(java.util.Collection<Long> materialIds) {
+        Map<Long, BigDecimal> out = new java.util.HashMap<>();
+        for (Long id : materialIds) {
+            BigDecimal qty = balanceRepo.sumQtyByMaterialAndStatus(id, "AVAILABLE");
+            out.put(id, qty == null ? BigDecimal.ZERO : qty);
+        }
+        return out;
+    }
+
     @Transactional(readOnly = true)
     public Map<String, BigDecimal> valuation(Long warehouseId) {
         List<InventoryBalance> balances = warehouseId != null

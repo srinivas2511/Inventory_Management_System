@@ -18,4 +18,6 @@ public record ProductionOperationDto(
         BigDecimal rejectedQty,
         BigDecimal scrapQty,
         Instant startedAt,
-        Instant completedAt) {}
+        Instant completedAt,
+        Instant scheduledStart,
+        Instant scheduledEnd) {}

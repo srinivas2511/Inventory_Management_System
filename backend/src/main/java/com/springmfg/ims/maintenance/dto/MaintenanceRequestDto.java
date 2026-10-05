@@ -1,5 +1,6 @@
 package com.springmfg.ims.maintenance.dto;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 
@@ -18,7 +19,11 @@ public record MaintenanceRequestDto(
         LocalDate scheduledDate,
         Instant completedAt,
         String resolutionNotes,
-        Instant createdAt) {
+        Instant createdAt,
+        BigDecimal labourHours,
+        BigDecimal labourCost,
+        Long costCentreId,
+        Instant costPostedAt) {
 
     public static MaintenanceRequestDto from(MaintenanceRequest r) {
         return new MaintenanceRequestDto(
@@ -26,6 +31,6 @@ public record MaintenanceRequestDto(
                 r.getRequestType(), r.getPriority(), r.getDescription(),
                 r.getStatus(), r.getRequestedBy(), r.getAssignedTo(),
                 r.getScheduledDate(), r.getCompletedAt(), r.getResolutionNotes(),
-                r.getCreatedAt());
+                r.getCreatedAt(), r.getLabourHours(), r.getLabourCost(), r.getCostCentreId(), r.getCostPostedAt());
     }
 }

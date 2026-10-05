@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.springmfg.ims.audit.service.AuditService;
+import com.springmfg.ims.controlling.repository.CostCentreRepository;
 import com.springmfg.ims.common.exception.BusinessRuleException;
 import com.springmfg.ims.common.exception.ErrorCode;
 import com.springmfg.ims.common.exception.NotFoundException;
@@ -15,10 +16,12 @@ public class MachineService {
 
     private final MachineRepository repo;
     private final AuditService auditService;
+    private final CostCentreRepository costCentres;
 
-    public MachineService(MachineRepository repo, AuditService auditService) {
+    public MachineService(MachineRepository repo, AuditService auditService, CostCentreRepository costCentres) {
         this.repo = repo;
         this.auditService = auditService;
+        this.costCentres = costCentres;
     }
 
     @Transactional(readOnly = true)
@@ -51,6 +54,12 @@ public class MachineService {
         machine.setMachineType(req.machineType());
         machine.setProductionLine(req.productionLine());
         if (req.status() != null) machine.setStatus(req.status());
+        if (req.costCentreId() != null) {
+            if (!costCentres.existsById(req.costCentreId())) {
+                throw new NotFoundException("Cost centre not found: " + req.costCentreId());
+            }
+            machine.setCostCentreId(req.costCentreId());
+        }
         machine = repo.save(machine);
         auditService.record("MACHINE_SAVE", "Machine", String.valueOf(machine.getId()), null, req.code(), null);
         return MachineDto.from(machine);

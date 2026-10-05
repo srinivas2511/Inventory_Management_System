@@ -22,17 +22,32 @@ import org.springframework.http.HttpStatus;
 import com.springmfg.ims.maintenance.dto.CreateMaintenanceRequestDto;
 import com.springmfg.ims.maintenance.dto.CreatePmScheduleDto;
 import com.springmfg.ims.maintenance.dto.MaintenanceRequestDto;
+import com.springmfg.ims.maintenance.dto.MaintenanceWorkDtos.ActivityDto;
+import com.springmfg.ims.maintenance.dto.MaintenanceWorkDtos.MaintenanceCostDto;
+import com.springmfg.ims.maintenance.dto.MaintenanceWorkDtos.RecordActivityRequest;
 import com.springmfg.ims.maintenance.dto.PmScheduleDto;
+import com.springmfg.ims.maintenance.dto.SparePartDtos.IssueSparePartRequest;
+import com.springmfg.ims.maintenance.dto.SparePartDtos.SparePartIssueLineDto;
+import com.springmfg.ims.maintenance.service.MaintenanceCostPoster;
+import com.springmfg.ims.maintenance.service.MaintenanceCostService;
 import com.springmfg.ims.maintenance.service.MaintenanceService;
+import com.springmfg.ims.maintenance.service.SparePartService;
 
 @RestController
 @RequestMapping("/api/maintenance")
 public class MaintenanceController {
 
     private final MaintenanceService service;
+    private final SparePartService spareParts;
+    private final MaintenanceCostService costs;
+    private final MaintenanceCostPoster costPoster;
 
-    public MaintenanceController(MaintenanceService service) {
+    public MaintenanceController(MaintenanceService service, SparePartService spareParts,
+                                 MaintenanceCostService costs, MaintenanceCostPoster costPoster) {
         this.service = service;
+        this.spareParts = spareParts;
+        this.costs = costs;
+        this.costPoster = costPoster;
     }
 
     @GetMapping("/requests")
@@ -83,5 +98,55 @@ public class MaintenanceController {
     @PreAuthorize("hasAuthority('MAINTENANCE_MANAGE')")
     public MaintenanceRequestDto generatePmRequest(@PathVariable Long id) {
         return service.generatePmRequest(id);
+    }
+
+    @GetMapping("/requests/{id}/activities")
+    @PreAuthorize("hasAuthority('MAINTENANCE_VIEW')")
+    public List<ActivityDto> activities(@PathVariable Long id) {
+        return service.listActivities(id);
+    }
+
+    @PostMapping("/requests/{id}/activities")
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAuthority('MAINTENANCE_MANAGE')")
+    public ActivityDto addActivity(@PathVariable Long id, @Valid @RequestBody RecordActivityRequest req) {
+        return service.addActivity(id, req);
+    }
+
+    @GetMapping("/requests/{id}/spare-parts")
+    @PreAuthorize("hasAnyAuthority('MAINTENANCE_VIEW','SPARE_PART_VIEW')")
+    public List<SparePartIssueLineDto> sparePartIssues(@PathVariable Long id) {
+        return spareParts.issuesOf(id);
+    }
+
+    @PostMapping("/requests/{id}/spare-parts")
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAuthority('SPARE_PART_ISSUE')")
+    public SparePartIssueLineDto issueSparePart(@PathVariable Long id, @Valid @RequestBody IssueSparePartRequest req) {
+        return spareParts.issue(id, req);
+    }
+
+    @GetMapping("/requests/{id}/cost")
+    @PreAuthorize("hasAuthority('MAINTENANCE_COST_VIEW')")
+    public MaintenanceCostDto cost(@PathVariable Long id) {
+        return costs.cost(id);
+    }
+
+    @PostMapping("/requests/{id}/post-cost")
+    @PreAuthorize("hasAuthority('MAINTENANCE_COST_POST')")
+    public MaintenanceCostDto postCost(@PathVariable Long id) {
+        return costs.postLabourCost(id);
+    }
+
+    @GetMapping("/costs/unposted")
+    @PreAuthorize("hasAuthority('MAINTENANCE_COST_VIEW')")
+    public List<MaintenanceCostDto> unpostedCosts() {
+        return costs.unposted();
+    }
+
+    @PostMapping("/costs/repost-unposted")
+    @PreAuthorize("hasAuthority('MAINTENANCE_COST_POST')")
+    public int repostUnposted() {
+        return costPoster.repostUnposted();
     }
 }

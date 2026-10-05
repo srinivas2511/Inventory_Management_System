@@ -262,6 +262,35 @@ export const routes: Routes = [
           import('./features/maintenance/maintenance-list.component').then((m) => m.MaintenanceListComponent),
       },
       {
+        path: 'maintenance/requests/:id',
+        title: 'Maintenance Request',
+        canActivate: [permissionGuard('MAINTENANCE_VIEW')],
+        loadComponent: () =>
+          import('./features/maintenance/maintenance-request-detail.component').then(
+            (m) => m.MaintenanceRequestDetailComponent,
+          ),
+      },
+      {
+        path: 'maintenance/spare-parts',
+        title: 'Spare Parts',
+        canActivate: [permissionGuard('SPARE_PART_VIEW')],
+        loadComponent: () => import('./features/maintenance/spare-parts.component').then((m) => m.SparePartsComponent),
+      },
+      {
+        path: 'production/oee',
+        title: 'OEE',
+        canActivate: [permissionGuard('OEE_VIEW')],
+        loadComponent: () =>
+          import('./features/production/oee-dashboard.component').then((m) => m.OeeDashboardComponent),
+      },
+      {
+        path: 'production/schedule',
+        title: 'Production Schedule',
+        canActivate: [permissionGuard('SCHEDULE_VIEW')],
+        loadComponent: () =>
+          import('./features/production/schedule-gantt.component').then((m) => m.ScheduleGanttComponent),
+      },
+      {
         path: 'finance/dashboard',
         title: 'Finance Dashboard',
         canActivate: [permissionGuard('FINANCE_REPORT')],

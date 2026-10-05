@@ -10,4 +10,5 @@ public record RecordDowntimeRequest(
         Long productionOrderId,
         @NotBlank String reason,
         String category,
-        Instant startedAt) {}
+        Instant startedAt,
+        Instant endedAt) {}

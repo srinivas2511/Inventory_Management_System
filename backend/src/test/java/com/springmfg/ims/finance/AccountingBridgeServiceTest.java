@@ -23,6 +23,7 @@ import com.springmfg.ims.finance.gl.dto.JournalLineRequest;
 import com.springmfg.ims.finance.gl.repository.InventoryAccountAssignmentRepository;
 import com.springmfg.ims.finance.gl.service.AccountingBridgeService;
 import com.springmfg.ims.finance.gl.service.AccountingFailureReporter;
+import com.springmfg.ims.finance.gl.service.JournalDimensionResolver;
 import com.springmfg.ims.finance.gl.service.JournalService;
 import com.springmfg.ims.inventory.domain.InventoryTransaction;
 import com.springmfg.ims.inventory.event.StockPostedEvent;
@@ -40,7 +41,7 @@ class AccountingBridgeServiceTest {
         assignmentRepo = mock(InventoryAccountAssignmentRepository.class);
         journalService = mock(JournalService.class);
         failureReporter = mock(AccountingFailureReporter.class);
-        bridge = new AccountingBridgeService(assignmentRepo, journalService, failureReporter);
+        bridge = new AccountingBridgeService(assignmentRepo, journalService, failureReporter, java.util.List.of());
     }
 
     private InventoryTransaction transaction(String type, BigDecimal totalCost) {
@@ -153,5 +154,45 @@ class AccountingBridgeServiceTest {
 
         verify(journalService, never()).postAutoJournal(any());
         verify(failureReporter, never()).missingJournal(any(), anyString(), anyString(), anyString());
+    }
+
+    @Test
+    void aResolverCanChooseTheCostCentreOfTheDocumentThatCausedTheMovement() {
+        InventoryAccountAssignment assignment = new InventoryAccountAssignment();
+        assignment.setGlAccountDebitId(10L);
+        assignment.setGlAccountCreditId(20L);
+        assignment.setCostCentreId(5L);
+        when(assignmentRepo.findByCompanyIdAndTransactionTypeAndItemType(1L, "MAINTENANCE_ISSUE", "MATERIAL"))
+                .thenReturn(Optional.of(assignment));
+        JournalDimensionResolver machineCentre = (type, id) ->
+                "SPARE_PART_ISSUE".equals(type) && Long.valueOf(7L).equals(id) ? Optional.of(99L) : Optional.empty();
+        bridge = new AccountingBridgeService(assignmentRepo, journalService, failureReporter,
+                java.util.List.of(machineCentre));
+        InventoryTransaction tx = transaction("MAINTENANCE_ISSUE", new BigDecimal("80"));
+        when(tx.getReferenceType()).thenReturn("SPARE_PART_ISSUE");
+
+        bridge.onStockPosted(new StockPostedEvent(tx));
+
+        ArgumentCaptor<AutoJournalRequest> captor = ArgumentCaptor.forClass(AutoJournalRequest.class);
+        verify(journalService).postAutoJournal(captor.capture());
+        assertThat(captor.getValue().lines()).allSatisfy(l -> assertThat(l.costCentreId()).isEqualTo(99L));
+    }
+
+    @Test
+    void whenNoResolverHasAnAnswerTheAssignmentDefaultStands() {
+        InventoryAccountAssignment assignment = new InventoryAccountAssignment();
+        assignment.setGlAccountDebitId(10L);
+        assignment.setGlAccountCreditId(20L);
+        assignment.setCostCentreId(5L);
+        when(assignmentRepo.findByCompanyIdAndTransactionTypeAndItemType(1L, "MAINTENANCE_ISSUE", "MATERIAL"))
+                .thenReturn(Optional.of(assignment));
+        bridge = new AccountingBridgeService(assignmentRepo, journalService, failureReporter,
+                java.util.List.of((type, id) -> Optional.empty()));
+
+        bridge.onStockPosted(new StockPostedEvent(transaction("MAINTENANCE_ISSUE", new BigDecimal("80"))));
+
+        ArgumentCaptor<AutoJournalRequest> captor = ArgumentCaptor.forClass(AutoJournalRequest.class);
+        verify(journalService).postAutoJournal(captor.capture());
+        assertThat(captor.getValue().lines()).allSatisfy(l -> assertThat(l.costCentreId()).isEqualTo(5L));
     }
 }

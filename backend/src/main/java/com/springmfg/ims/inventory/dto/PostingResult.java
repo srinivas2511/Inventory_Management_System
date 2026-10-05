@@ -5,5 +5,6 @@ import java.math.BigDecimal;
 public record PostingResult(
         Long transactionId,
         String transactionNumber,
-        BigDecimal balanceAfter) {
+        BigDecimal balanceAfter,
+        BigDecimal unitCost) {
 }

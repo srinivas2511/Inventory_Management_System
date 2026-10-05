@@ -46,13 +46,28 @@ class RoleAccessIT extends AbstractIntegrationTest {
 
     private static final List<String> ROLES = List.of("ADMIN", "ENGINEER", "PRODUCTION_MANAGER", "SUPERVISOR",
             "OPERATOR", "QUALITY_MANAGER", "STORE_MANAGER", "PURCHASE_MANAGER", "SALES", "DISPATCH", "MAINTENANCE",
-            "STORE_OPERATOR", "MANAGEMENT", "FINANCE_MANAGER", "ACCOUNTANT");
+            "STORE_OPERATOR", "MANAGEMENT", "FINANCE_MANAGER", "ACCOUNTANT", "PLANNER", "CONTROLLER");
 
     private static final Set<String> DOCUMENT_READERS = Set.of("ADMIN", "ENGINEER", "PRODUCTION_MANAGER", "SUPERVISOR",
             "QUALITY_MANAGER", "STORE_MANAGER", "PURCHASE_MANAGER", "MAINTENANCE", "MANAGEMENT");
     private static final Set<String> DOCUMENT_NON_READERS = Set.of("OPERATOR", "SALES", "DISPATCH", "STORE_OPERATOR");
     private static final Set<String> DOCUMENT_UPLOADERS = Set.of("ADMIN", "ENGINEER", "PRODUCTION_MANAGER",
             "QUALITY_MANAGER", "PURCHASE_MANAGER", "MAINTENANCE");
+
+    private static final Set<String> SPARE_PART_READERS = Set.of("ADMIN", "MAINTENANCE", "STORE_MANAGER",
+            "PRODUCTION_MANAGER", "PURCHASE_MANAGER", "MANAGEMENT");
+    private static final Set<String> SPARE_PART_NON_READERS = Set.of("OPERATOR", "SALES", "DISPATCH", "STORE_OPERATOR",
+            "QUALITY_MANAGER", "SUPERVISOR", "FINANCE_MANAGER");
+    private static final Set<String> SPARE_PART_MANAGERS = Set.of("ADMIN", "MAINTENANCE", "STORE_MANAGER");
+    private static final String SPARE_PART_BODY =
+            "{\"sparePartCode\":\"X1\",\"name\":\"N\",\"uom\":\"PCS\",\"minStock\":0,\"reorderLevel\":0,"
+                    + "\"standardCost\":0}";
+    private static final Set<String> MAINTENANCE_COST_READERS = Set.of("ADMIN", "MAINTENANCE", "MANAGEMENT",
+            "CONTROLLER", "FINANCE_MANAGER");
+    private static final Set<String> OEE_READERS = Set.of("ADMIN", "PRODUCTION_MANAGER", "SUPERVISOR", "MAINTENANCE",
+            "MANAGEMENT");
+    private static final Set<String> OEE_NON_READERS = Set.of("OPERATOR", "SALES", "STORE_MANAGER", "QUALITY_MANAGER",
+            "DISPATCH");
 
     /** One probed endpoint: who must get in, and who must be stopped with 403. */
     private record Probe(HttpMethod method, String path, String body, Set<String> allowed, Set<String> forbidden) {
@@ -207,7 +222,53 @@ class RoleAccessIT extends AbstractIntegrationTest {
                     Set.of("QUALITY_MANAGER", "MANAGEMENT", "ENGINEER", "OPERATOR")),
             Probe.withBody(HttpMethod.PUT, "/api/notification-templates/" + MISSING,
                     "{\"channel\":\"BOTH\",\"bodyTemplate\":\"x\"}", Set.of("ADMIN"),
-                    Set.of("QUALITY_MANAGER", "MANAGEMENT", "ENGINEER")));
+                    Set.of("QUALITY_MANAGER", "MANAGEMENT", "ENGINEER")),
+            // advanced manufacturing (R18): spare parts, maintenance cost, OEE, scheduling
+            Probe.of(HttpMethod.GET, "/api/spare-parts", SPARE_PART_READERS, SPARE_PART_NON_READERS),
+            Probe.of(HttpMethod.GET, "/api/spare-parts/" + MISSING, SPARE_PART_READERS, SPARE_PART_NON_READERS),
+            Probe.withBody(HttpMethod.PUT, "/api/spare-parts/" + MISSING, SPARE_PART_BODY, SPARE_PART_MANAGERS,
+                    Set.of("PRODUCTION_MANAGER", "PURCHASE_MANAGER", "MANAGEMENT", "OPERATOR")),
+            Probe.of(HttpMethod.DELETE, "/api/spare-parts/" + MISSING, SPARE_PART_MANAGERS,
+                    Set.of("PRODUCTION_MANAGER", "PURCHASE_MANAGER", "MANAGEMENT")),
+            Probe.of(HttpMethod.GET, "/api/maintenance/requests/" + MISSING + "/spare-parts",
+                    Set.of("ADMIN", "MAINTENANCE", "MANAGEMENT", "STORE_MANAGER", "PURCHASE_MANAGER",
+                            "PRODUCTION_MANAGER"),
+                    Set.of("OPERATOR", "SALES", "DISPATCH")),
+            Probe.withBody(HttpMethod.POST, "/api/maintenance/requests/" + MISSING + "/spare-parts",
+                    "{\"sparePartId\":1,\"warehouseId\":1,\"quantity\":1}", SPARE_PART_MANAGERS,
+                    Set.of("PRODUCTION_MANAGER", "SUPERVISOR", "MANAGEMENT", "PURCHASE_MANAGER")),
+            Probe.of(HttpMethod.GET, "/api/maintenance/requests/" + MISSING + "/activities",
+                    Set.of("ADMIN", "MAINTENANCE", "MANAGEMENT"), Set.of("OPERATOR", "SALES")),
+            Probe.withBody(HttpMethod.POST, "/api/maintenance/requests/" + MISSING + "/activities",
+                    "{\"description\":\"x\",\"durationMinutes\":10}", Set.of("ADMIN", "MAINTENANCE"),
+                    Set.of("MANAGEMENT", "OPERATOR", "STORE_MANAGER")),
+            Probe.of(HttpMethod.GET, "/api/maintenance/requests/" + MISSING + "/cost", MAINTENANCE_COST_READERS,
+                    Set.of("STORE_MANAGER", "PRODUCTION_MANAGER", "OPERATOR")),
+            Probe.of(HttpMethod.GET, "/api/maintenance/costs/unposted", MAINTENANCE_COST_READERS,
+                    Set.of("STORE_MANAGER", "PRODUCTION_MANAGER", "OPERATOR", "SALES")),
+            Probe.of(HttpMethod.POST, "/api/maintenance/requests/" + MISSING + "/post-cost",
+                    Set.of("ADMIN", "FINANCE_MANAGER"), Set.of("MAINTENANCE", "MANAGEMENT", "CONTROLLER")),
+            Probe.of(HttpMethod.POST, "/api/maintenance/costs/repost-unposted", Set.of("ADMIN", "FINANCE_MANAGER"),
+                    Set.of("MAINTENANCE", "MANAGEMENT", "CONTROLLER")),
+            Probe.of(HttpMethod.GET, "/api/oee/summary", OEE_READERS, OEE_NON_READERS),
+            Probe.of(HttpMethod.GET, "/api/oee/machines", OEE_READERS, OEE_NON_READERS),
+            Probe.of(HttpMethod.GET, "/api/oee/machines/" + MISSING, OEE_READERS, OEE_NON_READERS),
+            Probe.of(HttpMethod.GET, "/api/oee/trend", OEE_READERS, OEE_NON_READERS),
+            Probe.of(HttpMethod.GET, "/api/oee/losses", OEE_READERS, OEE_NON_READERS),
+            Probe.of(HttpMethod.GET, "/api/oee/downtime-reasons", OEE_READERS, OEE_NON_READERS),
+            Probe.of(HttpMethod.GET, "/api/scheduling/gantt",
+                    Set.of("ADMIN", "PRODUCTION_MANAGER", "SUPERVISOR", "PLANNER", "MANAGEMENT"),
+                    Set.of("OPERATOR", "MAINTENANCE", "SALES", "STORE_MANAGER")),
+            Probe.of(HttpMethod.POST, "/api/scheduling/run?dryRun=true",
+                    Set.of("ADMIN", "PRODUCTION_MANAGER", "PLANNER"),
+                    Set.of("SUPERVISOR", "MANAGEMENT", "OPERATOR", "MAINTENANCE")),
+            Probe.withBody(HttpMethod.PUT, "/api/scheduling/operations/" + MISSING + "/schedule",
+                    "{\"machineId\":1,\"start\":\"2035-01-01T09:00:00Z\"}",
+                    Set.of("ADMIN", "PRODUCTION_MANAGER", "PLANNER"),
+                    Set.of("SUPERVISOR", "MANAGEMENT", "OPERATOR")),
+            Probe.of(HttpMethod.DELETE, "/api/scheduling/operations/" + MISSING + "/schedule",
+                    Set.of("ADMIN", "PRODUCTION_MANAGER", "PLANNER"),
+                    Set.of("SUPERVISOR", "MANAGEMENT", "OPERATOR")));
 
     @Autowired UserAdminService userAdminService;
     @Autowired JdbcTemplate jdbc;

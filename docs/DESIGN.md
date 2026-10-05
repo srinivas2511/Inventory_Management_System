@@ -2325,6 +2325,16 @@ CREATE TABLE spare_part_issue_lines (
 
 ---
 
+### 24.3 As built (R18)
+
+**OEE.** Per machine and business day the figures come from `mv_oee_daily` (trend) or the identical live query (everything else): `good_qty`, `bad_qty` (rejected + scrap), `ideal_minutes` (pieces x `operations.standard_time_min`), `bad_ideal_minutes`, `planned_downtime_min` (downtime of category PLANNED_MAINTENANCE plus activities of PREVENTIVE maintenance requests) and `unplanned_downtime_min` (all other downtime, split at business-day midnights). `OeeCalculator` turns days into the result: per day the stops are clamped to the planned time, then minutes are summed, then `Availability = operating / planned`, `Performance = min(1, ideal / operating)`, `Quality = good / (good + bad)`, `OEE = A x P x Q`. The loss Pareto ranks downtime by category, plus planned maintenance, reduced speed (`operating - ideal`) and rejects/scrap (`bad_ideal_minutes`).
+
+**Spare parts.** `spare_parts` (as 24.2, with `material_id` required and the standard columns) owns a material of type SPARE_PART; `spare_part_issue_lines` adds `warehouse_id`. Issues post `MAINTENANCE_ISSUE` through `InventoryPostingService`; the journal is Dr 5301 / Cr 1401 on the cost centre of the machine.
+
+**Maintenance cost.** `maintenance_requests` gains `labour_hours`, `labour_cost`, `cost_centre_id`, `labour_journal_header_id`, `cost_posted_at`. Labour posts Dr 5301 / Cr 5302 when the request completes (after commit, retriable). `machines.cost_centre_id` names the cost centre.
+
+**Scheduling.** `production_operations` gains `scheduled_start` and `scheduled_end` (the span of the planned work; CHECK end > start). Endpoints: `GET /api/scheduling/gantt`, `POST /api/scheduling/run?dryRun=`, `PUT|DELETE /api/scheduling/operations/{id}/schedule`. OEE endpoints: `GET /api/oee/summary|machines|machines/{id}|trend|losses|downtime-reasons`. Spare part endpoints: `/api/spare-parts`, `/api/maintenance/requests/{id}/spare-parts|activities|cost|post-cost`, `/api/maintenance/costs/unposted|repost-unposted`. The rules are in docs/decisions.md, section "R18 Advanced Manufacturing".
+
 ## 25. Analytics and Integration Design (R19)
 
 ### 25.1 Analytics architecture

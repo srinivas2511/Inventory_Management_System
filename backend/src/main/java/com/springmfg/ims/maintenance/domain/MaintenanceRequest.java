@@ -1,5 +1,6 @@
 package com.springmfg.ims.maintenance.domain;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 
@@ -49,6 +50,21 @@ public class MaintenanceRequest extends BaseEntity {
     @Column(name = "resolution_notes", length = 500)
     private String resolutionNotes;
 
+    @Column(name = "labour_hours", precision = 10, scale = 2)
+    private BigDecimal labourHours;
+
+    @Column(name = "labour_cost", precision = 18, scale = 4)
+    private BigDecimal labourCost;
+
+    @Column(name = "cost_centre_id")
+    private Long costCentreId;
+
+    @Column(name = "labour_journal_header_id")
+    private Long labourJournalHeaderId;
+
+    @Column(name = "cost_posted_at")
+    private Instant costPostedAt;
+
     public String getRequestNumber() { return requestNumber; }
     public void setRequestNumber(String requestNumber) { this.requestNumber = requestNumber; }
     public Long getMachineId() { return machineId; }
@@ -71,4 +87,14 @@ public class MaintenanceRequest extends BaseEntity {
     public void setCompletedAt(Instant completedAt) { this.completedAt = completedAt; }
     public String getResolutionNotes() { return resolutionNotes; }
     public void setResolutionNotes(String resolutionNotes) { this.resolutionNotes = resolutionNotes; }
+    public BigDecimal getLabourHours() { return labourHours; }
+    public void setLabourHours(BigDecimal v) { this.labourHours = v; }
+    public BigDecimal getLabourCost() { return labourCost; }
+    public void setLabourCost(BigDecimal v) { this.labourCost = v; }
+    public Long getCostCentreId() { return costCentreId; }
+    public void setCostCentreId(Long v) { this.costCentreId = v; }
+    public Long getLabourJournalHeaderId() { return labourJournalHeaderId; }
+    public void setLabourJournalHeaderId(Long v) { this.labourJournalHeaderId = v; }
+    public Instant getCostPostedAt() { return costPostedAt; }
+    public void setCostPostedAt(Instant v) { this.costPostedAt = v; }
 }

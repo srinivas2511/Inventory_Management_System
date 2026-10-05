@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -30,6 +31,7 @@ import { MaintenanceApi, MaintenanceRequestDto, PmScheduleDto } from './maintena
     MatSnackBarModule,
     MatTabsModule,
     DatePipe,
+    RouterLink,
     StatusBadgeComponent,
     HasPermissionDirective,
   ],
@@ -93,6 +95,9 @@ import { MaintenanceApi, MaintenanceRequestDto, PmScheduleDto } from './maintena
             <ng-container matColumnDef="actions">
               <th mat-header-cell *matHeaderCellDef>Actions</th>
               <td mat-cell *matCellDef="let r">
+                <a mat-icon-button matTooltip="Open" [routerLink]="['/maintenance/requests', r.id]" data-test="open">
+                  <mat-icon>open_in_new</mat-icon>
+                </a>
                 @if (r.status === 'OPEN') {
                   <button
                     mat-icon-button

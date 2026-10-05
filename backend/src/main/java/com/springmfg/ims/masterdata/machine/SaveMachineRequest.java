@@ -7,4 +7,5 @@ public record SaveMachineRequest(
         @NotBlank String name,
         String machineType,
         String productionLine,
-        String status) {}
+        String status,
+        Long costCentreId) {}

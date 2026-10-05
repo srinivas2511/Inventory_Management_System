@@ -10,7 +10,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.springmfg.ims.audit.service.AuditService;
 import com.springmfg.ims.auth.service.UserPermissionCache.CachedUser;
+import com.springmfg.ims.common.exception.BusinessRuleException;
+import com.springmfg.ims.common.exception.ErrorCode;
 import com.springmfg.ims.common.exception.NotFoundException;
+import com.springmfg.ims.production.domain.DowntimeCategory;
 import com.springmfg.ims.production.domain.ProductionDowntime;
 import com.springmfg.ims.production.dto.DowntimeDto;
 import com.springmfg.ims.production.dto.RecordDowntimeRequest;
@@ -33,8 +36,14 @@ public class ProductionDowntimeService {
         dt.setMachineId(req.machineId());
         dt.setProductionOrderId(req.productionOrderId());
         dt.setReason(req.reason());
-        dt.setCategory(req.category());
+        dt.setCategory(DowntimeCategory.validate(req.category()));
         dt.setStartedAt(req.startedAt() != null ? req.startedAt() : Instant.now());
+        if (req.endedAt() != null) {
+            if (!req.endedAt().isAfter(dt.getStartedAt())) {
+                throw new BusinessRuleException(ErrorCode.VALIDATION_FAILED, "Downtime must end after it starts");
+            }
+            dt.setEndedAt(req.endedAt());
+        }
         dt.setReportedBy(currentUserId());
         dt = repo.save(dt);
         auditService.record("DOWNTIME_RECORD", "ProductionDowntime", String.valueOf(dt.getId()),

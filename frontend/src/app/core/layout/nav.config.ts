@@ -138,6 +138,14 @@ export const NAV_GROUPS: NavGroup[] = [
         permission: 'PRODUCTION_EXECUTE',
         enabled: true,
       },
+      {
+        label: 'Schedule',
+        icon: 'view_timeline',
+        route: '/production/schedule',
+        permission: 'SCHEDULE_VIEW',
+        enabled: true,
+      },
+      { label: 'OEE', icon: 'speed', route: '/production/oee', permission: 'OEE_VIEW', enabled: true },
     ],
   },
   {
@@ -382,6 +390,13 @@ export const NAV_GROUPS: NavGroup[] = [
     label: 'Maintenance',
     items: [
       { label: 'Maintenance', icon: 'build', route: '/maintenance', permission: 'MAINTENANCE_VIEW', enabled: true },
+      {
+        label: 'Spare Parts',
+        icon: 'handyman',
+        route: '/maintenance/spare-parts',
+        permission: 'SPARE_PART_VIEW',
+        enabled: true,
+      },
     ],
   },
   {

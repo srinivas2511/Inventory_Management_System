@@ -17,6 +17,7 @@ public class AccountingFailureReporter {
 
     public static final String MISSING_AR_INVOICE = "MISSING_AR_INVOICE";
     public static final String MISSING_JOURNAL = "MISSING_JOURNAL";
+    public static final String MAINTENANCE_COST_UNPOSTED = "MAINTENANCE_COST_UNPOSTED";
 
     private static final int ALERT_MESSAGE_MAX = 300;
 
@@ -43,6 +44,18 @@ public class AccountingFailureReporter {
                                String reason) {
         alertService.raise(MISSING_JOURNAL, "HIGH", "INVENTORY_TRANSACTION", inventoryTransactionId,
                 fit("No GL journal for " + transactionType + " " + transactionNumber + ": " + reason));
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void maintenanceCostUnposted(Long maintenanceRequestId, String requestNumber, String reason) {
+        alertService.raise(MAINTENANCE_COST_UNPOSTED, "HIGH", "MAINTENANCE_REQUEST", maintenanceRequestId,
+                fit("Labour cost of maintenance request " + requestNumber + " is not in the GL: " + reason));
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void maintenanceCostPosted(Long maintenanceRequestId, String requestNumber) {
+        alertService.resolveOpen(MAINTENANCE_COST_UNPOSTED, "MAINTENANCE_REQUEST", maintenanceRequestId,
+                "Labour cost of maintenance request " + requestNumber + " posted");
     }
 
     private static String fit(String message) {

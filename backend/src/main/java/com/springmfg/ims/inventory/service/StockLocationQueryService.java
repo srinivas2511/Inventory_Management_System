@@ -229,7 +229,7 @@ public class StockLocationQueryService {
                        SUM(ABS(quantity) * unit_cost) AS value
                 FROM ims.inventory_transactions
                 WHERE transaction_date >= :since AND warehouse_id = :wh
-                  AND transaction_type IN ('MATERIAL_ISSUE', 'MATERIAL_CONSUMPTION', 'SALES_DISPATCH')
+                  AND transaction_type IN ('MATERIAL_ISSUE', 'MATERIAL_CONSUMPTION', 'SALES_DISPATCH', 'MAINTENANCE_ISSUE')
                 GROUP BY 1
                 """, new MapSqlParameterSource("since", java.sql.Timestamp.from(since)).addValue("wh", warehouseId),
                 (org.springframework.jdbc.core.RowCallbackHandler) rs -> out.put(rs.getString("item_key"),

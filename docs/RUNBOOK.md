@@ -238,3 +238,16 @@ Alerts are visible in **Insight → Alerts** and polled every 15 minutes by `Ale
 | Notification e-mails not arriving | Administration → Notification Admin → Delivery log, filter `FAILED` or `PENDING`. `last_error` names the failure (no credentials are logged). A `PENDING` row is retried with back-off (60 s, 120 s, ... capped at 1 h) until `notification.email.max_attempts`, then becomes `FAILED` and is not retried by itself. Fix SMTP, then re-create the notification or set the row back to `PENDING` with `next_attempt_at = now()`. |
 | Document download answers 404 | The file is missing from `DOCUMENTS_STORAGE_ROOT` (volume not mounted, or restored without the files). See "Document files" in section 6. |
 | Upload answers 413 or 415 | 413: larger than `documents.max_size_mb`. 415: extension not in `documents.allowed_extensions`, or the content does not match the extension (a `.pdf` that is not a PDF). |
+
+## 10. Advanced manufacturing (R18): settings and jobs
+
+| Item | What it does | Where |
+|---|---|---|
+| `mfg.calendar.shift_codes` | Comma-separated shift codes (see HR shifts) that make up planned production time for OEE and the working windows of the scheduler. Default `GENERAL`. Weekly offs and the time zone come from `hrm.weekly_off_days` and `hrm.timezone`. | Admin settings |
+| `mfg.schedule.default_horizon_days` | Planning horizon of an auto-schedule run when none is given (1 to 90, default 14). | Admin settings |
+| `OeeViewRefreshJob` | Refreshes the materialized view `mv_oee_daily` every 15 minutes (ShedLock). The OEE trend chart reads it, so it can be up to 15 minutes behind; the other OEE figures are live. If a node restarts, the next run refreshes it. To refresh at once: `REFRESH MATERIALIZED VIEW CONCURRENTLY ims.mv_oee_daily;` | Scheduled job |
+| Maintenance labour cost | When a maintenance request is completed its labour is posted to the GL after the completion commits. If posting fails (for example the fiscal period is closed) the request stays completed and a `MAINTENANCE_COST_UNPOSTED` alert is raised. Fix the cause, then `POST /api/maintenance/requests/{id}/post-cost` for one request or `POST /api/maintenance/costs/repost-unposted` for all (permission `MAINTENANCE_COST_POST`). `GET /api/maintenance/costs/unposted` lists them. | Alerts, API |
+| Machine cost centre | Maintenance cost is charged to `machines.cost_centre_id`; machines created before R18 were set to `CC-PROD-01`. Set it with `POST /api/machines` (optional `costCentreId`). Without one, the cost centre in setting `controlling.production_cost_centre_id` is used. | API |
+| Spare part stock | Spare parts are materials of type `SPARE_PART`. Receive them with a normal purchase order and goods receipt; the low-stock sweep and MRP safety stock use the minimum stock set on the part. | Purchasing |
+
+Scheduling notes: running the scheduler (`POST /api/scheduling/run`) with `dryRun=true` shows the proposal without saving anything. A full run replans every pending operation of the chosen orders; an operation keeps the machine it already has. After deploying R18, existing released orders have no scheduled windows until the first run.

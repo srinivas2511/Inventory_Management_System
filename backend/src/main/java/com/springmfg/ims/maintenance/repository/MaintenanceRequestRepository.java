@@ -20,6 +20,9 @@ public interface MaintenanceRequestRepository extends JpaRepository<MaintenanceR
 
     List<MaintenanceRequest> findByStatus(String status);
 
+    @Query("SELECT r FROM MaintenanceRequest r WHERE r.status = 'COMPLETED' AND r.costPostedAt IS NULL ORDER BY r.id")
+    List<MaintenanceRequest> findCompletedWithUnpostedCost();
+
     @Query("SELECT COUNT(r) FROM MaintenanceRequest r WHERE r.status IN :statuses")
     long countByStatusIn(@Param("statuses") List<String> statuses);
 }

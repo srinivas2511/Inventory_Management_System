@@ -54,6 +54,7 @@ public enum ErrorCode {
     DISPATCH_EXCEEDS_STOCK(HttpStatus.UNPROCESSABLE_ENTITY, "Dispatch exceeds available stock"),
     ORDER_LOCKED(HttpStatus.UNPROCESSABLE_ENTITY, "Order is locked"),
     ILLEGAL_STATE_TRANSITION(HttpStatus.UNPROCESSABLE_ENTITY, "Illegal state transition"),
+    SCHEDULE_CONFLICT(HttpStatus.CONFLICT, "Schedule conflict"),
     BOM_NOT_ACTIVE(HttpStatus.UNPROCESSABLE_ENTITY, "No active BOM"),
     SEGREGATION_OF_DUTIES(HttpStatus.UNPROCESSABLE_ENTITY, "Requester cannot approve own request"),
     APPROVAL_REQUIRED(HttpStatus.UNPROCESSABLE_ENTITY, "Approval required"),

@@ -28,13 +28,16 @@ public class AccountingBridgeService {
     private final InventoryAccountAssignmentRepository assignmentRepo;
     private final JournalService journalService;
     private final AccountingFailureReporter failureReporter;
+    private final List<JournalDimensionResolver> dimensionResolvers;
 
     public AccountingBridgeService(InventoryAccountAssignmentRepository assignmentRepo,
                                    JournalService journalService,
-                                   AccountingFailureReporter failureReporter) {
+                                   AccountingFailureReporter failureReporter,
+                                   List<JournalDimensionResolver> dimensionResolvers) {
         this.assignmentRepo = assignmentRepo;
         this.journalService = journalService;
         this.failureReporter = failureReporter;
+        this.dimensionResolvers = dimensionResolvers;
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
@@ -67,13 +70,14 @@ public class AccountingBridgeService {
                 return;
             }
 
+            Long costCentreId = costCentreFor(tx, assignment);
             List<JournalLineRequest> lines = List.of(
                     new JournalLineRequest(assignment.getGlAccountDebitId(), amount, BigDecimal.ZERO,
                             tx.getTransactionType() + " " + tx.getTransactionNumber(),
-                            assignment.getCostCentreId(), assignment.getProfitCentreId()),
+                            costCentreId, assignment.getProfitCentreId()),
                     new JournalLineRequest(assignment.getGlAccountCreditId(), BigDecimal.ZERO, amount,
                             tx.getTransactionType() + " " + tx.getTransactionNumber(),
-                            assignment.getCostCentreId(), assignment.getProfitCentreId())
+                            costCentreId, assignment.getProfitCentreId())
             );
 
             AutoJournalRequest req = new AutoJournalRequest(
@@ -94,6 +98,18 @@ public class AccountingBridgeService {
                     tx.getTransactionNumber(), e.getMessage(), e);
             report(tx, e.getMessage());
         }
+    }
+
+    /** The document that caused the movement may know a better cost centre than the assignment's default. */
+    private Long costCentreFor(com.springmfg.ims.inventory.domain.InventoryTransaction tx,
+                               InventoryAccountAssignment assignment) {
+        for (JournalDimensionResolver resolver : dimensionResolvers) {
+            Optional<Long> resolved = resolver.costCentreFor(tx.getReferenceType(), tx.getReferenceId());
+            if (resolved.isPresent()) {
+                return resolved.get();
+            }
+        }
+        return assignment.getCostCentreId();
     }
 
     /** The stock movement already committed, so the gap is made visible as an alert instead of an error. */

@@ -114,7 +114,7 @@ public class InventoryPostingService {
         auditService.record("STOCK_POSTED", "INVENTORY_TRANSACTION", String.valueOf(tx.getId()),
                 null, cmd.transactionType(), cmd.remarks());
 
-        return new PostingResult(tx.getId(), tx.getTransactionNumber(), bal.getQtyOnHand());
+        return new PostingResult(tx.getId(), tx.getTransactionNumber(), bal.getQtyOnHand(), tx.getUnitCost());
     }
 
     /**
@@ -172,8 +172,8 @@ public class InventoryPostingService {
         eventPublisher.publishEvent(new StockPostedEvent(inTx));
 
         return List.of(
-                new PostingResult(outTx.getId(), outTx.getTransactionNumber(), outBal.getQtyOnHand()),
-                new PostingResult(inTx.getId(), inTx.getTransactionNumber(), inBal.getQtyOnHand()));
+                new PostingResult(outTx.getId(), outTx.getTransactionNumber(), outBal.getQtyOnHand(), outTx.getUnitCost()),
+                new PostingResult(inTx.getId(), inTx.getTransactionNumber(), inBal.getQtyOnHand(), inTx.getUnitCost()));
     }
 
     /**
@@ -222,7 +222,7 @@ public class InventoryPostingService {
         auditService.record("STOCK_REVERSED", "INVENTORY_TRANSACTION",
                 String.valueOf(txId), String.valueOf(txId), String.valueOf(reversalTx.getId()), reason);
 
-        return new PostingResult(reversalTx.getId(), reversalTx.getTransactionNumber(), bal.getQtyOnHand());
+        return new PostingResult(reversalTx.getId(), reversalTx.getTransactionNumber(), bal.getQtyOnHand(), reversalTx.getUnitCost());
     }
 
     // ── reservation helpers (qty_reserved only — no transaction record) ───────
