@@ -158,7 +158,8 @@ public class DispatchService {
                     warehouseId, locationId,
                     "AVAILABLE",
                     line.quantity(), batch.getProduct().getUom(),
-                    unitPrice,
+                    // The out-leg is valued at the balance's carried cost (COGS), never at the selling price.
+                    batch.getUnitCost(),
                     "DISPATCH", dispatch.getId(), dispatch.getDispatchNumber(),
                     "Dispatch to customer " + order.getCustomerId()));
 

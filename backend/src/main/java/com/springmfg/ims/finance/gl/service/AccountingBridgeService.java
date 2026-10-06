@@ -47,6 +47,11 @@ public class AccountingBridgeService {
         if ("STOCK_TRANSFER".equals(tx.getTransactionType())) {
             return;
         }
+        // Consuming issued material only turns WIP stock into output: the GL was debited to WIP at issue and WIP is
+        // credited when the output is received, so consumption itself has no journal.
+        if ("MATERIAL_CONSUMPTION".equals(tx.getTransactionType())) {
+            return;
+        }
         try {
             Optional<InventoryAccountAssignment> assignmentOpt =
                     assignmentRepo.findByCompanyIdAndTransactionTypeAndItemType(
@@ -67,6 +72,10 @@ public class AccountingBridgeService {
             InventoryAccountAssignment assignment = assignmentOpt.get();
             BigDecimal amount = tx.getTotalCost().abs();
             if (amount.compareTo(BigDecimal.ZERO) == 0) {
+                // A zero-value movement of real stock leaves the GL out of step with the ledger; never skip it silently.
+                if (tx.getQuantity() != null && tx.getQuantity().signum() != 0) {
+                    report(tx, "zero-value movement (unit cost 0), so the GL does not reflect this stock");
+                }
                 return;
             }
 
