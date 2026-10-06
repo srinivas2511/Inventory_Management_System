@@ -18,12 +18,12 @@ import com.springmfg.ims.common.exception.BusinessRuleException;
 import com.springmfg.ims.common.exception.ErrorCode;
 import com.springmfg.ims.common.exception.NotFoundException;
 import com.springmfg.ims.common.numbering.DocumentNumberService;
-import com.springmfg.ims.inventory.domain.InventoryBalance;
 import com.springmfg.ims.inventory.domain.MaterialBatch;
 import com.springmfg.ims.inventory.dto.TransferCommand;
-import com.springmfg.ims.inventory.repository.InventoryBalanceRepository;
 import com.springmfg.ims.inventory.repository.MaterialBatchRepository;
 import com.springmfg.ims.inventory.service.InventoryPostingService;
+import com.springmfg.ims.inventory.service.StockLocationQueryService;
+import com.springmfg.ims.inventory.service.StockLocationQueryService.LocationStock;
 import com.springmfg.ims.procurement.event.GoodsReceivedForInspectionEvent;
 import com.springmfg.ims.procurement.repository.PurchaseOrderItemRepository;
 import com.springmfg.ims.quality.domain.InspectionPlan;
@@ -47,7 +47,7 @@ public class InspectionService {
     private final DocumentNumberService numberService;
     private final AuditService auditService;
     private final ApplicationEventPublisher events;
-    private final InventoryBalanceRepository balanceRepo;
+    private final StockLocationQueryService stockQuery;
     private final InventoryPostingService postingService;
 
     public InspectionService(
@@ -59,7 +59,7 @@ public class InspectionService {
             DocumentNumberService numberService,
             AuditService auditService,
             ApplicationEventPublisher events,
-            InventoryBalanceRepository balanceRepo,
+            StockLocationQueryService stockQuery,
             InventoryPostingService postingService) {
         this.inspectionRepo = inspectionRepo;
         this.inspectionItemRepo = inspectionItemRepo;
@@ -69,7 +69,7 @@ public class InspectionService {
         this.numberService = numberService;
         this.auditService = auditService;
         this.events = events;
-        this.balanceRepo = balanceRepo;
+        this.stockQuery = stockQuery;
         this.postingService = postingService;
     }
 
@@ -235,11 +235,11 @@ public class InspectionService {
     private void releaseQuarantine(QualityInspection insp, BigDecimal accepted, BigDecimal rejected) {
         BigDecimal toAccept = accepted;
         BigDecimal toReject = rejected;
-        List<InventoryBalance> quarantined = balanceRepo.findByMaterialId(insp.getMaterialId()).stream()
-                .filter(b -> insp.getMaterialBatchId().equals(b.getMaterialBatchId())
-                        && "QUARANTINE".equals(b.getStockStatus()) && b.getQtyOnHand().signum() > 0)
+        List<LocationStock> quarantined = stockQuery
+                .stockOfBatch("MATERIAL", insp.getMaterialId(), insp.getMaterialBatchId()).stream()
+                .filter(b -> "QUARANTINE".equals(b.stockStatus()))
                 .toList();
-        BigDecimal available = quarantined.stream().map(InventoryBalance::getQtyOnHand)
+        BigDecimal available = quarantined.stream().map(LocationStock::qtyOnHand)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal needed = accepted.add(rejected);
         if (available.compareTo(needed) < 0) {
@@ -247,8 +247,8 @@ public class InspectionService {
                     "Batch " + insp.getMaterialBatchId() + " has only " + available.toPlainString()
                             + " in QUARANTINE; the decision needs " + needed.toPlainString());
         }
-        for (InventoryBalance bal : quarantined) {
-            BigDecimal here = bal.getQtyOnHand();
+        for (LocationStock bal : quarantined) {
+            BigDecimal here = bal.qtyOnHand();
             BigDecimal acceptHere = toAccept.min(here);
             toAccept = toAccept.subtract(acceptHere);
             BigDecimal rejectHere = toReject.min(here.subtract(acceptHere));
@@ -258,15 +258,15 @@ public class InspectionService {
         }
     }
 
-    private void moveQuarantined(QualityInspection insp, InventoryBalance bal, BigDecimal qty, String toStatus,
+    private void moveQuarantined(QualityInspection insp, LocationStock bal, BigDecimal qty, String toStatus,
             String remarks) {
         if (qty.signum() <= 0) {
             return;
         }
         postingService.transfer(new TransferCommand(
                 "MATERIAL", insp.getMaterialId(), null, insp.getMaterialBatchId(), null,
-                bal.getWarehouseId(), bal.getLocationId(), "QUARANTINE",
-                bal.getWarehouseId(), bal.getLocationId(), toStatus,
+                bal.warehouseId(), bal.locationId(), "QUARANTINE",
+                bal.warehouseId(), bal.locationId(), toStatus,
                 qty, null,
                 "QUALITY_INSPECTION", insp.getId(), insp.getInspectionNumber(), remarks));
     }

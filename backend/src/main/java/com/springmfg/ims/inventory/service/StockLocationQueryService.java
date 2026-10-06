@@ -102,6 +102,18 @@ public class StockLocationQueryService {
                         .addValue("batch", batchId), STOCK_MAPPER);
     }
 
+    /** Stock rows of one batch at every location and in every stock status, with a positive on-hand quantity. */
+    @Transactional(readOnly = true)
+    public List<LocationStock> stockOfBatch(String itemType, Long itemId, Long batchId) {
+        flush();
+        String itemCol = "MATERIAL".equals(itemType) ? "b.material_id" : "b.product_id";
+        String batchCol = "MATERIAL".equals(itemType) ? "b.material_batch_id" : "b.fg_batch_id";
+        return jdbc.query(STOCK_SELECT + " WHERE b.item_type = :it AND " + itemCol + " = :item AND " + batchCol
+                        + " = :batch AND b.qty_on_hand > 0 ORDER BY b.location_id, b.stock_status",
+                new MapSqlParameterSource("it", itemType).addValue("item", itemId).addValue("batch", batchId),
+                STOCK_MAPPER);
+    }
+
     /**
      * Pickable stock of an item in first-expiry/first-in order: materials by expiry then receipt date, finished
      * goods by production date. Only released stock is returned (AVAILABLE for materials, APPROVED for products).
