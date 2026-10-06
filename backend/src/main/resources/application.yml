@@ -61,6 +61,9 @@ management:
       probes:
         enabled: true
       show-details: never
+      group:
+        readiness:
+          include: readinessState,db
   info:
     build:
       enabled: true
@@ -84,5 +87,15 @@ ims:
   notification:
     from: ${NOTIFICATION_FROM:noreply@ims.local}
     outbox-delay-ms: 30000
+  integration:
+    # 32 random bytes, base64. Webhook secrets are stored AES-GCM encrypted under this key; without it none can be created.
+    secret-key: ${IMS_INTEGRATION_SECRET_KEY:}
+    webhook:
+      allow-private-targets: false     # true only for local development against http://localhost targets
+      poll-delay-ms: 30000
+  ai:
+    forecast:
+      url: ${IMS_AI_FORECAST_URL:}     # empty = no AI forecasting; manual forecasts only
+      api-key: ${IMS_AI_FORECAST_API_KEY:}
   demo:
     load-data: false           # true only under the dev/demo profile (Phase 8 loader)

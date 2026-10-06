@@ -33,7 +33,6 @@ public class SpringSpecification {
 
     public SpringSpecification(Product product) {
         this.product = product;
-        this.productId = product.getId();
     }
 
     public Long getProductId() { return productId; }

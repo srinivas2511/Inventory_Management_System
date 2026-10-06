@@ -4,3 +4,9 @@ ims:
   notification:
     # The outbox job never fires during a test run; tests drive NotificationOutboxJob.processDue() themselves.
     outbox-delay-ms: 3600000
+  integration:
+    # test-only key (32 bytes of 0x42, base64); never a real secret
+    secret-key: QkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkI=
+    webhook:
+      allow-private-targets: true    # the tests deliver to a server on localhost
+      poll-delay-ms: 3600000         # the delivery job never fires on its own; tests call processDue()

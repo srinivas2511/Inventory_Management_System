@@ -434,6 +434,34 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'analytics',
+        title: 'Analytical Dashboards',
+        canActivate: [permissionGuard('ANALYTICS_VIEW')],
+        loadComponent: () =>
+          import('./features/analytics/analytics-dashboards.component').then((m) => m.AnalyticsDashboardsComponent),
+      },
+      {
+        path: 'analytics/explorer',
+        title: 'Analytics Explorer',
+        canActivate: [permissionGuard('ANALYTICS_VIEW')],
+        loadComponent: () =>
+          import('./features/analytics/analytics-explorer.component').then((m) => m.AnalyticsExplorerComponent),
+      },
+      {
+        path: 'admin/webhooks',
+        title: 'Webhooks',
+        canActivate: [permissionGuard('WEBHOOK_VIEW')],
+        loadComponent: () =>
+          import('./features/integration/webhook-admin.component').then((m) => m.WebhookAdminComponent),
+      },
+      {
+        path: 'admin/data',
+        title: 'Data Import and Export',
+        canActivate: [permissionGuard('DATA_EXPORT')],
+        loadComponent: () =>
+          import('./features/integration/data-exchange.component').then((m) => m.DataExchangeComponent),
+      },
+      {
         path: 'admin/notifications',
         title: 'Notification Administration',
         canActivate: [permissionGuard('NOTIFICATION_MANAGE')],

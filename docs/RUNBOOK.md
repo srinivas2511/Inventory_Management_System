@@ -251,3 +251,9 @@ Alerts are visible in **Insight → Alerts** and polled every 15 minutes by `Ale
 | Spare part stock | Spare parts are materials of type `SPARE_PART`. Receive them with a normal purchase order and goods receipt; the low-stock sweep and MRP safety stock use the minimum stock set on the part. | Purchasing |
 
 Scheduling notes: running the scheduler (`POST /api/scheduling/run`) with `dryRun=true` shows the proposal without saving anything. A full run replans every pending operation of the chosen orders; an operation keeps the machine it already has. After deploying R18, existing released orders have no scheduled windows until the first run.
+
+## Analytics and integration (R19)
+
+New environment variables: `IMS_INTEGRATION_SECRET_KEY` (32 random bytes, base64; required to create webhooks; losing it makes stored webhook secrets unreadable, so rotate them), `IMS_AI_FORECAST_URL` and `IMS_AI_FORECAST_API_KEY` (optional).
+Health: `/actuator/health/readiness` covers the database only; the `integration` indicator in `/actuator/health` shows the webhook backlog and never takes the application out of service. Alert an external monitor on readiness failures and on `WEBHOOK_DELIVERY_FAILED` alerts.
+BI tools: create a login role that is a member of `ims_reporting` (`CREATE ROLE bi LOGIN PASSWORD '...' IN ROLE ims_reporting;`) and point the tool at schema `reporting`.

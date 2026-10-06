@@ -80,6 +80,8 @@ class ArFromDispatchIT extends AbstractIntegrationTest {
     @Autowired WarehouseLocationRepository locationRepo;
     @Autowired GlAccountResolver glAccounts;
     @Autowired TestData td;
+    @Autowired com.springmfg.ims.integration.webhook.service.WebhookAdminService webhooks;
+    @Autowired com.springmfg.ims.integration.webhook.repository.WebhookDeliveryRepository webhookDeliveries;
 
     private Long customerId;
     private Long productId;
@@ -246,6 +248,37 @@ class ArFromDispatchIT extends AbstractIntegrationTest {
         ArInvoiceDto afterFull = arService.recordReceipt(inv.getId(),
                 new ArReceiptRequest(LocalDate.now(), new BigDecimal("600.0000"), "BANK_TRANSFER", "UTR-2"));
         assertThat(afterFull.status()).isEqualTo("PAID");
+    }
+
+    @Test
+    @DisplayName("AR-08: only the receipt that settles an invoice queues an InvoicePaid webhook")
+    void settlingReceipt_queuesInvoicePaidWebhook() {
+        var sub = webhooks.create(new com.springmfg.ims.integration.webhook.dto.WebhookDtos.SaveWebhookRequest(
+                "AR-08 hook", "https://example.com/hook", java.util.List.of("InvoicePaid"), true, null));
+        try {
+            DispatchDto d = dispatch(LocalDate.now(), line("10.000", "100.0000"));
+            ArInvoice inv = arInvoiceRepo.findByDispatchId(d.id()).orElseThrow();
+            String key = "InvoicePaid:" + inv.getId();
+
+            arService.recordReceipt(inv.getId(),
+                    new ArReceiptRequest(LocalDate.now(), new BigDecimal("400.0000"), "BANK_TRANSFER", "UTR-A"));
+            assertThat(webhookDeliveries.existsBySubscriptionIdAndEventKey(sub.webhook().id(), key))
+                    .as("a partial receipt settles nothing").isFalse();
+
+            arService.recordReceipt(inv.getId(),
+                    new ArReceiptRequest(LocalDate.now(), new BigDecimal("600.0000"), "BANK_TRANSFER", "UTR-B"));
+            var queued = webhookDeliveries.search(sub.webhook().id(), "", org.springframework.data.domain.PageRequest.of(0, 10));
+            assertThat(queued.getContent()).hasSize(1);
+            assertThat(queued.getContent().get(0).getEventKey()).isEqualTo(key);
+            assertThat(queued.getContent().get(0).getEventType()).isEqualTo("InvoicePaid");
+            assertThat(queued.getContent().get(0).getPayload()).containsEntry("invoiceNumber", inv.getInvoiceNumber())
+                    .containsEntry("currency", "INR");
+            assertThat(new BigDecimal(String.valueOf(queued.getContent().get(0).getPayload().get("totalAmount"))))
+                    .isEqualByComparingTo("1000.0000");
+        } finally {
+            webhooks.update(sub.webhook().id(), new com.springmfg.ims.integration.webhook.dto.WebhookDtos.SaveWebhookRequest(
+                    "AR-08 hook", "https://example.com/hook", java.util.List.of("InvoicePaid"), false, null));
+        }
     }
 
     @Test

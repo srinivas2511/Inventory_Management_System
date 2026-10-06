@@ -209,6 +209,20 @@ export const NAV_GROUPS: NavGroup[] = [
       },
       { label: 'Reports', icon: 'assessment', route: '/insight/reports', permission: 'REPORT_VIEW', enabled: true },
       {
+        label: 'Analytics',
+        icon: 'insights',
+        route: '/analytics',
+        permission: 'ANALYTICS_VIEW',
+        enabled: true,
+      },
+      {
+        label: 'Analytics Explorer',
+        icon: 'query_stats',
+        route: '/analytics/explorer',
+        permission: 'ANALYTICS_VIEW',
+        enabled: true,
+      },
+      {
         label: 'Traceability',
         icon: 'track_changes',
         route: '/insight/traceability',
@@ -416,6 +430,20 @@ export const NAV_GROUPS: NavGroup[] = [
         icon: 'mark_email_read',
         route: '/admin/notifications',
         permission: 'NOTIFICATION_MANAGE',
+        enabled: true,
+      },
+      {
+        label: 'Webhooks',
+        icon: 'webhook',
+        route: '/admin/webhooks',
+        permission: 'WEBHOOK_VIEW',
+        enabled: true,
+      },
+      {
+        label: 'Data Import / Export',
+        icon: 'import_export',
+        route: '/admin/data',
+        permission: 'DATA_EXPORT',
         enabled: true,
       },
       {

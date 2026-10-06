@@ -69,6 +69,30 @@ class RoleAccessIT extends AbstractIntegrationTest {
     private static final Set<String> OEE_NON_READERS = Set.of("OPERATOR", "SALES", "STORE_MANAGER", "QUALITY_MANAGER",
             "DISPATCH");
 
+    // analytics and integration (R19)
+    private static final Set<String> ANALYTICS_READERS = Set.of("ADMIN", "MANAGEMENT", "CONTROLLER", "FINANCE_MANAGER",
+            "PRODUCTION_MANAGER", "PURCHASE_MANAGER");
+    private static final Set<String> ANALYTICS_NON_READERS = Set.of("ENGINEER", "SUPERVISOR", "OPERATOR",
+            "QUALITY_MANAGER", "STORE_MANAGER", "SALES", "DISPATCH", "MAINTENANCE", "STORE_OPERATOR", "ACCOUNTANT",
+            "PLANNER");
+    private static final Set<String> ANALYTICS_FINANCE_READERS = Set.of("ADMIN", "MANAGEMENT", "CONTROLLER",
+            "FINANCE_MANAGER");
+    private static final Set<String> ANALYTICS_FINANCE_NON_READERS = Set.of("PRODUCTION_MANAGER", "PURCHASE_MANAGER",
+            "ENGINEER", "SUPERVISOR", "OPERATOR", "SALES", "ACCOUNTANT", "PLANNER");
+    private static final Set<String> ADMIN_ONLY = Set.of("ADMIN");
+    private static final Set<String> NOT_ADMIN = Set.of("MANAGEMENT", "FINANCE_MANAGER", "CONTROLLER", "PRODUCTION_MANAGER",
+            "PURCHASE_MANAGER", "ENGINEER", "SUPERVISOR", "OPERATOR", "SALES", "DISPATCH", "MAINTENANCE",
+            "STORE_MANAGER", "STORE_OPERATOR", "ACCOUNTANT", "PLANNER", "QUALITY_MANAGER");
+    private static final Set<String> FORECAST_PLANNERS = Set.of("ADMIN", "PLANNER");
+    private static final Set<String> FORECAST_NON_PLANNERS = Set.of("MANAGEMENT", "PRODUCTION_MANAGER", "PURCHASE_MANAGER",
+            "OPERATOR", "SALES", "FINANCE_MANAGER");
+    private static final Set<String> TALLY_EXPORTERS = Set.of("ADMIN", "FINANCE_MANAGER");
+    private static final Set<String> TALLY_NON_EXPORTERS = Set.of("MANAGEMENT", "CONTROLLER", "ACCOUNTANT",
+            "PRODUCTION_MANAGER", "PURCHASE_MANAGER", "OPERATOR", "SALES");
+    /** Inactive on purpose: the permitted caller creates a subscription that never receives an event. */
+    private static final String WEBHOOK_BODY =
+            "{\"name\":\"rbac probe\",\"targetUrl\":\"https://example.com/hook\",\"events\":[\"StockPosted\"],\"active\":false}";
+
     /** One probed endpoint: who must get in, and who must be stopped with 403. */
     private record Probe(HttpMethod method, String path, String body, Set<String> allowed, Set<String> forbidden) {
         static Probe of(HttpMethod method, String path, Set<String> allowed, Set<String> forbidden) {
@@ -268,7 +292,37 @@ class RoleAccessIT extends AbstractIntegrationTest {
                     Set.of("SUPERVISOR", "MANAGEMENT", "OPERATOR")),
             Probe.of(HttpMethod.DELETE, "/api/scheduling/operations/" + MISSING + "/schedule",
                     Set.of("ADMIN", "PRODUCTION_MANAGER", "PLANNER"),
-                    Set.of("SUPERVISOR", "MANAGEMENT", "OPERATOR")));
+                    Set.of("SUPERVISOR", "MANAGEMENT", "OPERATOR")),
+            // analytics: the query endpoint, with finance queries needing the second permission
+            Probe.of(HttpMethod.GET, "/api/analytics/catalogue", ANALYTICS_READERS, ANALYTICS_NON_READERS),
+            Probe.of(HttpMethod.GET, "/api/analytics/query?key=PRODUCTION_MONTHLY", ANALYTICS_READERS, ANALYTICS_NON_READERS),
+            Probe.of(HttpMethod.GET, "/api/analytics/query?key=SUPPLIER_SCORECARD", ANALYTICS_READERS, ANALYTICS_NON_READERS),
+            Probe.of(HttpMethod.GET, "/api/analytics/query?key=FIN_SUMMARY_MONTHLY", ANALYTICS_FINANCE_READERS,
+                    ANALYTICS_FINANCE_NON_READERS),
+            Probe.of(HttpMethod.GET, "/api/analytics/query?key=COST_VARIANCE", ANALYTICS_FINANCE_READERS,
+                    ANALYTICS_FINANCE_NON_READERS),
+            Probe.of(HttpMethod.POST, "/api/analytics/refresh", ADMIN_ONLY, NOT_ADMIN),
+            Probe.of(HttpMethod.POST, "/api/analytics/anomalies/run", ADMIN_ONLY, NOT_ADMIN),
+            Probe.of(HttpMethod.GET, "/api/analytics/forecast/provider", FORECAST_PLANNERS, FORECAST_NON_PLANNERS),
+            Probe.of(HttpMethod.POST, "/api/analytics/forecast/generate", FORECAST_PLANNERS, FORECAST_NON_PLANNERS),
+            // webhooks
+            Probe.of(HttpMethod.GET, "/api/integration/webhooks", ADMIN_ONLY, NOT_ADMIN),
+            Probe.of(HttpMethod.GET, "/api/integration/webhooks/event-types", ADMIN_ONLY, NOT_ADMIN),
+            Probe.of(HttpMethod.GET, "/api/integration/webhooks/" + MISSING, ADMIN_ONLY, NOT_ADMIN),
+            Probe.of(HttpMethod.GET, "/api/integration/webhook-deliveries", ADMIN_ONLY, NOT_ADMIN),
+            Probe.withBody(HttpMethod.POST, "/api/integration/webhooks", WEBHOOK_BODY, ADMIN_ONLY, NOT_ADMIN),
+            Probe.withBody(HttpMethod.PUT, "/api/integration/webhooks/" + MISSING, WEBHOOK_BODY, ADMIN_ONLY, NOT_ADMIN),
+            Probe.of(HttpMethod.POST, "/api/integration/webhooks/" + MISSING + "/rotate-secret", ADMIN_ONLY, NOT_ADMIN),
+            Probe.of(HttpMethod.POST, "/api/integration/webhooks/" + MISSING + "/test", ADMIN_ONLY, NOT_ADMIN),
+            Probe.of(HttpMethod.POST, "/api/integration/webhook-deliveries/" + MISSING + "/retry", ADMIN_ONLY, NOT_ADMIN),
+            // bulk import (the upload itself is covered by ImportIT: argument binding precedes method security there)
+            Probe.of(HttpMethod.GET, "/api/integration/import", ADMIN_ONLY, NOT_ADMIN),
+            Probe.of(HttpMethod.GET, "/api/integration/import/customers/template", ADMIN_ONLY, NOT_ADMIN),
+            // export and Tally
+            Probe.of(HttpMethod.GET, "/api/integration/export", ADMIN_ONLY, NOT_ADMIN),
+            Probe.of(HttpMethod.GET, "/api/integration/export/customers", ADMIN_ONLY, NOT_ADMIN),
+            Probe.of(HttpMethod.GET, "/api/integration/tally/ledgers", TALLY_EXPORTERS, TALLY_NON_EXPORTERS),
+            Probe.of(HttpMethod.GET, "/api/integration/tally/vouchers", TALLY_EXPORTERS, TALLY_NON_EXPORTERS));
 
     @Autowired UserAdminService userAdminService;
     @Autowired JdbcTemplate jdbc;
@@ -304,6 +358,8 @@ class RoleAccessIT extends AbstractIntegrationTest {
     @AfterAll
     void removeTheUsers() {
         String like = "rbac_%_" + runId;
+        // an alert raised by a probe (the anomaly sweep) notifies the users who hold the matching role
+        jdbc.update("DELETE FROM notifications WHERE user_id IN (SELECT id FROM users WHERE username LIKE ?)", like);
         jdbc.update("DELETE FROM refresh_tokens WHERE user_id IN (SELECT id FROM users WHERE username LIKE ?)", like);
         jdbc.update("DELETE FROM password_history WHERE user_id IN (SELECT id FROM users WHERE username LIKE ?)",
                 like);

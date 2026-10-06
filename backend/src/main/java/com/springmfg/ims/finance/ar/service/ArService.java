@@ -1,6 +1,7 @@
 package com.springmfg.ims.finance.ar.service;
 
 import com.springmfg.ims.audit.service.AuditService;
+import com.springmfg.ims.common.event.InvoicePaidEvent;
 import com.springmfg.ims.common.exception.BusinessRuleException;
 import com.springmfg.ims.common.exception.ErrorCode;
 import com.springmfg.ims.common.exception.NotFoundException;
@@ -26,6 +27,7 @@ import com.springmfg.ims.sales.repository.DispatchRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,6 +49,7 @@ public class ArService {
     private static final String REVENUE = "4001";
     private static final String BANK = "1201";
 
+    private final ApplicationEventPublisher events;
     private final ArInvoiceRepository arInvoiceRepo;
     private final ArReceiptRepository arReceiptRepo;
     private final DispatchRepository dispatchRepo;
@@ -67,7 +70,8 @@ public class ArService {
                      DocumentNumberService numberService,
                      AuditService auditService,
                      CustomerRepository customerRepo,
-                     GlAccountResolver glAccounts) {
+                     GlAccountResolver glAccounts,
+                     ApplicationEventPublisher events) {
         this.arInvoiceRepo = arInvoiceRepo;
         this.arReceiptRepo = arReceiptRepo;
         this.dispatchRepo = dispatchRepo;
@@ -78,6 +82,7 @@ public class ArService {
         this.auditService = auditService;
         this.customerRepo = customerRepo;
         this.glAccounts = glAccounts;
+        this.events = events;
     }
 
     /**
@@ -175,8 +180,14 @@ public class ArService {
 
         BigDecimal newReceived = inv.getReceivedAmount().add(req.amount());
         inv.setReceivedAmount(newReceived);
-        inv.setStatus(newReceived.compareTo(inv.getTotalAmount()) >= 0 ? "PAID" : "PARTIALLY_PAID");
-        return toDto(arInvoiceRepo.save(inv));
+        boolean settled = newReceived.compareTo(inv.getTotalAmount()) >= 0;
+        inv.setStatus(settled ? "PAID" : "PARTIALLY_PAID");
+        ArInvoice saved = arInvoiceRepo.save(inv);
+        if (settled) {
+            events.publishEvent(new InvoicePaidEvent(saved.getId(), saved.getInvoiceNumber(), saved.getCustomerId(),
+                    saved.getTotalAmount(), saved.getCurrencyCode()));
+        }
+        return toDto(saved);
     }
 
     @Transactional(readOnly = true)

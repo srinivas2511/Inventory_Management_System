@@ -68,6 +68,8 @@ const STATUS_MAP: Record<string, { color: StatusColor; icon: string; label?: str
   REQUIRED: { color: 'orange', icon: 'assignment_late' },
   PASSED: { color: 'green', icon: 'check_circle' },
   FAILED: { color: 'red', icon: 'cancel' },
+  DELIVERED: { color: 'green', icon: 'mark_email_read' },
+  RETRY: { color: 'amber', icon: 'schedule' },
 };
 
 @Component({
