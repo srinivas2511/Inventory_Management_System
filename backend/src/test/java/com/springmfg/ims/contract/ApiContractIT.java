@@ -144,7 +144,11 @@ class ApiContractIT extends AbstractIntegrationTest {
             }
             String pair = c.verb() + " " + c.url() + " -> " + best.pattern();
             checkResponse(fs, c, best, violations, checkedPairs.add("R|" + pair + "|" + c.generic()));
-            checkBody(fs, c, best, violations);
+            // A weak match means a variable segment (e.g. /{id}/{action}) fits several endpoints and "best" is merely the
+            // first of them in an unordered list, so its body must not be held against the call.
+            if (!bestWeak) {
+                checkBody(fs, c, best, violations);
+            }
             if (methodCalls.get(c.methodKey()) == 1) {
                 checkParams(c, best, violations);
             }
