@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
+import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Router, RouterLink } from '@angular/router';
 import { DecimalPipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -13,23 +13,14 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
-
-export interface QualityInspectionDto {
-  id: number;
-  inspectionNumber: string;
-  inspectionType: string;
-  status: string;
-  materialId: number;
-  inspectedQty: number;
-  acceptedQty: number;
-  rejectedQty: number;
-}
+import { InspectionApi, QualityInspectionDto } from './inspection.api';
 
 @Component({
   selector: 'app-inspection-list',
   standalone: true,
   imports: [
     ReactiveFormsModule,
+    RouterLink,
     MatTableModule,
     MatButtonModule,
     MatIconModule,
@@ -73,13 +64,48 @@ export interface QualityInspectionDto {
       <button mat-stroked-button (click)="load()"><mat-icon>refresh</mat-icon> Refresh</button>
     </div>
 
+    <div class="filter-bar" *appHasPermission="'QUALITY_INSPECT'">
+      <mat-form-field appearance="outline">
+        <mat-label>Production operation ID</mat-label>
+        <input matInput type="number" min="1" [formControl]="operationCtrl" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Inspected qty</mat-label>
+        <input matInput type="number" min="0" step="any" [formControl]="inProcessQtyCtrl" />
+      </mat-form-field>
+      <button
+        mat-stroked-button
+        (click)="startInProcess()"
+        [disabled]="operationCtrl.invalid || inProcessQtyCtrl.invalid || creating()"
+      >
+        <mat-icon>add</mat-icon> New in-process inspection
+      </button>
+      <mat-form-field appearance="outline">
+        <mat-label>FG batch ID</mat-label>
+        <input matInput type="number" min="1" [formControl]="fgBatchCtrl" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Inspected qty</mat-label>
+        <input matInput type="number" min="0" step="any" [formControl]="finalQtyCtrl" />
+      </mat-form-field>
+      <button
+        mat-stroked-button
+        (click)="startFinal()"
+        [disabled]="fgBatchCtrl.invalid || finalQtyCtrl.invalid || creating()"
+      >
+        <mat-icon>add</mat-icon> New final inspection
+      </button>
+    </div>
+
     @if (loading()) {
       <div class="loading-center"><mat-spinner diameter="40" /></div>
     } @else {
       <table mat-table [dataSource]="rows()" class="mat-elevation-z1">
         <ng-container matColumnDef="inspectionNumber">
           <th mat-header-cell *matHeaderCellDef>Inspection #</th>
-          <td mat-cell *matCellDef="let r">{{ r.inspectionNumber }}</td>
+          <td mat-cell *matCellDef="let r">
+            <a [routerLink]="['/quality/inspections', r.id]">{{ r.inspectionNumber }}</a>
+          </td>
         </ng-container>
         <ng-container matColumnDef="inspectionType">
           <th mat-header-cell *matHeaderCellDef>Type</th>
@@ -89,9 +115,9 @@ export interface QualityInspectionDto {
           <th mat-header-cell *matHeaderCellDef>Status</th>
           <td mat-cell *matCellDef="let r"><app-status-badge [status]="r.status" /></td>
         </ng-container>
-        <ng-container matColumnDef="materialId">
-          <th mat-header-cell *matHeaderCellDef>Material</th>
-          <td mat-cell *matCellDef="let r">{{ r.materialId }}</td>
+        <ng-container matColumnDef="reference">
+          <th mat-header-cell *matHeaderCellDef>Reference</th>
+          <td mat-cell *matCellDef="let r">{{ reference(r) }}</td>
         </ng-container>
         <ng-container matColumnDef="inspectedQty">
           <th mat-header-cell *matHeaderCellDef>Inspected</th>
@@ -99,31 +125,18 @@ export interface QualityInspectionDto {
         </ng-container>
         <ng-container matColumnDef="acceptedQty">
           <th mat-header-cell *matHeaderCellDef>Accepted</th>
-          <td mat-cell *matCellDef="let r">{{ r.acceptedQty | number: '1.3-3' }}</td>
+          <td mat-cell *matCellDef="let r">{{ r.acceptedQty ?? 0 | number: '1.3-3' }}</td>
         </ng-container>
         <ng-container matColumnDef="rejectedQty">
           <th mat-header-cell *matHeaderCellDef>Rejected</th>
-          <td mat-cell *matCellDef="let r">{{ r.rejectedQty | number: '1.3-3' }}</td>
+          <td mat-cell *matCellDef="let r">{{ r.rejectedQty ?? 0 | number: '1.3-3' }}</td>
         </ng-container>
         <ng-container matColumnDef="actions">
           <th mat-header-cell *matHeaderCellDef></th>
           <td mat-cell *matCellDef="let r">
-            @if (r.status === 'PENDING' || r.status === 'IN_PROGRESS') {
-              <button
-                mat-icon-button
-                matTooltip="Record Results"
-                *appHasPermission="'QUALITY_INSPECT'"
-                (click)="submitResult(r.id)"
-              >
-                <mat-icon>assignment</mat-icon>
-              </button>
-              <button mat-icon-button matTooltip="Approve" *appHasPermission="'QUALITY_INSPECT'" (click)="accept(r.id)">
-                <mat-icon>check_circle</mat-icon>
-              </button>
-              <button mat-icon-button matTooltip="Reject" *appHasPermission="'QUALITY_INSPECT'" (click)="reject(r.id)">
-                <mat-icon>cancel</mat-icon>
-              </button>
-            }
+            <a mat-icon-button [routerLink]="['/quality/inspections', r.id]" matTooltip="Open">
+              <mat-icon>open_in_new</mat-icon>
+            </a>
           </td>
         </ng-container>
 
@@ -134,14 +147,15 @@ export interface QualityInspectionDto {
   `,
 })
 export class InspectionListComponent implements OnInit {
-  private http = inject(HttpClient);
+  private api = inject(InspectionApi);
   private snack = inject(MatSnackBar);
+  private router = inject(Router);
 
   columns = [
     'inspectionNumber',
     'inspectionType',
     'status',
-    'materialId',
+    'reference',
     'inspectedQty',
     'acceptedQty',
     'rejectedQty',
@@ -149,8 +163,13 @@ export class InspectionListComponent implements OnInit {
   ];
   rows = signal<QualityInspectionDto[]>([]);
   loading = signal(false);
+  creating = signal(false);
   typeCtrl = new FormControl<string | null>(null);
   statusCtrl = new FormControl<string | null>(null);
+  operationCtrl = new FormControl<number | null>(null, [Validators.required, Validators.min(1)]);
+  inProcessQtyCtrl = new FormControl<number | null>(null, [Validators.required, Validators.min(0.001)]);
+  fgBatchCtrl = new FormControl<number | null>(null, [Validators.required, Validators.min(1)]);
+  finalQtyCtrl = new FormControl<number | null>(null, [Validators.required, Validators.min(0.001)]);
 
   ngOnInit(): void {
     this.typeCtrl.valueChanges.subscribe(() => this.load());
@@ -158,14 +177,16 @@ export class InspectionListComponent implements OnInit {
     this.load();
   }
 
+  reference(r: QualityInspectionDto): string {
+    if (r.grNumber) return `${r.grNumber} · ${r.materialCode ?? ''} ${r.batchNumber ?? ''}`.trim();
+    if (r.productionOperationId) return `Operation ${r.productionOperationId}`;
+    if (r.fgBatchId) return `FG batch ${r.fgBatchId}`;
+    return '';
+  }
+
   load(): void {
     this.loading.set(true);
-    const params: Record<string, string> = {};
-    const t = this.typeCtrl.value;
-    const s = this.statusCtrl.value;
-    if (t) params['type'] = t;
-    if (s) params['status'] = s;
-    this.http.get<{ content: QualityInspectionDto[] }>('/api/quality/inspections', { params }).subscribe({
+    this.api.list(this.typeCtrl.value, this.statusCtrl.value).subscribe({
       next: (page) => {
         this.rows.set(page.content ?? []);
         this.loading.set(false);
@@ -174,37 +195,30 @@ export class InspectionListComponent implements OnInit {
     });
   }
 
-  submitResult(id: number): void {
-    // Minimal: submit with zero quantities to open the inspection for recording
-    const body = { acceptedQty: 0, rejectedQty: 0, remarks: '', items: [] };
-    this.http.post<QualityInspectionDto>(`/api/quality/inspections/${id}/results`, body).subscribe({
-      next: () => {
-        this.snack.open('Results recorded', 'OK', { duration: 2000 });
-        this.load();
-      },
-      error: (e) => this.snack.open(e.error?.detail ?? 'Error', 'OK', { duration: 4000 }),
+  startInProcess(): void {
+    this.creating.set(true);
+    this.api.createInProcess(this.operationCtrl.value as number, this.inProcessQtyCtrl.value as number).subscribe({
+      next: (i) => this.opened(i),
+      error: (e) => this.failed(e),
     });
   }
 
-  accept(id: number): void {
-    this.http.post<QualityInspectionDto>(`/api/quality/inspections/${id}/accept`, {}).subscribe({
-      next: () => {
-        this.snack.open('Inspection approved', 'OK', { duration: 2000 });
-        this.load();
-      },
-      error: (e) => this.snack.open(e.error?.detail ?? 'Error', 'OK', { duration: 4000 }),
+  startFinal(): void {
+    this.creating.set(true);
+    this.api.createFinal(this.fgBatchCtrl.value as number, this.finalQtyCtrl.value as number, null).subscribe({
+      next: (i) => this.opened(i),
+      error: (e) => this.failed(e),
     });
   }
 
-  reject(id: number): void {
-    const reason = prompt('Rejection reason:');
-    if (!reason) return;
-    this.http.post<QualityInspectionDto>(`/api/quality/inspections/${id}/reject`, { reason }).subscribe({
-      next: () => {
-        this.snack.open('Inspection rejected', 'OK', { duration: 2000 });
-        this.load();
-      },
-      error: (e) => this.snack.open(e.error?.detail ?? 'Error', 'OK', { duration: 4000 }),
-    });
+  private opened(i: QualityInspectionDto): void {
+    this.creating.set(false);
+    this.snack.open(`Inspection ${i.inspectionNumber} created`, 'OK', { duration: 2500 });
+    this.router.navigate(['/quality/inspections', i.id]);
+  }
+
+  private failed(e: { error?: { detail?: string } }): void {
+    this.creating.set(false);
+    this.snack.open(e.error?.detail ?? 'The inspection could not be created', 'OK', { duration: 5000 });
   }
 }

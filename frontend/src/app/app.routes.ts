@@ -147,6 +147,13 @@ export const routes: Routes = [
           import('./features/quality/inspection-list.component').then((m) => m.InspectionListComponent),
       },
       {
+        path: 'quality/inspections/:id',
+        title: 'Inspection',
+        canActivate: [permissionGuard('QUALITY_VIEW')],
+        loadComponent: () =>
+          import('./features/quality/inspection-detail.component').then((m) => m.InspectionDetailComponent),
+      },
+      {
         path: 'quality/fg-batches',
         title: 'FG Batches',
         canActivate: [permissionGuard('QUALITY_VIEW')],
