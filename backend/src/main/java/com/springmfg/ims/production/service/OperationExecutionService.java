@@ -224,11 +224,14 @@ public class OperationExecutionService {
                     findDefaultWarehouseId(op.getProductionOrderId()))
                     .stream().filter(l -> "SCRAP".equals(l.getLocationType())).toList();
             if (!scrapLocs.isEmpty()) {
+                Long scrapProductId = getProductId(op.getProductionOrderId());
+                BigDecimal scrapCost = productRepo.findById(scrapProductId)
+                        .map(Product::getStandardCost).orElse(null);
                 postingService.post(new PostingCommand(
                         "PRODUCTION_REJECTION", "PRODUCT",
-                        null, getProductId(op.getProductionOrderId()), null, null,
+                        null, scrapProductId, null, null,
                         scrapLocs.get(0).getWarehouse().getId(), scrapLocs.get(0).getId(), "SCRAP",
-                        scrQty, null, null,
+                        scrQty, null, scrapCost,
                         "PRODUCTION_OUTPUT", output.getId(), null, req.remarks()));
             }
         }

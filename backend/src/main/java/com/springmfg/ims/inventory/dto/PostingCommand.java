@@ -24,11 +24,14 @@ public record PostingCommand(
         String referenceNumber,
         String remarks) {
 
-    /** OUT-leg transaction types reduce on-hand. */
+    /**
+     * OUT-leg transaction types reduce on-hand. PRODUCTION_REJECTION is an IN-leg into the SCRAP location: in-process
+     * (WIP) quantity carries no ledger balance, so the scrapped units are recorded as arriving in scrap.
+     */
     public boolean isOutLeg() {
         return switch (transactionType) {
             case "MATERIAL_ISSUE", "MATERIAL_CONSUMPTION", "SALES_DISPATCH",
-                 "SCRAP", "PRODUCTION_REJECTION", "STOCK_ADJUSTMENT_OUT", "MAINTENANCE_ISSUE" -> true;
+                 "SCRAP", "STOCK_ADJUSTMENT_OUT", "MAINTENANCE_ISSUE" -> true;
             default -> false;
         };
     }
