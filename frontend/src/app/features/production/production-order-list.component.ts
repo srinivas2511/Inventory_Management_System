@@ -11,7 +11,9 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatExpansionModule } from '@angular/material/expansion';
+import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { ProductionOrderFormComponent } from './production-order-form.component';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
 
@@ -254,6 +256,7 @@ export interface ProductionOrderDto {
 export class ProductionOrderListComponent implements OnInit {
   private http = inject(HttpClient);
   private snack = inject(MatSnackBar);
+  private dialog = inject(MatDialog);
 
   columns = ['orderNumber', 'productId', 'plannedQty', 'status', 'priority', 'actions'];
   materialCols = ['materialId', 'plannedQty', 'issuedQty', 'remainingQty'];
@@ -282,7 +285,15 @@ export class ProductionOrderListComponent implements OnInit {
   }
 
   createOrder(): void {
-    this.snack.open('Production order creation — coming soon', 'OK', { duration: 2000 });
+    this.dialog
+      .open(ProductionOrderFormComponent, { width: '720px', maxWidth: '95vw' })
+      .afterClosed()
+      .subscribe((created) => {
+        if (created) {
+          this.snack.open('Production order created as a draft', 'OK', { duration: 3000 });
+          this.load();
+        }
+      });
   }
 
   doAction(id: number, action: string): void {

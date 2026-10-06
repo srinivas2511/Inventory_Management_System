@@ -4,6 +4,7 @@ import { HttpClient } from '@angular/common/http';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
+import { BomFormComponent } from './bom-form.component';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -204,7 +205,15 @@ export class BomListComponent implements OnInit {
   }
 
   createBom(): void {
-    this.snack.open('BOM creation dialog — coming soon', 'OK', { duration: 2000 });
+    this.dialog
+      .open(BomFormComponent, { width: '960px', maxWidth: '95vw' })
+      .afterClosed()
+      .subscribe((created) => {
+        if (created) {
+          this.snack.open('BOM created as a draft', 'OK', { duration: 3000 });
+          this.load();
+        }
+      });
   }
 
   doAction(id: number, action: string): void {
