@@ -11,5 +11,5 @@ public interface SpringAttributeDefinitionRepository
         extends JpaRepository<SpringAttributeDefinition, Long> {
 
     @Cacheable("springAttributes")
-    List<SpringAttributeDefinition> findBySpringTypeOrderByDisplayOrderAsc(String springType);
+    List<SpringAttributeDefinition> findBySpringTypeAndActiveTrueOrderByDisplayOrderAsc(String springType);
 }

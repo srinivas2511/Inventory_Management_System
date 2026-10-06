@@ -51,7 +51,7 @@ public class ProductService {
 
     @Transactional(readOnly = true)
     public List<SpringAttributeDefinitionDto> getAttributeDefinitions(String springType) {
-        return attrDefRepo.findBySpringTypeOrderByDisplayOrderAsc(springType.toUpperCase())
+        return attrDefRepo.findBySpringTypeAndActiveTrueOrderByDisplayOrderAsc(springType.toUpperCase())
             .stream().map(SpringAttributeDefinitionDto::from).toList();
     }
 

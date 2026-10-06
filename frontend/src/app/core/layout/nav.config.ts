@@ -453,6 +453,13 @@ export const NAV_GROUPS: NavGroup[] = [
         permission: 'SETTINGS_MANAGE',
         enabled: true,
       },
+      {
+        label: 'Attribute Definitions',
+        icon: 'tune',
+        route: '/admin/attribute-definitions',
+        permission: 'ATTRIBUTE_MANAGE',
+        enabled: true,
+      },
     ],
   },
 ];

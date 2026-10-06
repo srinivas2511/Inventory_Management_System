@@ -14,7 +14,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge.component';
 import { HasPermissionDirective } from '../../../shared/directives/has-permission.directive';
 import { openDocumentsDialog } from '../../documents/documents-dialog.component';
-import { ProductApi, ProductDto, SpringType, ProductStatus } from './product.api';
+import { ProductApi, ProductDto, ProductTypeDto, SpringType, ProductStatus } from './product.api';
 import { ProductFormComponent } from './product-form.component';
 
 @Component({
@@ -52,8 +52,8 @@ import { ProductFormComponent } from './product-form.component';
         <mat-label>Spring type</mat-label>
         <mat-select [formControl]="typeCtrl">
           <mat-option [value]="null">All types</mat-option>
-          @for (t of springTypes; track t) {
-            <mat-option [value]="t">{{ t }}</mat-option>
+          @for (t of productTypes(); track t.code) {
+            <mat-option [value]="t.code">{{ t.name }}</mat-option>
           }
         </mat-select>
       </mat-form-field>
@@ -153,15 +153,7 @@ import { ProductFormComponent } from './product-form.component';
   ],
 })
 export class ProductListComponent implements OnInit {
-  protected readonly springTypes: SpringType[] = [
-    'COMPRESSION',
-    'EXTENSION',
-    'TORSION',
-    'CONICAL',
-    'DISC_BELLEVILLE',
-    'WIRE_FORM',
-    'CUSTOM',
-  ];
+  protected readonly productTypes = signal<ProductTypeDto[]>([]);
   protected readonly columns = ['code', 'name', 'springType', 'drawing', 'status', 'actions'];
   protected readonly rows = signal<ProductDto[]>([]);
   protected readonly total = signal(0);
@@ -175,6 +167,7 @@ export class ProductListComponent implements OnInit {
   private readonly dialog = inject(MatDialog);
 
   ngOnInit(): void {
+    this.api.listProductTypes().subscribe((types) => this.productTypes.set(types));
     this.load();
     this.searchCtrl.valueChanges.pipe(debounceTime(300), distinctUntilChanged()).subscribe(() => {
       this.pageIndex.set(0);

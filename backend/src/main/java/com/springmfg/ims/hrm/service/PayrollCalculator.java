@@ -5,10 +5,7 @@ import java.math.RoundingMode;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.YearMonth;
-import java.util.List;
 import java.util.Set;
-
-import com.springmfg.ims.hrm.service.PayrollSettings.Slab;
 
 /**
  * Pure payroll arithmetic (DESIGN section 19.2). It touches no database and reads every rate from
@@ -19,7 +16,6 @@ import com.springmfg.ims.hrm.service.PayrollSettings.Slab;
 public final class PayrollCalculator {
 
     private static final BigDecimal HUNDRED = new BigDecimal("100");
-    private static final BigDecimal TWELVE = new BigDecimal("12");
     private static final BigDecimal HALF = new BigDecimal("0.5");
 
     private PayrollCalculator() {
@@ -67,7 +63,12 @@ public final class PayrollCalculator {
             BigDecimal totalDeductions,
             BigDecimal netPay) {}
 
+    /** Calculates with the default (India) statutory rule pack. */
     public static Result calculate(Inputs in, PayrollSettings s) {
+        return calculate(in, s, PayrollRulePacks.DEFAULT);
+    }
+
+    public static Result calculate(Inputs in, PayrollSettings s, PayrollRulePack pack) {
         LocalDate first = in.month().atDay(1);
         LocalDate last = in.month().atEndOfMonth();
 
@@ -113,22 +114,16 @@ public final class PayrollCalculator {
         BigDecimal other = money(in.fixedOtherAllowances().multiply(factor));
         BigDecimal gross = basic.add(hra).add(da).add(travel).add(other);
 
-        BigDecimal pfBase = basic.min(s.pfWageCeiling());
-        BigDecimal pfEmployee = money(pfBase.multiply(s.pfEmployeePct()).divide(HUNDRED, 10, RoundingMode.HALF_UP));
-        BigDecimal pfEmployer = money(pfBase.multiply(s.pfEmployerPct()).divide(HUNDRED, 10, RoundingMode.HALF_UP));
+        PayrollRulePack.Statutory statutory = pack.compute(new PayrollRulePack.Basis(
+                basic, gross, in.basicPay(), in.fixedTravelAllowance(), in.fixedOtherAllowances()), s);
+        BigDecimal pfEmployee = statutory.pfEmployee();
+        BigDecimal pfEmployer = statutory.pfEmployer();
+        BigDecimal esiEmployee = statutory.esiEmployee();
+        BigDecimal esiEmployer = statutory.esiEmployer();
+        BigDecimal professionalTax = statutory.professionalTax();
+        BigDecimal tds = statutory.tds();
 
-        BigDecimal esiEmployee = BigDecimal.ZERO.setScale(2);
-        BigDecimal esiEmployer = BigDecimal.ZERO.setScale(2);
-        if (gross.signum() > 0 && gross.compareTo(s.esiGrossCeiling()) <= 0) {
-            esiEmployee = money(gross.multiply(s.esiEmployeePct()).divide(HUNDRED, 10, RoundingMode.HALF_UP));
-            esiEmployer = money(gross.multiply(s.esiEmployerPct()).divide(HUNDRED, 10, RoundingMode.HALF_UP));
-        }
-
-        BigDecimal professionalTax = gross.signum() > 0 ? professionalTax(gross, s.professionalTaxSlabs())
-                : BigDecimal.ZERO.setScale(2);
-        BigDecimal tds = gross.signum() > 0 ? monthlyTds(in, s) : BigDecimal.ZERO.setScale(2);
-
-        BigDecimal deductions = pfEmployee.add(esiEmployee).add(professionalTax).add(tds);
+        BigDecimal deductions = statutory.employeeDeductions();
         BigDecimal net = gross.subtract(deductions);
 
         return new Result(
@@ -141,46 +136,6 @@ public final class PayrollCalculator {
 
     private static boolean isWorking(LocalDate d, Inputs in) {
         return !in.weeklyOff().contains(d.getDayOfWeek()) && !in.holidays().contains(d);
-    }
-
-    private static BigDecimal professionalTax(BigDecimal gross, List<Slab> slabs) {
-        for (Slab slab : slabs) {
-            if (slab.upTo() == null || gross.compareTo(slab.upTo()) <= 0) {
-                return money(slab.value());
-            }
-        }
-        return BigDecimal.ZERO.setScale(2);
-    }
-
-    /**
-     * Simplified TDS: projects the full-month (un-prorated) gross over 12 months, deducts the standard deduction,
-     * applies the slabs, rebate and cess, and spreads the annual tax evenly.
-     */
-    private static BigDecimal monthlyTds(Inputs in, PayrollSettings s) {
-        BigDecimal basic = in.basicPay();
-        BigDecimal monthlyGross = basic
-                .add(basic.multiply(s.hraPct()).divide(HUNDRED, 10, RoundingMode.HALF_UP))
-                .add(basic.multiply(s.daPct()).divide(HUNDRED, 10, RoundingMode.HALF_UP))
-                .add(in.fixedTravelAllowance())
-                .add(in.fixedOtherAllowances());
-        BigDecimal taxable = monthlyGross.multiply(TWELVE).subtract(s.tdsStandardDeduction()).max(BigDecimal.ZERO);
-        if (taxable.compareTo(s.tdsRebateLimit()) <= 0) {
-            return BigDecimal.ZERO.setScale(2);
-        }
-        BigDecimal tax = BigDecimal.ZERO;
-        BigDecimal lower = BigDecimal.ZERO;
-        for (Slab slab : s.tdsSlabs()) {
-            BigDecimal upper = slab.upTo();
-            BigDecimal top = upper == null ? taxable : taxable.min(upper);
-            BigDecimal portion = top.subtract(lower).max(BigDecimal.ZERO);
-            tax = tax.add(portion.multiply(slab.value()).divide(HUNDRED, 10, RoundingMode.HALF_UP));
-            if (upper == null || taxable.compareTo(upper) <= 0) {
-                break;
-            }
-            lower = upper;
-        }
-        BigDecimal withCess = tax.multiply(BigDecimal.ONE.add(s.tdsCessPct().divide(HUNDRED, 10, RoundingMode.HALF_UP)));
-        return money(withCess.divide(TWELVE, 10, RoundingMode.HALF_UP));
     }
 
     private static BigDecimal money(BigDecimal v) {

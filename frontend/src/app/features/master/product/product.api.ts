@@ -1,11 +1,44 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { AppConfigService } from '../../../core/config/app-config.service';
 import { Page } from '../material/material.api';
 
-export type SpringType =
-  'COMPRESSION' | 'EXTENSION' | 'TORSION' | 'CONICAL' | 'DISC_BELLEVILLE' | 'WIRE_FORM' | 'CUSTOM';
+/** A product type code from the product_types lookup: the spring types plus any enabled industry vertical's types. */
+export type SpringType = string;
+
+export interface ProductTypeDto {
+  id: number;
+  code: string;
+  name: string;
+  industry: string;
+  displayOrder: number;
+}
+
+/** The attribute definition exactly as the backend returns it (GET /api/products/attributes/{type}). */
+export interface BackendAttributeDefinitionDto {
+  id: number;
+  springType: string;
+  attributeCode: string;
+  label: string;
+  dataType: string;
+  unit?: string | null;
+  required: boolean;
+  displayOrder: number;
+}
+
+export function toAttributeDefinition(d: BackendAttributeDefinitionDto): SpringAttributeDefinitionDto {
+  return {
+    id: d.id,
+    springType: d.springType,
+    attributeKey: d.attributeCode,
+    displayName: d.label,
+    dataType: d.dataType === 'NUMBER' ? 'DECIMAL' : d.dataType,
+    unit: d.unit ?? undefined,
+    required: d.required,
+    displayOrder: d.displayOrder,
+  };
+}
 
 export type ProductStatus = 'DRAFT' | 'ACTIVE' | 'OBSOLETE';
 
@@ -92,12 +125,16 @@ export class ProductApi {
   }
 
   obsolete(id: number): Observable<ProductDto> {
-    return this.http.post<ProductDto>(`${this.base}/api/products/${id}/obsolete`, {});
+    return this.http.delete<ProductDto>(`${this.base}/api/products/${id}`);
+  }
+
+  listProductTypes(): Observable<ProductTypeDto[]> {
+    return this.http.get<ProductTypeDto[]>(`${this.base}/api/product-types`);
   }
 
   getAttributeDefinitions(springType: SpringType): Observable<SpringAttributeDefinitionDto[]> {
-    return this.http.get<SpringAttributeDefinitionDto[]>(`${this.base}/api/products/attribute-definitions`, {
-      params: new HttpParams().set('springType', springType),
-    });
+    return this.http
+      .get<BackendAttributeDefinitionDto[]>(`${this.base}/api/products/attributes/${encodeURIComponent(springType)}`)
+      .pipe(map((defs) => defs.map(toAttributeDefinition)));
   }
 }

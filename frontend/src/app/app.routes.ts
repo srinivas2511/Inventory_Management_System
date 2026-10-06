@@ -712,6 +712,15 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/admin/settings/system-settings.component').then((m) => m.SystemSettingsComponent),
       },
+      {
+        path: 'admin/attribute-definitions',
+        title: 'Attribute Definitions',
+        canActivate: [permissionGuard('ATTRIBUTE_MANAGE')],
+        loadComponent: () =>
+          import('./features/admin/attribute-definitions/attribute-definitions.component').then(
+            (m) => m.AttributeDefinitionsComponent,
+          ),
+      },
     ],
   },
   { path: '**', redirectTo: '' },

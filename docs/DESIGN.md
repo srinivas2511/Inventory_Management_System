@@ -2425,6 +2425,13 @@ Similarly: `R__furniture_v1_attributes.sql` with `leg_height`, `load_capacity_kg
 
 `pcb_layer_count`, `tolerance_mm`, `component_type`, `rework_type` attributes; Soldering, Reflow, Wave_Solder, Functional_Test, Burn_In operations.
 
+### 26.4 As built (R20)
+
+- **Product types are data.** `product_types` (V35) is the lookup behind `products.spring_type`; the seven spring types are seeded and the old CHECK constraint is replaced by a foreign key. Attribute definitions stay in `spring_attribute_definitions` (its `spring_type` column holds any product type code, plus an `active` flag) instead of a renamed `product_attribute_definitions` table; the lookup's `industry` column plays the role of `industry_type`.
+- **Packs are opt-in repeatable SQL.** Each vertical is a folder `db/vertical/<name>/R__<name>_v1_*.sql` (types and attributes, operations, rejection reasons), applied only when the name is in `ims.verticals` / `IMS_VERTICALS`. The seeds use `ON CONFLICT DO NOTHING` / `WHERE NOT EXISTS`, so they are idempotent. Product types are `AUTOMOTIVE_PART`, `FURNITURE_ITEM` and `ELECTRONIC_COMPONENT`; operation codes are prefixed `AUT-`, `FUR-`, `ELE-`; the rejection-reason scope `ALL` is stored as `BOTH`. Standard times in the seeds are illustrative.
+- **Adding a vertical** is a new folder of SQL with the same three file kinds and no Java change; see the README section "Adding an industry vertical".
+- **Attribute-definition admin** (`/api/admin/attribute-definitions`, permission `ATTRIBUTE_MANAGE`) adds, edits, deactivates and re-activates definitions without a migration; the type and code of an existing definition never change.
+
 ---
 
 ## 27. Updated Migration Plan (R9–R20)

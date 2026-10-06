@@ -104,5 +104,18 @@ Seeded in the `dev`/`demo` profile only (never production):
 
 Set `ims.demo.load-data=true` in your docker `.env` (or `application-dev.yml`) to auto-seed a complete end-to-end workflow on startup: supplier → raw-material stock → purchase order → production order (3 operations) → final inspection (48 pcs approved) → sales order → dispatch.
 
+## Adding an industry vertical
+
+The platform ships as a spring manufacturer. Other industries are data packs: a folder of SQL, no Java. Automotive, furniture and electronics are included as examples under `backend/src/main/resources/db/vertical/`. To add one, for example `medical`:
+
+1. **Create the folder** `backend/src/main/resources/db/vertical/medical/` (the name is lower case, letters, digits and underscores).
+2. **Add the seed files**, each a repeatable Flyway script that is safe to run twice (`ON CONFLICT DO NOTHING` or `WHERE NOT EXISTS`):
+   - `R__medical_v1_types_attributes.sql`: one row in `product_types` (code up to 20 characters, an `industry` label) and its rows in `spring_attribute_definitions` (type, code, label, `NUMBER`/`TEXT`/`ENUM`/`BOOLEAN`, unit, required, limits, enum values as JSONB, display order).
+   - `R__medical_v1_operations.sql`: rows in `operations`; prefix the codes (for example `MED-`) so they never clash with another vertical.
+   - `R__medical_v1_rejection_reasons.sql`: rows in `rejection_reasons`, prefixed the same way, scope `INCOMING`, `PRODUCTION` or `BOTH`.
+3. **Test it.** Copy the pattern in `IndustryVerticalIT`: apply the folder to a fresh database and check the rows, then create a product of the new type with its attributes through `POST /api/products`.
+4. **Activate it** per deployment with `IMS_VERTICALS=medical` (comma separated for several) and restart; see `docs/RUNBOOK.md`, "Industry verticals". A deployment that does not name it never receives it.
+5. **Adjust in the UI.** Attributes can then be added, edited and deactivated without a migration under Admin, Attribute Definitions. The sample standard times in operations are illustrative; set your own.
+
 ## Working on this project
 See [CONTRIBUTING.md](CONTRIBUTING.md) and [CLAUDE.md](CLAUDE.md).

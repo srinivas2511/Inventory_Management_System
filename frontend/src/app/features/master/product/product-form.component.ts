@@ -8,7 +8,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { DynamicSpecFormComponent } from './dynamic-spec-form.component';
-import { ProductApi, ProductDto, SpringAttributeDefinitionDto, SpringType } from './product.api';
+import { ProductApi, ProductDto, ProductTypeDto, SpringAttributeDefinitionDto, SpringType } from './product.api';
 
 @Component({
   selector: 'app-product-form',
@@ -46,8 +46,8 @@ import { ProductApi, ProductDto, SpringAttributeDefinitionDto, SpringType } from
           <mat-form-field appearance="outline">
             <mat-label>Spring type</mat-label>
             <mat-select formControlName="springType" data-testid="springType">
-              @for (t of springTypes; track t) {
-                <mat-option [value]="t">{{ t }}</mat-option>
+              @for (t of productTypes(); track t.code) {
+                <mat-option [value]="t.code">{{ t.name }}</mat-option>
               }
             </mat-select>
             @if (form.controls.springType.hasError('required') && form.controls.springType.touched) {
@@ -164,15 +164,7 @@ import { ProductApi, ProductDto, SpringAttributeDefinitionDto, SpringType } from
   ],
 })
 export class ProductFormComponent implements OnInit {
-  protected readonly springTypes: SpringType[] = [
-    'COMPRESSION',
-    'EXTENSION',
-    'TORSION',
-    'CONICAL',
-    'DISC_BELLEVILLE',
-    'WIRE_FORM',
-    'CUSTOM',
-  ];
+  protected readonly productTypes = signal<ProductTypeDto[]>([]);
   protected readonly product = inject<ProductDto | undefined>(MAT_DIALOG_DATA);
   protected readonly attrDefs = signal<SpringAttributeDefinitionDto[]>([]);
   protected readonly saving = signal(false);
@@ -208,6 +200,7 @@ export class ProductFormComponent implements OnInit {
       }
       this.form.controls.code.disable();
     }
+    this.api.listProductTypes().subscribe((types) => this.productTypes.set(types));
     this.form.controls.springType.valueChanges.subscribe((type) => {
       if (type) this.loadAttrDefs(type);
     });

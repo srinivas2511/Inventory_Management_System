@@ -53,6 +53,9 @@ public class SpringAttributeDefinition {
     @Column(name = "display_order", nullable = false)
     private int displayOrder;
 
+    @Column(nullable = false)
+    private boolean active = true;
+
     protected SpringAttributeDefinition() {}
 
     public Long getId() { return id; }
@@ -66,4 +69,5 @@ public class SpringAttributeDefinition {
     public BigDecimal getMaxValue() { return maxValue; }
     public String getEnumValues() { return enumValues; }
     public int getDisplayOrder() { return displayOrder; }
+    public boolean isActive() { return active; }
 }

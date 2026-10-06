@@ -166,6 +166,7 @@ public class PayrollService {
         requireOpenPeriod(last);
 
         PayrollSettings s = PayrollSettings.load(settings);
+        PayrollRulePack rulePack = PayrollRulePacks.forCode(settings.get("hrm.payroll.rule_pack", PayrollRulePacks.DEFAULT.code()));
         String policy = unrecordedDayPolicy();
         LocalDate unrecordedBefore = UNRECORDED_ABSENT.equals(policy) ? LocalDate.now(calendar.zone()) : null;
         Set<DayOfWeek> weeklyOff = calendar.weeklyOff();
@@ -183,7 +184,7 @@ public class PayrollService {
         for (Employee e : employeeRepo.findEmployedDuring(first, last)) {
             PayrollCalculator.Result r = PayrollCalculator.calculate(
                     inputs(e, ym, weeklyOff, attendance.getOrDefault(e.getId(), List.of()),
-                            leaves.getOrDefault(e.getId(), List.of()), leaveTypes, unrecordedBefore), s);
+                            leaves.getOrDefault(e.getId(), List.of()), leaveTypes, unrecordedBefore), s, rulePack);
             if (r.grossPay().signum() == 0) {
                 continue;
             }
@@ -205,7 +206,8 @@ public class PayrollService {
         run = runRepo.save(run);
         auditService.record("PAYROLL_CALCULATE", "PAYROLL_RUN", String.valueOf(id), null,
                 slips.size() + " slips; gross " + run.getTotalGross().toPlainString() + "; net "
-                        + run.getTotalNet().toPlainString() + "; unrecorded-day policy " + policy, null);
+                        + run.getTotalNet().toPlainString() + "; unrecorded-day policy " + policy
+                        + "; rule pack " + rulePack.code(), null);
         return toDto(run, false);
     }
 

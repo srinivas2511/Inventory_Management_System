@@ -5,14 +5,14 @@ import java.math.BigDecimal;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+
+import com.springmfg.ims.product.validation.ActiveProductType;
 
 public record SaveProductRequest(
         @NotBlank @Size(max = 30) String productCode,
         @NotBlank @Size(max = 150) String name,
-        @NotBlank @Pattern(regexp = "COMPRESSION|EXTENSION|TORSION|CONICAL|BELLEVILLE|WIRE_FORM|CUSTOM")
-        String springType,
+        @NotBlank @ActiveProductType String springType,
         Long primaryMaterialId,
         BigDecimal wireDiameter,
         BigDecimal outerDiameter,
