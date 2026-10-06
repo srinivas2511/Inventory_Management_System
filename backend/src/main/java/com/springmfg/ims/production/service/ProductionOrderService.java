@@ -159,6 +159,9 @@ public class ProductionOrderService {
 
         // Snapshot routing
         List<ProductRouting> routing = routingRepo.findByProductIdAndActiveTrue(order.getProductId());
+        // DESIGN 4.7: the first operation can process the whole planned quantity; every later operation receives
+        // the previous operation's good output (OperationExecutionService.recordOutput cascades it).
+        int firstSequence = routing.stream().mapToInt(ProductRouting::getSequenceNo).min().orElse(0);
         for (ProductRouting step : routing) {
             ProductionOperation op = new ProductionOperation();
             op.setProductionOrderId(order.getId());
@@ -167,6 +170,9 @@ public class ProductionOrderService {
             op.setMachineId(step.getMachineId());
             op.setInspectionPoint(step.isInspectionPoint());
             op.setStatus("PENDING");
+            if (step.getSequenceNo() == firstSequence) {
+                op.setInputQty(order.getPlannedQty());
+            }
             operationRepo.save(op);
         }
 
