@@ -26,8 +26,8 @@ const GST_PATTERN = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
       <form [formGroup]="form" id="sup-form" (ngSubmit)="save()" novalidate class="form-grid">
         <mat-form-field appearance="outline">
           <mat-label>Code</mat-label>
-          <input matInput formControlName="code" [readonly]="!!supplier" />
-          @if (form.controls.code.hasError('required') && form.controls.code.touched) {
+          <input matInput formControlName="supplierCode" [readonly]="!!supplier" />
+          @if (form.controls.supplierCode.hasError('required') && form.controls.supplierCode.touched) {
             <mat-error>Required</mat-error>
           }
         </mat-form-field>
@@ -106,14 +106,14 @@ export class SupplierFormComponent {
   protected readonly saving = signal(false);
   protected readonly errorMessage = signal('');
   protected readonly form = inject(FormBuilder).nonNullable.group({
-    code: ['', Validators.required],
+    supplierCode: ['', Validators.required],
     name: ['', Validators.required],
     contactPerson: [''],
     email: ['', Validators.email],
     phone: [''],
     gstNumber: ['', Validators.pattern(GST_PATTERN)],
     address: [''],
-    paymentTermsDays: [null as number | null],
+    paymentTerms: [''],
   });
   private readonly api = inject(SupplierApi);
   private readonly dialogRef = inject(MatDialogRef<SupplierFormComponent>);
@@ -121,7 +121,7 @@ export class SupplierFormComponent {
   constructor() {
     if (this.supplier) {
       this.form.patchValue(this.supplier);
-      this.form.controls.code.disable();
+      this.form.controls.supplierCode.disable();
     }
   }
 

@@ -26,7 +26,6 @@ export interface WarehouseHealthDto {
   warehouseId: number;
   warehouseCode: string;
   missingLocationTypes: string[];
-  healthy: boolean;
 }
 
 export interface SaveWarehouseRequest {

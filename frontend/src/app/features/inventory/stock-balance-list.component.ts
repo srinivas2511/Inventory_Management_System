@@ -74,7 +74,7 @@ import { InventoryApi, InventoryBalanceDto } from './inventory.api';
         </ng-container>
         <ng-container matColumnDef="available">
           <th mat-header-cell *matHeaderCellDef>Available</th>
-          <td mat-cell *matCellDef="let r">{{ r.availableQty | number: '1.3-3' }}</td>
+          <td mat-cell *matCellDef="let r">{{ r.qtyAvailable | number: '1.3-3' }}</td>
         </ng-container>
         <ng-container matColumnDef="avgCost">
           <th mat-header-cell *matHeaderCellDef>Avg Cost</th>

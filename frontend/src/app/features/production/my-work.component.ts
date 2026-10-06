@@ -210,7 +210,7 @@ export class MyWorkComponent implements OnInit {
 
   load(): void {
     this.loading.set(true);
-    this.http.get<MyWorkItemDto[]>('/api/production/operations/my-work').subscribe({
+    this.http.get<MyWorkItemDto[]>('/api/production/my-work').subscribe({
       next: (items) => {
         this.items.set(items ?? []);
         this.loading.set(false);
@@ -252,11 +252,12 @@ export class MyWorkComponent implements OnInit {
 
   recordOutput(opId: number): void {
     const body = {
+      productionOperationId: opId,
       goodQty: this.goodCtrl.value ?? 0,
       rejectedQty: this.rejCtrl.value ?? 0,
       scrapQty: this.scrapCtrl.value ?? 0,
     };
-    this.http.post(`/api/production/operations/${opId}/outputs`, body).subscribe({
+    this.http.post('/api/production/outputs', body).subscribe({
       next: () => {
         this.snack.open('Output recorded', 'OK', { duration: 2000 });
         this.selectedOp.set(null);

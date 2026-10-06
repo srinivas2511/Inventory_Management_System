@@ -26,8 +26,8 @@ const GST_PATTERN = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
       <form [formGroup]="form" id="cust-form" (ngSubmit)="save()" novalidate class="form-grid">
         <mat-form-field appearance="outline">
           <mat-label>Code</mat-label>
-          <input matInput formControlName="code" [readonly]="!!customer" />
-          @if (form.controls.code.hasError('required') && form.controls.code.touched) {
+          <input matInput formControlName="customerCode" [readonly]="!!customer" />
+          @if (form.controls.customerCode.hasError('required') && form.controls.customerCode.touched) {
             <mat-error>Required</mat-error>
           }
         </mat-form-field>
@@ -106,14 +106,14 @@ export class CustomerFormComponent {
   protected readonly saving = signal(false);
   protected readonly errorMessage = signal('');
   protected readonly form = inject(FormBuilder).nonNullable.group({
-    code: ['', Validators.required],
+    customerCode: ['', Validators.required],
     name: ['', Validators.required],
     contactPerson: [''],
     email: ['', Validators.email],
     phone: [''],
     gstNumber: ['', Validators.pattern(GST_PATTERN)],
     address: [''],
-    creditLimitDays: [null as number | null],
+    paymentTerms: [''],
   });
   private readonly api = inject(CustomerApi);
   private readonly dialogRef = inject(MatDialogRef<CustomerFormComponent>);
@@ -121,7 +121,7 @@ export class CustomerFormComponent {
   constructor() {
     if (this.customer) {
       this.form.patchValue(this.customer);
-      this.form.controls.code.disable();
+      this.form.controls.customerCode.disable();
     }
   }
 

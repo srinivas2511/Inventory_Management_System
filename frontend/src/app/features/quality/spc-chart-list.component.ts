@@ -42,7 +42,7 @@ import { QualityPlusApi, SPC_CHART_TYPES, SpcChartSummary, SpcChartType } from '
           <mat-label>Product</mat-label>
           <mat-select formControlName="productId">
             @for (p of products(); track p.id) {
-              <mat-option [value]="p.id">{{ p.code }} - {{ p.name }}</mat-option>
+              <mat-option [value]="p.id">{{ p.productCode }} - {{ p.name }}</mat-option>
             }
           </mat-select>
         </mat-form-field>

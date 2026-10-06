@@ -28,8 +28,8 @@ import { MaterialApi, MaterialDto, UomDto } from './material.api';
       <form [formGroup]="form" id="material-form" (ngSubmit)="save()" novalidate class="form-grid">
         <mat-form-field appearance="outline">
           <mat-label>Code</mat-label>
-          <input matInput formControlName="code" data-testid="code" [readonly]="!!material" />
-          @if (form.controls.code.hasError('required') && form.controls.code.touched) {
+          <input matInput formControlName="materialCode" data-testid="code" [readonly]="!!material" />
+          @if (form.controls.materialCode.hasError('required') && form.controls.materialCode.touched) {
             <mat-error>Required</mat-error>
           }
         </mat-form-field>
@@ -133,7 +133,7 @@ export class MaterialFormComponent implements OnInit {
   protected readonly errorMessage = signal('');
 
   protected readonly form = inject(FormBuilder).nonNullable.group({
-    code: ['', [Validators.required, Validators.maxLength(20)]],
+    materialCode: ['', [Validators.required, Validators.maxLength(20)]],
     name: ['', [Validators.required, Validators.maxLength(120)]],
     materialType: ['', Validators.required],
     uom: ['', Validators.required],
@@ -152,7 +152,7 @@ export class MaterialFormComponent implements OnInit {
     this.api.listUoms().subscribe((list) => this.uoms.set(list));
     if (this.material) {
       this.form.patchValue(this.material);
-      this.form.controls.code.disable();
+      this.form.controls.materialCode.disable();
     }
   }
 

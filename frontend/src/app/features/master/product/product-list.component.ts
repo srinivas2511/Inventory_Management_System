@@ -73,7 +73,7 @@ import { ProductFormComponent } from './product-form.component';
       <table mat-table [dataSource]="rows()" class="mat-elevation-z1">
         <ng-container matColumnDef="code">
           <th mat-header-cell *matHeaderCellDef>Code</th>
-          <td mat-cell *matCellDef="let r">{{ r.code }}</td>
+          <td mat-cell *matCellDef="let r">{{ r.productCode }}</td>
         </ng-container>
         <ng-container matColumnDef="name">
           <th mat-header-cell *matHeaderCellDef>Name</th>
@@ -203,7 +203,7 @@ export class ProductListComponent implements OnInit {
   }
 
   protected openDocuments(product: ProductDto): void {
-    openDocumentsDialog(this.dialog, { entityType: 'PRODUCT', entityId: product.id, title: product.code });
+    openDocumentsDialog(this.dialog, { entityType: 'PRODUCT', entityId: product.id, title: product.productCode });
   }
 
   protected openForm(product?: ProductDto): void {

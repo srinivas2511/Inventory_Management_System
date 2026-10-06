@@ -194,7 +194,7 @@ export class BomListComponent implements OnInit {
     const params: Record<string, string> = {};
     const s = this.statusCtrl.value;
     if (s) params['status'] = s;
-    this.http.get<{ content: BomDto[] }>('/api/bom', { params }).subscribe({
+    this.http.get<{ content: BomDto[] }>('/api/boms', { params }).subscribe({
       next: (page) => {
         this.rows.set(page.content ?? []);
         this.loading.set(false);
@@ -208,7 +208,7 @@ export class BomListComponent implements OnInit {
   }
 
   doAction(id: number, action: string): void {
-    this.http.post<BomDto>(`/api/bom/${id}/${action}`, {}).subscribe({
+    this.http.post<BomDto>(`/api/boms/${id}/${action}`, {}).subscribe({
       next: () => {
         this.snack.open('Done', 'OK', { duration: 2000 });
         this.load();

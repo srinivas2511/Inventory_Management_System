@@ -4,7 +4,7 @@ export interface SessionUser {
   id: number;
   username: string;
   fullName: string;
-  email: string;
+  email?: string;
   roles: string[];
   permissions: string[];
   mustChangePassword: boolean;

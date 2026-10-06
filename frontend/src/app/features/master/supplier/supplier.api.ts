@@ -6,27 +6,27 @@ import { Page } from '../material/material.api';
 
 export interface SupplierDto {
   id: number;
-  code: string;
+  supplierCode: string;
   name: string;
   contactPerson?: string;
   email?: string;
   phone?: string;
   address?: string;
   gstNumber?: string;
-  paymentTermsDays?: number | null;
-  active: boolean;
+  paymentTerms?: string;
+  status: string;
   version: number;
 }
 
 export interface SaveSupplierRequest {
-  code: string;
+  supplierCode: string;
   name: string;
   contactPerson?: string;
   email?: string;
   phone?: string;
   address?: string;
   gstNumber?: string;
-  paymentTermsDays?: number | null;
+  paymentTerms?: string | null;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -37,7 +37,7 @@ export class SupplierApi {
   search(q: string, active: boolean | null, page: number, size: number): Observable<Page<SupplierDto>> {
     let params = new HttpParams().set('page', page).set('size', size);
     if (q) params = params.set('q', q);
-    if (active !== null) params = params.set('active', active);
+    if (active !== null) params = params.set('status', active ? 'ACTIVE' : 'INACTIVE');
     return this.http.get<Page<SupplierDto>>(`${this.base}/api/suppliers`, { params });
   }
 

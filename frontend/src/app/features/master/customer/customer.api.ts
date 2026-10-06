@@ -6,27 +6,27 @@ import { Page } from '../material/material.api';
 
 export interface CustomerDto {
   id: number;
-  code: string;
+  customerCode: string;
   name: string;
   contactPerson?: string;
   email?: string;
   phone?: string;
   address?: string;
   gstNumber?: string;
-  creditLimitDays?: number | null;
-  active: boolean;
+  paymentTerms?: string;
+  status: string;
   version: number;
 }
 
 export interface SaveCustomerRequest {
-  code: string;
+  customerCode: string;
   name: string;
   contactPerson?: string;
   email?: string;
   phone?: string;
   address?: string;
   gstNumber?: string;
-  creditLimitDays?: number | null;
+  paymentTerms?: string | null;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -37,7 +37,7 @@ export class CustomerApi {
   search(q: string, active: boolean | null, page: number, size: number): Observable<Page<CustomerDto>> {
     let params = new HttpParams().set('page', page).set('size', size);
     if (q) params = params.set('q', q);
-    if (active !== null) params = params.set('active', active);
+    if (active !== null) params = params.set('status', active ? 'ACTIVE' : 'INACTIVE');
     return this.http.get<Page<CustomerDto>>(`${this.base}/api/customers`, { params });
   }
 

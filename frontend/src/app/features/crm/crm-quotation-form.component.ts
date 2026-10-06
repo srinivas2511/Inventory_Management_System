@@ -80,7 +80,7 @@ export function netUnitPrice(unitPrice: number, discountPct: number): number {
         <button mat-stroked-button type="button" (click)="searchProducts()"><mat-icon>search</mat-icon> Search</button>
         @for (p of found(); track p.id) {
           <button mat-stroked-button type="button" (click)="addLine(p)">
-            <mat-icon>add</mat-icon> {{ p.code }} {{ p.name }}
+            <mat-icon>add</mat-icon> {{ p.productCode }} {{ p.name }}
           </button>
         }
       </div>
@@ -260,7 +260,7 @@ export class CrmQuotationFormComponent implements OnInit {
 
   addLine(p: ProductDto): void {
     this.items.push(this.newLine(p.id, 1, null, null));
-    this.labels.update((l) => [...l, `${p.code} ${p.name}`]);
+    this.labels.update((l) => [...l, `${p.productCode} ${p.name}`]);
     this.sources.update((s) => [...s, '']);
     this.found.set([]);
     this.lookupPrice(this.items.length - 1);

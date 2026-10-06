@@ -235,3 +235,30 @@ Scope delivered (gate M20): product types as data (R20-4.1 prerequisite), the Au
 - **Defects found and fixed in the product screens (existing, found while wiring the type lookup):** the frontend called `GET /api/products/attribute-definitions?springType=` (no such endpoint; the backend serves `/api/products/attributes/{type}`) and read `attributeKey`/`displayName` where the backend returns `attributeCode`/`label`, so the dynamic attribute form could not have worked; it also sent `DISC_BELLEVILLE` where the backend and database say `BELLEVILLE`, and called `POST /obsolete` where the backend uses `DELETE /api/products/{id}`. The API client now calls the real endpoint and maps the field names, and type choices come from the lookup. **Other fields of the product form may still differ from the backend DTO (for example `code` versus `productCode`); they were not audited here.**
 - **Not done / limits:** no non-India payroll pack and no locale packs (above); no demo user for `ATTRIBUTE_MANAGE` (there is no demo-user mechanism); the R20-1.2 "inspection plan with automotive parameters" demo is not exercised, the inspection-plan API is generic and takes any parameters; `docker/.env.example` is not updated (see RUNBOOK for `IMS_VERTICALS`).
 - **Role grants:** `ATTRIBUTE_MANAGE` to ADMIN only.
+
+## Frontend/backend contract audit (2026-10-06)
+
+The frontend specs mock `HttpClient`, so a screen calling a URL, verb, field or enum value the backend does not have passed every frontend test and failed only in the browser. `ApiContractIT` now scans the Angular sources (363 HTTP calls) against the Spring handler mappings (495 endpoints) and DTO records, and fails the build on drift. `FrontendSourcesTest` pins the scanner's own rules.
+
+**What the guard checks:** URL and verb exist; the response generic has the backend's shape (object, array, Spring `Page`) and reads only fields the DTO carries; request bodies carry the DTO's `@NotNull`/`@NotBlank`/`@NotEmpty` fields and nothing the backend ignores; query parameters match the handler's `@RequestParam`, `Pageable` and model-attribute names (only in methods that make a single HTTP call); string-literal unions named like a backend enum use only its constants; `public/config.json` and the `AppConfigService` default agree on `apiBaseUrl`. **What it does not check:** a body or response type the text scan cannot resolve (listed as UNRESOLVED in `target/api-contract-report.txt`), field value formats, and nested object fields. Justified exceptions live in `backend/src/test/resources/contract/api-contract-allowlist.txt`; an entry that stops matching fails the build.
+
+| Area | Call / field | Defect | Fix |
+|---|---|---|---|
+| Whole app | `apiBaseUrl: "/api"` (config.json and code default) with `${base}/api/...` paths | 48 calls went to `/api/api/...` (404): login, refresh, every master-data screen, inventory, warehouses, user/role/audit admin | Default and shipped value are now `""` (same origin); the auth interceptor recognises API requests by `/api/` |
+| Auth | `LoginResponse.refreshToken` | Backend sends the refresh token only as an HttpOnly cookie; the frontend stored `undefined` as the string `"undefined"` and refreshed only by accident | Nothing is stored; `refresh()` posts `{}` and the cookie authenticates; `mustChangePassword` taken from the top-level response |
+| Customers, suppliers, materials, products | `code` vs `customerCode`/`supplierCode`/`materialCode`/`productCode` | Create/update returned 400 (required code missing); code columns and product pickers (CRM quotation, CRM prices, complaints, FAI, SPC) were blank | DTOs, forms and templates use the backend names |
+| Customers, suppliers | list filter `active=true` | Backend takes `status=ACTIVE\|INACTIVE`; the filter was ignored. `active`/`creditLimitDays`/`paymentTermsDays` do not exist (backend has `status`, `paymentTerms`) | Filter sends `status`; DTOs use `status` and `paymentTerms` |
+| Products | nested `specification` with `wireDiameterMm` etc. | Backend is flat (`wireDiameter`, `freeLength`, ... plus an `attributes` JSON); spring dimensions and per-type attributes were silently never saved | Form keeps its grouping but sends the flat body and reads `attributes` |
+| Materials | `specificationStandard`, `preferredSupplierName` | Do not exist in the backend DTOs | Removed |
+| BOM | `/api/bom`, `/api/bom/{id}/{action}` | Backend is `/api/boms` | Fixed |
+| Production orders | `/api/production/orders[/{id}/{action}]` | Backend is `/api/production-orders` | Fixed |
+| My Work | `/api/production/operations/my-work`; `/operations/{id}/outputs` | Backend is `/api/production/my-work` and `POST /api/production/outputs` with `productionOperationId` in the body | Fixed |
+| Inventory | `availableQty`; `MaterialBatchDto.materialName` | Backend is `qtyAvailable`; no `materialName` | Fixed; the stock-balance "available" column was blank |
+| Warehouses | `WarehouseHealthDto.healthy` | Not returned (`missingLocationTypes` is) | Removed |
+
+**Not fixed, needs a backend decision (allowlisted with reasons):**
+1. `GET /api/procurement/goods-receipts`: the goods-receipt list screen calls a list-all endpoint that does not exist (DESIGN specifies only create, get-by-id and list-by-PO). The screen swallows the 404 and shows an empty table.
+2. `GET /api/production/my-work` returns `ProductionOperationDto`, which has no order id, order number or product id, so the My Work card title is blank.
+3. `ProductionOrderDto` omits `priority` (the entity has it, default 3), so the production-order list's Priority column is blank.
+
+**Other findings, not changed:** the BOM and production-order "create" buttons are "coming soon" stubs (rule 11); the forced password change flow (`mustChangePassword`) has no UI; files that hard-code `/api/...` bases ignore a non-empty `apiBaseUrl`, so only same-origin deployments (as `docker/nginx.conf` serves) are supported today.

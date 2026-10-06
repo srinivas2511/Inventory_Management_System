@@ -77,7 +77,7 @@ import {
           <mat-select formControlName="productId" (selectionChange)="onProductChange()">
             <mat-option [value]="null">Not specified</mat-option>
             @for (p of products(); track p.id) {
-              <mat-option [value]="p.id">{{ p.code }} - {{ p.name }}</mat-option>
+              <mat-option [value]="p.id">{{ p.productCode }} - {{ p.name }}</mat-option>
             }
           </mat-select>
         </mat-form-field>

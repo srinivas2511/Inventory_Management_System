@@ -16,7 +16,7 @@ export interface InventoryBalanceDto {
   stockStatus: string;
   qtyOnHand: number;
   qtyReserved: number;
-  availableQty: number;
+  qtyAvailable: number;
   avgUnitCost: number;
   totalValue: number;
   updatedAt: string;
@@ -51,7 +51,6 @@ export interface MaterialBatchDto {
   batchNumber: string;
   materialId: number;
   materialCode?: string;
-  materialName?: string;
   receivedDate: string;
   expiryDate?: string;
   receivedQty: number;

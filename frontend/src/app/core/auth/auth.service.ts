@@ -11,10 +11,12 @@ export interface LoginRequest {
   password: string;
 }
 
+/** The backend returns the refresh token in an HttpOnly cookie, never in the body. */
 export interface LoginResponse {
   accessToken: string;
-  refreshToken: string;
-  user: SessionUser;
+  expiresIn: number;
+  mustChangePassword: boolean;
+  user: Omit<SessionUser, 'email' | 'mustChangePassword'>;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -33,22 +35,16 @@ export class AuthService {
     return this.http.post<LoginResponse>(`${this.base}/login`, req).pipe(
       tap((res) => {
         this.tokenStore.set(res.accessToken);
-        this.saveRefreshToken(res.refreshToken);
-        this.sessionStore.setUser(res.user);
+        this.sessionStore.setUser({ ...res.user, mustChangePassword: res.mustChangePassword });
       }),
     );
   }
 
   refresh(): Observable<LoginResponse> {
-    const refreshToken = this.loadRefreshToken();
-    if (!refreshToken) {
-      return throwError(() => new Error('No refresh token'));
-    }
-    return this.http.post<LoginResponse>(`${this.base}/refresh`, { refreshToken }).pipe(
+    return this.http.post<LoginResponse>(`${this.base}/refresh`, {}).pipe(
       tap((res) => {
         this.tokenStore.set(res.accessToken);
-        this.saveRefreshToken(res.refreshToken);
-        this.sessionStore.setUser(res.user);
+        this.sessionStore.setUser({ ...res.user, mustChangePassword: res.mustChangePassword });
       }),
       catchError((err) => {
         this.logout();
@@ -67,32 +63,7 @@ export class AuthService {
 
   logout(): void {
     this.tokenStore.clear();
-    this.clearRefreshToken();
     this.sessionStore.clear();
     this.router.navigate(['/login']);
-  }
-
-  loadRefreshToken(): string | null {
-    try {
-      return localStorage.getItem('ims_rt');
-    } catch {
-      return null;
-    }
-  }
-
-  private saveRefreshToken(token: string): void {
-    try {
-      localStorage.setItem('ims_rt', token);
-    } catch {
-      // private browsing — token is lost on page close, user must log in again
-    }
-  }
-
-  private clearRefreshToken(): void {
-    try {
-      localStorage.removeItem('ims_rt');
-    } catch {
-      // ignore
-    }
   }
 }

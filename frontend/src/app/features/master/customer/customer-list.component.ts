@@ -60,7 +60,7 @@ import { CustomerFormComponent } from './customer-form.component';
       <table mat-table [dataSource]="rows()" class="mat-elevation-z1">
         <ng-container matColumnDef="code">
           <th mat-header-cell *matHeaderCellDef>Code</th>
-          <td mat-cell *matCellDef="let r">{{ r.code }}</td>
+          <td mat-cell *matCellDef="let r">{{ r.customerCode }}</td>
         </ng-container>
         <ng-container matColumnDef="name">
           <th mat-header-cell *matHeaderCellDef>Name</th>
@@ -76,7 +76,7 @@ import { CustomerFormComponent } from './customer-form.component';
         </ng-container>
         <ng-container matColumnDef="status">
           <th mat-header-cell *matHeaderCellDef>Status</th>
-          <td mat-cell *matCellDef="let r"><app-status-badge [status]="r.active ? 'ACTIVE' : 'INACTIVE'" /></td>
+          <td mat-cell *matCellDef="let r"><app-status-badge [status]="r.status" /></td>
         </ng-container>
         <ng-container matColumnDef="actions">
           <th mat-header-cell *matHeaderCellDef></th>

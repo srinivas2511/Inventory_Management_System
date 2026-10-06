@@ -270,7 +270,7 @@ export class ProductionOrderListComponent implements OnInit {
     const params: Record<string, string> = {};
     const s = this.statusCtrl.value;
     if (s) params['status'] = s;
-    this.http.get<{ content: ProductionOrderDto[] }>('/api/production/orders', { params }).subscribe({
+    this.http.get<{ content: ProductionOrderDto[] }>('/api/production-orders', { params }).subscribe({
       next: (page) => {
         this.rows.set(page.content ?? []);
         this.loading.set(false);
@@ -284,7 +284,7 @@ export class ProductionOrderListComponent implements OnInit {
   }
 
   doAction(id: number, action: string): void {
-    this.http.post<ProductionOrderDto>(`/api/production/orders/${id}/${action}`, {}).subscribe({
+    this.http.post<ProductionOrderDto>(`/api/production-orders/${id}/${action}`, {}).subscribe({
       next: () => {
         this.snack.open('Done', 'OK', { duration: 2000 });
         this.load();

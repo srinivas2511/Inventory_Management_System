@@ -5,32 +5,29 @@ import { AppConfigService } from '../../../core/config/app-config.service';
 
 export interface MaterialDto {
   id: number;
-  code: string;
+  materialCode: string;
   name: string;
   description?: string;
   uom: string;
   materialType: string;
   grade?: string;
-  specificationStandard?: string;
   diameterMm?: number;
   minStock?: number;
   reorderLevel?: number;
   maxStock?: number;
   standardCost?: number;
   preferredSupplierId?: number;
-  preferredSupplierName?: string;
   active: boolean;
   version: number;
 }
 
 export interface SaveMaterialRequest {
-  code: string;
+  materialCode: string;
   name: string;
   description?: string;
   uom: string;
   materialType: string;
   grade?: string;
-  specificationStandard?: string;
   diameterMm?: number | null;
   minStock?: number | null;
   reorderLevel?: number | null;

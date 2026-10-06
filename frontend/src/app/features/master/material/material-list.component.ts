@@ -62,7 +62,7 @@ import { MaterialFormComponent } from './material-form.component';
       <table mat-table [dataSource]="rows()" class="mat-elevation-z1">
         <ng-container matColumnDef="code">
           <th mat-header-cell *matHeaderCellDef>Code</th>
-          <td mat-cell *matCellDef="let r">{{ r.code }}</td>
+          <td mat-cell *matCellDef="let r">{{ r.materialCode }}</td>
         </ng-container>
         <ng-container matColumnDef="name">
           <th mat-header-cell *matHeaderCellDef>Name</th>

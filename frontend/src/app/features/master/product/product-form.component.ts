@@ -8,7 +8,14 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { DynamicSpecFormComponent } from './dynamic-spec-form.component';
-import { ProductApi, ProductDto, ProductTypeDto, SpringAttributeDefinitionDto, SpringType } from './product.api';
+import {
+  ProductApi,
+  ProductDto,
+  ProductTypeDto,
+  SaveProductRequest,
+  SpringAttributeDefinitionDto,
+  SpringType,
+} from './product.api';
 
 @Component({
   selector: 'app-product-form',
@@ -31,8 +38,8 @@ import { ProductApi, ProductDto, ProductTypeDto, SpringAttributeDefinitionDto, S
         <div class="form-grid">
           <mat-form-field appearance="outline">
             <mat-label>Code</mat-label>
-            <input matInput formControlName="code" [readonly]="!!product" data-testid="code" />
-            @if (form.controls.code.hasError('required') && form.controls.code.touched) {
+            <input matInput formControlName="productCode" [readonly]="!!product" data-testid="code" />
+            @if (form.controls.productCode.hasError('required') && form.controls.productCode.touched) {
               <mat-error>Required</mat-error>
             }
           </mat-form-field>
@@ -79,19 +86,19 @@ import { ProductApi, ProductDto, ProductTypeDto, SpringAttributeDefinitionDto, S
           <div class="spec-grid">
             <mat-form-field appearance="outline">
               <mat-label>Wire Ø (mm)</mat-label>
-              <input matInput type="number" formControlName="wireDiameterMm" />
+              <input matInput type="number" formControlName="wireDiameter" />
             </mat-form-field>
             <mat-form-field appearance="outline">
               <mat-label>Outer Ø (mm)</mat-label>
-              <input matInput type="number" formControlName="outerDiameterMm" />
+              <input matInput type="number" formControlName="outerDiameter" />
             </mat-form-field>
             <mat-form-field appearance="outline">
               <mat-label>Free length (mm)</mat-label>
-              <input matInput type="number" formControlName="freeLengthMm" />
+              <input matInput type="number" formControlName="freeLength" />
             </mat-form-field>
             <mat-form-field appearance="outline">
               <mat-label>Total coils</mat-label>
-              <input matInput type="number" formControlName="totalCoils" />
+              <input matInput type="number" formControlName="numberOfCoils" />
             </mat-form-field>
             <mat-form-field appearance="outline">
               <mat-label>Active coils</mat-label>
@@ -171,7 +178,7 @@ export class ProductFormComponent implements OnInit {
   protected readonly errorMessage = signal('');
 
   protected readonly form = inject(FormBuilder).nonNullable.group({
-    code: ['', Validators.required],
+    productCode: ['', Validators.required],
     name: ['', Validators.required],
     springType: ['' as SpringType, Validators.required],
     drawingNumber: [''],
@@ -179,10 +186,10 @@ export class ProductFormComponent implements OnInit {
     heatTreatment: [''],
     surfaceTreatment: [''],
     specification: inject(FormBuilder).group({
-      wireDiameterMm: [null as number | null],
-      outerDiameterMm: [null as number | null],
-      freeLengthMm: [null as number | null],
-      totalCoils: [null as number | null],
+      wireDiameter: [null as number | null],
+      outerDiameter: [null as number | null],
+      freeLength: [null as number | null],
+      numberOfCoils: [null as number | null],
       activeCoils: [null as number | null],
     }),
   });
@@ -195,10 +202,8 @@ export class ProductFormComponent implements OnInit {
   ngOnInit(): void {
     if (this.product) {
       this.form.patchValue(this.product);
-      if (this.product.specification) {
-        this.form.controls.specification.patchValue(this.product.specification);
-      }
-      this.form.controls.code.disable();
+      this.form.controls.specification.patchValue(this.product);
+      this.form.controls.productCode.disable();
     }
     this.api.listProductTypes().subscribe((types) => this.productTypes.set(types));
     this.form.controls.springType.valueChanges.subscribe((type) => {
@@ -211,8 +216,8 @@ export class ProductFormComponent implements OnInit {
   private loadAttrDefs(type: SpringType): void {
     this.api.getAttributeDefinitions(type).subscribe((defs) => {
       this.attrDefs.set(defs);
-      if (this.product?.specification?.attributes) {
-        const attrs = this.product.specification.attributes as Record<string, unknown>;
+      if (this.product?.attributes) {
+        const attrs = this.product.attributes;
         for (const [k, v] of Object.entries(attrs)) {
           if (this.attrGroup.contains(k)) this.attrGroup.get(k)?.setValue(v);
         }
@@ -227,12 +232,11 @@ export class ProductFormComponent implements OnInit {
     }
     this.saving.set(true);
     const raw = this.form.getRawValue();
-    const req = {
-      ...raw,
-      specification: {
-        ...raw.specification,
-        attributes: this.attrDefs().length > 0 ? this.attrGroup.value : undefined,
-      },
+    const { specification, ...top } = raw;
+    const req: SaveProductRequest = {
+      ...top,
+      ...specification,
+      attributes: this.attrDefs().length > 0 ? this.attrGroup.value : undefined,
     };
     const obs = this.product ? this.api.update(this.product.id, req) : this.api.create(req);
     obs.subscribe({

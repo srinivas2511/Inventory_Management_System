@@ -49,7 +49,7 @@ import { FAI_STATUSES, FaiStatus, FaiSummary, QualityPlusApi } from './quality-p
           <mat-label>Product</mat-label>
           <mat-select [formControl]="productCtrl">
             @for (p of products(); track p.id) {
-              <mat-option [value]="p.id">{{ p.code }} - {{ p.name }}</mat-option>
+              <mat-option [value]="p.id">{{ p.productCode }} - {{ p.name }}</mat-option>
             }
           </mat-select>
         </mat-form-field>

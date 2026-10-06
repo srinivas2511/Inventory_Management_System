@@ -105,7 +105,7 @@ describe('HTTP interceptors', () => {
     expect(toast.error).toHaveBeenCalledWith('Something went wrong on the server. Reference: abc123');
   });
 
-  it('uses the configured API base for matching', () => {
-    expect(TestBed.inject(AppConfigService).apiBaseUrl).toBe('/api');
+  it('treats the shipped default as same-origin, so API paths are /api/... and never /api/api/...', () => {
+    expect(TestBed.inject(AppConfigService).apiBaseUrl).toBe('');
   });
 });

@@ -53,44 +53,45 @@ export interface SpringAttributeDefinitionDto {
   displayOrder: number;
 }
 
-export interface SpringSpecificationDto {
-  wireDiameterMm?: number | null;
-  outerDiameterMm?: number | null;
-  freeLengthMm?: number | null;
-  totalCoils?: number | null;
-  activeCoils?: number | null;
-  attributes?: Record<string, unknown>;
-}
-
+/** The product exactly as the backend returns it: spring dimensions are flat fields, per-type attributes a JSON object. */
 export interface ProductDto {
   id: number;
-  code: string;
+  productCode: string;
   name: string;
-  description?: string;
   springType: SpringType;
   status: ProductStatus;
+  primaryMaterialId?: number | null;
+  wireDiameter?: number | null;
+  outerDiameter?: number | null;
+  innerDiameter?: number | null;
+  freeLength?: number | null;
+  numberOfCoils?: number | null;
+  activeCoils?: number | null;
   drawingNumber?: string;
   drawingRevision?: string;
   heatTreatment?: string;
   surfaceTreatment?: string;
-  customerId?: number;
-  customerName?: string;
-  specification?: SpringSpecificationDto;
+  customerId?: number | null;
+  attributes?: Record<string, unknown> | null;
   active: boolean;
   version: number;
 }
 
 export interface SaveProductRequest {
-  code: string;
+  productCode: string;
   name: string;
-  description?: string;
   springType: SpringType;
-  drawingNumber?: string;
-  drawingRevision?: string;
-  heatTreatment?: string;
-  surfaceTreatment?: string;
-  customerId?: number;
-  specification?: SpringSpecificationDto;
+  wireDiameter?: number | null;
+  outerDiameter?: number | null;
+  freeLength?: number | null;
+  numberOfCoils?: number | null;
+  activeCoils?: number | null;
+  drawingNumber?: string | null;
+  drawingRevision?: string | null;
+  heatTreatment?: string | null;
+  surfaceTreatment?: string | null;
+  customerId?: number | null;
+  attributes?: Record<string, unknown>;
 }
 
 @Injectable({ providedIn: 'root' })
