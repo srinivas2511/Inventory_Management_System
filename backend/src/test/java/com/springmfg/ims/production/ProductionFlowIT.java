@@ -32,6 +32,9 @@ import com.springmfg.ims.inventory.dto.OpeningBalanceLine;
 import com.springmfg.ims.inventory.service.OpeningBalanceService;
 import com.springmfg.ims.material.domain.Material;
 import com.springmfg.ims.product.domain.Product;
+import com.springmfg.ims.lookup.LookupDtos.DispatchableOrder;
+import com.springmfg.ims.lookup.LookupDtos.FgStock;
+import com.springmfg.ims.lookup.LookupService;
 import com.springmfg.ims.production.dto.CreateIssueRequest;
 import com.springmfg.ims.quality.dto.FinalInspectionDecisionRequest;
 import com.springmfg.ims.quality.service.FinalInspectionService;
@@ -74,6 +77,7 @@ class ProductionFlowIT extends AbstractIntegrationTest {
     @Autowired SalesOrderService salesOrderService;
     @Autowired ReservationService reservationService;
     @Autowired DispatchService dispatchService;
+    @Autowired LookupService lookupService;
     @Autowired JdbcTemplate jdbc;
     @Autowired TestData td;
 
@@ -270,6 +274,20 @@ class ProductionFlowIT extends AbstractIntegrationTest {
         salesOrderService.confirm(so.id());
         so = salesOrderService.approve(so.id());
         Long itemId = so.items().get(0).id();
+
+        // the lookups behind the reserve and dispatch forms see the released stock and the open order
+        List<FgStock> stock = lookupService.finishedGoodsStock(order.productId());
+        assertThat(stock).singleElement().satisfies(st -> {
+            assertThat(st.fgBatchId()).isEqualTo(fgBatchId);
+            assertThat(st.available()).isEqualByComparingTo("100");
+        });
+        Long approvedOrderId = so.id();
+        DispatchableOrder dispatchable = lookupService.dispatchableOrders().stream()
+                .filter(o -> o.id().equals(approvedOrderId)).findFirst().orElseThrow();
+        assertThat(dispatchable.items()).singleElement().satisfies(i -> {
+            assertThat(i.salesOrderItemId()).isEqualTo(itemId);
+            assertThat(i.remainingQty()).isEqualByComparingTo("80");
+        });
 
         reservationService.reserve(new ReserveRequest(itemId, fgBatchId, warehouseId, fgLocation,
                 new BigDecimal("80")));

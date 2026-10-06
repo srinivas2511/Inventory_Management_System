@@ -121,6 +121,21 @@ class RoleAccessIT extends AbstractIntegrationTest {
                     Set.of("OPERATOR", "STORE_OPERATOR", "DISPATCH")),
             Probe.of(HttpMethod.GET, "/api/warehouses",
                     Set.of("ADMIN", "STORE_MANAGER", "STORE_OPERATOR", "MANAGEMENT"), Set.of("OPERATOR")),
+            // dropdown lookups for the create forms: readable with the transactional permission, not the master data one
+            Probe.of(HttpMethod.GET, "/api/lookups/suppliers", Set.of("ADMIN", "PURCHASE_MANAGER"), Set.of("OPERATOR")),
+            Probe.of(HttpMethod.GET, "/api/lookups/customers", Set.of("ADMIN", "SALES"), Set.of("OPERATOR")),
+            Probe.of(HttpMethod.GET, "/api/lookups/materials", Set.of("ADMIN", "PURCHASE_MANAGER", "ENGINEER"),
+                    Set.of("OPERATOR")),
+            Probe.of(HttpMethod.GET, "/api/lookups/products", Set.of("ADMIN", "SALES", "PRODUCTION_MANAGER"),
+                    Set.of("OPERATOR")),
+            Probe.of(HttpMethod.GET, "/api/lookups/warehouses", Set.of("ADMIN", "STORE_MANAGER"), Set.of("OPERATOR")),
+            Probe.of(HttpMethod.GET, "/api/lookups/locations", Set.of("ADMIN", "STORE_MANAGER"), Set.of("OPERATOR")),
+            Probe.of(HttpMethod.GET, "/api/lookups/products/" + MISSING + "/active-bom",
+                    Set.of("ADMIN", "PRODUCTION_MANAGER", "ENGINEER"), Set.of("OPERATOR")),
+            Probe.of(HttpMethod.GET, "/api/lookups/purchase-orders/receivable", Set.of("ADMIN"), Set.of("OPERATOR")),
+            Probe.of(HttpMethod.GET, "/api/lookups/fg-stock", Set.of("ADMIN", "SALES", "DISPATCH"), Set.of("OPERATOR")),
+            Probe.of(HttpMethod.GET, "/api/lookups/sales-orders/dispatchable", Set.of("ADMIN", "DISPATCH"),
+                    Set.of("OPERATOR")),
             Probe.of(HttpMethod.DELETE, "/api/materials/" + MISSING, Set.of("ADMIN"),
                     Set.of("ENGINEER", "STORE_MANAGER")),
             Probe.of(HttpMethod.DELETE, "/api/products/" + MISSING, Set.of("ADMIN", "ENGINEER"),
@@ -409,10 +424,10 @@ class RoleAccessIT extends AbstractIntegrationTest {
                             assertThat(status).as("%s %s as %s", probe.method(), probe.path(), role)
                                     .isNotIn(401, 403).isLessThan(500);
                             if (probe.method() == HttpMethod.GET) {
-                                // a list or report must succeed; a by-id read of a missing id answers 404
+                                // a list or report must succeed; a by-id read of a missing id answers 404, or 204 when "none yet" is a valid answer
                                 boolean byMissingId = probe.path().contains("/" + MISSING);
                                 assertThat(status).as("%s %s as %s", probe.method(), probe.path(), role)
-                                        .isIn(byMissingId ? List.of(200, 404) : List.of(200));
+                                        .isIn(byMissingId ? List.of(200, 204, 404) : List.of(200));
                             }
                         })),
                 probe.forbidden().stream().map(role -> DynamicTest.dynamicTest(

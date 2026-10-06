@@ -1,0 +1,192 @@
+package com.springmfg.ims.lookup;
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.springmfg.ims.common.search.SearchText;
+import com.springmfg.ims.lookup.LookupDtos.ActiveBom;
+import com.springmfg.ims.lookup.LookupDtos.DispatchableItem;
+import com.springmfg.ims.lookup.LookupDtos.DispatchableOrder;
+import com.springmfg.ims.lookup.LookupDtos.FgStock;
+import com.springmfg.ims.lookup.LookupDtos.ItemOption;
+import com.springmfg.ims.lookup.LookupDtos.LocationOption;
+import com.springmfg.ims.lookup.LookupDtos.Option;
+import com.springmfg.ims.lookup.LookupDtos.ReceivablePo;
+import com.springmfg.ims.lookup.LookupDtos.ReceivablePoItem;
+
+/**
+ * Small, read-only lists that feed the dropdowns of the create forms. They exist because the master-data list
+ * endpoints need the master-data permissions, which a purchaser, planner or dispatcher does not hold.
+ */
+@Service
+@Transactional(readOnly = true)
+public class LookupService {
+
+    private static final int LIMIT = 500;
+
+    private final NamedParameterJdbcTemplate jdbc;
+
+    public LookupService(NamedParameterJdbcTemplate jdbc) {
+        this.jdbc = jdbc;
+    }
+
+    public List<Option> suppliers(String q) {
+        return options("SELECT id, supplier_code AS code, name FROM suppliers WHERE status = 'ACTIVE'",
+                "supplier_code", q);
+    }
+
+    public List<Option> customers(String q) {
+        return options("SELECT id, customer_code AS code, name FROM customers WHERE status = 'ACTIVE'",
+                "customer_code", q);
+    }
+
+    public List<Option> warehouses(String q) {
+        return options("SELECT id, warehouse_code AS code, name FROM warehouses WHERE active = TRUE",
+                "warehouse_code", q);
+    }
+
+    public List<ItemOption> materials(String q) {
+        return items("SELECT id, material_code AS code, name, uom FROM materials WHERE active = TRUE",
+                "material_code", q);
+    }
+
+    public List<ItemOption> products(String q) {
+        return items("SELECT id, product_code AS code, name, uom FROM products WHERE active = TRUE",
+                "product_code", q);
+    }
+
+    public List<LocationOption> locations(Long warehouseId) {
+        return jdbc.query("""
+                SELECT id, warehouse_id, location_code, name, location_type FROM warehouse_locations
+                 WHERE active = TRUE AND (:wh = 0 OR warehouse_id = :wh)
+                 ORDER BY warehouse_id, location_code LIMIT 1000
+                """, new MapSqlParameterSource("wh", warehouseId == null ? 0L : warehouseId),
+                (rs, i) -> new LocationOption(rs.getLong("id"), rs.getLong("warehouse_id"),
+                        rs.getString("location_code"), rs.getString("name"), rs.getString("location_type")));
+    }
+
+    public Optional<ActiveBom> activeBom(Long productId) {
+        return jdbc.query("""
+                SELECT id, bom_number, revision, base_quantity FROM bom
+                 WHERE product_id = :p AND status = 'ACTIVE'
+                """, new MapSqlParameterSource("p", productId),
+                (rs, i) -> new ActiveBom(rs.getLong("id"), rs.getString("bom_number"), rs.getString("revision"),
+                        rs.getBigDecimal("base_quantity"))).stream().findFirst();
+    }
+
+    /** Purchase orders that can still be received against, with the open quantity per line. */
+    public List<ReceivablePo> receivablePurchaseOrders() {
+        List<Map<String, Object>> rows = jdbc.queryForList("""
+                SELECT po.id AS po_id, po.po_number, po.supplier_id, s.name AS supplier_name, po.status,
+                       i.id AS item_id, i.line_no, i.material_id, m.material_code, m.name AS material_name, m.uom,
+                       i.ordered_qty, i.received_qty
+                  FROM purchase_orders po
+                  JOIN suppliers s ON s.id = po.supplier_id
+                  JOIN purchase_order_items i ON i.purchase_order_id = po.id
+                  JOIN materials m ON m.id = i.material_id
+                 WHERE po.status IN ('SENT_TO_SUPPLIER', 'PARTIALLY_RECEIVED') AND i.ordered_qty > i.received_qty
+                 ORDER BY po.id DESC, i.line_no LIMIT 2000
+                """, new MapSqlParameterSource());
+        Map<Long, List<Map<String, Object>>> byPo = rows.stream().collect(
+                Collectors.groupingBy(r -> ((Number) r.get("po_id")).longValue(), LinkedHashMap::new,
+                        Collectors.toList()));
+        List<ReceivablePo> result = new ArrayList<>();
+        byPo.forEach((poId, lines) -> {
+            Map<String, Object> first = lines.get(0);
+            List<ReceivablePoItem> items = lines.stream().map(r -> {
+                BigDecimal ordered = (BigDecimal) r.get("ordered_qty");
+                BigDecimal received = (BigDecimal) r.get("received_qty");
+                return new ReceivablePoItem(((Number) r.get("item_id")).longValue(),
+                        ((Number) r.get("line_no")).intValue(), ((Number) r.get("material_id")).longValue(),
+                        (String) r.get("material_code"), (String) r.get("material_name"), (String) r.get("uom"),
+                        ordered, received, ordered.subtract(received));
+            }).toList();
+            result.add(new ReceivablePo(poId, (String) first.get("po_number"),
+                    ((Number) first.get("supplier_id")).longValue(), (String) first.get("supplier_name"),
+                    (String) first.get("status"), items));
+        });
+        return result;
+    }
+
+    /** Finished goods that can be reserved or dispatched: released stock per batch and location. */
+    public List<FgStock> finishedGoodsStock(Long productId) {
+        return jdbc.query("""
+                SELECT b.fg_batch_id, f.batch_number, b.product_id, b.warehouse_id, b.location_id,
+                       l.location_code, b.qty_on_hand, b.qty_reserved
+                  FROM inventory_balances b
+                  JOIN fg_batches f ON f.id = b.fg_batch_id
+                  JOIN warehouse_locations l ON l.id = b.location_id
+                 WHERE b.item_type = 'PRODUCT' AND b.stock_status = 'AVAILABLE' AND b.qty_on_hand > 0
+                   AND (:p = 0 OR b.product_id = :p)
+                 ORDER BY f.produced_on, b.fg_batch_id, b.location_id LIMIT 1000
+                """, new MapSqlParameterSource("p", productId == null ? 0L : productId),
+                (rs, i) -> new FgStock(rs.getLong("fg_batch_id"), rs.getString("batch_number"),
+                        rs.getLong("product_id"), rs.getLong("warehouse_id"), rs.getLong("location_id"),
+                        rs.getString("location_code"), rs.getBigDecimal("qty_on_hand"),
+                        rs.getBigDecimal("qty_reserved"),
+                        rs.getBigDecimal("qty_on_hand").subtract(rs.getBigDecimal("qty_reserved"))));
+    }
+
+    /** Approved sales orders that still have quantity to dispatch. */
+    public List<DispatchableOrder> dispatchableOrders() {
+        List<Map<String, Object>> rows = jdbc.queryForList("""
+                SELECT so.id AS order_id, so.order_number, so.customer_id, c.name AS customer_name,
+                       so.delivery_address, so.status, i.id AS item_id, i.line_no, i.product_id, p.product_code,
+                       p.name AS product_name, i.ordered_qty, i.dispatched_qty, i.unit_price
+                  FROM sales_orders so
+                  JOIN customers c ON c.id = so.customer_id
+                  JOIN sales_order_items i ON i.sales_order_id = so.id
+                  JOIN products p ON p.id = i.product_id
+                 WHERE so.status IN ('APPROVED', 'ALLOCATED', 'PARTIALLY_DISPATCHED')
+                   AND i.ordered_qty > i.dispatched_qty
+                 ORDER BY so.id DESC, i.line_no LIMIT 2000
+                """, new MapSqlParameterSource());
+        Map<Long, List<Map<String, Object>>> byOrder = rows.stream().collect(
+                Collectors.groupingBy(r -> ((Number) r.get("order_id")).longValue(), LinkedHashMap::new,
+                        Collectors.toList()));
+        List<DispatchableOrder> result = new ArrayList<>();
+        byOrder.forEach((orderId, lines) -> {
+            Map<String, Object> first = lines.get(0);
+            List<DispatchableItem> items = lines.stream().map(r -> {
+                BigDecimal ordered = (BigDecimal) r.get("ordered_qty");
+                BigDecimal dispatched = (BigDecimal) r.get("dispatched_qty");
+                return new DispatchableItem(((Number) r.get("item_id")).longValue(),
+                        ((Number) r.get("line_no")).intValue(), ((Number) r.get("product_id")).longValue(),
+                        (String) r.get("product_code"), (String) r.get("product_name"), ordered, dispatched,
+                        ordered.subtract(dispatched), (BigDecimal) r.get("unit_price"));
+            }).toList();
+            result.add(new DispatchableOrder(orderId, (String) first.get("order_number"),
+                    ((Number) first.get("customer_id")).longValue(), (String) first.get("customer_name"),
+                    (String) first.get("delivery_address"), (String) first.get("status"), items));
+        });
+        return result;
+    }
+
+    private List<Option> options(String select, String codeColumn, String q) {
+        return jdbc.query(select + filter(codeColumn) + " ORDER BY " + codeColumn + " LIMIT " + LIMIT,
+                new MapSqlParameterSource("q", SearchText.normalise(q)),
+                (rs, i) -> new Option(rs.getLong("id"), rs.getString("code"), rs.getString("name")));
+    }
+
+    private List<ItemOption> items(String select, String codeColumn, String q) {
+        return jdbc.query(select + filter(codeColumn) + " ORDER BY " + codeColumn + " LIMIT " + LIMIT,
+                new MapSqlParameterSource("q", SearchText.normalise(q)),
+                (rs, i) -> new ItemOption(rs.getLong("id"), rs.getString("code"), rs.getString("name"),
+                        rs.getString("uom")));
+    }
+
+    private static String filter(String codeColumn) {
+        return " AND (:q = '' OR LOWER(" + codeColumn + ") LIKE LOWER(CONCAT('%', :q, '%'))"
+                + " OR LOWER(name) LIKE LOWER(CONCAT('%', :q, '%')))";
+    }
+}
