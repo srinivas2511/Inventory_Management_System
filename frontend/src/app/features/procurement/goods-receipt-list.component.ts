@@ -9,7 +9,9 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { GoodsReceiptFormComponent } from './goods-receipt-form.component';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
@@ -45,7 +47,7 @@ export interface GoodsReceiptDto {
   template: `
     <div class="page-header">
       <h2 class="mat-h2">Goods Receipts</h2>
-      <button mat-raised-button color="primary" *appHasPermission="'INVENTORY_RECEIVE'">
+      <button mat-raised-button color="primary" *appHasPermission="'INVENTORY_RECEIVE'" (click)="receiveGoods()">
         <mat-icon>add</mat-icon> Receive Goods
       </button>
     </div>
@@ -88,6 +90,7 @@ export interface GoodsReceiptDto {
 export class GoodsReceiptListComponent implements OnInit {
   private http = inject(HttpClient);
   private snack = inject(MatSnackBar);
+  private dialog = inject(MatDialog);
 
   columns = ['grNumber', 'poNumber', 'receiptDate', 'status'];
   rows = signal<GoodsReceiptDto[]>([]);
@@ -96,6 +99,18 @@ export class GoodsReceiptListComponent implements OnInit {
 
   ngOnInit(): void {
     this.load();
+  }
+
+  receiveGoods(): void {
+    this.dialog
+      .open(GoodsReceiptFormComponent, { width: '960px', maxWidth: '95vw' })
+      .afterClosed()
+      .subscribe((created) => {
+        if (created) {
+          this.snack.open('Goods receipt posted', 'OK', { duration: 3000 });
+          this.load();
+        }
+      });
   }
 
   load(): void {

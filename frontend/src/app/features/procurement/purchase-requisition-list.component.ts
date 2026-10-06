@@ -10,7 +10,9 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { PurchaseRequisitionFormComponent } from './purchase-requisition-form.component';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
 
@@ -47,7 +49,7 @@ export interface PurchaseRequisitionDto {
   template: `
     <div class="page-header">
       <h2 class="mat-h2">Purchase Requisitions</h2>
-      <button mat-raised-button color="primary" *appHasPermission="'PURCHASE_CREATE'">
+      <button mat-raised-button color="primary" *appHasPermission="'PURCHASE_CREATE'" (click)="createPr()">
         <mat-icon>add</mat-icon> New PR
       </button>
     </div>
@@ -109,6 +111,7 @@ export interface PurchaseRequisitionDto {
 export class PurchaseRequisitionListComponent implements OnInit {
   private http = inject(HttpClient);
   private snack = inject(MatSnackBar);
+  private dialog = inject(MatDialog);
 
   columns = ['prNumber', 'materialId', 'requestedQty', 'neededBy', 'status', 'actions'];
   rows = signal<PurchaseRequisitionDto[]>([]);
@@ -118,6 +121,18 @@ export class PurchaseRequisitionListComponent implements OnInit {
   ngOnInit(): void {
     this.statusCtrl.valueChanges.subscribe(() => this.load());
     this.load();
+  }
+
+  createPr(): void {
+    this.dialog
+      .open(PurchaseRequisitionFormComponent, { width: '960px', maxWidth: '95vw' })
+      .afterClosed()
+      .subscribe((created) => {
+        if (created) {
+          this.snack.open('Requisition created', 'OK', { duration: 3000 });
+          this.load();
+        }
+      });
   }
 
   load(): void {

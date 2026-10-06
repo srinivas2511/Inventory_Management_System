@@ -10,7 +10,9 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { PurchaseOrderFormComponent } from './purchase-order-form.component';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
 
@@ -60,7 +62,7 @@ export interface PurchaseOrderDto {
   template: `
     <div class="page-header">
       <h2 class="mat-h2">Purchase Orders</h2>
-      <button mat-raised-button color="primary" *appHasPermission="'PURCHASE_CREATE'">
+      <button mat-raised-button color="primary" *appHasPermission="'PURCHASE_CREATE'" (click)="createPo()">
         <mat-icon>add</mat-icon> New PO
       </button>
     </div>
@@ -151,6 +153,7 @@ export interface PurchaseOrderDto {
 export class PurchaseOrderListComponent implements OnInit {
   private http = inject(HttpClient);
   private snack = inject(MatSnackBar);
+  private dialog = inject(MatDialog);
 
   columns = ['poNumber', 'supplierId', 'poDate', 'grandTotal', 'status', 'actions'];
   rows = signal<PurchaseOrderDto[]>([]);
@@ -160,6 +163,18 @@ export class PurchaseOrderListComponent implements OnInit {
   ngOnInit(): void {
     this.statusCtrl.valueChanges.subscribe(() => this.load());
     this.load();
+  }
+
+  createPo(): void {
+    this.dialog
+      .open(PurchaseOrderFormComponent, { width: '960px', maxWidth: '95vw' })
+      .afterClosed()
+      .subscribe((created) => {
+        if (created) {
+          this.snack.open('Purchase order created', 'OK', { duration: 3000 });
+          this.load();
+        }
+      });
   }
 
   load(): void {
