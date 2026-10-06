@@ -134,10 +134,50 @@ export interface Page<T> {
   number: number;
 }
 
+export interface MissingArInvoiceDto {
+  dispatchId: number;
+  dispatchNumber: string;
+  customerId: number;
+  dispatchDate: string;
+}
+
+export interface ArReconcileResultDto {
+  attempted: number;
+  created: number;
+  alreadyInvoiced: number;
+  failed: number;
+  failures: { dispatchId: number; dispatchNumber: string; reason: string }[];
+}
+
+export interface FinanceAlertDto {
+  id: number;
+  alertType: string;
+  severity: string;
+  entityType: string;
+  entityId: number;
+  message: string;
+  status: string;
+  lastSeenAt: string;
+  resolvedAt: string | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class FinanceApi {
   private http = inject(HttpClient);
   private base = '/api';
+
+  getMissingArInvoices(): Observable<MissingArInvoiceDto[]> {
+    return this.http.get<MissingArInvoiceDto[]>(`${this.base}/ar/reconciliation/missing-invoices`);
+  }
+
+  retryMissingArInvoices(): Observable<ArReconcileResultDto> {
+    return this.http.post<ArReconcileResultDto>(`${this.base}/ar/reconciliation/missing-invoices/retry`, {});
+  }
+
+  getMissingArInvoiceAlerts(): Observable<Page<FinanceAlertDto>> {
+    const params = new HttpParams().set('alertType', 'MISSING_AR_INVOICE').set('size', 200);
+    return this.http.get<Page<FinanceAlertDto>>(`${this.base}/alerts`, { params });
+  }
 
   getJournals(page = 0, size = 20): Observable<Page<JournalHeaderDto>> {
     const params = new HttpParams().set('page', page).set('size', size);

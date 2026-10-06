@@ -264,6 +264,13 @@ export const NAV_GROUPS: NavGroup[] = [
         enabled: true,
       },
       {
+        label: 'AR Reconciliation',
+        icon: 'sync_problem',
+        route: '/finance/ar-reconciliation',
+        permission: 'AR_MANAGE',
+        enabled: true,
+      },
+      {
         label: 'Bank Reconciliation',
         icon: 'account_balance_wallet',
         route: '/finance/bank',

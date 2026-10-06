@@ -336,6 +336,13 @@ export const routes: Routes = [
         loadComponent: () => import('./features/finance/ar-list.component').then((m) => m.ArListComponent),
       },
       {
+        path: 'finance/ar-reconciliation',
+        title: 'AR Invoice Reconciliation',
+        canActivate: [permissionGuard('AR_MANAGE')],
+        loadComponent: () =>
+          import('./features/finance/ar-reconciliation.component').then((m) => m.ArReconciliationComponent),
+      },
+      {
         path: 'finance/bank',
         title: 'Bank Reconciliation',
         canActivate: [permissionGuard('BANK_RECONCILE')],
