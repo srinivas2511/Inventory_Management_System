@@ -60,6 +60,7 @@ public class OperationExecutionService {
     private final OperationRepository opMasterRepo;
     private final MachineRepository machineRepo;
     private final ProductRepository productRepo;
+    private final FinishedGoodsCostService fgCostService;
 
     public OperationExecutionService(
             ProductionOperationRepository opRepo,
@@ -76,7 +77,8 @@ public class OperationExecutionService {
             ProductionOrderService orderService,
             OperationRepository opMasterRepo,
             MachineRepository machineRepo,
-            ProductRepository productRepo) {
+            ProductRepository productRepo,
+            FinishedGoodsCostService fgCostService) {
         this.opRepo = opRepo;
         this.orderRepo = orderRepo;
         this.outputRepo = outputRepo;
@@ -92,6 +94,7 @@ public class OperationExecutionService {
         this.opMasterRepo = opMasterRepo;
         this.machineRepo = machineRepo;
         this.productRepo = productRepo;
+        this.fgCostService = fgCostService;
     }
 
     @Transactional
@@ -277,6 +280,10 @@ public class OperationExecutionService {
         fgBatch.setRemainingQty(lastOp.getGoodQty());
         fgBatch.setProducedOn(LocalDate.now());
         fgBatch.setQualityStatus("PRODUCTION_COMPLETED");
+        // Received at standard (released estimate) or at the actual material cost still in WIP after scrap; the
+        // ledger value of the receipt is what the bridge journals as Dr 1410 FG / Cr 1501 WIP.
+        FinishedGoodsCostService.FgCost fgCost = fgCostService.resolve(orderId, order.getProductId(), lastOp.getGoodQty());
+        fgBatch.setUnitCost(fgCost.unitCost());
         fgBatch = fgBatchRepo.save(fgBatch);
 
         // Post PRODUCTION_RECEIPT to FG Quality Pending location
@@ -289,8 +296,9 @@ public class OperationExecutionService {
                     "PRODUCTION_RECEIPT", "PRODUCT",
                     null, order.getProductId(), null, fgBatch.getId(),
                     warehouseId, fgqLocs.get(0).getId(), "QUALITY_PENDING",
-                    lastOp.getGoodQty(), null, null,
-                    "PRODUCTION_ORDER", orderId, order.getOrderNumber(), null));
+                    lastOp.getGoodQty(), null, fgCost.unitCost(),
+                    "PRODUCTION_ORDER", orderId, order.getOrderNumber(),
+                    "FG cost basis " + fgCost.basis()));
         }
 
         // Update order

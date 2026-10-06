@@ -248,4 +248,23 @@ public class StockLocationQueryService {
                         rs.getBigDecimal("value")));
         return out;
     }
+
+    /**
+     * Value already taken out of work in progress as scrap for the given production outputs: the ledger value of
+     * their PRODUCTION_REJECTION postings. Finished-goods costing nets it off the material cost so the same material
+     * is never relieved from WIP twice.
+     */
+    @Transactional(readOnly = true)
+    public BigDecimal scrapValueOfOutputs(Collection<Long> productionOutputIds) {
+        if (productionOutputIds == null || productionOutputIds.isEmpty()) {
+            return BigDecimal.ZERO;
+        }
+        flush();
+        BigDecimal value = jdbc.queryForObject("""
+                SELECT COALESCE(SUM(total_cost), 0) FROM ims.inventory_transactions
+                WHERE transaction_type = 'PRODUCTION_REJECTION' AND reference_type = 'PRODUCTION_OUTPUT'
+                  AND reference_id IN (:ids)
+                """, new MapSqlParameterSource("ids", productionOutputIds), BigDecimal.class);
+        return value != null ? value : BigDecimal.ZERO;
+    }
 }
