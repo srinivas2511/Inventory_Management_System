@@ -91,10 +91,20 @@ class DemoDataLoaderIT {
 
         assertThat(count("SELECT COUNT(*) FROM ims.fg_batches WHERE quality_status = 'APPROVED'")).isGreaterThanOrEqualTo(1);
         assertThat(count("SELECT COUNT(*) FROM ims.sales_orders WHERE notes LIKE 'Demo sales order%'")).isEqualTo(1);
-        assertThat(count("SELECT COUNT(*) FROM ims.sales_reservations WHERE status = 'ACTIVE'")).isEqualTo(1);
-        // The dispatch itself is not asserted: DispatchService posts finished goods out of stock status APPROVED while
-        // final inspection leaves them AVAILABLE, so a dispatch of inspected stock fails (docs/decisions.md,
-        // "UI walkthrough blockers", found-not-fixed). Add the dispatch assertion when that convention is decided.
+        // the reservation was consumed by the dispatch, which posted the stock out and raised the AR invoice
+        assertThat(count("SELECT COUNT(*) FROM ims.sales_reservations WHERE status = 'ACTIVE'")).isZero();
+        assertThat(count("SELECT COUNT(*) FROM ims.sales_reservations WHERE status = 'USED'")).isEqualTo(1);
+        assertThat(count("""
+                SELECT COUNT(*) FROM ims.dispatches d
+                  JOIN ims.sales_orders so ON so.id = d.sales_order_id
+                 WHERE so.notes LIKE 'Demo sales order%'
+                """)).isEqualTo(1);
+        assertThat(count("""
+                SELECT COUNT(*) FROM ims.ar_invoices i
+                  JOIN ims.dispatches d ON d.id = i.dispatch_id
+                  JOIN ims.sales_orders so ON so.id = d.sales_order_id
+                 WHERE so.notes LIKE 'Demo sales order%' AND i.total_amount > 0
+                """)).isEqualTo(1);
     }
 
     @Test
