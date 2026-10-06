@@ -258,7 +258,8 @@ public class AuthService {
 
     // ── helpers ──────────────────────────────────────────────────────────────
 
-    private void validatePasswordPolicy(String password, User user) {
+    /** Complexity rules only (length, character classes, no username); history is checked per existing user. */
+    public void validateComplexity(String password, String username) {
         int minLen = settings.getInt("auth.password.min_length", 10);
         if (password.length() < minLen) {
             throw new BusinessRuleException(ErrorCode.PASSWORD_POLICY, "Password must be at least " + minLen + " characters");
@@ -267,9 +268,13 @@ public class AuthService {
         if (!password.matches(".*[a-z].*")) throw new BusinessRuleException(ErrorCode.PASSWORD_POLICY, "Password must contain a lowercase letter");
         if (!password.matches(".*\\d.*"))   throw new BusinessRuleException(ErrorCode.PASSWORD_POLICY, "Password must contain a digit");
         if (!password.matches(".*[^A-Za-z0-9].*")) throw new BusinessRuleException(ErrorCode.PASSWORD_POLICY, "Password must contain a special character");
-        if (user.getUsername() != null && password.toLowerCase().contains(user.getUsername().toLowerCase())) {
+        if (username != null && password.toLowerCase().contains(username.toLowerCase())) {
             throw new BusinessRuleException(ErrorCode.PASSWORD_POLICY, "Password must not contain your username");
         }
+    }
+
+    private void validatePasswordPolicy(String password, User user) {
+        validateComplexity(password, user.getUsername());
 
         int historyCount = settings.getInt("auth.password.history_count", 5);
         passwordHistoryRepo.findByUserIdOrderByChangedAtDesc(user.getId(), PageRequest.of(0, historyCount))

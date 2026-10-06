@@ -96,11 +96,13 @@ docs/       requirements, architecture, design, plan, runbook, UAT checklist, en
 
 ## Demo login credentials
 
-Seeded in the `dev`/`demo` profile only (never production):
+Created by the demo loader in the `dev`/`demo` profile only (never production; set `ims.demo.load-data=true`):
 
 | Username | Default password | Role |
 |----------|-----------------|------|
 | `admin` | `Admin@123` | ADMIN (all permissions) |
+
+A production installation has no default user. Set `IMS_BOOTSTRAP_ADMIN_USERNAME` and `IMS_BOOTSTRAP_ADMIN_PASSWORD` for the first start (see `docs/RUNBOOK.md`, "First administrator").
 
 Set `ims.demo.load-data=true` in your docker `.env` (or `application-dev.yml`) to auto-seed a complete end-to-end workflow on startup: supplier → raw-material stock → purchase order → production order (3 operations) → final inspection (48 pcs approved) → sales order → dispatch.
 

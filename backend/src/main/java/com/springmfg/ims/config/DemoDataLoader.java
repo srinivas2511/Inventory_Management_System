@@ -1,7 +1,9 @@
 package com.springmfg.ims.config;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -12,6 +14,7 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
@@ -24,6 +27,10 @@ import com.springmfg.ims.engineering.bom.BomService;
 import com.springmfg.ims.engineering.bom.CreateBomRequest;
 import com.springmfg.ims.engineering.routing.RoutingService;
 import com.springmfg.ims.engineering.routing.SaveRoutingStepRequest;
+import com.springmfg.ims.iam.domain.Role;
+import com.springmfg.ims.iam.domain.User;
+import com.springmfg.ims.iam.repository.RoleRepository;
+import com.springmfg.ims.iam.repository.UserRepository;
 import com.springmfg.ims.inventory.dto.OpeningBalanceLine;
 import com.springmfg.ims.inventory.service.OpeningBalanceService;
 import com.springmfg.ims.material.dto.MaterialDto;
@@ -48,6 +55,7 @@ import com.springmfg.ims.production.dto.CreateIssueRequest;
 import com.springmfg.ims.production.dto.CreateProductionOrderRequest;
 import com.springmfg.ims.production.dto.ProductionOrderDto;
 import com.springmfg.ims.production.dto.RecordOutputRequest;
+import com.springmfg.ims.production.repository.ProductionOrderRepository;
 import com.springmfg.ims.production.service.MaterialIssueService;
 import com.springmfg.ims.production.service.OperationExecutionService;
 import com.springmfg.ims.production.service.ProductionOrderService;
@@ -82,6 +90,10 @@ public class DemoDataLoader {
 
     // ── seed codes (idempotency guard) ────────────────────────────────────────
 
+    // documented in README.md; this class only exists in the dev/demo profiles, never production
+    private static final String DEMO_ADMIN_USERNAME = "admin";
+    private static final String DEMO_ADMIN_PASSWORD = "Admin@123";
+
     private static final String SUPPLIER_CODE = "DEMO-KRISHNA";
     private static final String CUSTOMER_CODE  = "DEMO-AUTOINC";
     private static final String MATERIAL_CODE  = "DEMO-WR-65SI2";
@@ -91,7 +103,6 @@ public class DemoDataLoader {
     private static final long WAREHOUSE_ID = 1L;
     private static final long LOC_RM01     = 1L;  // RAW_MATERIAL
     private static final long LOC_FG01     = 4L;  // FINISHED
-    private static final long LOC_DISPATCH = 8L;  // DISPATCH
 
     // operations seeded by V2: 1=WIRE-DRAW, 2=COILING, 3=CUTTING, 4=GRINDING,
     // 5=HEAT-TREAT, 6=SHOT-PEEN, 7=SURFACE-TREAT, 8=INSPECTION, 9=PACKAGING
@@ -99,11 +110,15 @@ public class DemoDataLoader {
     private static final long OP_GRINDING   = 4L;
     private static final long OP_INSPECTION = 8L;
 
+    private final UserRepository userRepo;
+    private final RoleRepository roleRepo;
+    private final PasswordEncoder passwordEncoder;
     private final SupplierRepository supplierRepo;
     private final CustomerRepository customerRepo;
     private final MaterialRepository materialRepo;
     private final ProductRepository productRepo;
     private final PurchaseOrderItemRepository poItemRepo;
+    private final ProductionOrderRepository productionOrderRepo;
     private final QualityInspectionRepository inspectionRepo;
 
     private final SupplierService supplierService;
@@ -123,11 +138,15 @@ public class DemoDataLoader {
     private final DispatchService dispatchService;
 
     public DemoDataLoader(
+            UserRepository userRepo,
+            RoleRepository roleRepo,
+            PasswordEncoder passwordEncoder,
             SupplierRepository supplierRepo,
             CustomerRepository customerRepo,
             MaterialRepository materialRepo,
             ProductRepository productRepo,
             PurchaseOrderItemRepository poItemRepo,
+            ProductionOrderRepository productionOrderRepo,
             QualityInspectionRepository inspectionRepo,
             SupplierService supplierService,
             CustomerService customerService,
@@ -144,11 +163,15 @@ public class DemoDataLoader {
             SalesOrderService salesOrderService,
             ReservationService reservationService,
             DispatchService dispatchService) {
+        this.userRepo = userRepo;
+        this.roleRepo = roleRepo;
+        this.passwordEncoder = passwordEncoder;
         this.supplierRepo = supplierRepo;
         this.customerRepo = customerRepo;
         this.materialRepo = materialRepo;
         this.productRepo = productRepo;
         this.poItemRepo = poItemRepo;
+        this.productionOrderRepo = productionOrderRepo;
         this.inspectionRepo = inspectionRepo;
         this.supplierService = supplierService;
         this.customerService = customerService;
@@ -171,13 +194,18 @@ public class DemoDataLoader {
     public void load() {
         log.info("DemoDataLoader: starting demo data load");
         try {
-            installAdminContext();
+            installAdminContext(step0_adminUser());
             long supplierId = step1_supplier();
             long customerId = step2_customer();
             long materialId = step3_material(supplierId);
             long productId  = step4_product(materialId);
             step5_routing(productId);
             long bomId      = step6_bom(productId, materialId);
+            if (!productionOrderRepo.findByProductId(productId).isEmpty()) {
+                // stock, PO and production to dispatch are one flow; a second run must not repeat any of it
+                log.info("DemoDataLoader: demo flow already loaded — nothing more to do");
+                return;
+            }
             step7_openingBalance(materialId);
             step8_purchaseOrderDraft(supplierId, materialId);
             long prodOrderId = step9_productionOrder(productId, bomId);
@@ -191,6 +219,29 @@ public class DemoDataLoader {
         } finally {
             SecurityContextHolder.clearContext();
         }
+    }
+
+    // ── Step 0: the documented demo administrator ───────────────────────────
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public long step0_adminUser() {
+        return userRepo.findByUsername(DEMO_ADMIN_USERNAME)
+                .map(u -> { log.info("step0: demo admin exists id={}", u.getId()); return u.getId(); })
+                .orElseGet(() -> {
+                    Role adminRole = roleRepo.findByCode("ADMIN")
+                            .orElseThrow(() -> new IllegalStateException("Role ADMIN is missing"));
+                    User admin = new User();
+                    admin.setUsername(DEMO_ADMIN_USERNAME);
+                    admin.setFullName("Demo Administrator");
+                    admin.setEmail("admin@demo.local");
+                    admin.setPasswordHash(passwordEncoder.encode(DEMO_ADMIN_PASSWORD));
+                    admin.setPasswordChangedAt(Instant.now());
+                    admin.setMustChangePassword(false);
+                    admin.setRoles(new HashSet<>(Set.of(adminRole)));
+                    userRepo.save(admin);
+                    log.info("step0: demo admin created (username={})", DEMO_ADMIN_USERNAME);
+                    return admin.getId();
+                });
     }
 
     // ── Step 1: Supplier ─────────────────────────────────────────────────────
@@ -480,7 +531,7 @@ public class DemoDataLoader {
                 List.of(new CreateDispatchRequest.DispatchLineRequest(
                         soItemId, fgBatchId,
                         new BigDecimal("80"),
-                        WAREHOUSE_ID, LOC_DISPATCH,
+                        WAREHOUSE_ID, LOC_FG01,
                         new BigDecimal("14.5000"))),
                 "Demo dispatch — full order fulfilled"));
         log.info("step13: dispatch created — demo workflow complete");
@@ -488,9 +539,9 @@ public class DemoDataLoader {
 
     // ── Security context helper ───────────────────────────────────────────────
 
-    private void installAdminContext() {
+    private void installAdminContext(long adminId) {
         CachedUser admin = new CachedUser(
-                1L, "admin", true, 0,
+                adminId, DEMO_ADMIN_USERNAME, true, 0,
                 Set.of("ADMIN"),
                 Set.of("ADMIN", "USER_VIEW", "USER_CREATE", "USER_UPDATE", "SETTINGS_MANAGE",
                         "MASTERDATA_MANAGE", "MATERIAL_VIEW", "SUPPLIER_MANAGE", "CUSTOMER_MANAGE",

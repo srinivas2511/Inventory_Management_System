@@ -47,12 +47,29 @@ Settings (Administration → System Settings): `documents.max_size_mb` (default 
 `notification.email.max_attempts` (default 5), `notification.email.retry_base_seconds` (default 60) and
 `notification.alert.email_min_severity` (default `HIGH`).
 
-### Admin user
+### First administrator
 
-Seeded by `V1__iam_platform.sql`:
+A fresh installation has **no users**; nothing is seeded by migrations and there is no default password. On the first
+start, with an empty `users` table, the application creates the initial administrator from the environment:
 
-| Username | Default password |
-|----------|-----------------|
+| Variable | Meaning |
+|----------|---------|
+| `IMS_BOOTSTRAP_ADMIN_USERNAME` | username of the first administrator |
+| `IMS_BOOTSTRAP_ADMIN_PASSWORD` | its password; must satisfy the password policy (length, upper and lower case, digit, special character, not containing the username) |
+| `IMS_BOOTSTRAP_ADMIN_EMAIL` | optional; defaults to `<username>@localhost.localdomain` |
+
+The password is stored as a BCrypt hash and never logged; the user holds the `ADMIN` role (every permission) and is
+flagged must-change-password. If the variables are unset the application starts anyway and logs one line naming them.
+Once any user exists the variables are ignored, so remove them from the environment after the first start.
+`docker/.env.example` is not updated by this change (outside the paths the agent could edit); add the variables to your
+`docker/.env` for the first start.
+
+In the `dev`/`demo` profiles the demo loader (`ims.demo.load-data=true`) creates `admin` / `Admin@123` instead; that
+account never exists in production.
+
+Reset a password later via **Settings → Users → admin → Reset password** or the API.
+
+----------|-----------------|
 | `admin` | `Admin@123` ← **change immediately** |
 
 Change via **Settings → Users → admin → Reset password** or via the API.
