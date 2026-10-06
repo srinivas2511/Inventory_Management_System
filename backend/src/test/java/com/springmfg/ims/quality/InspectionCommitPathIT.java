@@ -109,6 +109,15 @@ class InspectionCommitPathIT extends AbstractIntegrationTest {
         batch.setStatus("QUARANTINE");
         batch = materialBatchRepo.save(batch);
 
+        // Goods receipt posts the received stock as QUARANTINE; the inspection decision releases it.
+        Warehouse wh = warehouseRepo.findById(1L).orElseThrow();
+        WarehouseLocation loc = ensureLocation(wh, "RAW_MATERIAL");
+        postingService.post(new PostingCommand(
+                "PURCHASE_RECEIPT", "MATERIAL", material.getId(), null, batch.getId(), null,
+                wh.getId(), loc.getId(), "QUARANTINE",
+                new BigDecimal("100.000"), material.getUom(), new BigDecimal("50.0000"),
+                "GOODS_RECEIPT", batch.getId(), batch.getBatchNumber(), "IT setup"));
+
         QualityInspection insp = new QualityInspection();
         insp.setInspectionNumber(td.code("QI"));
         insp.setInspectionType("INCOMING");
@@ -178,6 +187,25 @@ class InspectionCommitPathIT extends AbstractIntegrationTest {
         return out;
     }
 
+    private Map<String, BigDecimal> materialBalancesByStatus(Long materialBatchId) {
+        Map<String, BigDecimal> out = new HashMap<>();
+        jdbc.query("SELECT stock_status, SUM(qty_on_hand) AS qty FROM ims.inventory_balances WHERE material_batch_id = ? GROUP BY stock_status",
+                rs -> {
+                    out.put(rs.getString("stock_status"), rs.getBigDecimal("qty"));
+                }, materialBatchId);
+        return out;
+    }
+
+    private static BigDecimal qty(Map<String, BigDecimal> balances, String status) {
+        return balances.getOrDefault(status, BigDecimal.ZERO);
+    }
+
+    private Long measuredIncoming(IncomingFixture f) {
+        Long itemId = itemRepo.findByInspectionId(f.inspectionId()).get(0).getId();
+        inspectionService.submitResult(f.inspectionId(), results(itemId, "2.00", "0", "0"));
+        return itemId;
+    }
+
     private static InspectionResultRequest results(Long itemId, String value, String accepted, String rejected) {
         return new InspectionResultRequest(new BigDecimal(accepted), new BigDecimal(rejected), null,
                 List.of(new InspectionResultRequest.ItemResultRequest(itemId, new BigDecimal(value), null, null)));
@@ -208,6 +236,79 @@ class InspectionCommitPathIT extends AbstractIntegrationTest {
         assertThat(stored.getDecisionAt()).isNotNull();
         assertThat(stored.getInspectorId()).isEqualTo(userId);
         assertThat(materialBatchRepo.findById(f.batchId()).orElseThrow().getStatus()).isEqualTo("AVAILABLE");
+        assertThat(stored.getAcceptedQty()).isEqualByComparingTo("98");
+        assertThat(stored.getRejectedQty()).isEqualByComparingTo("2");
+
+        Map<String, BigDecimal> balances = materialBalancesByStatus(f.batchId());
+        assertThat(qty(balances, "AVAILABLE")).isEqualByComparingTo("98");
+        assertThat(qty(balances, "REJECTED")).isEqualByComparingTo("2");
+        assertThat(qty(balances, "QUARANTINE")).isEqualByComparingTo("0");
+    }
+
+    @Test
+    @DisplayName("INS-CP-6: accepting with explicit quantities moves exactly those quantities out of QUARANTINE")
+    void incomingAcceptWithQuantitiesMovesStock() {
+        IncomingFixture f = incoming();
+        measuredIncoming(f);
+
+        inspectionService.accept(f.inspectionId(), new BigDecimal("90"), new BigDecimal("10"));
+
+        QualityInspection stored = inspectionRepo.findById(f.inspectionId()).orElseThrow();
+        assertThat(stored.getStatus()).isEqualTo("APPROVED");
+        assertThat(stored.getAcceptedQty()).isEqualByComparingTo("90");
+        assertThat(stored.getRejectedQty()).isEqualByComparingTo("10");
+        Map<String, BigDecimal> balances = materialBalancesByStatus(f.batchId());
+        assertThat(qty(balances, "AVAILABLE")).isEqualByComparingTo("90");
+        assertThat(qty(balances, "REJECTED")).isEqualByComparingTo("10");
+        assertThat(qty(balances, "QUARANTINE")).isEqualByComparingTo("0");
+    }
+
+    @Test
+    @DisplayName("INS-CP-7: accepting with no quantities anywhere accepts the whole lot and releases all of it")
+    void incomingAcceptWithNothingStoredAcceptsTheWholeLot() {
+        IncomingFixture f = incoming();
+        measuredIncoming(f);
+
+        inspectionService.accept(f.inspectionId());
+
+        QualityInspection stored = inspectionRepo.findById(f.inspectionId()).orElseThrow();
+        assertThat(stored.getAcceptedQty()).isEqualByComparingTo("100");
+        assertThat(stored.getRejectedQty()).isEqualByComparingTo("0");
+        Map<String, BigDecimal> balances = materialBalancesByStatus(f.batchId());
+        assertThat(qty(balances, "AVAILABLE")).isEqualByComparingTo("100");
+        assertThat(qty(balances, "QUARANTINE")).isEqualByComparingTo("0");
+    }
+
+    @Test
+    @DisplayName("INS-CP-8: only the accepted quantity is needed, the rest of the lot is the rejected quantity")
+    void incomingAcceptWithOnlyAcceptedQuantityRejectsTheRemainder() {
+        IncomingFixture f = incoming();
+        measuredIncoming(f);
+
+        inspectionService.accept(f.inspectionId(), new BigDecimal("75"), null);
+
+        Map<String, BigDecimal> balances = materialBalancesByStatus(f.batchId());
+        assertThat(qty(balances, "AVAILABLE")).isEqualByComparingTo("75");
+        assertThat(qty(balances, "REJECTED")).isEqualByComparingTo("25");
+    }
+
+    @Test
+    @DisplayName("INS-CP-9: quantities that do not add up to the inspected quantity are refused and no stock moves")
+    void incomingAcceptWithWrongTotalIsRefused() {
+        IncomingFixture f = incoming();
+        measuredIncoming(f);
+
+        assertThatThrownBy(() -> inspectionService.accept(f.inspectionId(), new BigDecimal("60"), new BigDecimal("10")))
+                .isInstanceOf(BusinessRuleException.class)
+                .hasMessageContaining("must equal the inspected quantity");
+        assertThatThrownBy(() -> inspectionService.accept(f.inspectionId(), BigDecimal.ZERO, new BigDecimal("100")))
+                .isInstanceOf(BusinessRuleException.class)
+                .hasMessageContaining("use Reject");
+
+        assertThat(inspectionRepo.findById(f.inspectionId()).orElseThrow().getStatus()).isEqualTo("IN_PROGRESS");
+        Map<String, BigDecimal> balances = materialBalancesByStatus(f.batchId());
+        assertThat(qty(balances, "QUARANTINE")).isEqualByComparingTo("100");
+        assertThat(qty(balances, "AVAILABLE")).isEqualByComparingTo("0");
     }
 
     @Test
@@ -226,6 +327,13 @@ class InspectionCommitPathIT extends AbstractIntegrationTest {
         assertThat(stored.getStatus()).isEqualTo("REJECTED");
         assertThat(stored.getRemarks()).isEqualTo("Diameter above the upper limit");
         assertThat(materialBatchRepo.findById(f.batchId()).orElseThrow().getStatus()).isEqualTo("REJECTED");
+        assertThat(stored.getRejectedQty()).isEqualByComparingTo("100");
+        assertThat(stored.getAcceptedQty()).isEqualByComparingTo("0");
+
+        Map<String, BigDecimal> balances = materialBalancesByStatus(f.batchId());
+        assertThat(qty(balances, "REJECTED")).isEqualByComparingTo("100");
+        assertThat(qty(balances, "QUARANTINE")).isEqualByComparingTo("0");
+        assertThat(qty(balances, "AVAILABLE")).isEqualByComparingTo("0");
     }
 
     // ---- final ---------------------------------------------------------------------------------------------------

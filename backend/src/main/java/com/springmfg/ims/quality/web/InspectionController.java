@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.springmfg.ims.quality.dto.AcceptInspectionRequest;
 import com.springmfg.ims.quality.dto.ApproveFgHoldRequest;
 import com.springmfg.ims.quality.dto.CreateFinalInspectionRequest;
 import com.springmfg.ims.quality.dto.CreateInProcessInspectionRequest;
@@ -73,8 +74,9 @@ public class InspectionController {
 
     @PostMapping("/inspections/{id}/accept")
     @PreAuthorize("hasAuthority('QUALITY_INSPECT')")
-    public QualityInspectionDto accept(@PathVariable Long id) {
-        return service.accept(id);
+    public QualityInspectionDto accept(@PathVariable Long id,
+            @Valid @RequestBody(required = false) AcceptInspectionRequest req) {
+        return req == null ? service.accept(id) : service.accept(id, req.acceptedQty(), req.rejectedQty());
     }
 
     @PostMapping("/inspections/{id}/reject")

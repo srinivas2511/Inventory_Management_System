@@ -102,8 +102,8 @@ export class InspectionApi {
     return this.http.post<QualityInspectionDto>(`${this.base}/inspections/${id}/results`, body);
   }
 
-  accept(id: number): Observable<QualityInspectionDto> {
-    return this.http.post<QualityInspectionDto>(`${this.base}/inspections/${id}/accept`, {});
+  accept(id: number, quantities?: { acceptedQty: number; rejectedQty: number }): Observable<QualityInspectionDto> {
+    return this.http.post<QualityInspectionDto>(`${this.base}/inspections/${id}/accept`, quantities ?? {});
   }
 
   reject(id: number, reason: string): Observable<QualityInspectionDto> {

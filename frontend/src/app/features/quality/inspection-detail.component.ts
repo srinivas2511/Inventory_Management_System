@@ -264,7 +264,7 @@ interface ReasonLine {
                 <input matInput [formControl]="remarksCtrl" />
               </mat-form-field>
             </div>
-            @if (qtyError(); as err) {
+            @if (qtyError() ?? acceptError(); as err) {
               <p class="error">{{ err }}</p>
             }
             <div class="actions">
@@ -273,7 +273,12 @@ interface ReasonLine {
                   <mat-icon>save</mat-icon> Save results
                 </button>
               }
-              <button mat-flat-button color="primary" (click)="accept()" [disabled]="busy()">
+              <button
+                mat-flat-button
+                color="primary"
+                (click)="accept()"
+                [disabled]="busy() || !!qtyError() || !!acceptError()"
+              >
                 <mat-icon>check_circle</mat-icon> Accept
               </button>
               <mat-form-field appearance="outline" class="reject-reason">
@@ -575,7 +580,24 @@ export class InspectionDetailComponent implements OnInit {
   }
 
   accept(): void {
-    this.run(this.api.accept(this.id), 'Inspection accepted');
+    this.run(
+      this.api.accept(this.id, {
+        acceptedQty: this.acceptedCtrl.value ?? 0,
+        rejectedQty: this.rejectedCtrl.value ?? 0,
+      }),
+      'Inspection accepted',
+    );
+  }
+
+  acceptError(): string | null {
+    const i = this.insp();
+    if (!i) return null;
+    const accepted = this.acceptedCtrl.value ?? 0;
+    const total = accepted + (this.rejectedCtrl.value ?? 0);
+    if (total !== i.inspectedQty) {
+      return `Accepted plus rejected (${total}) must equal the inspected quantity (${i.inspectedQty}) to accept.`;
+    }
+    return accepted === 0 ? 'Nothing is accepted; use Reject to reject the whole lot.' : null;
   }
 
   reject(): void {
@@ -633,9 +655,12 @@ export class InspectionDetailComponent implements OnInit {
       note: new FormControl<string>(item.deviationNote ?? '', { nonNullable: true }),
       override: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
     }));
-    this.acceptedCtrl.setValue(i.acceptedQty ?? i.inspectedQty);
+    // The server stores 0 until a decision is made, so an undecided inspection starts from "accept the whole lot".
+    const undecided = (i.acceptedQty ?? 0) === 0 && (i.rejectedQty ?? 0) === 0 && (i.holdQty ?? 0) === 0;
+    const startQty = undecided ? i.inspectedQty : (i.acceptedQty ?? i.inspectedQty);
+    this.acceptedCtrl.setValue(startQty);
     this.rejectedCtrl.setValue(i.rejectedQty ?? 0);
-    this.approvedCtrl.setValue(i.acceptedQty ?? i.inspectedQty);
+    this.approvedCtrl.setValue(startQty);
     this.finalRejectedCtrl.setValue(i.rejectedQty ?? 0);
     this.holdCtrl.setValue(i.holdQty ?? 0);
     this.remarksCtrl.setValue(i.remarks ?? '');

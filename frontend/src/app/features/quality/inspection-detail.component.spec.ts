@@ -196,14 +196,40 @@ describe('InspectionDetailComponent', () => {
     expect(button('Save results')?.disabled).toBe(true);
   });
 
-  it('accepts, then shows the released batch', () => {
-    setup(['QUALITY_VIEW', 'QUALITY_INSPECT'], inspection({}));
+  it('accepts the whole lot by default and sends the quantities, then shows the released batch', () => {
+    // the server stores 0/0 for an inspection nobody has decided yet (not null)
+    setup(['QUALITY_VIEW', 'QUALITY_INSPECT'], inspection({ acceptedQty: 0, rejectedQty: 0, holdQty: 0 }));
+    expect(fixture.componentInstance.acceptedCtrl.value).toBe(100);
     button('Accept')?.click();
     const req = backend.expectOne('/api/quality/inspections/7/accept');
     expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ acceptedQty: 100, rejectedQty: 0 });
     req.flush(inspection({ status: 'APPROVED', acceptedQty: 100, rejectedQty: 0 }));
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('released to available stock');
+  });
+
+  it('sends the entered accepted and rejected quantities when accepting', () => {
+    setup(['QUALITY_VIEW', 'QUALITY_INSPECT'], inspection({ acceptedQty: 0, rejectedQty: 0, holdQty: 0 }));
+    fixture.componentInstance.acceptedCtrl.setValue(90);
+    fixture.componentInstance.rejectedCtrl.setValue(10);
+    fixture.detectChanges();
+    button('Accept')?.click();
+    const req = backend.expectOne('/api/quality/inspections/7/accept');
+    expect(req.request.body).toEqual({ acceptedQty: 90, rejectedQty: 10 });
+    req.flush(inspection({ status: 'APPROVED', acceptedQty: 90, rejectedQty: 10 }));
+  });
+
+  it('blocks Accept until accepted plus rejected equals the inspected quantity', () => {
+    setup(['QUALITY_VIEW', 'QUALITY_INSPECT'], inspection({ acceptedQty: 0, rejectedQty: 0, holdQty: 0 }));
+    fixture.componentInstance.acceptedCtrl.setValue(60);
+    fixture.componentInstance.rejectedCtrl.setValue(10);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('must equal the inspected quantity');
+    expect(button('Accept')?.disabled).toBe(true);
+    fixture.componentInstance.acceptedCtrl.setValue(90);
+    fixture.detectChanges();
+    expect(button('Accept')?.disabled).toBe(false);
   });
 
   it('needs a reason to reject', () => {

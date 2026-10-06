@@ -1,5 +1,6 @@
 package com.springmfg.ims.quality.service;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 
@@ -17,8 +18,12 @@ import com.springmfg.ims.common.exception.BusinessRuleException;
 import com.springmfg.ims.common.exception.ErrorCode;
 import com.springmfg.ims.common.exception.NotFoundException;
 import com.springmfg.ims.common.numbering.DocumentNumberService;
+import com.springmfg.ims.inventory.domain.InventoryBalance;
 import com.springmfg.ims.inventory.domain.MaterialBatch;
+import com.springmfg.ims.inventory.dto.TransferCommand;
+import com.springmfg.ims.inventory.repository.InventoryBalanceRepository;
 import com.springmfg.ims.inventory.repository.MaterialBatchRepository;
+import com.springmfg.ims.inventory.service.InventoryPostingService;
 import com.springmfg.ims.procurement.event.GoodsReceivedForInspectionEvent;
 import com.springmfg.ims.procurement.repository.PurchaseOrderItemRepository;
 import com.springmfg.ims.quality.domain.InspectionPlan;
@@ -42,6 +47,8 @@ public class InspectionService {
     private final DocumentNumberService numberService;
     private final AuditService auditService;
     private final ApplicationEventPublisher events;
+    private final InventoryBalanceRepository balanceRepo;
+    private final InventoryPostingService postingService;
 
     public InspectionService(
             QualityInspectionRepository inspectionRepo,
@@ -51,7 +58,9 @@ public class InspectionService {
             PurchaseOrderItemRepository poItemRepo,
             DocumentNumberService numberService,
             AuditService auditService,
-            ApplicationEventPublisher events) {
+            ApplicationEventPublisher events,
+            InventoryBalanceRepository balanceRepo,
+            InventoryPostingService postingService) {
         this.inspectionRepo = inspectionRepo;
         this.inspectionItemRepo = inspectionItemRepo;
         this.planRepo = planRepo;
@@ -60,6 +69,8 @@ public class InspectionService {
         this.numberService = numberService;
         this.auditService = auditService;
         this.events = events;
+        this.balanceRepo = balanceRepo;
+        this.postingService = postingService;
     }
 
     /** Triggered by GoodsReceiptService after each GR item is saved. */
@@ -133,6 +144,17 @@ public class InspectionService {
 
     @Transactional
     public QualityInspectionDto accept(Long inspectionId) {
+        return accept(inspectionId, null, null);
+    }
+
+    /**
+     * Accepts an incoming inspection. The accepted and rejected quantities must add up to the inspected quantity:
+     * when the caller sends neither, the stored result quantities apply, and when nothing was stored the whole lot
+     * is accepted. Accepted stock moves QUARANTINE to AVAILABLE and rejected stock QUARANTINE to REJECTED, both
+     * through the posting service.
+     */
+    @Transactional
+    public QualityInspectionDto accept(Long inspectionId, BigDecimal requestedAccepted, BigDecimal requestedRejected) {
         QualityInspection insp = requireInspection(inspectionId);
         rejectFirstArticle(insp);
         if (!"IN_PROGRESS".equals(insp.getStatus()) && !"PENDING".equals(insp.getStatus())) {
@@ -150,6 +172,36 @@ public class InspectionService {
                     "All mandatory parameters must be measured before accepting");
         }
 
+        BigDecimal inspected = insp.getInspectedQty() != null ? insp.getInspectedQty() : BigDecimal.ZERO;
+        BigDecimal accepted = requestedAccepted;
+        BigDecimal rejected = requestedRejected;
+        if (accepted == null && rejected == null) {
+            accepted = insp.getAcceptedQty() != null ? insp.getAcceptedQty() : BigDecimal.ZERO;
+            rejected = insp.getRejectedQty() != null ? insp.getRejectedQty() : BigDecimal.ZERO;
+            if (accepted.signum() == 0 && rejected.signum() == 0) {
+                accepted = inspected;
+            }
+        } else if (rejected == null) {
+            rejected = inspected.subtract(accepted);
+        } else if (accepted == null) {
+            accepted = inspected.subtract(rejected);
+        }
+        if (accepted.signum() < 0 || rejected.signum() < 0) {
+            throw new BusinessRuleException(ErrorCode.VALIDATION_FAILED,
+                    "Accepted and rejected quantities cannot be negative");
+        }
+        if (accepted.add(rejected).compareTo(inspected) != 0) {
+            throw new BusinessRuleException(ErrorCode.VALIDATION_FAILED,
+                    "Accepted (" + accepted.toPlainString() + ") plus rejected (" + rejected.toPlainString()
+                            + ") must equal the inspected quantity (" + inspected.toPlainString() + ")");
+        }
+        if (accepted.signum() == 0) {
+            throw new BusinessRuleException(ErrorCode.VALIDATION_FAILED,
+                    "Nothing is accepted; use Reject to reject the whole lot");
+        }
+
+        insp.setAcceptedQty(accepted);
+        insp.setRejectedQty(rejected);
         insp.setStatus("APPROVED");
         insp.setDecisionBy(currentUserId());
         insp.setDecisionAt(Instant.now());
@@ -161,14 +213,62 @@ public class InspectionService {
                 batch.setStatus("AVAILABLE");
                 batchRepo.save(batch);
             });
+            releaseQuarantine(insp, accepted, rejected);
         }
 
-        // Update po_item accepted qty
+        // Update po_item accepted and rejected qty
         updatePoItemAccepted(insp);
+        if (rejected.signum() > 0) {
+            updatePoItemRejected(insp);
+        }
 
         auditService.record("INSPECTION_ACCEPTED", "QUALITY_INSPECTION", String.valueOf(inspectionId),
-                "IN_PROGRESS", "APPROVED", null);
+                "IN_PROGRESS", "APPROVED",
+                "accepted=" + accepted.toPlainString() + " rejected=" + rejected.toPlainString());
         return toDto(insp);
+    }
+
+    /**
+     * Moves the batch's quarantined stock out of quarantine: the accepted quantity to AVAILABLE and the rejected
+     * quantity to REJECTED, at the location where the goods were received.
+     */
+    private void releaseQuarantine(QualityInspection insp, BigDecimal accepted, BigDecimal rejected) {
+        BigDecimal toAccept = accepted;
+        BigDecimal toReject = rejected;
+        List<InventoryBalance> quarantined = balanceRepo.findByMaterialId(insp.getMaterialId()).stream()
+                .filter(b -> insp.getMaterialBatchId().equals(b.getMaterialBatchId())
+                        && "QUARANTINE".equals(b.getStockStatus()) && b.getQtyOnHand().signum() > 0)
+                .toList();
+        BigDecimal available = quarantined.stream().map(InventoryBalance::getQtyOnHand)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal needed = accepted.add(rejected);
+        if (available.compareTo(needed) < 0) {
+            throw new BusinessRuleException(ErrorCode.VALIDATION_FAILED,
+                    "Batch " + insp.getMaterialBatchId() + " has only " + available.toPlainString()
+                            + " in QUARANTINE; the decision needs " + needed.toPlainString());
+        }
+        for (InventoryBalance bal : quarantined) {
+            BigDecimal here = bal.getQtyOnHand();
+            BigDecimal acceptHere = toAccept.min(here);
+            toAccept = toAccept.subtract(acceptHere);
+            BigDecimal rejectHere = toReject.min(here.subtract(acceptHere));
+            toReject = toReject.subtract(rejectHere);
+            moveQuarantined(insp, bal, acceptHere, "AVAILABLE", "Incoming inspection accepted");
+            moveQuarantined(insp, bal, rejectHere, "REJECTED", "Incoming inspection rejected");
+        }
+    }
+
+    private void moveQuarantined(QualityInspection insp, InventoryBalance bal, BigDecimal qty, String toStatus,
+            String remarks) {
+        if (qty.signum() <= 0) {
+            return;
+        }
+        postingService.transfer(new TransferCommand(
+                "MATERIAL", insp.getMaterialId(), null, insp.getMaterialBatchId(), null,
+                bal.getWarehouseId(), bal.getLocationId(), "QUARANTINE",
+                bal.getWarehouseId(), bal.getLocationId(), toStatus,
+                qty, null,
+                "QUALITY_INSPECTION", insp.getId(), insp.getInspectionNumber(), remarks));
     }
 
     @Transactional
@@ -180,6 +280,9 @@ public class InspectionService {
                     "Inspection must be in PENDING or IN_PROGRESS to reject");
         }
 
+        BigDecimal inspected = insp.getInspectedQty() != null ? insp.getInspectedQty() : BigDecimal.ZERO;
+        insp.setAcceptedQty(BigDecimal.ZERO);
+        insp.setRejectedQty(inspected);
         insp.setStatus("REJECTED");
         insp.setDecisionBy(currentUserId());
         insp.setDecisionAt(Instant.now());
@@ -192,6 +295,7 @@ public class InspectionService {
                 batch.setStatus("REJECTED");
                 batchRepo.save(batch);
             });
+            releaseQuarantine(insp, BigDecimal.ZERO, inspected);
         }
 
         // Update po_item rejected qty
