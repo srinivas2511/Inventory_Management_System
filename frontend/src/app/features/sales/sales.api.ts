@@ -1,4 +1,4 @@
-import { inject } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
@@ -73,6 +73,53 @@ export interface PageResponse<T> {
   number: number;
 }
 
+/** Mirrors CreateSalesOrderRequest and AddSalesOrderItemRequest on the backend. */
+export interface CreateSalesOrderRequest {
+  customerId: number;
+  orderDate: string;
+  requiredDate: string | null;
+  deliveryAddress: string | null;
+  paymentTerms: string | null;
+  notes: string | null;
+  items: {
+    productId: number;
+    orderedQty: number;
+    unitPrice: number | null;
+    customerSpecRef: string | null;
+    notes: string | null;
+  }[];
+}
+
+/** Mirrors ReserveRequest on the backend. */
+export interface ReserveRequest {
+  salesOrderItemId: number;
+  fgBatchId: number;
+  warehouseId: number;
+  locationId: number;
+  qty: number;
+}
+
+/** Mirrors CreateDispatchRequest and DispatchLineRequest on the backend. */
+export interface CreateDispatchRequest {
+  salesOrderId: number;
+  dispatchDate: string;
+  transporter: string | null;
+  vehicleNo: string | null;
+  lrNumber: string | null;
+  deliveryAddress: string;
+  invoiceReference: string | null;
+  notes: string | null;
+  lines: {
+    salesOrderItemId: number;
+    fgBatchId: number;
+    quantity: number;
+    warehouseId: number;
+    locationId: number;
+    unitPrice: number | null;
+  }[];
+}
+
+@Injectable({ providedIn: 'root' })
 export class SalesApi {
   private http = inject(HttpClient);
 
@@ -85,6 +132,18 @@ export class SalesApi {
 
   getSalesOrder(id: number): Observable<SalesOrderDto> {
     return this.http.get<SalesOrderDto>(`/api/sales/orders/${id}`);
+  }
+
+  createOrder(request: CreateSalesOrderRequest): Observable<SalesOrderDto> {
+    return this.http.post<SalesOrderDto>('/api/sales/orders', request);
+  }
+
+  reserve(request: ReserveRequest): Observable<unknown> {
+    return this.http.post('/api/sales/reservations', request);
+  }
+
+  createDispatch(request: CreateDispatchRequest): Observable<DispatchDto> {
+    return this.http.post<DispatchDto>('/api/sales/dispatches', request);
   }
 
   confirmOrder(id: number): Observable<SalesOrderDto> {

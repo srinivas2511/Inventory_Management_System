@@ -5,9 +5,11 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
+import { DispatchFormComponent } from './dispatch-form.component';
 import { SalesApi, DispatchDto } from './sales.api';
 
 @Component({
@@ -30,6 +32,9 @@ import { SalesApi, DispatchDto } from './sales.api';
   template: `
     <div class="page-header">
       <h2 class="mat-h2">Dispatches</h2>
+      <button mat-raised-button color="primary" *appHasPermission="'DISPATCH_CREATE'" (click)="createDispatch()">
+        <mat-icon>add</mat-icon> New dispatch
+      </button>
     </div>
 
     @if (loading()) {
@@ -94,6 +99,7 @@ import { SalesApi, DispatchDto } from './sales.api';
 export class DispatchListComponent implements OnInit {
   private api = inject(SalesApi);
   private snack = inject(MatSnackBar);
+  private dialog = inject(MatDialog);
 
   dispatches = signal<DispatchDto[]>([]);
   loading = signal(false);
@@ -124,6 +130,18 @@ export class DispatchListComponent implements OnInit {
         this.snack.open('Failed to load dispatches', 'Dismiss', { duration: 3000 });
       },
     });
+  }
+
+  createDispatch(): void {
+    this.dialog
+      .open(DispatchFormComponent, { width: '960px', maxWidth: '95vw' })
+      .afterClosed()
+      .subscribe((created) => {
+        if (created) {
+          this.snack.open('Dispatch created; the AR invoice follows automatically', '', { duration: 4000 });
+          this.load();
+        }
+      });
   }
 
   viewNote(dispatch: DispatchDto): void {

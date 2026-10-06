@@ -9,9 +9,12 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
+import { ReservationFormComponent } from './reservation-form.component';
+import { SalesOrderFormComponent } from './sales-order-form.component';
 import { SalesApi, SalesOrderDto } from './sales.api';
 
 @Component({
@@ -38,6 +41,9 @@ import { SalesApi, SalesOrderDto } from './sales.api';
   template: `
     <div class="page-header">
       <h2 class="mat-h2">Sales Orders</h2>
+      <button mat-raised-button color="primary" *appHasPermission="'SALES_CREATE'" (click)="createOrder()">
+        <mat-icon>add</mat-icon> New order
+      </button>
     </div>
 
     <div class="filter-bar">
@@ -89,6 +95,16 @@ import { SalesApi, SalesOrderDto } from './sales.api';
         <ng-container matColumnDef="actions">
           <th mat-header-cell *matHeaderCellDef></th>
           <td mat-cell *matCellDef="let o">
+            @if (o.status === 'ORDERED' || o.status === 'APPROVED') {
+              <button
+                mat-icon-button
+                matTooltip="Reserve stock"
+                *appHasPermission="'SALES_CREATE,RESERVE_FG'"
+                (click)="reserve(o)"
+              >
+                <mat-icon>inventory</mat-icon>
+              </button>
+            }
             @if (o.allowedActions.includes('confirm')) {
               <button mat-icon-button matTooltip="Confirm" *appHasPermission="'SALES_CREATE'" (click)="confirm(o)">
                 <mat-icon>check_circle</mat-icon>
@@ -127,6 +143,7 @@ import { SalesApi, SalesOrderDto } from './sales.api';
 export class SalesOrderListComponent implements OnInit {
   private api = inject(SalesApi);
   private snack = inject(MatSnackBar);
+  private dialog = inject(MatDialog);
 
   statusCtrl = new FormControl<string | null>(null);
   orders = signal<SalesOrderDto[]>([]);
@@ -150,6 +167,30 @@ export class SalesOrderListComponent implements OnInit {
         this.snack.open('Failed to load orders', 'Dismiss', { duration: 3000 });
       },
     });
+  }
+
+  createOrder(): void {
+    this.dialog
+      .open(SalesOrderFormComponent, { width: '960px', maxWidth: '95vw' })
+      .afterClosed()
+      .subscribe((created) => {
+        if (created) {
+          this.snack.open('Sales order created', '', { duration: 3000 });
+          this.load();
+        }
+      });
+  }
+
+  reserve(order: SalesOrderDto): void {
+    this.dialog
+      .open(ReservationFormComponent, { width: '640px', maxWidth: '95vw', data: order })
+      .afterClosed()
+      .subscribe((reserved) => {
+        if (reserved) {
+          this.snack.open('Stock reserved', '', { duration: 3000 });
+          this.load();
+        }
+      });
   }
 
   confirm(order: SalesOrderDto): void {
