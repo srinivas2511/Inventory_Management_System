@@ -116,13 +116,13 @@ public class StockLocationQueryService {
 
     /**
      * Pickable stock of an item in first-expiry/first-in order: materials by expiry then receipt date, finished
-     * goods by production date. Only released stock is returned (AVAILABLE for materials, APPROVED for products).
+     * goods by production date. Only released stock is returned (AVAILABLE for materials and products).
      */
     @Transactional(readOnly = true)
     public List<LocationStock> pickableStock(String itemType, Long itemId, Long warehouseId) {
         flush();
         String itemCol = "MATERIAL".equals(itemType) ? "b.material_id" : "b.product_id";
-        String status = "MATERIAL".equals(itemType) ? "AVAILABLE" : "APPROVED";
+        String status = "AVAILABLE";
         return jdbc.query(STOCK_SELECT + " WHERE b.item_type = :it AND " + itemCol + " = :item AND b.stock_status = :st"
                         + " AND b.qty_on_hand > 0 AND (:wh IS NULL OR b.warehouse_id = :wh)"
                         + " ORDER BY pick_date NULLS LAST, batch_id, b.location_id",

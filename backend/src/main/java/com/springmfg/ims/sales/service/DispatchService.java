@@ -156,7 +156,7 @@ public class DispatchService {
                     null, soItem.getProductId(),
                     null, line.fgBatchId(),
                     warehouseId, locationId,
-                    "APPROVED",
+                    "AVAILABLE",
                     line.quantity(), batch.getProduct().getUom(),
                     unitPrice,
                     "DISPATCH", dispatch.getId(), dispatch.getDispatchNumber(),

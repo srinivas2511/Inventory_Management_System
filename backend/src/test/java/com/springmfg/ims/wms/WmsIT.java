@@ -204,7 +204,7 @@ class WmsIT extends AbstractIntegrationTest {
         b.setUnitCost(new BigDecimal("50.0000"));
         Long id = fgBatchRepo.save(b).getId();
         posting.post(new PostingCommand("FG_RECEIPT", "PRODUCT", null, product.getId(), null, id, warehouseId,
-                locationId, "APPROVED", qty, product.getUom(), new BigDecimal("50.0000"), "FG_BATCH", id,
+                locationId, "AVAILABLE", qty, product.getUom(), new BigDecimal("50.0000"), "FG_BATCH", id,
                 b.getBatchNumber(), "WMS IT"));
         return id;
     }
@@ -671,7 +671,7 @@ class WmsIT extends AbstractIntegrationTest {
         Long lineId = cc.lines().get(0).id();
 
         posting.post(new PostingCommand("FG_RECEIPT", "PRODUCT", null, product.getId(), null, batch, wh,
-                bin.locationId(), "APPROVED", new BigDecimal("5.000"), product.getUom(), new BigDecimal("50.0000"),
+                bin.locationId(), "AVAILABLE", new BigDecimal("5.000"), product.getUom(), new BigDecimal("50.0000"),
                 "FG_BATCH", batch, "late receipt", "arrived while counting"));
 
         cycleCountService.recordCounts(cc.id(), new RecordCountsRequest(List.of(new CountEntry(lineId,

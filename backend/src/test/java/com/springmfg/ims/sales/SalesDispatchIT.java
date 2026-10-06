@@ -94,7 +94,7 @@ class SalesDispatchIT extends AbstractIntegrationTest {
         postingService.post(new PostingCommand(
                 "FG_RECEIPT", "PRODUCT",
                 null, productId, null, fgBatchId,
-                warehouseId, locationId, "APPROVED",
+                warehouseId, locationId, "AVAILABLE",
                 new BigDecimal("200.000"), product.getUom(),
                 new BigDecimal("50.0000"),
                 "FG_BATCH", fgBatchId, batch.getBatchNumber(), "IT setup"));
