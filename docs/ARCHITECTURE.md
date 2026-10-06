@@ -548,6 +548,8 @@ Three enforcement layers, all server-side:
 2. **State/transition level:** per-transition permission checks (e.g. `PURCHASE_APPROVE` for SUBMITTED→APPROVED).
 3. **Data-scope level** (`AccessScopeService`): operator/supervisor see only assigned production orders; store operator scoped to assigned warehouses; segregation of duties (requester ≠ approver).
 
+**The Administrator role holds every permission in the catalogue** (V37, kept complete by `AdminHoldsEveryPermissionIT`: a release that seeds new permission codes grants them to `ADMIN` in the same migration). Holding a permission does not bypass the code-level segregation-of-duties rules: an administrator still cannot approve their own purchase order or approval request (`AdminSegregationOfDutiesIT`).
+
 ### 10.3 Financial access controls (R9)
 - Journal entry preparer ≠ approver (hard-coded `AccessScopeService` check)
 - Period close requires `PERIOD_CLOSE` permission (Finance Manager)

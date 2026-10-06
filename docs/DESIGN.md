@@ -934,6 +934,8 @@ Every document response includes `"allowedActions": ["SUBMIT","CANCEL"]`, comput
 ## 7. Security Design Details
 
 ### 7.1 Permission catalogue (complete)
+The `ADMIN` role is granted every code below (and every code a later release adds); see ARCHITECTURE §10.2.
+
 | Module | Codes |
 |---|---|
 | IAM | `USER_VIEW, USER_CREATE, USER_UPDATE, USER_DELETE, ROLE_MANAGE, PERMISSION_MANAGE, SETTINGS_MANAGE, AUDIT_VIEW` |
