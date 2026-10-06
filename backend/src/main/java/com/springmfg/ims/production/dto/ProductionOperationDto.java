@@ -20,4 +20,7 @@ public record ProductionOperationDto(
         Instant startedAt,
         Instant completedAt,
         Instant scheduledStart,
-        Instant scheduledEnd) {}
+        Instant scheduledEnd,
+        Long productionOrderId,
+        String productionOrderNumber,
+        Long productId) {}

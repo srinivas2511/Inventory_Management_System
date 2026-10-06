@@ -353,13 +353,17 @@ public class OperationExecutionService {
         String opName = opMasterRepo.findById(op.getOperationId()).map(o -> o.getName()).orElse(null);
         String machineName = op.getMachineId() != null
                 ? machineRepo.findById(op.getMachineId()).map(m -> m.getName()).orElse(null) : null;
+        ProductionOrder owner = orderRepo.findById(op.getProductionOrderId()).orElse(null);
         return new ProductionOperationDto(
                 op.getId(), op.getSequenceNo(), op.getOperationId(), opName,
                 op.getMachineId(), machineName, op.getAssignedOperatorId(),
                 op.isInspectionPoint(), op.getStatus(),
                 op.getInputQty(), op.getGoodQty(), op.getRejectedQty(), op.getScrapQty(),
                 op.getStartedAt(), op.getCompletedAt(),
-                op.getScheduledStart(), op.getScheduledEnd());
+                op.getScheduledStart(), op.getScheduledEnd(),
+                op.getProductionOrderId(),
+                owner != null ? owner.getOrderNumber() : null,
+                owner != null ? owner.getProductId() : null);
     }
 
     private Long currentUserId() {

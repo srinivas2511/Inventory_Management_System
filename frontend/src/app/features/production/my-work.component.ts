@@ -14,6 +14,7 @@ import { MatDividerModule } from '@angular/material/divider';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 
 export interface MyWorkItemDto {
+  id: number;
   operationId: number;
   productionOrderId: number;
   productionOrderNumber: string;
@@ -61,7 +62,7 @@ export interface MyWorkItemDto {
       </div>
     } @else {
       <div class="work-grid">
-        @for (item of items(); track item.operationId) {
+        @for (item of items(); track item.id) {
           <mat-card class="work-card" [class.active-card]="item.status === 'IN_PROGRESS'">
             <mat-card-header>
               <mat-card-title>{{ item.productionOrderNumber }}</mat-card-title>
@@ -89,7 +90,7 @@ export interface MyWorkItemDto {
 
               <mat-divider style="margin: 12px 0;" />
 
-              @if (item.status === 'IN_PROGRESS' && selectedOp() === item.operationId) {
+              @if (item.status === 'IN_PROGRESS' && selectedOp() === item.id) {
                 <div class="output-form">
                   <mat-form-field appearance="outline" style="width:100%">
                     <mat-label>Good Qty</mat-label>
@@ -104,7 +105,7 @@ export interface MyWorkItemDto {
                     <input matInput type="number" [formControl]="scrapCtrl" />
                   </mat-form-field>
                   <div class="form-actions">
-                    <button mat-raised-button color="primary" (click)="recordOutput(item.operationId)">
+                    <button mat-raised-button color="primary" (click)="recordOutput(item.id)">
                       <mat-icon>save</mat-icon> Record Output
                     </button>
                     <button mat-stroked-button (click)="cancelInput()">Cancel</button>
@@ -116,15 +117,15 @@ export interface MyWorkItemDto {
             </mat-card-content>
             <mat-card-actions>
               @if (item.status === 'PENDING') {
-                <button mat-raised-button color="primary" (click)="startOp(item.operationId)">
+                <button mat-raised-button color="primary" (click)="startOp(item.id)">
                   <mat-icon>play_arrow</mat-icon> Start
                 </button>
               }
-              @if (item.status === 'IN_PROGRESS' && selectedOp() !== item.operationId) {
-                <button mat-raised-button color="accent" (click)="openOutput(item.operationId)">
+              @if (item.status === 'IN_PROGRESS' && selectedOp() !== item.id) {
+                <button mat-raised-button color="accent" (click)="openOutput(item.id)">
                   <mat-icon>add_task</mat-icon> Record Output
                 </button>
-                <button mat-stroked-button (click)="pauseOp(item.operationId)"><mat-icon>pause</mat-icon> Pause</button>
+                <button mat-stroked-button (click)="pauseOp(item.id)"><mat-icon>pause</mat-icon> Pause</button>
               }
             </mat-card-actions>
           </mat-card>

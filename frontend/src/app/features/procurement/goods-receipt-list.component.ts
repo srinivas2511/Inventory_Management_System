@@ -66,9 +66,9 @@ export interface GoodsReceiptDto {
           <th mat-header-cell *matHeaderCellDef>GR Number</th>
           <td mat-cell *matCellDef="let r">{{ r.grNumber }}</td>
         </ng-container>
-        <ng-container matColumnDef="purchaseOrderId">
-          <th mat-header-cell *matHeaderCellDef>PO ID</th>
-          <td mat-cell *matCellDef="let r">{{ r.purchaseOrderId }}</td>
+        <ng-container matColumnDef="poNumber">
+          <th mat-header-cell *matHeaderCellDef>PO Number</th>
+          <td mat-cell *matCellDef="let r">{{ r.poNumber }}</td>
         </ng-container>
         <ng-container matColumnDef="receiptDate">
           <th mat-header-cell *matHeaderCellDef>Receipt Date</th>
@@ -89,7 +89,7 @@ export class GoodsReceiptListComponent implements OnInit {
   private http = inject(HttpClient);
   private snack = inject(MatSnackBar);
 
-  columns = ['grNumber', 'purchaseOrderId', 'receiptDate', 'status'];
+  columns = ['grNumber', 'poNumber', 'receiptDate', 'status'];
   rows = signal<GoodsReceiptDto[]>([]);
   loading = signal(false);
   poCtrl = new FormControl<string>('');
@@ -100,17 +100,18 @@ export class GoodsReceiptListComponent implements OnInit {
 
   load(): void {
     this.loading.set(true);
-    // Fetch all GRs by listing purchase orders then their GRs is complex;
-    // use a broad search via purchase-orders endpoint first
-    this.http.get<{ content: GoodsReceiptDto[] }>('/api/procurement/goods-receipts', {}).subscribe({
-      next: (page) => {
-        this.rows.set(page.content ?? []);
-        this.loading.set(false);
-      },
-      error: () => {
-        this.rows.set([]);
-        this.loading.set(false);
-      },
-    });
+    const po = (this.poCtrl.value ?? '').trim();
+    this.http
+      .get<{ content: GoodsReceiptDto[] }>('/api/procurement/goods-receipts', { params: po ? { po } : {} })
+      .subscribe({
+        next: (page) => {
+          this.rows.set(page.content ?? []);
+          this.loading.set(false);
+        },
+        error: () => {
+          this.rows.set([]);
+          this.loading.set(false);
+        },
+      });
   }
 }

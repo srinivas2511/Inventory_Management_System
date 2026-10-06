@@ -268,8 +268,10 @@ public class ProductionOrderService {
 
     @Transactional(readOnly = true)
     public List<ProductionOperationDto> getOperations(Long orderId) {
+        ProductionOrder order = orderRepo.findById(orderId)
+                .orElseThrow(() -> new NotFoundException("Production order not found: " + orderId));
         return operationRepo.findByProductionOrderIdOrderBySequenceNo(orderId).stream()
-                .map(this::toOperationDto)
+                .map(op -> toOperationDto(op, order))
                 .toList();
     }
 
@@ -341,7 +343,7 @@ public class ProductionOrderService {
                 })
                 .toList();
         List<ProductionOperationDto> ops = operationRepo.findByProductionOrderIdOrderBySequenceNo(order.getId()).stream()
-                .map(this::toOperationDto)
+                .map(op -> toOperationDto(op, order))
                 .toList();
 
         return new ProductionOrderDto(
@@ -355,11 +357,12 @@ public class ProductionOrderService {
                 order.getStartDate(), order.getExpectedCompletionDate(),
                 order.getActualStartAt(), order.getActualCompletionAt(),
                 order.getProductionLine(), order.getSupervisorId(), order.getStatus(),
+                order.getPriority(),
                 order.getReleasedAt(), order.getClosedAt(), order.getRemarks(),
                 mats, ops, allowedActions(order.getStatus()));
     }
 
-    private ProductionOperationDto toOperationDto(ProductionOperation op) {
+    private ProductionOperationDto toOperationDto(ProductionOperation op, ProductionOrder order) {
         String opName = opMasterRepo.findById(op.getOperationId()).map(o -> o.getName()).orElse(null);
         String machineName = op.getMachineId() != null
                 ? machineRepo.findById(op.getMachineId()).map(m -> m.getName()).orElse(null) : null;
@@ -369,7 +372,8 @@ public class ProductionOrderService {
                 op.isInspectionPoint(), op.getStatus(),
                 op.getInputQty(), op.getGoodQty(), op.getRejectedQty(), op.getScrapQty(),
                 op.getStartedAt(), op.getCompletedAt(),
-                op.getScheduledStart(), op.getScheduledEnd());
+                op.getScheduledStart(), op.getScheduledEnd(),
+                order.getId(), order.getOrderNumber(), order.getProductId());
     }
 
     private List<String> allowedActions(String status) {

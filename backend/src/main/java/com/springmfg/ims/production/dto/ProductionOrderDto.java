@@ -24,6 +24,7 @@ public record ProductionOrderDto(
         String productionLine,
         Long supervisorId,
         String status,
+        int priority,
         Instant releasedAt,
         Instant closedAt,
         String remarks,

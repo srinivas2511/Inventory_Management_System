@@ -170,6 +170,8 @@ class RoleAccessIT extends AbstractIntegrationTest {
             Probe.of(HttpMethod.POST, "/api/ar/reconciliation/missing-invoices/retry",
                     Set.of("ADMIN", "FINANCE_MANAGER"), Set.of("ACCOUNTANT", "OPERATOR", "SALES")),
             // goods receipt
+            Probe.of(HttpMethod.GET, "/api/procurement/goods-receipts",
+                    Set.of("ADMIN", "STORE_OPERATOR", "PURCHASE_MANAGER"), Set.of("OPERATOR", "SALES")),
             Probe.of(HttpMethod.GET, "/api/procurement/goods-receipts/" + MISSING,
                     Set.of("ADMIN", "STORE_OPERATOR", "PURCHASE_MANAGER"), Set.of("OPERATOR", "SALES")),
             // sales and dispatch

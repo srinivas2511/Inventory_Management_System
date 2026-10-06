@@ -50,6 +50,43 @@ class ProcurementIT extends AbstractIntegrationTest {
 
     @Test
     @WithMockUser(authorities = {"PURCHASE_CREATE", "PURCHASE_APPROVE", "INVENTORY_RECEIVE"})
+    void goodsReceiptList_filtersByStatusPoNumberAndDateAndNamesThePo() {
+        var po = poService.create(new CreatePoRequest(
+                SUPPLIER_ID, LocalDate.now(), LocalDate.now().plusDays(7), "NET30", null, null,
+                List.of(new CreatePoRequest.PoLineRequest(
+                        MATERIAL_ID, new BigDecimal("100.000"), new BigDecimal("50.0000"), new BigDecimal("18.00")))));
+        po = poService.submit(po.id());
+        PurchaseOrder entity = poRepo.findById(po.id()).orElseThrow();
+        entity.setSubmittedBy(-99L);
+        poRepo.save(entity);
+        po = poService.approve(po.id());
+        var gr = grService.receive(new CreateGrRequest(
+                po.id(), LocalDate.now(), WAREHOUSE_ID, "CHALLAN-LIST", "MH01AB9999",
+                List.of(new CreateGrRequest.GrLineRequest(
+                        po.items().get(0).id(), new BigDecimal("10.000"), LOCATION_ID, "HEAT-L", "CERT-L", null, true))));
+        // Newest first, as the endpoint defaults: other tests in the shared database leave more than a page of receipts.
+        var page = org.springframework.data.domain.PageRequest.of(0, 20,
+                org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "id"));
+
+        var all = grService.search(null, null, null, null, null, page);
+        assertThat(all.getContent()).extracting(g -> g.id()).contains(gr.id());
+        assertThat(all.getContent().stream().filter(g -> g.id().equals(gr.id())).findFirst().orElseThrow().poNumber())
+                .isEqualTo(po.poNumber());
+
+        assertThat(grService.search("POSTED", po.id(), null, null, null, page).getContent())
+                .extracting(g -> g.id()).containsExactly(gr.id());
+        assertThat(grService.search("CANCELLED", po.id(), null, null, null, page).getContent()).isEmpty();
+        assertThat(grService.search(null, null, po.poNumber().toLowerCase(), null, null, page).getContent())
+                .extracting(g -> g.id()).contains(gr.id());
+        assertThat(grService.search(null, null, "no-such-po", null, null, page).getContent()).isEmpty();
+        assertThat(grService.search(null, po.id(), null, LocalDate.now().plusDays(1), null, page).getContent()).isEmpty();
+        assertThat(grService.search(null, po.id(), null, null, LocalDate.now().minusDays(1), page).getContent()).isEmpty();
+        assertThat(grService.search(null, po.id(), "  ", LocalDate.now(), LocalDate.now(), page).getContent())
+                .extracting(g -> g.id()).containsExactly(gr.id());
+    }
+
+    @Test
+    @WithMockUser(authorities = {"PURCHASE_CREATE", "PURCHASE_APPROVE", "INVENTORY_RECEIVE"})
     void fullProcurementFlow_draftToPo_grCreatesQuarantineStock() {
         // Create PO
         CreatePoRequest poReq = new CreatePoRequest(

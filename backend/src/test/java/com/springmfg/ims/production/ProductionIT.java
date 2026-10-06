@@ -38,6 +38,9 @@ class ProductionIT extends AbstractIntegrationTest {
     @Autowired ProductionOrderMaterialRepository pomRepo;
     @Autowired BomRepository bomRepo;
     @Autowired FgBatchRepository fgBatchRepo;
+    @Autowired com.springmfg.ims.production.repository.ProductionOperationRepository opRepo;
+    @Autowired com.springmfg.ims.production.service.OperationExecutionService executionService;
+    @Autowired org.springframework.jdbc.core.JdbcTemplate jdbc;
     @Autowired TestData td;
 
     private Long productId;
@@ -49,6 +52,45 @@ class ProductionIT extends AbstractIntegrationTest {
         productId = td.product().getId();
         materialId = td.material().getId();
         bomId = td.draftBom(productId).getId();
+    }
+
+    @Test
+    void order_dto_carries_priority_and_my_work_items_carry_their_order() {
+        Long operator = jdbc.queryForObject(
+                "INSERT INTO ims.users (username, full_name, email, password_hash) VALUES (?, 'Operator', ?, 'x') RETURNING id",
+                Long.class, td.code("op"), td.code("op") + "@example.com");
+        Long master = jdbc.queryForObject("select id from ims.operations order by id limit 1", Long.class);
+
+        ProductionOrder order = new ProductionOrder();
+        order.setOrderNumber(td.code("PRIO"));
+        order.setProductId(productId);
+        order.setBomId(bomId);
+        order.setPlannedQty(BigDecimal.TEN);
+        order.setPriority((short) 2);
+        order.setStatus("IN_PROGRESS");
+        order = orderRepo.save(order);
+
+        com.springmfg.ims.production.domain.ProductionOperation op = new com.springmfg.ims.production.domain.ProductionOperation();
+        op.setProductionOrderId(order.getId());
+        op.setSequenceNo(1);
+        op.setOperationId(master);
+        op.setAssignedOperatorId(operator);
+        op = opRepo.save(op);
+
+        ProductionOrderDto dto = orderService.findById(order.getId());
+        assertThat(dto.priority()).isEqualTo(2);
+        assertThat(dto.operations()).hasSize(1);
+        assertThat(dto.operations().get(0).productionOrderId()).isEqualTo(order.getId());
+        assertThat(dto.operations().get(0).productionOrderNumber()).isEqualTo(order.getOrderNumber());
+        assertThat(dto.operations().get(0).productId()).isEqualTo(productId);
+
+        var work = executionService.getMyWork(operator);
+        assertThat(work).hasSize(1);
+        assertThat(work.get(0).id()).isEqualTo(op.getId());
+        assertThat(work.get(0).operationId()).isEqualTo(master);
+        assertThat(work.get(0).productionOrderId()).isEqualTo(order.getId());
+        assertThat(work.get(0).productionOrderNumber()).isEqualTo(order.getOrderNumber());
+        assertThat(work.get(0).productId()).isEqualTo(productId);
     }
 
     @Test

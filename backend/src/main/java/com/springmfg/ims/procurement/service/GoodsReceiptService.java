@@ -182,6 +182,13 @@ public class GoodsReceiptService {
     }
 
     @Transactional(readOnly = true)
+    public Page<GoodsReceiptDto> search(String status, Long purchaseOrderId, String poNumber,
+                                        java.time.LocalDate from, java.time.LocalDate to, Pageable pageable) {
+        return grRepo.search(status, purchaseOrderId, poNumber, from, to, pageable)
+                .map(gr -> toDto(gr, grItemRepo.findByGoodsReceiptId(gr.getId())));
+    }
+
+    @Transactional(readOnly = true)
     public Page<GoodsReceiptDto> findByPurchaseOrder(Long poId, Pageable pageable) {
         return grRepo.findByPurchaseOrderId(poId, pageable)
                 .map(gr -> toDto(gr, grItemRepo.findByGoodsReceiptId(gr.getId())));
@@ -209,7 +216,8 @@ public class GoodsReceiptService {
                         i.isInspectionRequired(), null))
                 .toList();
         return new GoodsReceiptDto(
-                gr.getId(), gr.getGrNumber(), gr.getPurchaseOrderId(), null,
+                gr.getId(), gr.getGrNumber(), gr.getPurchaseOrderId(),
+                poRepo.findById(gr.getPurchaseOrderId()).map(PurchaseOrder::getPoNumber).orElse(null),
                 gr.getReceiptDate(), gr.getSupplierChallanNo(), gr.getVehicleNo(),
                 gr.getWarehouseId(), gr.getStatus(), gr.getReceivedBy(), itemDtos);
     }

@@ -39,6 +39,7 @@ export interface ProductionOrderDto {
   id: number;
   orderNumber: string;
   productId: number;
+  productCode: string;
   plannedQty: number;
   goodQty: number;
   rejectedQty: number;
@@ -110,7 +111,8 @@ export interface ProductionOrderDto {
                 <app-status-badge [status]="row.status" />
               </mat-panel-title>
               <mat-panel-description>
-                Product: {{ row.productId }} · Planned: {{ row.plannedQty | number: '1.0-3' }} · Good:
+                Product: {{ row.productCode }} · Priority {{ row.priority }} · Planned:
+                {{ row.plannedQty | number: '1.0-3' }} · Good:
                 {{ row.goodQty | number: '1.0-3' }}
               </mat-panel-description>
             </mat-expansion-panel-header>

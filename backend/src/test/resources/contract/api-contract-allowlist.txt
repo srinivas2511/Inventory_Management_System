@@ -1,9 +1,3 @@
 # Justified exceptions to ApiContractIT, one per line: KEY  # reason (the reason is mandatory).
 # KEY is the exact "KIND|..." text printed in target/api-contract-report.txt. Entries that stop matching fail the build,
 # so this file cannot rot. Prefer fixing the frontend (or the backend, if it is wrong against DESIGN.md) over listing here.
-NO_ENDPOINT|GET /api/procurement/goods-receipts  # The goods-receipt list screen needs a list-all endpoint; DESIGN specifies only GR create, get-by-id and list-by-PO. Needs a backend decision (R3 follow-up); the screen shows an empty table until then.
-RESP_FIELD|GET /api/production/my-work|MyWorkItemDto.productionOrderId  # ProductionOperationDto carries no order id; the My Work card title needs it. Backend DTO gap (additive fields needed); the screen shows a blank title until then.
-RESP_FIELD|GET /api/production/my-work|MyWorkItemDto.productionOrderNumber  # Same gap: the operation DTO has no order number.
-RESP_FIELD|GET /api/production/my-work|MyWorkItemDto.productId  # Same gap: the operation DTO has no product id.
-RESP_FIELD|POST /api/production-orders/{}/{}|ProductionOrderDto.priority  # The order entity has priority (default 3) but ProductionOrderDto omits it, so the Priority column is blank. Additive DTO field needed.
-RESP_FIELD|GET /api/production-orders|ProductionOrderDto.priority  # Same gap as above, seen on the list call.
