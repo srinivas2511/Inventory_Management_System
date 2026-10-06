@@ -13,6 +13,7 @@ const STATUS_MAP: Record<string, { color: StatusColor; icon: string; label?: str
   DISPATCHED: { color: 'green', icon: 'check_circle' },
   LOW_STOCK: { color: 'amber', icon: 'warning', label: 'Low Stock' },
   HOLD: { color: 'amber', icon: 'pause_circle' },
+  PAUSED: { color: 'amber', icon: 'pause_circle' },
   QUARANTINE: { color: 'orange', icon: 'radio_button_half', label: 'Quarantine' },
   QUALITY_PENDING: { color: 'orange', icon: 'radio_button_half', label: 'Quality Pending' },
   REJECTED: { color: 'red', icon: 'cancel' },

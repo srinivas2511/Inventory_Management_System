@@ -145,11 +145,12 @@ public class OperationExecutionService {
             throw new BusinessRuleException(ErrorCode.ILLEGAL_STATE_TRANSITION,
                     "Operation cannot be completed in status: " + op.getStatus());
         }
+        String previousStatus = op.getStatus();
         op.setStatus("COMPLETED");
         op.setCompletedAt(Instant.now());
         opRepo.save(op);
         auditService.record("OP_COMPLETE", "ProductionOperation", String.valueOf(operationId),
-                "IN_PROGRESS", "COMPLETED", null);
+                previousStatus, "COMPLETED", null);
         eventPublisher.publishEvent(new OperationCompletedEvent(operationId, op.getProductionOrderId(),
                 operatorOf(op), op.getCompletedAt()));
 
@@ -366,7 +367,8 @@ public class OperationExecutionService {
                 op.getScheduledStart(), op.getScheduledEnd(),
                 op.getProductionOrderId(),
                 owner != null ? owner.getOrderNumber() : null,
-                owner != null ? owner.getProductId() : null);
+                owner != null ? owner.getProductId() : null,
+                !opRepo.existsByProductionOrderIdAndSequenceNoGreaterThan(op.getProductionOrderId(), op.getSequenceNo()));
     }
 
     private Long currentUserId() {

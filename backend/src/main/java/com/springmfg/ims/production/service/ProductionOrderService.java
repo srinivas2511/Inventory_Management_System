@@ -379,7 +379,8 @@ public class ProductionOrderService {
                 op.getInputQty(), op.getGoodQty(), op.getRejectedQty(), op.getScrapQty(),
                 op.getStartedAt(), op.getCompletedAt(),
                 op.getScheduledStart(), op.getScheduledEnd(),
-                order.getId(), order.getOrderNumber(), order.getProductId());
+                order.getId(), order.getOrderNumber(), order.getProductId(),
+                !operationRepo.existsByProductionOrderIdAndSequenceNoGreaterThan(order.getId(), op.getSequenceNo()));
     }
 
     private List<String> allowedActions(String status) {

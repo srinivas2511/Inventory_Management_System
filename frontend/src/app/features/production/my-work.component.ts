@@ -2,6 +2,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { DatePipe, DecimalPipe } from '@angular/common';
+import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -27,6 +28,7 @@ export interface MyWorkItemDto {
   goodQty: number;
   rejectedQty: number;
   scrapQty: number;
+  finalOperation: boolean;
 }
 
 @Component({
@@ -111,6 +113,31 @@ export interface MyWorkItemDto {
                     <button mat-stroked-button (click)="cancelInput()">Cancel</button>
                   </div>
                 </div>
+              } @else if (confirmingOp() === item.id) {
+                <div class="confirm-panel">
+                  <p>
+                    Recorded {{ recordedQty(item) | number: '1.0-3' }} of {{ item.inputQty | number: '1.0-3' }}
+                    pieces on this operation.
+                  </p>
+                  @if (unrecordedQty(item) > 0) {
+                    <p class="warn-text">
+                      {{ unrecordedQty(item) | number: '1.0-3' }} pieces have no output recorded and will not be passed
+                      on.
+                    </p>
+                  }
+                  @if (item.finalOperation) {
+                    <p>
+                      This is the last operation. Completing it creates the finished-goods batch and requests the final
+                      inspection.
+                    </p>
+                  }
+                  <div class="form-actions">
+                    <button mat-raised-button color="primary" (click)="completeOp(item)">
+                      <mat-icon>check_circle</mat-icon> Complete operation
+                    </button>
+                    <button mat-stroked-button (click)="cancelComplete()">Cancel</button>
+                  </div>
+                </div>
               } @else {
                 <app-status-badge [status]="item.status" />
               }
@@ -121,11 +148,19 @@ export interface MyWorkItemDto {
                   <mat-icon>play_arrow</mat-icon> Start
                 </button>
               }
-              @if (item.status === 'IN_PROGRESS' && selectedOp() !== item.id) {
+              @if (item.status === 'PAUSED') {
+                <button mat-raised-button color="primary" (click)="resumeOp(item.id)">
+                  <mat-icon>play_arrow</mat-icon> Resume
+                </button>
+              }
+              @if (item.status === 'IN_PROGRESS' && selectedOp() !== item.id && confirmingOp() !== item.id) {
                 <button mat-raised-button color="accent" (click)="openOutput(item.id)">
                   <mat-icon>add_task</mat-icon> Record Output
                 </button>
                 <button mat-stroked-button (click)="pauseOp(item.id)"><mat-icon>pause</mat-icon> Pause</button>
+                <button mat-stroked-button (click)="askComplete(item.id)">
+                  <mat-icon>check_circle</mat-icon> Complete
+                </button>
               }
             </mat-card-actions>
           </mat-card>
@@ -177,6 +212,12 @@ export interface MyWorkItemDto {
         flex-direction: column;
         gap: 4px;
       }
+      .confirm-panel p {
+        margin: 4px 0;
+      }
+      .warn-text {
+        color: #f57c00;
+      }
       .form-actions {
         display: flex;
         gap: 8px;
@@ -196,10 +237,12 @@ export interface MyWorkItemDto {
 export class MyWorkComponent implements OnInit {
   private http = inject(HttpClient);
   private snack = inject(MatSnackBar);
+  private router = inject(Router);
 
   items = signal<MyWorkItemDto[]>([]);
   loading = signal(false);
   selectedOp = signal<number | null>(null);
+  confirmingOp = signal<number | null>(null);
 
   goodCtrl = new FormControl<number>(0, [Validators.min(0)]);
   rejCtrl = new FormControl<number>(0, [Validators.min(0)]);
@@ -226,7 +269,7 @@ export class MyWorkComponent implements OnInit {
         this.snack.open('Started', 'OK', { duration: 2000 });
         this.load();
       },
-      error: (e) => this.snack.open(e.error?.detail ?? 'Error', 'OK', { duration: 4000 }),
+      error: (e) => this.fail(e),
     });
   }
 
@@ -236,11 +279,59 @@ export class MyWorkComponent implements OnInit {
         this.snack.open('Paused', 'OK', { duration: 2000 });
         this.load();
       },
-      error: (e) => this.snack.open(e.error?.detail ?? 'Error', 'OK', { duration: 4000 }),
+      error: (e) => this.fail(e),
+    });
+  }
+
+  resumeOp(opId: number): void {
+    this.http.post(`/api/production/operations/${opId}/resume`, {}).subscribe({
+      next: () => {
+        this.snack.open('Resumed', 'OK', { duration: 2000 });
+        this.load();
+      },
+      error: (e) => this.fail(e),
+    });
+  }
+
+  recordedQty(item: MyWorkItemDto): number {
+    return item.goodQty + item.rejectedQty + item.scrapQty;
+  }
+
+  unrecordedQty(item: MyWorkItemDto): number {
+    return Math.max(0, item.inputQty - this.recordedQty(item));
+  }
+
+  askComplete(opId: number): void {
+    this.selectedOp.set(null);
+    this.confirmingOp.set(opId);
+  }
+
+  cancelComplete(): void {
+    this.confirmingOp.set(null);
+  }
+
+  completeOp(item: MyWorkItemDto): void {
+    this.http.post(`/api/production/operations/${item.id}/complete`, {}).subscribe({
+      next: () => {
+        this.confirmingOp.set(null);
+        if (item.finalOperation) {
+          this.snack
+            .open('Operation completed. Final inspection requested for the finished goods.', 'Open inspections', {
+              duration: 10000,
+            })
+            .onAction()
+            .subscribe(() => this.router.navigateByUrl('/quality/inspections'));
+        } else {
+          this.snack.open('Operation completed', 'OK', { duration: 2000 });
+        }
+        this.load();
+      },
+      error: (e) => this.fail(e),
     });
   }
 
   openOutput(opId: number): void {
+    this.confirmingOp.set(null);
     this.selectedOp.set(opId);
     this.goodCtrl.setValue(0);
     this.rejCtrl.setValue(0);
@@ -249,6 +340,10 @@ export class MyWorkComponent implements OnInit {
 
   cancelInput(): void {
     this.selectedOp.set(null);
+  }
+
+  private fail(e: { error?: { detail?: string } }): void {
+    this.snack.open(e.error?.detail ?? 'The request failed. Try again.', 'OK', { duration: 6000 });
   }
 
   recordOutput(opId: number): void {
@@ -264,7 +359,7 @@ export class MyWorkComponent implements OnInit {
         this.selectedOp.set(null);
         this.load();
       },
-      error: (e) => this.snack.open(e.error?.detail ?? 'Error', 'OK', { duration: 4000 }),
+      error: (e) => this.fail(e),
     });
   }
 }

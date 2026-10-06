@@ -176,6 +176,60 @@ class ProductionFlowIT extends AbstractIntegrationTest {
     }
 
     @Test
+    @DisplayName("PRD-FLOW-6: a paused operation stays in My Work, resumes and completes, and the last completion raises the final inspection")
+    void pausedOperationsStayInMyWorkAndTheLastCompletionRaisesTheFinalInspection() {
+        ProductionOrderDto order = releasedOrder(new BigDecimal("100"));
+        Long me = ((CachedUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).id();
+        jdbc.update("UPDATE ims.production_operations SET assigned_operator_id = ? WHERE production_order_id = ?",
+                me, order.id());
+        List<ProductionOperationDto> ops = order.operations().stream()
+                .sorted(java.util.Comparator.comparing(ProductionOperationDto::sequenceNo)).toList();
+        assertThat(executionService.getMyWork(me)).extracting(ProductionOperationDto::status).containsOnly("PENDING");
+
+        // operation 1: pause keeps it on the screen, resume then output then complete takes it off
+        Long first = ops.get(0).id();
+        executionService.startOperation(first, null);
+        executionService.pauseOperation(first);
+        assertThat(executionService.getMyWork(me)).filteredOn(o -> o.id().equals(first))
+                .singleElement().extracting(ProductionOperationDto::status).isEqualTo("PAUSED");
+        executionService.resumeOperation(first);
+        executionService.recordOutput(output(first, "100", "0", "0"));
+        ProductionOperationDto done = executionService.completeOperation(first);
+        assertThat(done.status()).isEqualTo("COMPLETED");
+        assertThat(done.finalOperation()).isFalse();
+        assertThat(executionService.getMyWork(me)).extracting(ProductionOperationDto::id).doesNotContain(first);
+
+        // operation 2: completing from PAUSED is allowed and the audit trail records the real previous status
+        Long second = ops.get(1).id();
+        executionService.startOperation(second, null);
+        executionService.recordOutput(output(second, "100", "0", "0"));
+        executionService.pauseOperation(second);
+        executionService.completeOperation(second);
+        String oldValue = jdbc.queryForObject("""
+                SELECT old_value::text FROM ims.audit_logs
+                 WHERE action = 'OP_COMPLETE' AND entity = 'ProductionOperation' AND entity_id = ?
+                """, String.class, String.valueOf(second));
+        assertThat(oldValue).contains("PAUSED");
+
+        // the last operation is flagged, and completing it produces the FG batch and the FINAL inspection after commit
+        Long last = ops.get(2).id();
+        assertThat(executionService.getMyWork(me)).filteredOn(o -> o.id().equals(last))
+                .singleElement().extracting(ProductionOperationDto::finalOperation).isEqualTo(true);
+        executionService.startOperation(last, null);
+        executionService.recordOutput(output(last, "100", "0", "0"));
+        assertThat(executionService.completeOperation(last).finalOperation()).isTrue();
+
+        assertThat(orderService.findById(order.id()).status()).isEqualTo("COMPLETED");
+        assertThat(jdbc.queryForObject(
+                "SELECT quality_status FROM ims.fg_batches WHERE production_order_id = ?", String.class, order.id()))
+                .isEqualTo("QUALITY_PENDING");
+        assertThat(jdbc.queryForObject("""
+                SELECT count(*) FROM ims.quality_inspections qi JOIN ims.fg_batches b ON b.id = qi.fg_batch_id
+                 WHERE b.production_order_id = ? AND qi.inspection_type = 'FINAL' AND qi.status = 'PENDING'
+                """, Integer.class, order.id())).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("PRD-FLOW-3: output above the remaining input is still refused")
     void outputAboveTheRemainingInputIsRefused() {
         ProductionOrderDto order = releasedOrder(new BigDecimal("100"));

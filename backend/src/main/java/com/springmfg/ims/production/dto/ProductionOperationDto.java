@@ -23,4 +23,5 @@ public record ProductionOperationDto(
         Instant scheduledEnd,
         Long productionOrderId,
         String productionOrderNumber,
-        Long productId) {}
+        Long productId,
+        boolean finalOperation) {}
