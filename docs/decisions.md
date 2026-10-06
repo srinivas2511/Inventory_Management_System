@@ -298,3 +298,13 @@ Found by driving the real UI against a fresh install (see the walkthrough findin
 - **Create forms (frontend).** New PO, New PR, Receive Goods, New BOM, New Production Order, New Sales Order, Reserve stock and New Dispatch are Angular Material dialogs on the existing endpoints and DTOs, with validation mirroring the backend, ProblemDetail and field errors shown in the dialog, and permission-gated buttons. New BOM creates material lines only (operation lines are edited through the routing screen). A new production order uses the product's single ACTIVE BOM and says so when there is none. Goods receipt lines default to the open quantity and the QUARANTINE location when the warehouse has one. They have unit specs against the real DTO shapes but have not been exercised in a browser.
 - **Still open from the walkthrough (not part of this pass):** session loss on reload (M1), dashboard 403 for roles without `DASHBOARD_VIEW` (M2), goods receipts post as `MATERIAL_RECEIPT` which has no GL account assignment (M5), no manual journal entry UI (M6), no operator assignment UI (M7), no change-password screen (M8), single-administrator PO approval (M4).
 
+## My Work: complete and resume operations (2026-10-07)
+
+- The My Work query now returns PAUSED operations next to PENDING and IN_PROGRESS. Before, pausing an operation made it vanish from the operator's screen, so Resume could not be reached.
+- `ProductionOperationDto.finalOperation` (additive) marks the last operation of an order so the screen can say that completing it creates the finished-goods batch and requests the final inspection.
+- Completing from PAUSED is allowed by the backend and is now audited with the real previous status (it was always logged as IN_PROGRESS).
+- Complete asks for confirmation and warns about input pieces that have no output recorded, because those pieces are not passed on to the next operation.
+
+### Left open after walkthrough 2
+Operator assignment has no endpoint or UI (it was set with SQL during the walkthrough); material issue, user creation, AR receipts and AP invoice entry and payment have no UI; the three-way match is not enforced; finished goods are never costed, so dispatch posts no COGS journal and WIP is never relieved; a page reload logs the user out; roles without DASHBOARD_VIEW get a 403 on the dashboard they land on; there is no manual journal entry or change-password screen. Journals, sales orders, dispatches and payroll still have no segregation-of-duties rule.
+
