@@ -87,6 +87,12 @@ public class LeaveService {
     /** Balances of the tracked leave types; creates the year's rows (with carry-forward) on first use. */
     @Transactional
     public List<LeaveBalanceDto> balances(Long employeeId, Integer year) {
+        if (employeeId == null) {
+            Long uid = HrmSecurity.currentUserId();
+            if (uid != null && employeeRepo.findByUserId(uid).isEmpty()) {
+                return List.of();
+            }
+        }
         Employee e = resolveViewedEmployee(employeeId);
         int y = year != null ? year : LocalDate.now(calendar.zone()).getYear();
         List<LeaveBalanceDto> out = new ArrayList<>();

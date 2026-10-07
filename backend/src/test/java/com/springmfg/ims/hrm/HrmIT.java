@@ -357,6 +357,15 @@ class HrmIT extends AbstractIntegrationTest {
 
     @Test
     @Transactional
+    @DisplayName("D-19: a user with no employee record has no leave balances (empty list, not a 404)")
+    void leaveBalancesAreEmptyForAUserWithoutAnEmployeeRecord() {
+        Long unlinkedUser = user();
+        as(unlinkedUser, "LEAVE_APPLY");
+        assertThat(leaveService.balances(null, 2026)).isEmpty();
+    }
+
+    @Test
+    @Transactional
     @DisplayName("Leave workflow: apply, approve deducts the balance and marks attendance, cancel restores both")
     void leaveWorkflow() {
         Long applicantUser = user();
