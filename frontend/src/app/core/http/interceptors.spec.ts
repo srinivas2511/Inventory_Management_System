@@ -125,6 +125,24 @@ describe('HTTP interceptors', () => {
     expect(toast.error).not.toHaveBeenCalled();
   });
 
+  it('names the failing fields in the detail a form shows instead of a bare "Validation failed" (D-31)', () => {
+    let detail = '';
+    http.post('/api/materials', {}).subscribe({ error: (e) => (detail = e.error.detail) });
+    backend.expectOne('/api/materials').flush(
+      {
+        code: 'VALIDATION_FAILED',
+        status: 400,
+        detail: 'Validation failed',
+        fieldErrors: [
+          { field: 'minStock', message: 'must not be null' },
+          { field: 'standardCost', message: 'must not be null' },
+        ],
+      },
+      { status: 400, statusText: 'Bad Request' },
+    );
+    expect(detail).toBe('Validation failed (minStock: must not be null; standardCost: must not be null)');
+  });
+
   it('quotes the trace id for server errors', () => {
     http.get('/api/materials').subscribe({ error: () => undefined });
     backend

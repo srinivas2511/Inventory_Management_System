@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -7,6 +7,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { applyFieldErrors } from '../../../core/models/problem.model';
 import { MaterialApi, MaterialDto, UomDto } from './material.api';
 
 @Component({
@@ -74,12 +75,18 @@ import { MaterialApi, MaterialDto, UomDto } from './material.api';
 
         <mat-form-field appearance="outline">
           <mat-label>Min stock</mat-label>
-          <input matInput type="number" formControlName="minStock" />
+          <input matInput type="number" formControlName="minStock" data-testid="minStock" />
+          @if (form.controls.minStock.touched && form.controls.minStock.invalid) {
+            <mat-error>{{ numberError('Min stock', form.controls.minStock) }}</mat-error>
+          }
         </mat-form-field>
 
         <mat-form-field appearance="outline">
           <mat-label>Reorder level</mat-label>
-          <input matInput type="number" formControlName="reorderLevel" />
+          <input matInput type="number" formControlName="reorderLevel" data-testid="reorderLevel" />
+          @if (form.controls.reorderLevel.touched && form.controls.reorderLevel.invalid) {
+            <mat-error>{{ numberError('Reorder level', form.controls.reorderLevel) }}</mat-error>
+          }
         </mat-form-field>
 
         <mat-form-field appearance="outline">
@@ -89,7 +96,10 @@ import { MaterialApi, MaterialDto, UomDto } from './material.api';
 
         <mat-form-field appearance="outline">
           <mat-label>Standard cost (₹)</mat-label>
-          <input matInput type="number" formControlName="standardCost" />
+          <input matInput type="number" formControlName="standardCost" data-testid="standardCost" />
+          @if (form.controls.standardCost.touched && form.controls.standardCost.invalid) {
+            <mat-error>{{ numberError('Standard cost', form.controls.standardCost) }}</mat-error>
+          }
         </mat-form-field>
 
         @if (errorMessage()) {
@@ -139,10 +149,11 @@ export class MaterialFormComponent implements OnInit {
     uom: ['', Validators.required],
     grade: [''],
     diameterMm: [null as number | null],
-    minStock: [null as number | null],
-    reorderLevel: [null as number | null],
+    // The API requires these three and refuses negatives (SaveMaterialRequest), so say so before submitting.
+    minStock: [null as number | null, [Validators.required, Validators.min(0)]],
+    reorderLevel: [null as number | null, [Validators.required, Validators.min(0)]],
     maxStock: [null as number | null],
-    standardCost: [null as number | null],
+    standardCost: [null as number | null, [Validators.required, Validators.min(0)]],
   });
 
   private readonly api = inject(MaterialApi);
@@ -154,6 +165,16 @@ export class MaterialFormComponent implements OnInit {
       this.form.patchValue(this.material);
       this.form.controls.materialCode.disable();
     }
+  }
+
+  protected numberError(label: string, control: AbstractControl): string {
+    if (control.hasError('required')) {
+      return `${label} is required`;
+    }
+    if (control.hasError('min')) {
+      return `${label} cannot be negative`;
+    }
+    return (control.getError('server') as string | undefined) ?? `${label} is not valid`;
   }
 
   save(): void {
@@ -171,7 +192,7 @@ export class MaterialFormComponent implements OnInit {
       },
       error: (err) => {
         this.saving.set(false);
-        this.errorMessage.set(err?.error?.detail ?? 'Save failed.');
+        this.errorMessage.set(applyFieldErrors(this.form, err, 'Save failed.'));
       },
     });
   }

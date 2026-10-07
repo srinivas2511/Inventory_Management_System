@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { catchError, throwError } from 'rxjs';
 import { SessionStore } from '../auth/session.store';
 import { safeReturnUrl } from '../auth/return-url';
-import { isProblemDetail } from '../models/problem.model';
+import { detailWithFieldErrors, isProblemDetail } from '../models/problem.model';
 import { ToastService } from '../notification/toast.service';
 
 /**
@@ -40,6 +40,19 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
           toast.error(`Something went wrong on the server.${problem?.traceId ? ` Reference: ${problem.traceId}` : ''}`);
         } else if (error.status !== 400 && error.status !== 401) {
           toast.error(problem?.detail ?? problem?.title ?? 'The request could not be completed.');
+        }
+        // Forms read `error.detail`; a bare "Validation failed" hides which fields failed (D-31), so name them there.
+        if (error.status === 400 && problem?.fieldErrors?.length) {
+          return throwError(
+            () =>
+              new HttpErrorResponse({
+                error: { ...problem, detail: detailWithFieldErrors(problem, 'Validation failed') },
+                headers: error.headers,
+                status: error.status,
+                statusText: error.statusText,
+                url: error.url ?? undefined,
+              }),
+          );
         }
       }
       return throwError(() => error);
