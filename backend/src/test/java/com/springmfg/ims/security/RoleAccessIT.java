@@ -3,6 +3,7 @@ package com.springmfg.ims.security;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.request;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,13 +17,16 @@ import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
 import com.jayway.jsonpath.JsonPath;
 import com.springmfg.ims.auth.service.UserPermissionCache.CachedUser;
@@ -35,8 +39,10 @@ import com.springmfg.ims.support.AbstractIntegrationTest;
  * {@code /api/auth/login}, and the JWT filter resolves the permissions the role was granted by the Flyway seed.
  * Nothing is supplied by hand, so an endpoint guarded by a code no role holds fails here.
  *
- * <p>Write endpoints are probed with a non-existent id and no body: a permitted caller reaches the service
- * (404), a forbidden caller is stopped by method security (403).
+ * <p>Write endpoints are probed with a non-existent id and no body: a permitted caller reaches the service (the
+ * declared 404 or 400), a forbidden caller is stopped by method security (403). Every probe must also resolve to a
+ * real controller method, and a permitted caller must get 2xx unless the probe is declared in
+ * {@link #DECLARED_STATUS}, so a mistyped path (404 for everybody) can no longer pass.
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class RoleAccessIT extends AbstractIntegrationTest {
@@ -363,7 +369,67 @@ class RoleAccessIT extends AbstractIntegrationTest {
             Probe.of(HttpMethod.GET, "/api/integration/tally/ledgers", TALLY_EXPORTERS, TALLY_NON_EXPORTERS),
             Probe.of(HttpMethod.GET, "/api/integration/tally/vouchers", TALLY_EXPORTERS, TALLY_NON_EXPORTERS));
 
+    /**
+     * What a permitted caller gets when it is not a 2xx. Every other permitted probe must answer 2xx. These probes
+     * reach the service (method security let them in) and are stopped there: a missing id answers 404, a create that
+     * names records which do not exist answers 404, and a create without a body answers 400. A permitted caller that
+     * gets any other status, including an undeclared 404, fails the test.
+     */
+    private static final Map<String, Integer> DECLARED_STATUS = Map.ofEntries(
+            Map.entry("DELETE /api/documents/999999/links/999999", 404),
+            Map.entry("DELETE /api/materials/999999", 404),
+            Map.entry("DELETE /api/products/999999", 404),
+            Map.entry("DELETE /api/rejection-reasons/999999", 404),
+            Map.entry("DELETE /api/scheduling/operations/999999/schedule", 404),
+            Map.entry("DELETE /api/spare-parts/999999", 404),
+            Map.entry("GET /api/documents/999999", 404),
+            Map.entry("GET /api/documents/999999/download", 404),
+            Map.entry("GET /api/integration/webhooks/999999", 404),
+            Map.entry("GET /api/maintenance/requests/999999/activities", 404),
+            Map.entry("GET /api/maintenance/requests/999999/cost", 404),
+            Map.entry("GET /api/maintenance/requests/999999/spare-parts", 404),
+            Map.entry("GET /api/oee/machines/999999", 404),
+            Map.entry("GET /api/procurement/goods-receipts/999999", 404),
+            Map.entry("GET /api/spare-parts/999999", 404),
+            Map.entry("GET /api/spc/charts/999999", 404),
+            Map.entry("POST /api/admin/attribute-definitions", 400), // no body: validation answers 400 after method security
+            Map.entry("POST /api/admin/attribute-definitions/999999/activate", 404),
+            Map.entry("POST /api/admin/attribute-definitions/999999/deactivate", 404),
+            Map.entry("POST /api/capa/999999/close", 404),
+            Map.entry("POST /api/capa/from-rejection/999999", 404),
+            Map.entry("POST /api/complaints", 404), // the body names a customer and batch that do not exist
+            Map.entry("POST /api/documents/999999/approve", 404),
+            Map.entry("POST /api/documents/999999/links", 404),
+            Map.entry("POST /api/documents/999999/obsolete", 404),
+            Map.entry("POST /api/documents/999999/reject", 404),
+            Map.entry("POST /api/documents/999999/submit", 404),
+            Map.entry("POST /api/fai", 404), // the body names a product that does not exist
+            Map.entry("POST /api/fai/999999/complete", 404),
+            Map.entry("POST /api/fai/999999/results", 404),
+            Map.entry("POST /api/integration/webhook-deliveries/999999/retry", 404),
+            Map.entry("POST /api/integration/webhooks/999999/rotate-secret", 404),
+            Map.entry("POST /api/integration/webhooks/999999/test", 404),
+            Map.entry("POST /api/maintenance/pm-schedules/999999/generate-request", 404),
+            Map.entry("POST /api/maintenance/requests/999999/activities", 404),
+            Map.entry("POST /api/maintenance/requests/999999/post-cost", 404),
+            Map.entry("POST /api/maintenance/requests/999999/spare-parts", 404),
+            Map.entry("POST /api/notifications/999999/read", 404),
+            Map.entry("POST /api/production-orders/999999999/material-returns", 404),
+            Map.entry("POST /api/sales/orders/999999/approve", 404),
+            Map.entry("POST /api/sales/orders/999999/cancel", 404),
+            Map.entry("POST /api/spc/charts", 404), // the body names a parameter that does not exist
+            Map.entry("POST /api/spc/charts/999999/points", 404),
+            Map.entry("POST /api/spc/charts/999999/recalculate-limits", 404),
+            Map.entry("PUT /api/admin/attribute-definitions/999999", 404),
+            Map.entry("PUT /api/alerts/999999/acknowledge", 404),
+            Map.entry("PUT /api/document-categories/999999", 404),
+            Map.entry("PUT /api/integration/webhooks/999999", 404),
+            Map.entry("PUT /api/notification-templates/999999", 404),
+            Map.entry("PUT /api/scheduling/operations/999999/schedule", 404),
+            Map.entry("PUT /api/spare-parts/999999", 404));
+
     @Autowired UserAdminService userAdminService;
+    @Autowired @Qualifier("requestMappingHandlerMapping") RequestMappingHandlerMapping handlerMapping;
     @Autowired JdbcTemplate jdbc;
 
     private final Map<String, String> tokenByRole = new LinkedHashMap<>();
@@ -427,11 +493,13 @@ class RoleAccessIT extends AbstractIntegrationTest {
                             int status = status(role, probe);
                             assertThat(status).as("%s %s as %s", probe.method(), probe.path(), role)
                                     .isNotIn(401, 403).isLessThan(500);
-                            if (probe.method() == HttpMethod.GET) {
-                                // a list or report must succeed; a by-id read of a missing id answers 404, or 204 when "none yet" is a valid answer
-                                boolean byMissingId = probe.path().contains("/" + MISSING);
-                                assertThat(status).as("%s %s as %s", probe.method(), probe.path(), role)
-                                        .isIn(byMissingId ? List.of(200, 204, 404) : List.of(200));
+                            Integer declared = DECLARED_STATUS.get(probe.method() + " " + probe.path());
+                            if (declared != null) {
+                                assertThat(status).as("%s %s as %s (declared)", probe.method(), probe.path(), role)
+                                        .isEqualTo(declared);
+                            } else {
+                                assertThat(status).as("%s %s as %s must succeed", probe.method(), probe.path(), role)
+                                        .isBetween(200, 299);
                             }
                         })),
                 probe.forbidden().stream().map(role -> DynamicTest.dynamicTest(
@@ -449,5 +517,36 @@ class RoleAccessIT extends AbstractIntegrationTest {
                             .getStatus();
                     assertThat(status).isEqualTo(401);
                 }));
+    }
+
+    /** A mistyped path passes every status check by answering 404 for all roles, so each probe must hit a real handler. */
+    @TestFactory
+    Stream<DynamicTest> everyProbeResolvesToARealHandler() {
+        return PROBES.stream().map(probe -> DynamicTest.dynamicTest(
+                probe.method() + " " + probe.path(), () -> {
+                    String path = probe.path();
+                    int q = path.indexOf('?');
+                    var req = new MockHttpServletRequest(probe.method().name(), q < 0 ? path : path.substring(0, q));
+                    if (q >= 0) {
+                        req.setQueryString(path.substring(q + 1));
+                    }
+                    Object handler = null;
+                    try {
+                        var chain = handlerMapping.getHandler(req);
+                        handler = chain == null ? null : chain.getHandler();
+                    } catch (Exception e) {
+                        throw new AssertionError(probe.method() + " " + probe.path() + " does not resolve: " + e, e);
+                    }
+                    assertThat(handler).as("%s %s must map to a controller method", probe.method(), probe.path())
+                            .isNotNull();
+                }));
+    }
+
+    @TestFactory
+    Stream<DynamicTest> everyDeclaredStatusBelongsToAProbe() {
+        List<String> probeKeys = new ArrayList<>();
+        PROBES.forEach(p -> probeKeys.add(p.method() + " " + p.path()));
+        return DECLARED_STATUS.keySet().stream().sorted().map(key -> DynamicTest.dynamicTest(key, () ->
+                assertThat(probeKeys).as("declared status without a probe: %s", key).contains(key)));
     }
 }
