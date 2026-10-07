@@ -110,6 +110,14 @@ export class InspectionApi {
     return this.http.post<QualityInspectionDto>(`${this.base}/inspections/${id}/reject`, { reason });
   }
 
+  hold(id: number, reason: string): Observable<QualityInspectionDto> {
+    return this.http.post<QualityInspectionDto>(`${this.base}/inspections/${id}/hold`, { reason });
+  }
+
+  reinspect(id: number): Observable<QualityInspectionDto> {
+    return this.http.post<QualityInspectionDto>(`${this.base}/inspections/${id}/reinspect`, {});
+  }
+
   createInProcess(productionOperationId: number, inspectedQty: number): Observable<QualityInspectionDto> {
     return this.http.post<QualityInspectionDto>(`${this.base}/inspections/in-process`, {
       productionOperationId,

@@ -214,6 +214,60 @@ class InspectionCommitPathIT extends AbstractIntegrationTest {
     // ---- incoming ------------------------------------------------------------------------------------------------
 
     @Test
+    @DisplayName("INS-CP-HOLD-1 (QCI-04/05): hold 100 in QUARANTINE, re-inspect, then accept 80 and reject 20")
+    void incomingHoldThenReinspectThenPartialDecision() {
+        IncomingFixture f = incoming();
+
+        assertThatThrownBy(() -> inspectionService.hold(f.inspectionId(), "  "))
+                .isInstanceOf(BusinessRuleException.class).hasMessageContaining("reason");
+
+        QualityInspectionDto held = inspectionService.hold(f.inspectionId(), "Surface rust suspected");
+        assertThat(held.status()).isEqualTo("HOLD");
+        assertThat(materialBatchRepo.findById(f.batchId()).orElseThrow().getStatus()).isEqualTo("HOLD");
+        Map<String, BigDecimal> onHold = materialBalancesByStatus(f.batchId());
+        assertThat(qty(onHold, "HOLD")).isEqualByComparingTo("100");
+        assertThat(qty(onHold, "QUARANTINE")).isEqualByComparingTo("0");
+        assertThat(qty(onHold, "AVAILABLE")).isEqualByComparingTo("0");
+
+        // a held inspection cannot be decided until it is re-inspected, nor held twice
+        assertThatThrownBy(() -> inspectionService.accept(f.inspectionId()))
+                .isInstanceOf(BusinessRuleException.class);
+        assertThatThrownBy(() -> inspectionService.hold(f.inspectionId(), "again"))
+                .isInstanceOf(BusinessRuleException.class);
+
+        assertThat(inspectionService.reinspect(f.inspectionId()).status()).isEqualTo("IN_PROGRESS");
+        measuredIncoming(f);
+        inspectionService.accept(f.inspectionId(), new BigDecimal("80"), new BigDecimal("20"));
+
+        QualityInspection stored = inspectionRepo.findById(f.inspectionId()).orElseThrow();
+        assertThat(stored.getStatus()).isEqualTo("APPROVED");
+        assertThat(materialBatchRepo.findById(f.batchId()).orElseThrow().getStatus()).isEqualTo("AVAILABLE");
+        Map<String, BigDecimal> after = materialBalancesByStatus(f.batchId());
+        assertThat(qty(after, "AVAILABLE")).isEqualByComparingTo("80");
+        assertThat(qty(after, "REJECTED")).isEqualByComparingTo("20");
+        assertThat(qty(after, "HOLD")).isEqualByComparingTo("0");
+        assertThat(qty(after, "QUARANTINE")).isEqualByComparingTo("0");
+    }
+
+    @Test
+    @DisplayName("INS-CP-HOLD-2: a held batch that fails re-inspection is rejected in full out of HOLD")
+    void incomingHoldThenReject() {
+        IncomingFixture f = incoming();
+        inspectionService.hold(f.inspectionId(), "Certificate missing");
+        assertThatThrownBy(() -> inspectionService.reinspect(f.inspectionId() + 9_000_000))
+                .isInstanceOf(RuntimeException.class);
+        inspectionService.reinspect(f.inspectionId());
+
+        inspectionService.reject(f.inspectionId(), "Certificate never supplied");
+
+        assertThat(inspectionRepo.findById(f.inspectionId()).orElseThrow().getStatus()).isEqualTo("REJECTED");
+        Map<String, BigDecimal> after = materialBalancesByStatus(f.batchId());
+        assertThat(qty(after, "REJECTED")).isEqualByComparingTo("100");
+        assertThat(qty(after, "HOLD")).isEqualByComparingTo("0");
+        assertThat(qty(after, "AVAILABLE")).isEqualByComparingTo("0");
+    }
+
+    @Test
     @DisplayName("INS-CP-1: an incoming inspection needs its mandatory parameter measured, then acceptance releases the batch")
     void incomingAcceptCommitsTheBatchRelease() {
         IncomingFixture f = incoming();

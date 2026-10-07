@@ -85,6 +85,18 @@ public class InspectionController {
         return service.reject(id, req.reason());
     }
 
+    @PostMapping("/inspections/{id}/hold")
+    @PreAuthorize("hasAuthority('QUALITY_HOLD')")
+    public QualityInspectionDto hold(@PathVariable Long id, @Valid @RequestBody RejectRequest req) {
+        return service.hold(id, req.reason());
+    }
+
+    @PostMapping("/inspections/{id}/reinspect")
+    @PreAuthorize("hasAuthority('QUALITY_INSPECT')")
+    public QualityInspectionDto reinspect(@PathVariable Long id) {
+        return service.reinspect(id);
+    }
+
     @GetMapping("/supplier-performance/{supplierId}")
     @PreAuthorize("hasAnyAuthority('QUALITY_VIEW','PURCHASE_VIEW')")
     public SupplierPerformanceDto supplierPerformance(@PathVariable Long supplierId) {

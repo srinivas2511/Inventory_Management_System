@@ -149,6 +149,36 @@ describe('InspectionDetailComponent', () => {
     expect(text).toContain('stays in quarantine');
   });
 
+  it('puts an incoming inspection on hold with a mandatory reason (QCI-04)', () => {
+    setup(['QUALITY_VIEW', 'QUALITY_INSPECT', 'QUALITY_HOLD'], inspection({}));
+    expect(button('Hold')?.disabled).toBe(true);
+    fixture.componentInstance.holdReasonCtrl.setValue('Surface rust suspected');
+    fixture.detectChanges();
+    button('Hold')?.click();
+    const req = backend.expectOne('/api/quality/inspections/7/hold');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ reason: 'Surface rust suspected' });
+    req.flush(inspection({ status: 'HOLD' }));
+    fixture.detectChanges();
+    expect(fixture.componentInstance.insp()?.status).toBe('HOLD');
+  });
+
+  it('does not offer Hold without QUALITY_HOLD', () => {
+    setup(['QUALITY_VIEW', 'QUALITY_INSPECT'], inspection({}));
+    expect(button('Hold')).toBeUndefined();
+  });
+
+  it('re-inspects a held incoming inspection (QCI-05)', () => {
+    setup(['QUALITY_VIEW', 'QUALITY_INSPECT'], inspection({ status: 'HOLD' }));
+    expect(fixture.nativeElement.textContent).toContain('on HOLD');
+    button('Re-inspect')?.click();
+    const req = backend.expectOne('/api/quality/inspections/7/reinspect');
+    expect(req.request.method).toBe('POST');
+    req.flush(inspection({ status: 'IN_PROGRESS' }));
+    fixture.detectChanges();
+    expect(fixture.componentInstance.insp()?.status).toBe('IN_PROGRESS');
+  });
+
   it('highlights an out-of-tolerance value before saving and posts the entered results', () => {
     setup(['QUALITY_VIEW', 'QUALITY_INSPECT'], inspection({}));
     const comp = fixture.componentInstance;

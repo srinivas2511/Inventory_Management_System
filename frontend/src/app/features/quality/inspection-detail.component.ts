@@ -293,9 +293,36 @@ interface ReasonLine {
               >
                 <mat-icon>cancel</mat-icon> Reject
               </button>
+              @if (canHold()) {
+                <mat-form-field appearance="outline" class="reject-reason">
+                  <mat-label>Hold reason</mat-label>
+                  <input matInput [formControl]="holdReasonCtrl" />
+                </mat-form-field>
+                <button mat-stroked-button (click)="hold()" [disabled]="busy() || holdReasonCtrl.invalid">
+                  <mat-icon>pause_circle</mat-icon> Hold
+                </button>
+              }
             </div>
           }
         </ng-container>
+      }
+
+      @if (isHeldIncoming()) {
+        <p class="note">
+          This batch is on HOLD. Its stock stays out of available stock until it is re-inspected and then accepted or
+          rejected.
+        </p>
+        <div class="actions">
+          <button
+            mat-flat-button
+            color="primary"
+            *appHasPermission="'QUALITY_INSPECT'"
+            (click)="reinspect()"
+            [disabled]="busy()"
+          >
+            <mat-icon>replay</mat-icon> Re-inspect
+          </button>
+        </div>
       }
 
       @if (needsDeviation().length > 0) {
@@ -464,6 +491,7 @@ export class InspectionDetailComponent implements OnInit {
   holdCtrl = new FormControl<number | null>(0, [Validators.min(0)]);
   remarksCtrl = new FormControl<string>('', { nonNullable: true });
   rejectReasonCtrl = new FormControl<string>('', { nonNullable: true, validators: [Validators.required] });
+  holdReasonCtrl = new FormControl<string>('', { nonNullable: true, validators: [Validators.required] });
 
   private id = 0;
 
@@ -495,6 +523,15 @@ export class InspectionDetailComponent implements OnInit {
       (i.status === 'PENDING' || i.status === 'IN_PROGRESS') &&
       this.session.hasPermission('QUALITY_INSPECT')
     );
+  }
+
+  canHold(): boolean {
+    return this.insp()?.inspectionType === 'INCOMING' && this.session.hasPermission('QUALITY_HOLD');
+  }
+
+  isHeldIncoming(): boolean {
+    const i = this.insp();
+    return !!i && i.inspectionType === 'INCOMING' && i.status === 'HOLD';
   }
 
   outcome(r: ItemRow): ItemOutcome {
@@ -598,6 +635,14 @@ export class InspectionDetailComponent implements OnInit {
       return `Accepted plus rejected (${total}) must equal the inspected quantity (${i.inspectedQty}) to accept.`;
     }
     return accepted === 0 ? 'Nothing is accepted; use Reject to reject the whole lot.' : null;
+  }
+
+  hold(): void {
+    this.run(this.api.hold(this.id, this.holdReasonCtrl.value.trim()), 'Inspection put on hold');
+  }
+
+  reinspect(): void {
+    this.run(this.api.reinspect(this.id), 'Re-inspection started');
   }
 
   reject(): void {

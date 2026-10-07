@@ -237,7 +237,7 @@ public class InspectionService {
         BigDecimal toReject = rejected;
         List<LocationStock> quarantined = stockQuery
                 .stockOfBatch("MATERIAL", insp.getMaterialId(), insp.getMaterialBatchId()).stream()
-                .filter(b -> "QUARANTINE".equals(b.stockStatus()))
+                .filter(b -> "QUARANTINE".equals(b.stockStatus()) || "HOLD".equals(b.stockStatus()))
                 .toList();
         BigDecimal available = quarantined.stream().map(LocationStock::qtyOnHand)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -265,10 +265,66 @@ public class InspectionService {
         }
         postingService.transfer(new TransferCommand(
                 "MATERIAL", insp.getMaterialId(), null, insp.getMaterialBatchId(), null,
-                bal.warehouseId(), bal.locationId(), "QUARANTINE",
+                bal.warehouseId(), bal.locationId(), bal.stockStatus(),
                 bal.warehouseId(), bal.locationId(), toStatus,
                 qty, null,
                 "QUALITY_INSPECTION", insp.getId(), insp.getInspectionNumber(), remarks));
+    }
+
+    /**
+     * Puts an incoming inspection on HOLD (QCI-04, QMS-003): the batch's quarantined stock moves QUARANTINE to HOLD
+     * through the posting service, so it stays unavailable to issue, and the inspection waits for a re-inspection.
+     * A reason is mandatory.
+     */
+    @Transactional
+    public QualityInspectionDto hold(Long inspectionId, String reason) {
+        QualityInspection insp = requireInspection(inspectionId);
+        rejectFirstArticle(insp);
+        if (insp.getMaterialBatchId() == null || !"INCOMING".equals(insp.getInspectionType())) {
+            throw new BusinessRuleException(ErrorCode.VALIDATION_FAILED,
+                    "Only an incoming inspection can be put on hold here; final inspections use the FG batch hold");
+        }
+        if (reason == null || reason.isBlank()) {
+            throw new BusinessRuleException(ErrorCode.VALIDATION_FAILED, "A reason is required to put a batch on hold");
+        }
+        if (!"IN_PROGRESS".equals(insp.getStatus()) && !"PENDING".equals(insp.getStatus())) {
+            throw new BusinessRuleException(ErrorCode.ILLEGAL_STATE_TRANSITION,
+                    "Inspection must be in PENDING or IN_PROGRESS to put on hold");
+        }
+        String from = insp.getStatus();
+        for (LocationStock bal : stockQuery
+                .stockOfBatch("MATERIAL", insp.getMaterialId(), insp.getMaterialBatchId())) {
+            if ("QUARANTINE".equals(bal.stockStatus())) {
+                moveQuarantined(insp, bal, bal.qtyOnHand(), "HOLD", "Incoming inspection on hold: " + reason.trim());
+            }
+        }
+        batchRepo.findById(insp.getMaterialBatchId()).ifPresent(batch -> {
+            batch.setStatus("HOLD");
+            batchRepo.save(batch);
+        });
+        insp.setStatus("HOLD");
+        insp.setRemarks(reason.trim());
+        insp.setDecisionBy(currentUserId());
+        insp.setDecisionAt(Instant.now());
+        insp = inspectionRepo.save(insp);
+        auditService.record("INSPECTION_HELD", "QUALITY_INSPECTION", String.valueOf(inspectionId), from, "HOLD",
+                reason.trim());
+        return toDto(insp);
+    }
+
+    /** Re-opens a held inspection for a new round of results (QCI-05). The stock stays on HOLD until a decision. */
+    @Transactional
+    public QualityInspectionDto reinspect(Long inspectionId) {
+        QualityInspection insp = requireInspection(inspectionId);
+        if (!"HOLD".equals(insp.getStatus())) {
+            throw new BusinessRuleException(ErrorCode.ILLEGAL_STATE_TRANSITION,
+                    "Only an inspection on HOLD can be re-inspected");
+        }
+        insp.setStatus("IN_PROGRESS");
+        insp = inspectionRepo.save(insp);
+        auditService.record("INSPECTION_REINSPECTION", "QUALITY_INSPECTION", String.valueOf(inspectionId), "HOLD",
+                "IN_PROGRESS", "Re-inspection started");
+        return toDto(insp);
     }
 
     @Transactional
