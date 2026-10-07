@@ -335,6 +335,14 @@ class ProductionFlowIT extends AbstractIntegrationTest {
             assertThat(st.fgBatchId()).isEqualTo(fgBatchId);
             assertThat(st.available()).isEqualByComparingTo("100");
         });
+        // QCF-05: a batch that is on HOLD is not offered for reservation (the reservation itself would be refused)
+        String qualityStatus = jdbc.queryForObject("SELECT quality_status FROM ims.fg_batches WHERE id = ?",
+                String.class, fgBatchId);
+        jdbc.update("UPDATE ims.fg_batches SET quality_status = 'HOLD' WHERE id = ?", fgBatchId);
+        assertThat(lookupService.finishedGoodsStock(order.productId()))
+                .as("a batch on HOLD is not offered to the reserve and dispatch forms").isEmpty();
+        jdbc.update("UPDATE ims.fg_batches SET quality_status = ? WHERE id = ?", qualityStatus, fgBatchId);
+        assertThat(lookupService.finishedGoodsStock(order.productId())).hasSize(1);
         Long approvedOrderId = so.id();
         DispatchableOrder dispatchable = lookupService.dispatchableOrders().stream()
                 .filter(o -> o.id().equals(approvedOrderId)).findFirst().orElseThrow();

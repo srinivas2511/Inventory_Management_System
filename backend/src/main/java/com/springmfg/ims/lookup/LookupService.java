@@ -166,6 +166,7 @@ public class LookupService {
                   JOIN fg_batches f ON f.id = b.fg_batch_id
                   JOIN warehouse_locations l ON l.id = b.location_id
                  WHERE b.item_type = 'PRODUCT' AND b.stock_status = 'AVAILABLE' AND b.qty_on_hand > 0
+                   AND f.quality_status IN ('APPROVED', 'PARTIALLY_APPROVED')
                    AND (:p = 0 OR b.product_id = :p)
                  ORDER BY f.produced_on, b.fg_batch_id, b.location_id LIMIT 1000
                 """, new MapSqlParameterSource("p", productId == null ? 0L : productId),
