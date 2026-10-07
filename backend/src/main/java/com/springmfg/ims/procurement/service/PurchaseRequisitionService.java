@@ -3,7 +3,9 @@ package com.springmfg.ims.procurement.service;
 import java.math.BigDecimal;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -72,7 +74,13 @@ public class PurchaseRequisitionService {
 
     @Transactional(readOnly = true)
     public Page<PurchaseRequisitionDto> findByStatus(String status, Pageable pageable) {
-        return prRepo.findByStatus(status, pageable).map(this::toDto);
+        Pageable page = pageable.getSort().isSorted() ? pageable
+                : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.DESC, "id"));
+        // A null status is "no filter"; the derived finder would turn it into "status IS NULL".
+        if (status == null || status.isBlank()) {
+            return prRepo.findAll(page).map(this::toDto);
+        }
+        return prRepo.findByStatus(status.trim(), page).map(this::toDto);
     }
 
     // ── private helpers ───────────────────────────────────────────────────────
