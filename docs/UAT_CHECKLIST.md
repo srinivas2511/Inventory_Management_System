@@ -13,7 +13,7 @@ For each test, record: **Pass / Fail / N/A**, tester initials, date.
 | ID | Test | Pass/Fail |
 |----|------|-----------|
 | ADM-01 | Log in with `admin` / `Admin@123`, land on dashboard | |
-| ADM-02 | Create a new user (`testuser`), assign role `STORE_KEEPER` | |
+| ADM-02 | Create a new user (`testuser`), assign role `STORE_MANAGER` | |
 | ADM-03 | Reset `testuser`'s password | |
 | ADM-04 | Disable and re-enable `testuser` | |
 | ADM-05 | View audit log for a user change (old value / new value shown) | |
@@ -94,7 +94,7 @@ For each test, record: **Pass / Fail / N/A**, tester initials, date.
 |----|------|-----------|
 | SAL-01 | Create customer `TEST-CUST`, save | |
 | SAL-02 | Create Sales Order for `DEMO-CS-25X3` (30 pcs) against `TEST-CUST` | |
-| SAL-03 | Confirm Sales Order — status → CONFIRMED | |
+| SAL-03 | Approve Sales Order — status ORDERED → APPROVED (a second user approves; the creator cannot) | |
 | SAL-04 | Reserve 30 pcs from available FG stock — reservation created | |
 | SAL-05 | Attempt to reserve more than available FG stock — expect error | |
 | SAL-06 | Create Dispatch against Sales Order; status → DISPATCHED | |

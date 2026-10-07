@@ -64,8 +64,9 @@ Once any user exists the variables are ignored, so remove them from the environm
 `docker/.env.example` is not updated by this change (outside the paths the agent could edit); add the variables to your
 `docker/.env` for the first start.
 
-In the `dev`/`demo` profiles the demo loader (`ims.demo.load-data=true`) creates `admin` / `Admin@123` instead; that
-account never exists in production.
+In the `dev`/`demo` profiles the demo loader (`ims.demo.load-data=true`) creates `admin` / `Admin@123` instead, plus the
+DESIGN section 11.2 role users (`engineer1`, `prodmgr1`, `purchase1`, `storemgr1`, `quality1`, `sales1`, `finance1`, ...)
+with the initial password `Demo@12345!` and a forced change at first sign-in. None of these accounts exist in production.
 
 The first sign-in is held to the password-change screen: while a password is temporary the server refuses every call
 except change-password, me, refresh and logout (403 `PASSWORD_CHANGE_REQUIRED`), so choose a new password first.
@@ -77,12 +78,15 @@ password this way: use **Change password** in the user menu. A locked account is
 screen. At least one active, unlocked administrator must always remain, so the last administrator cannot be
 deactivated or have the Administrator role removed; keep a second administrator in case the first is locked out.
 
-----------|-----------------|
-| `admin` | `Admin@123` ← **change immediately** |
-
-Change it at first sign-in (**Change password** in the user menu), or reset it from **Administration → Users** as another administrator.
-
 ---
+
+### Second approver (first-run step)
+
+The system refuses self-approval: whoever submits a purchase order, sales order, dispatch, AP invoice exception or
+journal cannot approve it. A one-administrator installation therefore cannot complete its first purchase order.
+After the first sign-in, create at least one more user under **Admin > Users** and give it the role that holds the
+approval permission (for example `PURCHASE_MANAGER`, or a second `ADMIN`), then change roles as your organisation requires.
+Keep a second administrator as well: failed sign-ins can lock the only one, and only an administrator can unlock.
 
 ## 2. Upgrade (rolling)
 
