@@ -12,6 +12,10 @@ import com.springmfg.ims.insight.report.ReportQueryHelper;
 import com.springmfg.ims.insight.report.ReportRequest;
 
 @Component
+/**
+ * Stock value is the ledger value: on-hand x the moving-average cost carried on each balance (DESIGN section 4 costing),
+ * the same basis as the stock screen and the valuation endpoint. The material's standard cost is not used (D-29).
+ */
 public class InventoryStockReport implements ReportDefinition {
 
     private final EntityManager em;
@@ -35,7 +39,7 @@ public class InventoryStockReport implements ReportDefinition {
                 SELECT m.material_code, m.name, m.material_type, m.uom,
                        COALESCE(SUM(CASE WHEN b.stock_status='AVAILABLE' THEN b.qty_on_hand - b.qty_reserved ELSE 0 END), 0) AS available_qty,
                        COALESCE(SUM(b.qty_reserved), 0) AS reserved_qty,
-                       COALESCE(SUM(b.qty_on_hand * m.standard_cost), 0) AS total_value
+                       COALESCE(SUM(CASE WHEN b.qty_on_hand > 0 THEN b.qty_on_hand * b.avg_unit_cost ELSE 0 END), 0) AS total_value
                 FROM ims.materials m
                 LEFT JOIN ims.inventory_balances b ON b.material_id = m.id
                 WHERE m.active = true
