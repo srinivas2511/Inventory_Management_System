@@ -318,6 +318,12 @@ export const routes: Routes = [
         loadComponent: () => import('./features/finance/journal-list.component').then((m) => m.JournalListComponent),
       },
       {
+        path: 'finance/journals/new',
+        title: 'New Journal Entry',
+        canActivate: [permissionGuard('GL_POST')],
+        loadComponent: () => import('./features/finance/journal-form.component').then((m) => m.JournalFormComponent),
+      },
+      {
         path: 'finance/journals/:id',
         title: 'Journal Detail',
         canActivate: [permissionGuard('GL_VIEW')],

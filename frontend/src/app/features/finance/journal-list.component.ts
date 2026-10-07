@@ -5,16 +5,30 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
+import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
 import { FinanceApi, JournalHeaderDto } from './finance.api';
 
 @Component({
   selector: 'app-journal-list',
   standalone: true,
-  imports: [RouterLink, MatTableModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule, StatusBadgeComponent],
+  imports: [
+    HasPermissionDirective,
+    RouterLink,
+    MatTableModule,
+    MatButtonModule,
+    MatIconModule,
+    MatProgressSpinnerModule,
+    StatusBadgeComponent,
+  ],
   template: `
     <div class="page-header">
       <h2 class="mat-h2">Journal Entries</h2>
-      <button mat-flat-button color="primary" (click)="load()"><mat-icon>refresh</mat-icon> Refresh</button>
+      <div class="header-actions">
+        <a mat-flat-button color="primary" *appHasPermission="'GL_POST'" routerLink="/finance/journals/new">
+          <mat-icon>add</mat-icon> New journal
+        </a>
+        <button mat-stroked-button (click)="load()"><mat-icon>refresh</mat-icon> Refresh</button>
+      </div>
     </div>
 
     @if (loading()) {
@@ -48,6 +62,14 @@ import { FinanceApi, JournalHeaderDto } from './finance.api';
       </table>
     }
   `,
+  styles: [
+    `
+      .header-actions {
+        display: flex;
+        gap: 8px;
+      }
+    `,
+  ],
 })
 export class JournalListComponent implements OnInit {
   private api = inject(FinanceApi);
