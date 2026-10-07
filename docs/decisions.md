@@ -457,3 +457,35 @@ Record receipt on open and part-paid customer invoices (`AR_MANAGE`), through th
 - **Reversing a system-made journal does not reverse its business document.** Reversing, for example, an AP invoice journal leaves the invoice OPEN with no journal behind it. The Reverse button is offered on every POSTED journal; a rule that sends users back to the source document is still to be decided.
 - **The payment/receipt journal is not linked.** The AP and AR DTOs carry only the invoice's own journal id, so the list links that one.
 - **Under-billing is not distinguishable from a partial invoice** (see the three-way match entry above); there is still no GR/IR report.
+
+## Production screens: material issue, material return and close, operator assignment (2026-10-07)
+
+The production-side screens the second walkthrough could not use (it issued material, closed orders and assigned operators through the API and SQL). All of it lives in the expandable detail of each order on the production order list. These screens are unit-tested only; they have not been run in a browser.
+
+### Material issue
+
+- **"Issue material"** (order status RELEASED or IN_PROGRESS, `INVENTORY_ISSUE`) opens a dialog: the warehouse to issue from, then one line per material on the order, pre-filled with the quantity still to issue (planned minus issued). Set a line to 0 to skip it. Each line shows the available quantity in the chosen warehouse and a batch picker; "Automatic (earliest expiry first)" leaves the choice to the allocator, so the screen can never disagree with what the server would pick. After posting, the dialog lists the issue number and the batches the stock came from.
+- **Over-issue** is warned about, not blocked: the server accepts it within `production.issue.tolerance_pct` (default 10%) and refuses beyond that, and its message is shown.
+- **The materials table** now reads planned, issued, consumed, returned, written off, left over and still to issue per line, so the reconciliation the order-close pass added is visible before closing.
+- **Backend, additive.** `GET /api/lookups/material-stock?materialId=&warehouseId=` (`INVENTORY_ISSUE`) lists the available raw-material batches in the allocator's order (earliest expiry first, then oldest receipt), one row per batch and location, with on-hand, reserved and available. `/api/lookups/warehouses` now also admits `INVENTORY_ISSUE`. `LookupIT` LOOK-7 checks the order, the reserved deduction and that quarantined stock is left out.
+- **Not built, and why.** No material-request screens: the issue endpoint does not require a request, and `MaterialRequest` has no endpoint (the `MATERIAL_REQUEST` permission is granted to SUPERVISOR but nothing uses it). No issue history list: there is no endpoint that lists issues, so the dialog shows the result of the issue just made instead.
+
+### Material return and close
+
+- **Return** (per material line, order COMPLETED, left over above 0, `PRODUCTION_CLOSE`): quantity up to the leftover and optional remarks, sent to `POST /api/production-orders/{id}/material-returns`. The request has no location, so the material goes back to the raw-material location it came from; the dialog says so and does not offer a location.
+- **Close** is now a dialog. With nothing left over it is a plain confirmation. With leftover material it lists it and requires a reason, then closes with that write-off reason (audited, Dr 5202 / Cr 1501); the page also says the material can be returned first. The order DTO exposes no variance journal id, so there is no link to it.
+
+### Operator assignment
+
+- **Permission.** The existing `PRODUCTION_ASSIGN` ("Assign operators and machines", seeded in V1 for PRODUCTION_MANAGER and SUPERVISOR; ADMIN holds everything). No new permission and no new role grant.
+- **Endpoints, additive.** `PUT /api/production/operations/{id}/assignment` and `PUT /api/production-orders/{id}/operator-assignment` (every unfinished operation of the order), both with `{operatorId, reason}`; a null operator unassigns. `GET /api/production/assignable-operators?q=` feeds the picker.
+- **Rules.** The user must be active, not locked, and hold a role that grants `PRODUCTION_EXECUTE`: one predicate (`OperatorDirectory`) answers both the picker and the check, so they cannot disagree. The order must be RELEASED or IN_PROGRESS and the operation PENDING, IN_PROGRESS or PAUSED. Assigning the same operator again changes and audits nothing; every change writes an `OP_ASSIGN` audit entry with the old and new operator and the reason. The bulk call skips finished operations.
+- **DTO.** `ProductionOperationDto` gains `assignedOperatorName` (additive), resolved with one query per order, so the operations table shows who has the work. The screen offers an assign control on each unfinished operation and "Assign operator to all" on the order.
+- **Tests.** `OperatorAssignmentIT` ASG-1 to ASG-6 (not transactional): an assigned operator sees the operation in My Work and another user does not; idempotence and the audit trail; who is assignable; the state rules; the bulk assignment; the picker search including a blank search. Strict `RoleAccessIT` probes cover the three routes and the stock lookup.
+
+### Known limits (not changed here)
+
+- **Nobody but ADMIN can use the issue button as the roles are seeded.** STORE_MANAGER holds `INVENTORY_ISSUE` but not `PRODUCTION_VIEW`, so cannot see the order screen; PRODUCTION_MANAGER holds `PRODUCTION_VIEW` but not `INVENTORY_ISSUE`. A user holding both roles can issue. This is a role-matrix decision (grant `PRODUCTION_VIEW` to STORE_MANAGER, or `INVENTORY_ISSUE` to PRODUCTION_MANAGER), left as the seeded least-privilege default.
+- **A supervisor can assign any order's operations.** `PRODUCTION_ASSIGN` carries no per-order scope check; `AccessScopeService` limits what an operator or supervisor sees, not what they may assign.
+- **Machine assignment** (the permission's other half) is not built: an operation's machine is still chosen when it starts.
+- **Delivered as two code commits, not one per screen:** the order list component carries all four dialogs, so the frontend could not be split without leaving a commit that does not build.
