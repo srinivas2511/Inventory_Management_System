@@ -4,7 +4,7 @@ import { ROLE_USERS } from './support/users';
 
 /**
  * Verifies the stack and creates the DESIGN §11.2 role users through the admin API
- * (the demo loader only creates `admin`; see e2e-defects D-01). Idempotent.
+ * (the demo loader creates them with the initial password too since D-01; either way they end on ROLE_PASSWORD). Idempotent.
  */
 export default async function globalSetup(): Promise<void> {
   const ctx = await rawApi();
@@ -28,15 +28,18 @@ export default async function globalSetup(): Promise<void> {
     if (found) {
       if (found.active === false || found.enabled === false) await admin.post(`/api/admin/users/${found.id}/reactivate`);
       if (found.locked) await admin.post(`/api/admin/users/${found.id}/unlock`);
-      continue;
+      // Already usable with the final password: nothing to do.
+      if ((await login(u.username, ROLE_PASSWORD)).status === 200) continue;
+      // Otherwise it is still on the initial password (the demo loader creates the DESIGN 11.2 users with it, D-01).
+    } else {
+      await admin.must('POST', '/api/admin/users', {
+        username: u.username,
+        fullName: u.fullName,
+        email: `${u.username}@e2e.local`,
+        password: TEMP_PASSWORD,
+        roleCodes: [u.role],
+      });
     }
-    await admin.must('POST', '/api/admin/users', {
-      username: u.username,
-      fullName: u.fullName,
-      email: `${u.username}@e2e.local`,
-      password: TEMP_PASSWORD,
-      roleCodes: [u.role],
-    });
     const first = await login(u.username, TEMP_PASSWORD);
     if (first.status !== 200) throw new Error(`First login failed for ${u.username}: HTTP ${first.status}`);
     const change = await ctx.post('/api/auth/change-password', {

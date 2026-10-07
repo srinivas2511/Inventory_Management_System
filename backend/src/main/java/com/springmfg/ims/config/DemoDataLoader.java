@@ -94,6 +94,25 @@ public class DemoDataLoader {
     // documented in README.md; this class only exists in the dev/demo profiles, never production
     private static final String DEMO_ADMIN_USERNAME = "admin";
     private static final String DEMO_ADMIN_PASSWORD = "Admin@123";
+    /** DESIGN section 11.2: the initial password of every demo role user; a change is forced at the first login. */
+    private static final String DEMO_USER_PASSWORD = "Demo@12345!";
+    /** DESIGN section 11.2 role users (plus finance1, which UAT Role 8 needs): username, role, full name. */
+    private static final String[][] DEMO_USERS = {
+            {"engineer1", "ENGINEER", "Demo Engineer"},
+            {"prodmgr1", "PRODUCTION_MANAGER", "Demo Production Manager"},
+            {"supervisor1", "SUPERVISOR", "Demo Supervisor"},
+            {"operator1", "OPERATOR", "Demo Operator One"},
+            {"operator2", "OPERATOR", "Demo Operator Two"},
+            {"quality1", "QUALITY_MANAGER", "Demo Quality Manager"},
+            {"storemgr1", "STORE_MANAGER", "Demo Store Manager"},
+            {"storeop1", "STORE_OPERATOR", "Demo Store Operator"},
+            {"purchase1", "PURCHASE_MANAGER", "Demo Purchase Manager"},
+            {"sales1", "SALES", "Demo Sales"},
+            {"dispatch1", "DISPATCH", "Demo Dispatch"},
+            {"maint1", "MAINTENANCE", "Demo Maintenance"},
+            {"mgmt1", "MANAGEMENT", "Demo Management"},
+            {"finance1", "FINANCE_MANAGER", "Demo Finance Manager"},
+    };
 
     private static final String SUPPLIER_CODE = "DEMO-KRISHNA";
     private static final String CUSTOMER_CODE  = "DEMO-AUTOINC";
@@ -203,6 +222,7 @@ public class DemoDataLoader {
         log.info("DemoDataLoader: starting demo data load");
         try {
             installAdminContext(step0_adminUser());
+            step0b_demoUsers();
             long supplierId = step1_supplier();
             long customerId = step2_customer();
             long materialId = step3_material(supplierId);
@@ -252,6 +272,34 @@ public class DemoDataLoader {
                     log.info("step0: demo admin created (username={})", DEMO_ADMIN_USERNAME);
                     return admin.getId();
                 });
+    }
+
+    /** DESIGN section 11.2: one user per role, created only when absent so a second run changes nothing. */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public int step0b_demoUsers() {
+        int created = 0;
+        for (String[] u : DEMO_USERS) {
+            if (userRepo.findByUsername(u[0]).isPresent()) {
+                continue;
+            }
+            Role role = roleRepo.findByCode(u[1]).orElse(null);
+            if (role == null) {
+                log.warn("step0b: role {} is missing, demo user {} skipped", u[1], u[0]);
+                continue;
+            }
+            User user = new User();
+            user.setUsername(u[0]);
+            user.setFullName(u[2]);
+            user.setEmail(u[0] + "@demo.local");
+            user.setPasswordHash(passwordEncoder.encode(DEMO_USER_PASSWORD));
+            user.setPasswordChangedAt(Instant.now());
+            user.setMustChangePassword(true);
+            user.setRoles(new HashSet<>(Set.of(role)));
+            userRepo.save(user);
+            created++;
+        }
+        log.info("step0b: {} demo role users created (initial password per DESIGN section 11.2)", created);
+        return created;
     }
 
     // ── Step 1: Supplier ─────────────────────────────────────────────────────

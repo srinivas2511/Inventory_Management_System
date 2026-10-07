@@ -67,6 +67,22 @@ class DemoDataLoaderIT {
     }
 
     @Test
+    void theDesignRoleUsersExistWithTheInitialPasswordAndMustChangeIt() throws Exception {
+        // D-01, DESIGN section 11.2: one demo user per role, initial password Demo@12345!, change forced at first login
+        assertThat(count("SELECT COUNT(*) FROM ims.users WHERE username IN ('engineer1','prodmgr1','supervisor1',"
+                + "'operator1','operator2','quality1','storemgr1','storeop1','purchase1','sales1','dispatch1',"
+                + "'maint1','mgmt1','finance1') AND must_change_password")).isEqualTo(14);
+        assertThat(count("SELECT COUNT(*) FROM ims.users u JOIN ims.user_roles ur ON ur.user_id = u.id "
+                + "JOIN ims.roles r ON r.id = ur.role_id WHERE u.username = 'storemgr1' AND r.code = 'STORE_MANAGER'"))
+                .isEqualTo(1);
+        mockMvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"username\":\"purchase1\",\"password\":\"Demo@12345!\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.mustChangePassword").value(true))
+                .andExpect(jsonPath("$.user.roles[0]").value("PURCHASE_MANAGER"));
+    }
+
+    @Test
     void aWrongPasswordIsStillRefused() throws Exception {
         mockMvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"username\":\"admin\",\"password\":\"not-the-password\"}"))
