@@ -8,7 +8,9 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { AuthService } from '../../core/auth/auth.service';
+import { landingRoute } from '../../core/auth/landing';
 import { safeReturnUrl } from '../../core/auth/return-url';
+import { SessionStore } from '../../core/auth/session.store';
 
 @Component({
   selector: 'app-login',
@@ -121,6 +123,7 @@ export class LoginComponent {
   protected readonly errorMessage = signal('');
 
   private readonly authService = inject(AuthService);
+  private readonly session = inject(SessionStore);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
 
@@ -134,7 +137,9 @@ export class LoginComponent {
     this.authService.login(this.form.getRawValue()).subscribe({
       // Back to the page the user was on when the session ended, or opened as a link; only in-app paths are followed.
       next: () =>
-        this.router.navigateByUrl(safeReturnUrl(this.route.snapshot.queryParamMap.get('returnUrl')) ?? '/dashboard'),
+        this.router.navigateByUrl(
+          safeReturnUrl(this.route.snapshot.queryParamMap.get('returnUrl')) ?? landingRoute(this.session),
+        ),
       error: (err) => {
         this.loading.set(false);
         this.errorMessage.set(err?.error?.detail ?? 'Invalid username or password.');

@@ -3,13 +3,18 @@ import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { of } from 'rxjs';
 import { AuthService, LoginResponse } from '../../core/auth/auth.service';
+import { SessionStore } from '../../core/auth/session.store';
 import { LoginComponent } from './login.component';
 
 describe('LoginComponent', () => {
   let fixture: ComponentFixture<LoginComponent>;
   let navigateByUrl: jasmine.Spy;
 
-  function setup(returnUrl: string | null): void {
+  function setup(
+    returnUrl: string | null,
+    roles: string[] = ['ADMIN'],
+    permissions: string[] = ['DASHBOARD_VIEW'],
+  ): void {
     const auth = jasmine.createSpyObj<AuthService>('AuthService', ['login']);
     auth.login.and.returnValue(of({} as LoginResponse));
     TestBed.configureTestingModule({
@@ -21,6 +26,15 @@ describe('LoginComponent', () => {
           useValue: { snapshot: { queryParamMap: convertToParamMap(returnUrl ? { returnUrl } : {}) } },
         },
       ],
+    });
+    // The real AuthService signs the user in before login() emits; the spy stands in for that.
+    TestBed.inject(SessionStore).setUser({
+      id: 1,
+      username: 'asha',
+      fullName: 'Asha Rao',
+      roles,
+      permissions,
+      mustChangePassword: false,
     });
     navigateByUrl = spyOn(TestBed.inject(Router), 'navigateByUrl');
     fixture = TestBed.createComponent(LoginComponent);
@@ -55,5 +69,17 @@ describe('LoginComponent', () => {
     setup('https://evil.example.com/');
     submit();
     expect(navigateByUrl).toHaveBeenCalledWith('/dashboard');
+  });
+
+  it('sends an operator, who has no dashboard permission, straight to My Work', () => {
+    setup(null, ['OPERATOR'], ['PRODUCTION_EXECUTE']);
+    submit();
+    expect(navigateByUrl).toHaveBeenCalledWith('/production/my-work');
+  });
+
+  it('sends a role without a dashboard to the first screen it may open instead of the dashboard', () => {
+    setup(null, ['ACCOUNTANT'], ['GL_VIEW']);
+    submit();
+    expect(navigateByUrl).toHaveBeenCalledWith('/finance/journals');
   });
 });

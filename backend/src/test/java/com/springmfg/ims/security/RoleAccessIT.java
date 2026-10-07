@@ -127,6 +127,33 @@ class RoleAccessIT extends AbstractIntegrationTest {
                     Set.of("OPERATOR", "STORE_OPERATOR", "DISPATCH")),
             Probe.of(HttpMethod.GET, "/api/warehouses",
                     Set.of("ADMIN", "STORE_MANAGER", "STORE_OPERATOR", "MANAGEMENT"), Set.of("OPERATOR")),
+            // DESIGN §8.6: the roles whose landing screen is a dashboard can read it; OPERATOR (My Work), DISPATCH
+            // (dispatch queue) and MAINTENANCE (machine status) land elsewhere, as do the finance roles
+            Probe.of(HttpMethod.GET, "/api/dashboard/kpis",
+                    Set.of("ADMIN", "ENGINEER", "PRODUCTION_MANAGER", "SUPERVISOR", "QUALITY_MANAGER", "STORE_MANAGER",
+                            "STORE_OPERATOR", "PURCHASE_MANAGER", "SALES", "MANAGEMENT", "CONTROLLER", "PLANNER"),
+                    Set.of("OPERATOR", "DISPATCH", "MAINTENANCE", "FINANCE_MANAGER", "ACCOUNTANT")),
+            // DESIGN §12 steps 20-21: quality traces an FG batch back and a material batch forward (a missing id is 404)
+            Probe.of(HttpMethod.GET, "/api/traceability/fg-batch/" + MISSING,
+                    Set.of("ADMIN", "QUALITY_MANAGER", "MANAGEMENT"),
+                    Set.of("ENGINEER", "PRODUCTION_MANAGER", "SUPERVISOR", "OPERATOR", "STORE_MANAGER",
+                            "PURCHASE_MANAGER", "SALES", "DISPATCH", "MAINTENANCE", "STORE_OPERATOR",
+                            "FINANCE_MANAGER", "ACCOUNTANT", "PLANNER", "CONTROLLER")),
+            Probe.of(HttpMethod.GET, "/api/traceability/material-batch/" + MISSING,
+                    Set.of("ADMIN", "QUALITY_MANAGER", "MANAGEMENT"),
+                    Set.of("ENGINEER", "PRODUCTION_MANAGER", "SUPERVISOR", "OPERATOR", "STORE_MANAGER",
+                            "PURCHASE_MANAGER", "SALES", "DISPATCH", "MAINTENANCE", "STORE_OPERATOR",
+                            "FINANCE_MANAGER", "ACCOUNTANT", "PLANNER", "CONTROLLER")),
+            // DESIGN §12 step 8: the store manager opens the production order screen and issues material to the order
+            Probe.of(HttpMethod.GET, "/api/production-orders",
+                    Set.of("ADMIN", "PRODUCTION_MANAGER", "SUPERVISOR", "STORE_MANAGER", "MANAGEMENT"),
+                    Set.of("ENGINEER", "OPERATOR", "QUALITY_MANAGER", "PURCHASE_MANAGER", "SALES", "DISPATCH",
+                            "MAINTENANCE", "STORE_OPERATOR", "FINANCE_MANAGER", "ACCOUNTANT", "PLANNER", "CONTROLLER")),
+            Probe.withBody(HttpMethod.POST, "/api/production/issues",
+                    "{\"productionOrderId\":" + MISSING + ",\"warehouseId\":1,"
+                            + "\"lines\":[{\"materialId\":1,\"quantity\":1}]}",
+                    Set.of("ADMIN", "STORE_MANAGER"),
+                    Set.of("OPERATOR", "PRODUCTION_MANAGER", "SUPERVISOR", "SALES", "QUALITY_MANAGER")),
             // returning issued material to stock needs PRODUCTION_CLOSE; a missing order answers 404 to the permitted
             Probe.withBody(HttpMethod.POST, "/api/production-orders/999999999/material-returns",
                     "{\"materialId\":1,\"quantity\":1}",
@@ -401,6 +428,9 @@ class RoleAccessIT extends AbstractIntegrationTest {
      * gets any other status, including an undeclared 404, fails the test.
      */
     private static final Map<String, Integer> DECLARED_STATUS = Map.ofEntries(
+            Map.entry("GET /api/traceability/fg-batch/999999", 404),
+            Map.entry("GET /api/traceability/material-batch/999999", 404),
+            Map.entry("POST /api/production/issues", 404),
             Map.entry("DELETE /api/documents/999999/links/999999", 404),
             Map.entry("DELETE /api/materials/999999", 404),
             Map.entry("DELETE /api/products/999999", 404),

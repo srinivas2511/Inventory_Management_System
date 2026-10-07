@@ -2,6 +2,7 @@ import { inject } from '@angular/core';
 import { CanActivateFn, Router, UrlTree } from '@angular/router';
 import { SessionStore } from './session.store';
 import { safeReturnUrl } from './return-url';
+import { landingRoute } from './landing';
 
 function toLogin(router: Router, url: string): UrlTree {
   const returnUrl = safeReturnUrl(url);
@@ -50,7 +51,8 @@ export function permissionGuard(permission: string): CanActivateFn {
     if (session.hasPermission(permission)) {
       return true;
     }
-    return router.createUrlTree(['/dashboard']);
+    // Not permitted: send them to a screen they may use (never to a route that needs the permission they lack).
+    return router.createUrlTree([landingRoute(session)]);
   };
 }
 
@@ -65,5 +67,5 @@ export const signedInGuard: CanActivateFn = (_route, state) => {
 export const guestGuard: CanActivateFn = () => {
   const session = inject(SessionStore);
   const router = inject(Router);
-  return session.isLoggedIn() ? router.createUrlTree(['/dashboard']) : true;
+  return session.isLoggedIn() ? router.createUrlTree([landingRoute(session)]) : true;
 };

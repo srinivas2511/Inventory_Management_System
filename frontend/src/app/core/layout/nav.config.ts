@@ -17,7 +17,7 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     label: 'Overview',
     items: [
-      { label: 'Dashboard', icon: 'dashboard', route: '/dashboard', enabled: true },
+      { label: 'Dashboard', icon: 'dashboard', route: '/dashboard', permission: 'DASHBOARD_VIEW', enabled: true },
       { label: 'Notifications', icon: 'notifications', route: '/notifications', enabled: true },
     ],
   },

@@ -37,7 +37,7 @@ describe('ChangePasswordComponent', () => {
       username: 'asha',
       fullName: 'Asha Rao',
       roles: [],
-      permissions: [],
+      permissions: ['DASHBOARD_VIEW'],
       mustChangePassword,
     });
     navigateByUrl = spyOn(TestBed.inject(Router), 'navigateByUrl');

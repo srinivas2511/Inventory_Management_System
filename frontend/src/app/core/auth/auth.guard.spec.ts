@@ -48,6 +48,9 @@ describe('auth guards', () => {
     expect(router.serializeUrl(run(guard, '/admin/users') as UrlTree)).toBe('/login?returnUrl=%2Fadmin%2Fusers');
 
     signIn(['PRODUCT_VIEW']);
+    expect(router.serializeUrl(run(guard, '/admin/users') as UrlTree)).toBe('/master/products');
+
+    signIn(['PRODUCT_VIEW', 'DASHBOARD_VIEW']);
     expect(router.serializeUrl(run(guard, '/admin/users') as UrlTree)).toBe('/dashboard');
 
     signIn(['USER_VIEW']);
@@ -56,8 +59,13 @@ describe('auth guards', () => {
 
   it('keeps the login page for people who are not signed in', () => {
     expect(run(guestGuard)).toBeTrue();
-    signIn([]);
+    signIn(['DASHBOARD_VIEW']);
     expect(router.serializeUrl(run(guestGuard) as UrlTree)).toBe('/dashboard');
+  });
+
+  it('never sends a user to the dashboard when they cannot open it', () => {
+    signIn(['SALES_VIEW']);
+    expect(router.serializeUrl(run(permissionGuard('DASHBOARD_VIEW'), '/dashboard') as UrlTree)).toBe('/sales/orders');
   });
   it('holds a user with a temporary password at the change-password page, remembering where they were going', () => {
     signIn(['USER_VIEW'], true);

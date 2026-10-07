@@ -1,5 +1,8 @@
+import { inject } from '@angular/core';
 import { Routes } from '@angular/router';
 import { authGuard, guestGuard, permissionGuard, signedInGuard } from './core/auth/auth.guard';
+import { landingRoute } from './core/auth/landing';
+import { SessionStore } from './core/auth/session.store';
 import { ShellComponent } from './core/layout/shell.component';
 
 export const routes: Routes = [
@@ -30,10 +33,11 @@ export const routes: Routes = [
     component: ShellComponent,
     canActivate: [authGuard],
     children: [
-      { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
+      { path: '', pathMatch: 'full', redirectTo: () => landingRoute(inject(SessionStore)) },
       {
         path: 'dashboard',
         title: 'Dashboard',
+        canActivate: [permissionGuard('DASHBOARD_VIEW')],
         loadComponent: () => import('./features/dashboard/dashboard.component').then((m) => m.DashboardComponent),
       },
       {

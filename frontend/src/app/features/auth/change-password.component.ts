@@ -10,6 +10,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { AuthService } from '../../core/auth/auth.service';
 import { passwordMeetsPolicy } from '../../core/auth/password-policy';
 import { safeReturnUrl } from '../../core/auth/return-url';
+import { landingRoute } from '../../core/auth/landing';
 import { SessionStore } from '../../core/auth/session.store';
 import { isProblemDetail, problemMessage } from '../../core/models/problem.model';
 import { ToastService } from '../../core/notification/toast.service';
@@ -135,7 +136,7 @@ function confirmMatches(group: AbstractControl): ValidationErrors | null {
           @if (forced) {
             <button mat-button type="button" (click)="signOut()" data-testid="forced-signout">Sign out instead</button>
           } @else {
-            <a mat-button routerLink="/dashboard" data-testid="change-cancel">Cancel</a>
+            <a mat-button [routerLink]="landing" data-testid="change-cancel">Cancel</a>
           }
         </mat-card-actions>
       </mat-card>
@@ -175,6 +176,7 @@ export class ChangePasswordComponent {
 
   /** Decided once on arrival: after a successful change the session no longer says the change is forced. */
   protected readonly forced = this.session.mustChangePassword();
+  protected readonly landing = landingRoute(this.session);
   protected readonly username = this.session.user()?.username ?? null;
   protected readonly show = signal(false);
   protected readonly saving = signal(false);
@@ -207,7 +209,9 @@ export class ChangePasswordComponent {
       next: () => {
         this.saving.set(false);
         this.toast.success('Password changed. Your other sessions have been signed out.');
-        this.router.navigateByUrl(safeReturnUrl(this.route.snapshot.queryParamMap.get('returnUrl')) ?? '/dashboard');
+        this.router.navigateByUrl(
+          safeReturnUrl(this.route.snapshot.queryParamMap.get('returnUrl')) ?? landingRoute(this.session),
+        );
       },
       error: (err) => {
         this.saving.set(false);
