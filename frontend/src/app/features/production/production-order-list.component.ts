@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { DecimalPipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -13,47 +13,20 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { AssignOperatorDialogComponent } from './assign-operator-dialog.component';
+import { CloseOrderDialogComponent } from './close-order-dialog.component';
+import { IssueMaterialDialogComponent } from './issue-material-dialog.component';
 import { ProductionOrderFormComponent } from './production-order-form.component';
+import {
+  ProductionOperationDto,
+  ProductionOrderDto,
+  ProductionOrderMaterialDto,
+  isRunning,
+  leftoverQty,
+} from './production-order.model';
+import { ReturnMaterialDialogComponent } from './return-material-dialog.component';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
-
-export interface ProductionOrderMaterialDto {
-  materialId: number;
-  plannedQty: number;
-  issuedQty: number;
-  consumedQty: number;
-  remainingQty: number;
-  uom: string;
-}
-
-export interface ProductionOperationDto {
-  id: number;
-  sequenceNo: number;
-  operationId: number;
-  status: string;
-  inputQty: number;
-  goodQty: number;
-  rejectedQty: number;
-  scrapQty: number;
-}
-
-export interface ProductionOrderDto {
-  id: number;
-  orderNumber: string;
-  productId: number;
-  productCode: string;
-  plannedQty: number;
-  goodQty: number;
-  rejectedQty: number;
-  scrapQty: number;
-  status: string;
-  priority: number;
-  startDate: string;
-  expectedCompletionDate: string;
-  materials: ProductionOrderMaterialDto[];
-  operations: ProductionOperationDto[];
-  allowedActions: string[];
-}
 
 @Component({
   selector: 'app-production-order-list',
@@ -70,7 +43,6 @@ export interface ProductionOrderDto {
     MatTooltipModule,
     MatExpansionModule,
     MatSnackBarModule,
-    DatePipe,
     DecimalPipe,
     StatusBadgeComponent,
     HasPermissionDirective,
@@ -121,6 +93,14 @@ export interface ProductionOrderDto {
 
             <div class="order-detail">
               <div class="action-bar">
+                @if (running(row)) {
+                  <button mat-stroked-button *appHasPermission="'INVENTORY_ISSUE'" (click)="issueMaterial(row)">
+                    <mat-icon>inventory_2</mat-icon> Issue material
+                  </button>
+                  <button mat-stroked-button *appHasPermission="'PRODUCTION_ASSIGN'" (click)="assign(row, null)">
+                    <mat-icon>group_add</mat-icon> Assign operator to all
+                  </button>
+                }
                 @if (row.allowedActions?.includes('approve')) {
                   <button
                     mat-stroked-button
@@ -141,7 +121,7 @@ export interface ProductionOrderDto {
                   </button>
                 }
                 @if (row.allowedActions?.includes('close')) {
-                  <button mat-stroked-button *appHasPermission="'PRODUCTION_CLOSE'" (click)="doAction(row.id, 'close')">
+                  <button mat-stroked-button *appHasPermission="'PRODUCTION_CLOSE'" (click)="closeOrder(row)">
                     <mat-icon>lock</mat-icon> Close
                   </button>
                 }
@@ -169,9 +149,9 @@ export interface ProductionOrderDto {
               <h4>Materials</h4>
               @if (row.materials?.length) {
                 <table mat-table [dataSource]="row.materials" class="mat-elevation-z0 detail-table">
-                  <ng-container matColumnDef="materialId">
+                  <ng-container matColumnDef="material">
                     <th mat-header-cell *matHeaderCellDef>Material</th>
-                    <td mat-cell *matCellDef="let m">{{ m.materialId }}</td>
+                    <td mat-cell *matCellDef="let m">{{ m.materialCode }} · {{ m.materialName }}</td>
                   </ng-container>
                   <ng-container matColumnDef="plannedQty">
                     <th mat-header-cell *matHeaderCellDef>Planned</th>
@@ -181,13 +161,48 @@ export interface ProductionOrderDto {
                     <th mat-header-cell *matHeaderCellDef>Issued</th>
                     <td mat-cell *matCellDef="let m">{{ m.issuedQty | number: '1.0-3' }}</td>
                   </ng-container>
+                  <ng-container matColumnDef="consumedQty">
+                    <th mat-header-cell *matHeaderCellDef>Consumed</th>
+                    <td mat-cell *matCellDef="let m">{{ m.consumedQty | number: '1.0-3' }}</td>
+                  </ng-container>
+                  <ng-container matColumnDef="returnedQty">
+                    <th mat-header-cell *matHeaderCellDef>Returned</th>
+                    <td mat-cell *matCellDef="let m">{{ m.returnedQty | number: '1.0-3' }}</td>
+                  </ng-container>
+                  <ng-container matColumnDef="scrapQty">
+                    <th mat-header-cell *matHeaderCellDef>Written off</th>
+                    <td mat-cell *matCellDef="let m">{{ m.scrapQty | number: '1.0-3' }}</td>
+                  </ng-container>
+                  <ng-container matColumnDef="leftover">
+                    <th mat-header-cell *matHeaderCellDef>Left over</th>
+                    <td mat-cell *matCellDef="let m">{{ leftover(m) | number: '1.0-3' }}</td>
+                  </ng-container>
                   <ng-container matColumnDef="remainingQty">
-                    <th mat-header-cell *matHeaderCellDef>Remaining</th>
+                    <th mat-header-cell *matHeaderCellDef>Still to issue</th>
                     <td mat-cell *matCellDef="let m">{{ m.remainingQty | number: '1.0-3' }}</td>
+                  </ng-container>
+                  <ng-container matColumnDef="actions">
+                    <th mat-header-cell *matHeaderCellDef></th>
+                    <td mat-cell *matCellDef="let m">
+                      @if (row.status === 'COMPLETED' && leftover(m) > 0) {
+                        <button
+                          mat-stroked-button
+                          *appHasPermission="'PRODUCTION_CLOSE'"
+                          (click)="returnMaterial(row, m)"
+                        >
+                          Return
+                        </button>
+                      }
+                    </td>
                   </ng-container>
                   <tr mat-header-row *matHeaderRowDef="materialCols"></tr>
                   <tr mat-row *matRowDef="let m; columns: materialCols"></tr>
                 </table>
+                @if (row.status === 'COMPLETED' && hasLeftover(row)) {
+                  <p class="reconcile-note">
+                    Some issued material was not used. Return it to stock, or close the order and write it off.
+                  </p>
+                }
               } @else {
                 <p class="empty-state">No materials snapshotted yet (order not released).</p>
               }
@@ -199,9 +214,35 @@ export interface ProductionOrderDto {
                     <th mat-header-cell *matHeaderCellDef>Seq</th>
                     <td mat-cell *matCellDef="let o">{{ o.sequenceNo }}</td>
                   </ng-container>
-                  <ng-container matColumnDef="operationId">
+                  <ng-container matColumnDef="operation">
                     <th mat-header-cell *matHeaderCellDef>Operation</th>
-                    <td mat-cell *matCellDef="let o">{{ o.operationId }}</td>
+                    <td mat-cell *matCellDef="let o">
+                      {{ o.operationName }}
+                      @if (o.machineName) {
+                        <span class="mat-caption"> · {{ o.machineName }}</span>
+                      }
+                    </td>
+                  </ng-container>
+                  <ng-container matColumnDef="operator">
+                    <th mat-header-cell *matHeaderCellDef>Operator</th>
+                    <td mat-cell *matCellDef="let o">
+                      @if (o.assignedOperatorId) {
+                        {{ o.assignedOperatorName ?? 'User ' + o.assignedOperatorId }}
+                      } @else {
+                        <span class="unassigned">Unassigned</span>
+                      }
+                      @if (running(row) && o.status !== 'COMPLETED') {
+                        <button
+                          mat-icon-button
+                          *appHasPermission="'PRODUCTION_ASSIGN'"
+                          aria-label="Assign operator"
+                          matTooltip="Assign operator"
+                          (click)="assign(row, o)"
+                        >
+                          <mat-icon>person_add</mat-icon>
+                        </button>
+                      }
+                    </td>
                   </ng-container>
                   <ng-container matColumnDef="status">
                     <th mat-header-cell *matHeaderCellDef>Status</th>
@@ -245,6 +286,13 @@ export interface ProductionOrderDto {
         width: 100%;
         margin-bottom: 16px;
       }
+      .unassigned {
+        color: #888;
+      }
+      .reconcile-note {
+        margin: 0 0 16px;
+        color: #8a5a00;
+      }
       h4 {
         margin: 16px 0 8px;
         font-size: 14px;
@@ -259,8 +307,18 @@ export class ProductionOrderListComponent implements OnInit {
   private dialog = inject(MatDialog);
 
   columns = ['orderNumber', 'productId', 'plannedQty', 'status', 'priority', 'actions'];
-  materialCols = ['materialId', 'plannedQty', 'issuedQty', 'remainingQty'];
-  opCols = ['sequenceNo', 'operationId', 'status', 'goodQty'];
+  materialCols = [
+    'material',
+    'plannedQty',
+    'issuedQty',
+    'consumedQty',
+    'returnedQty',
+    'scrapQty',
+    'leftover',
+    'remainingQty',
+    'actions',
+  ];
+  opCols = ['sequenceNo', 'operation', 'operator', 'status', 'goodQty'];
   rows = signal<ProductionOrderDto[]>([]);
   loading = signal(false);
   statusCtrl = new FormControl<string | null>(null);
@@ -304,5 +362,81 @@ export class ProductionOrderListComponent implements OnInit {
       },
       error: (e) => this.snack.open(e.error?.detail ?? 'Error', 'OK', { duration: 4000 }),
     });
+  }
+
+  protected running(order: ProductionOrderDto): boolean {
+    return isRunning(order);
+  }
+
+  protected leftover(m: ProductionOrderMaterialDto): number {
+    return leftoverQty(m);
+  }
+
+  protected hasLeftover(order: ProductionOrderDto): boolean {
+    return (order.materials ?? []).some((m) => leftoverQty(m) > 0);
+  }
+
+  issueMaterial(order: ProductionOrderDto): void {
+    this.dialog
+      .open(IssueMaterialDialogComponent, {
+        width: '820px',
+        maxWidth: '95vw',
+        data: { orderId: order.id, orderNumber: order.orderNumber, materials: order.materials },
+      })
+      .afterClosed()
+      .subscribe((issued) => {
+        if (issued) {
+          this.snack.open('Material issued', 'OK', { duration: 3000 });
+          this.load();
+        }
+      });
+  }
+
+  returnMaterial(order: ProductionOrderDto, material: ProductionOrderMaterialDto): void {
+    this.dialog
+      .open(ReturnMaterialDialogComponent, {
+        width: '520px',
+        maxWidth: '95vw',
+        data: { orderId: order.id, orderNumber: order.orderNumber, material },
+      })
+      .afterClosed()
+      .subscribe((returned) => {
+        if (returned) {
+          this.snack.open('Material returned to stock', 'OK', { duration: 3000 });
+          this.load();
+        }
+      });
+  }
+
+  closeOrder(order: ProductionOrderDto): void {
+    this.dialog
+      .open(CloseOrderDialogComponent, {
+        width: '560px',
+        maxWidth: '95vw',
+        data: { orderId: order.id, orderNumber: order.orderNumber, materials: order.materials ?? [] },
+      })
+      .afterClosed()
+      .subscribe((closed) => {
+        if (closed) {
+          this.snack.open('Order closed', 'OK', { duration: 3000 });
+          this.load();
+        }
+      });
+  }
+
+  assign(order: ProductionOrderDto, operation: ProductionOperationDto | null): void {
+    this.dialog
+      .open(AssignOperatorDialogComponent, {
+        width: '520px',
+        maxWidth: '95vw',
+        data: { orderId: order.id, orderNumber: order.orderNumber, operation },
+      })
+      .afterClosed()
+      .subscribe((saved) => {
+        if (saved) {
+          this.snack.open('Assignment saved', 'OK', { duration: 3000 });
+          this.load();
+        }
+      });
   }
 }

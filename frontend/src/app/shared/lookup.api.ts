@@ -95,6 +95,19 @@ export interface InvoiceableReceipt {
   openValue: number;
 }
 
+/** Raw material in one batch at one location, available to issue (mirrors LookupDtos.MaterialStock). */
+export interface MaterialStock {
+  batchId: number;
+  batchNumber: string;
+  expiryDate: string | null;
+  receivedDate: string;
+  locationId: number;
+  locationCode: string;
+  onHand: number;
+  reserved: number;
+  available: number;
+}
+
 /** Dropdown data for the create forms; readable with the transactional permission, not the master-data ones. */
 @Injectable({ providedIn: 'root' })
 export class LookupApi {
@@ -144,6 +157,11 @@ export class LookupApi {
     let params = new HttpParams();
     if (productId) params = params.set('productId', productId);
     return this.http.get<FgStock[]>('/api/lookups/fg-stock', { params });
+  }
+
+  materialStock(materialId: number, warehouseId: number): Observable<MaterialStock[]> {
+    const params = new HttpParams().set('materialId', materialId).set('warehouseId', warehouseId);
+    return this.http.get<MaterialStock[]>('/api/lookups/material-stock', { params });
   }
 
   dispatchableOrders(): Observable<DispatchableOrder[]> {
