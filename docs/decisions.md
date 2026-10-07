@@ -489,3 +489,26 @@ The production-side screens the second walkthrough could not use (it issued mate
 - **A supervisor can assign any order's operations.** `PRODUCTION_ASSIGN` carries no per-order scope check; `AccessScopeService` limits what an operator or supervisor sees, not what they may assign.
 - **Machine assignment** (the permission's other half) is not built: an operation's machine is still chosen when it starts.
 - **Delivered as two code commits, not one per screen:** the order list component carries all four dialogs, so the frontend could not be split without leaving a commit that does not build.
+
+## E2E release validation: batch 1 and batch 2 (2026-10-07)
+
+Defect ids refer to the Playwright release-validation run (`frontend/e2e`). Each is marked fixed only when its e2e test passes.
+
+### Batch 1 (commit `923766e`, migration V42)
+
+- **D-07 rejected finished goods.** Final inspection and hold release now write rejected quantity off at the batch's cost into a REJECTED scrap position (the bridge journals the scrap), so it is not counted as available and cannot be reserved or dispatched. WIP is relieved once.
+- **D-10 stock adjustment quantity.** The system quantity is the sum over every batch at the location and status, valued at weighted average cost; the Admin step is added only above ₹10,000. V42 adds the missing `SCRAP` and `STOCK_ADJUSTMENT_OUT` account assignments and corrects the gain direction.
+- **D-12 traceability 500.** Date and timestamp values are both handled, and the material-batch trace used columns that do not exist.
+
+### Batch 2 (migration V43)
+
+- **D-04 landing screen.** DESIGN §8.6 gives most roles a role dashboard. `DASHBOARD_VIEW` is now granted to ENGINEER, SUPERVISOR, PURCHASE_MANAGER and STORE_OPERATOR (QUALITY_MANAGER, STORE_MANAGER, SALES, PRODUCTION_MANAGER, MANAGEMENT, CONTROLLER and PLANNER already held it). OPERATOR (My Work), DISPATCH (dispatch queue) and MAINTENANCE (machine status) land elsewhere in §8.6 and do not get it. The frontend now also resolves the landing screen from the user's permissions (`core/auth/landing.ts`): the dashboard when held, the documented screen for those three roles, otherwise the first menu entry the user may open, with `/notifications` (no permission needed) as the last resort. The login redirect, the empty-path redirect, the guest guard and the permission guard's refusal all use it, the dashboard route is permission-guarded, and the Dashboard menu entry shows only to holders. A missing grant can no longer produce a 403 on the first screen or a redirect loop.
+- **D-05 store manager and the production order screen.** DESIGN §12 step 8 has storemgr1 issue material to an order. The issue needs `INVENTORY_ISSUE` (held); opening the order screen needs `PRODUCTION_VIEW`, now granted to STORE_MANAGER, the minimal read-only grant that makes the step work. Consequences: a store manager can also list machines and operations (their reads accept `PRODUCTION_VIEW`) and sees every production order (`AccessScopeService` treats `PRODUCTION_VIEW` as broad view access). Deliberately not granted, for least privilege: `PRODUCTION_VIEW` to STORE_OPERATOR and `INVENTORY_ISSUE` to SUPERVISOR (the documented step names storemgr1 or supervisor1; either one suffices).
+- **D-11 quality traces batches.** DESIGN §8.6 lists Traceability in the Quality role's groups and §12 steps 20-21 have quality1 trace an FG batch and a raw-material batch, so `TRACEABILITY_VIEW` is granted to QUALITY_MANAGER.
+- **D-08 order allocation.** A reservation moves an ORDERED or APPROVED order to ALLOCATED once every line is covered, where covered means its active reservations plus what is already dispatched reach the ordered quantity (a multi-line order stays APPROVED until its last line is covered). Releasing or expiring a reservation puts an ALLOCATED order back to APPROVED. An order that has started dispatching keeps PARTIALLY_DISPATCHED. Reservations are now also accepted on ALLOCATED and PARTIALLY_DISPATCHED orders. Both transitions are audited (`SO_ALLOCATED`, `SO_ALLOCATION_RELEASED`).
+- **Cancelling an order now releases its reservations.** Before, cancelling left the reserved finished goods locked on the balance. The cancel audit row also recorded the new status as the old one; it now records the real previous status.
+
+### Found, not fixed in this batch
+
+- **D-25 an FG batch trace has no backward leg.** `TraceabilityService.traceFgBatch` lists production, quality inspection and dispatch, but never the material batches issued to the order, their supplier, goods receipt or purchase order, which QMS-006, UAT INS-05 and DESIGN §5.7 / §12 step 20 require. DESIGN §5.7 specifies the join (FG batch → material issues of its production order → material batches → supplier and PO, using `fg_batch_material_sources` when it has rows). Workflow step S20 fails on this, not on the quality1 grant; S21 failed only as a cascade, because Playwright restarts the worker after a failure and the step state held in memory was lost.
+- **`SalesOrderService` audit calls pass their arguments in the wrong order** (entity id, old and new value are swapped relative to `AuditService.record`), so most sales order audit rows carry the wrong values. Only the cancel call was corrected here.
