@@ -108,6 +108,19 @@ test.describe('Security (SEC-01 .. SEC-09)', () => {
     expect(log.includes(token.split('.')[2]), 'a JWT signature is present in the log').toBe(false);
   });
 
+  test('SEC-08b the operational endpoints need SYSTEM_MONITOR: a signed-in non-admin gets 403 on /actuator/metrics and /actuator/prometheus', async ({ guard }) => {
+    guard.allow({ status: [401, 403, 404] });
+    const store = new Api('storemgr1');
+    for (const path of ['/actuator/metrics', '/actuator/prometheus']) {
+      expect((await store.get(path)).status, `${path} for a non-admin`).toBe(403);
+      const anon = await (await rawApi()).get(path);
+      expect(anon.status(), `${path} anonymously`).toBe(401);
+      // the dev profile exposes only health and info, so for the administrator the path answers 404, never 401/403
+      const adm = (await new Api(ADMIN_USER, ADMIN_PASSWORD).get(path)).status;
+      expect([200, 404], `${path} for the administrator`).toContain(adm);
+    }
+  });
+
   test('SEC-10 a signed-in user cannot read another route-level secret: /api/admin/** is 403 for a non-admin', async ({ guard }) => {
     guard.allow({ status: 403 });
     const op = new Api('operator1');

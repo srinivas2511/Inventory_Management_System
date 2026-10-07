@@ -148,3 +148,69 @@ export async function dispatchOnePiece(unitPrice = 200): Promise<{ dispatchId: n
   if (!invoice) throw new Error(`no AR invoice appeared for dispatch ${dispatch.id}`);
   return { dispatchId: dispatch.id, invoice };
 }
+
+export interface Produced {
+  orderId: number;
+  orderNumber: string;
+  fgBatchId: number;
+  fgBatchNumber: string;
+  inspectionId: number;
+  pieces: number;
+  issue: any;
+}
+
+/**
+ * A whole production run through the real API: wire received and accepted, a released order, the planned material
+ * issued, every operation started / output recorded / completed in sequence. Leaves one FG batch in QUALITY_PENDING with its
+ * FINAL inspection waiting (the after-commit path), so a spec can take it from there through the UI.
+ */
+export async function produceViaApi(pieces: number): Promise<Produced> {
+  const { warehouse } = await demoIds();
+  const order = await releasedOrder(pieces);
+  let mats: any[] = [];
+  for (let i = 0; i < 30 && mats.length === 0; i++) {
+    mats = await admin().list<any>(`/api/production-orders/${order.id}/materials`);
+    if (mats.length === 0) await new Promise((r) => setTimeout(r, 500));
+  }
+  if (mats.length === 0) throw new Error(`order ${order.orderNumber} has no material snapshot`);
+  const planned = mats.reduce((n, m) => n + Number(m.plannedQty), 0);
+  const rec = await receiveViaApi(Math.max(1, Math.ceil(planned)));
+  await apiFor(U.quality).must('POST', `/api/quality/inspections/${rec.inspectionId}/accept`, { acceptedQty: rec.qty, rejectedQty: 0 });
+  const issue = await admin().must('POST', '/api/production/issues', {
+    productionOrderId: order.id,
+    warehouseId: warehouse.id,
+    lines: mats.map((m) => ({ materialId: m.materialId, quantity: Number(m.plannedQty) })),
+  });
+  const ops = [...order.ops].sort((a: any, b: any) => a.sequenceNo - b.sequenceNo);
+  for (const op of ops) {
+    await admin().must('POST', `/api/production/operations/${op.id}/start`);
+    await admin().must('POST', '/api/production/outputs', { productionOperationId: op.id, goodQty: pieces, rejectedQty: 0, scrapQty: 0 });
+    await admin().must('POST', `/api/production/operations/${op.id}/complete`);
+  }
+  let fg: any;
+  let insp: any;
+  for (let i = 0; i < 40 && !(fg && insp); i++) {
+    fg = (await admin().list<any>('/api/quality/fg-batches?size=50')).sort((x, y) => y.id - x.id)[0];
+    if (fg) insp = (await admin().list<any>('/api/quality/inspections?size=200')).find((q) => q.inspectionType === 'FINAL' && q.fgBatchId === fg.id);
+    if (!(fg && insp)) await new Promise((r) => setTimeout(r, 500));
+  }
+  if (!fg || !insp) throw new Error(`no FG batch / final inspection appeared for order ${order.orderNumber}`);
+  return { orderId: order.id, orderNumber: order.orderNumber, fgBatchId: fg.id, fgBatchNumber: fg.batchNumber, inspectionId: insp.id, pieces, issue };
+}
+
+/** A confirmed and approved sales order for `qty` pieces of the demo product. */
+export async function approvedSalesOrder(qty: number, unitPrice = 200): Promise<{ id: number; orderNumber: string; itemId: number }> {
+  const { product, customer } = await demoIds();
+  const sales = apiFor(U.sales);
+  const so = await sales.must('POST', '/api/sales/orders', {
+    customerId: customer.id,
+    orderDate: isoToday(),
+    requiredDate: isoToday(10),
+    deliveryAddress: 'E2E Plot 1, Test Industrial Area',
+    items: [{ productId: product.id, orderedQty: qty, unitPrice }],
+  });
+  await sales.must('POST', `/api/sales/orders/${so.id}/confirm`);
+  await admin().must('POST', `/api/sales/orders/${so.id}/approve`);
+  const full = await admin().must('GET', `/api/sales/orders/${so.id}`);
+  return { id: so.id, orderNumber: full.orderNumber, itemId: full.items[0].id };
+}
