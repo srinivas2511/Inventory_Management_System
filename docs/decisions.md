@@ -422,3 +422,38 @@ Three items left open by the session / user-administration pass. Three commits.
 - **Concurrency.** Both paths take a transaction-scoped Postgres advisory lock first (`pg_advisory_xact_lock`) and re-count after it, so two administrators demoting each other at the same moment are serialised and the second is refused with `LAST_ADMIN`. `LastAdminGuardIT` runs that race with two threads and fails 3 runs out of 3 when the lock is removed.
 - **Other paths.** `RoleAdminService` and `RoleController` have no mutating operation (no role deletion, no permission removal), so nothing else can break the invariant today; `AdminHoldsEveryPermissionIT` already guards the ADMIN role's permission set in the data. A future mutating role path must call `AdminGuard`.
 - **Known limit.** Failed sign-ins can still lock the only administrator temporarily (`auth.lockout.*`); the new unlock endpoint is the way back, but only an administrator can use it. A deployment with a single administrator should keep a second one for that reason.
+
+## Finance screens: AP invoice entry, AR receipts, manual journals (2026-10-07)
+
+The three finance screens the second walkthrough could not use. Five commits: AP, AR, manual journals, and two small backend fixes the journal screen exposed. These screens are covered by unit specs and integration tests only; they have not been run in a browser (the Playwright pass is still to come).
+
+### AP invoice entry, match result and payments
+
+- **Entry.** A dialog on the AP list ("New invoice", `AP_MANAGE`). The goods receipt is mandatory: it is chosen from the supplier's posted receipts that still have value open to invoice, each showing received, already-invoiced and open value. Picking a receipt suggests the open value as the subtotal and, for a receipt nobody has invoiced yet, its tax; anything the user already typed is left alone. The suggestion is a convenience, not a rule: the server still decides the match.
+- **Match result.** After saving, the dialog shows the result at once: matched (with an Open invoice button), or a match exception with the server's message, the amount still open on the receipt, the invoice subtotal and the difference. An exception cannot be opened; the dialog explains that a finance manager other than the person who entered it has to approve the variance, and offers Cancel this invoice so a corrected one can be entered.
+- **List.** Open (draft, not in exception), Pay (open or part-paid), Cancel (draft, with a confirmation) and the existing Approve variance (`AP_MATCH_OVERRIDE`, now with the segregation-of-duties sentence). Supplier names come from the lookup; a journal column links the invoice's posting journal.
+- **Payment and receipt dialog.** One shared dialog (`SettlementDialogComponent`) records an AP payment or an AR receipt: amount (limited to the balance, compared at four decimals so float noise cannot flip the limit), date, method (bank transfer, cheque, cash; UPI for customers) and reference.
+- **Backend, additive.** `GET /api/lookups/goods-receipts/invoiceable?supplierId=` (`AP_MANAGE`; no supplier lists every supplier's receipts) returns the receipts with `receivedValue`, `receivedTax`, `invoicedValue` and `openValue`, using the same per-line rounding and the same "what counts as invoiced" rule as the three-way match. The supplier and customer lookups now also admit `AP_MANAGE` and `AR_MANAGE`, because an accountant holds neither the purchasing nor the sales permission those lookups needed. No new permission codes.
+
+### AR receipts
+
+Record receipt on open and part-paid customer invoices (`AR_MANAGE`), through the shared dialog. The list shows customer names and links each invoice's journal. No credit note: the backend has none.
+
+### Manual journal entry
+
+- **Form** (`/finance/journals/new`, `GL_POST`, a "New journal" button on the list): posting date, description, and a lines grid. The account picker offers only active accounts with `allowDirectPosting`, searchable by code or name, and a typed-but-not-picked account is refused. A line is a debit or a credit: typing one clears the other. A running total shows debits, credits and the difference, and Save stays off, with the reason in words, until every line has an account and one amount and debits equal credits on at least two lines. Journal type is fixed to GL and the currency to INR.
+- **Detail** now shows the period (with a warning when it is not open), the source document or the journal it reverses, the prepared/approved/posted trail and the line totals. Submit, Approve, Post and Reverse are gated by their permissions (`GL_POST`, `JOURNAL_APPROVE`, `GL_POST`, `GL_POST`). Reverse asks for a reason first; the response is the reversing journal, which the screen opens.
+- **Deliberately not offered:** cost and profit centres on a line (the DTO accepts them, but the pickers would need `CONTROLLING_VIEW` lookups a finance user does not hold); currencies other than INR (multi-currency is the unbuilt R9-7 work, and a different currency at rate 1 would be wrong); credit notes.
+
+### Defects found and fixed
+
+1. **A reversed journal stayed POSTED.** `JournalService.reverse` booked the mirror-image journal but never changed the original, so it could be reversed again and again, and the audit entry claimed a POSTED to REVERSED change that never happened. The original is now set to REVERSED in the same transaction (`JournalReversalIT`, which also covers "only a posted journal can be reversed").
+2. **The reversal response had no lines.** The mirrored lines were built but not attached to the header that was returned. Fixed in the same service.
+
+### Known limits (not changed here)
+
+- **No segregation of duties on journals.** The preparer can still submit, approve and post their own journal; a separate task.
+- **The backend does not enforce `allowDirectPosting`.** Only the screen limits the picker to such accounts; an API caller can still post a manual line to a system account.
+- **Reversing a system-made journal does not reverse its business document.** Reversing, for example, an AP invoice journal leaves the invoice OPEN with no journal behind it. The Reverse button is offered on every POSTED journal; a rule that sends users back to the source document is still to be decided.
+- **The payment/receipt journal is not linked.** The AP and AR DTOs carry only the invoice's own journal id, so the list links that one.
+- **Under-billing is not distinguishable from a partial invoice** (see the three-way match entry above); there is still no GR/IR report.
