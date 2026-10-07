@@ -180,7 +180,7 @@ public class JournalService {
                         l.getCreditAmount(), l.getDebitAmount(), "Reversal: " + l.getDescription(),
                         l.getCostCentreId(), l.getProfitCentreId()))
                 .toList();
-        buildLines(reversal, reversedLines);
+        reversal.setLines(buildLines(reversal, reversedLines));
 
         // The original stays POSTED forever otherwise, and could be reversed again and again.
         original.setStatus("REVERSED");
