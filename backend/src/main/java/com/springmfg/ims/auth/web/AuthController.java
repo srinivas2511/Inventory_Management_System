@@ -44,8 +44,9 @@ public class AuthController {
         return authService.refresh(httpReq, httpResp);
     }
 
+    /** Public on purpose: it acts only on the HttpOnly refresh cookie, so a signed-out tab with an expired access token can still end its session. */
     @PostMapping("/logout")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("permitAll()")
     public ResponseEntity<Void> logout(HttpServletRequest httpReq, HttpServletResponse httpResp) {
         authService.logout(httpReq, httpResp);
         return ResponseEntity.noContent().build();
@@ -68,8 +69,9 @@ public class AuthController {
     @PostMapping("/change-password")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> changePassword(@Valid @RequestBody ChangePasswordRequest req,
-                                               @AuthenticationPrincipal CachedUser principal) {
-        authService.changePassword(principal.id(), req);
+                                               @AuthenticationPrincipal CachedUser principal,
+                                               HttpServletRequest httpReq) {
+        authService.changePassword(principal.id(), req, httpReq);
         return ResponseEntity.noContent().build();
     }
 

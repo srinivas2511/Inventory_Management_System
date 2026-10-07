@@ -85,7 +85,11 @@ public class AuthService {
         this.refreshDays = refreshDays;
     }
 
-    @Transactional
+    /**
+     * {@code noRollbackFor}: the failed-attempt counter and the lockout are written and then the failure is reported
+     * by an exception. With the default rollback they were never persisted, so lockout could not happen.
+     */
+    @Transactional(noRollbackFor = BusinessRuleException.class)
     public LoginResponse login(LoginRequest req, HttpServletRequest httpReq, HttpServletResponse httpResp) {
         User user = userRepository.findByUsername(req.username())
             .orElseThrow(() -> new BusinessRuleException(ErrorCode.INVALID_CREDENTIALS, "Invalid username or password"));
@@ -141,7 +145,8 @@ public class AuthService {
         );
     }
 
-    @Transactional
+    /** {@code noRollbackFor}: reuse detection revokes the token family and then throws; that revocation must stick. */
+    @Transactional(noRollbackFor = BusinessRuleException.class)
     public LoginResponse refresh(HttpServletRequest httpReq, HttpServletResponse httpResp) {
         String raw = extractRefreshCookie(httpReq);
         if (raw == null) {
@@ -239,21 +244,43 @@ public class AuthService {
         User user = token.getUser();
         validatePasswordPolicy(newPassword, user);
         applyNewPassword(user, newPassword);
+        refreshTokenRepo.revokeAllForUser(user.getId(), Instant.now());
         token.markUsed();
         resetTokenRepo.save(token);
         auditService.record("PASSWORD_RESET", "USER", String.valueOf(user.getId()), null, null, null);
     }
 
+    /**
+     * A wrong current password is a 400 on the form, never a 401: the caller's token is fine, and a 401 would make
+     * the browser try a refresh and sign the user out over a typo. Every other session of the user ends: their
+     * refresh tokens are revoked and their access tokens stop validating (permission version bump); the session
+     * that changed the password keeps its own refresh token.
+     */
     @Transactional
-    public void changePassword(Long userId, ChangePasswordRequest req) {
+    public void changePassword(Long userId, ChangePasswordRequest req, HttpServletRequest httpReq) {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new BusinessRuleException(ErrorCode.NOT_FOUND, "User not found"));
         if (!passwordEncoder.matches(req.currentPassword(), user.getPasswordHash())) {
-            throw new BusinessRuleException(ErrorCode.INVALID_CREDENTIALS, "Current password is incorrect");
+            throw new BusinessRuleException(ErrorCode.CURRENT_PASSWORD_INCORRECT, "Current password is incorrect");
         }
         validatePasswordPolicy(req.newPassword(), user);
         applyNewPassword(user, req.newPassword());
+        endOtherSessions(user, httpReq);
         auditService.record("PASSWORD_CHANGE", "USER", String.valueOf(userId), null, null, null);
+    }
+
+    private void endOtherSessions(User user, HttpServletRequest httpReq) {
+        Instant now = Instant.now();
+        String raw = extractRefreshCookie(httpReq);
+        UUID currentFamily = raw == null ? null : refreshTokenRepo.findByTokenHash(sha256(raw))
+            .filter(t -> t.getUser().getId().equals(user.getId()) && !t.isRevoked())
+            .map(RefreshToken::getFamilyId)
+            .orElse(null);
+        if (currentFamily == null) {
+            refreshTokenRepo.revokeAllForUser(user.getId(), now);
+        } else {
+            refreshTokenRepo.revokeAllForUserExceptFamily(user.getId(), currentFamily, now);
+        }
     }
 
     // ── helpers ──────────────────────────────────────────────────────────────
@@ -291,6 +318,7 @@ public class AuthService {
         user.setPasswordHash(passwordEncoder.encode(newPassword));
         user.setPasswordChangedAt(Instant.now());
         user.setMustChangePassword(false);
+        user.setPermissionVersion(user.getPermissionVersion() + 1);
         userRepository.save(user);
         permissionCache.evict(user.getId());
     }

@@ -1,7 +1,8 @@
 import { HttpClient, HttpContext, provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
+import { SessionStore } from '../auth/session.store';
 import { TokenStore } from '../auth/token.store';
 import { AppConfigService } from '../config/app-config.service';
 import { ToastService } from '../notification/toast.service';
@@ -107,5 +108,80 @@ describe('HTTP interceptors', () => {
 
   it('treats the shipped default as same-origin, so API paths are /api/... and never /api/api/...', () => {
     expect(TestBed.inject(AppConfigService).apiBaseUrl).toBe('');
+  });
+  describe('session refresh', () => {
+    const REFRESHED = {
+      accessToken: 't2',
+      expiresIn: 900,
+      mustChangePassword: false,
+      user: { id: 1, username: 'asha', fullName: 'Asha Rao', roles: ['ADMIN'], permissions: ['USER_VIEW'] },
+    };
+    const unauthorized = { status: 401, statusText: 'Unauthorized' };
+
+    beforeEach(() => TestBed.inject(TokenStore).set('t1'));
+
+    it('refreshes once on a 401 and retries the request with the new token', () => {
+      let result: unknown;
+      http.get('/api/materials').subscribe((r) => (result = r));
+      backend.expectOne('/api/materials').flush({}, unauthorized);
+
+      const refresh = backend.expectOne('/api/auth/refresh');
+      expect(refresh.request.headers.has('Authorization')).toBeFalse();
+      refresh.flush(REFRESHED);
+
+      const retry = backend.expectOne('/api/materials');
+      expect(retry.request.headers.get('Authorization')).toBe('Bearer t2');
+      retry.flush({ ok: true });
+      expect(result).toEqual({ ok: true });
+      expect(TestBed.inject(SessionStore).user()?.username).toBe('asha');
+    });
+
+    it('shares one refresh between requests that fail at the same time', () => {
+      http.get('/api/a').subscribe();
+      http.get('/api/b').subscribe();
+      backend.expectOne('/api/a').flush({}, unauthorized);
+      backend.expectOne('/api/b').flush({}, unauthorized);
+
+      backend.expectOne('/api/auth/refresh').flush(REFRESHED);
+
+      backend.expectOne('/api/a').flush({});
+      backend.expectOne('/api/b').flush({});
+    });
+
+    it('ends the session instead of looping when the retried request is refused again', () => {
+      const navigate = spyOn(TestBed.inject(Router), 'navigate');
+      let failed = false;
+      http.get('/api/materials').subscribe({ error: () => (failed = true) });
+      backend.expectOne('/api/materials').flush({}, unauthorized);
+      backend.expectOne('/api/auth/refresh').flush(REFRESHED);
+      backend.expectOne('/api/materials').flush({}, unauthorized);
+
+      backend.expectNone('/api/auth/refresh');
+      expect(failed).toBeTrue();
+      expect(TestBed.inject(TokenStore).accessToken()).toBeNull();
+      expect(navigate).toHaveBeenCalledWith(['/login']);
+    });
+
+    it('fails every waiting request and signs out once when the refresh is rejected', () => {
+      const navigate = spyOn(TestBed.inject(Router), 'navigate');
+      const failures: number[] = [];
+      http.get('/api/a').subscribe({ error: (e) => failures.push(e.status) });
+      http.get('/api/b').subscribe({ error: (e) => failures.push(e.status) });
+      backend.expectOne('/api/a').flush({}, unauthorized);
+      backend.expectOne('/api/b').flush({}, unauthorized);
+      backend.expectOne('/api/auth/refresh').flush({ code: 'INVALID_TOKEN' }, unauthorized);
+
+      expect(failures).toEqual([401, 401]);
+      expect(navigate).toHaveBeenCalledTimes(1);
+    });
+
+    it('never tries to refresh around the sign-in endpoints themselves', () => {
+      http.post('/api/auth/logout', {}).subscribe({ error: () => undefined });
+      const logout = backend.expectOne('/api/auth/logout');
+      expect(logout.request.headers.has('Authorization')).toBeFalse();
+      logout.flush({}, unauthorized);
+
+      backend.expectNone('/api/auth/refresh');
+    });
   });
 });

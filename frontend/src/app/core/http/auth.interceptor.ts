@@ -1,70 +1,52 @@
-import { HttpEvent, HttpInterceptorFn, HttpRequest, HttpHandlerFn } from '@angular/common/http';
+import { HttpInterceptorFn, HttpRequest } from '@angular/common/http';
 import { inject } from '@angular/core';
-import { BehaviorSubject, Observable, throwError } from 'rxjs';
-import { catchError, filter, switchMap, take, tap } from 'rxjs/operators';
-import { AuthService, LoginResponse } from '../auth/auth.service';
+import { catchError, switchMap, throwError } from 'rxjs';
+import { AuthService } from '../auth/auth.service';
 import { TokenStore } from '../auth/token.store';
 import { AppConfigService } from '../config/app-config.service';
-
-let isRefreshing = false;
-const refreshDone$ = new BehaviorSubject<string | null>(null);
 
 function addBearer(req: HttpRequest<unknown>, token: string): HttpRequest<unknown> {
   return req.clone({ setHeaders: { Authorization: `Bearer ${token}` } });
 }
 
-function handle401(
-  req: HttpRequest<unknown>,
-  next: HttpHandlerFn,
-  authService: AuthService,
-): Observable<HttpEvent<unknown>> {
-  if (isRefreshing) {
-    return refreshDone$.pipe(
-      filter((t): t is string => t !== null),
-      take(1),
-      switchMap((token) => next(addBearer(req, token))),
-    );
-  }
-
-  isRefreshing = true;
-  refreshDone$.next(null);
-
-  return authService.refresh().pipe(
-    tap((res: LoginResponse) => {
-      isRefreshing = false;
-      refreshDone$.next(res.accessToken);
-    }),
-    switchMap((res: LoginResponse) => next(addBearer(req, res.accessToken))),
-    catchError((err) => {
-      isRefreshing = false;
-      authService.logout();
-      return throwError(() => err);
-    }),
-  );
-}
+const PUBLIC_AUTH_PATHS = [
+  '/api/auth/login',
+  '/api/auth/refresh',
+  '/api/auth/logout',
+  '/api/auth/forgot-password',
+  '/api/auth/reset-password',
+];
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const tokenStore = inject(TokenStore);
   const authService = inject(AuthService);
   const apiBase = inject(AppConfigService).apiBaseUrl;
   const isApiRequest = req.url.startsWith(`${apiBase}/api/`) || req.url.startsWith('/api/');
-
-  // Skip auth header for public auth endpoints
-  const isAuthEndpoint =
-    req.url.includes('/api/auth/login') ||
-    req.url.includes('/api/auth/refresh') ||
-    req.url.includes('/api/auth/forgot-password') ||
-    req.url.includes('/api/auth/reset-password');
+  const isPublicAuthEndpoint = PUBLIC_AUTH_PATHS.some((p) => req.url.includes(p));
 
   const token = tokenStore.accessToken();
-  const outgoing = token && isApiRequest && !isAuthEndpoint ? addBearer(req, token) : req;
+  const outgoing = token && isApiRequest && !isPublicAuthEndpoint ? addBearer(req, token) : req;
 
   return next(outgoing).pipe(
     catchError((err) => {
-      if (err.status === 401 && isApiRequest && !isAuthEndpoint) {
-        return handle401(req, next, authService);
+      if (err.status !== 401 || !isApiRequest || isPublicAuthEndpoint) {
+        return throwError(() => err);
       }
-      return throwError(() => err);
+      // Every 401 that arrives while a refresh is running waits for that one refresh, then retries once. The retry
+      // is sent straight down the chain, so it can never trigger another refresh: if the server still refuses a
+      // token it has just issued, the session is over.
+      return authService.refresh().pipe(
+        switchMap((res) =>
+          next(addBearer(req, res.accessToken)).pipe(
+            catchError((retryErr) => {
+              if (retryErr.status === 401) {
+                authService.expireSession();
+              }
+              return throwError(() => retryErr);
+            }),
+          ),
+        ),
+      );
     }),
   );
 };

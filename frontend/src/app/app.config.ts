@@ -2,8 +2,10 @@ import { APP_INITIALIZER, ApplicationConfig, inject, provideZoneChangeDetection 
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
+import { firstValueFrom } from 'rxjs';
 
 import { routes } from './app.routes';
+import { AuthService } from './core/auth/auth.service';
 import { AppConfigService } from './core/config/app-config.service';
 import { authInterceptor } from './core/http/auth.interceptor';
 import { correlationInterceptor } from './core/http/correlation.interceptor';
@@ -31,7 +33,13 @@ export const appConfig: ApplicationConfig = {
       multi: true,
       useFactory: () => {
         const config = inject(AppConfigService);
-        return () => config.load();
+        const auth = inject(AuthService);
+        // The access token is memory-only, so every full page load starts signed out. After the runtime config is
+        // known, restore the session from the HttpOnly refresh cookie before the router (and its guards) run.
+        return async () => {
+          await config.load();
+          await firstValueFrom(auth.restoreSession());
+        };
       },
     },
   ],
