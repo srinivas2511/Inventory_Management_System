@@ -238,10 +238,11 @@ describe('ApListComponent three-way match', () => {
 
     it('does not reload when the payment dialog is dismissed', () => {
       setup(['AP_MANAGE']);
-      dialogReturning(undefined);
+      const dialog = dialogReturning(undefined);
 
       fixture.componentInstance.pay(invoice({ status: 'OPEN' }));
 
+      expect(dialog).toHaveBeenCalledTimes(1);
       backend.expectNone((r) => r.url === '/api/ap/invoices');
     });
 
@@ -269,11 +270,12 @@ describe('ApListComponent three-way match', () => {
 
     it('reloads after the entry dialog saved something, and not when it was dismissed', () => {
       setup(['AP_MANAGE']);
-      dialogReturning(true, false);
+      const dialog = dialogReturning(true, false);
       fixture.componentInstance.newInvoice();
       flushLists();
 
       fixture.componentInstance.newInvoice();
+      expect(dialog).toHaveBeenCalledTimes(2);
       backend.expectNone((r) => r.url === '/api/ap/invoices');
     });
   });
