@@ -101,15 +101,59 @@ class AuthSessionIT extends AbstractIntegrationTest {
 
     @Test
     void refreshRotatesTheCookieAndAReusedTokenRevokesTheWholeFamily() throws Exception {
-        Session first = login(newUser(), PASSWORD);
+        String username = newUser();
+        Session first = login(username, PASSWORD);
 
         Session second = session(refresh(first.refreshCookie(), 200));
         assertThat(second.refreshCookie()).isNotEqualTo(first.refreshCookie());
 
-        // The first token was rotated away: presenting it again is theft, so the whole family dies,
-        // including the legitimate newest token. The old code threw after revoking, which rolled the revocation back.
+        // Once the grace window for concurrent requests has passed, presenting a rotated-away token is theft, so
+        // the whole family dies, including the legitimate newest token. The old code threw after revoking, which
+        // rolled the revocation back.
+        ageRevocations(username, 60);
         refresh(first.refreshCookie(), 401);
         refresh(second.refreshCookie(), 401);
+    }
+
+    @Test
+    void aTokenRotatedAMomentAgoIsAConcurrentRequestNotTheft() throws Exception {
+        // D-20: two tabs, or a fast Back navigation, send the same cookie before the first response has replaced it.
+        String username = newUser();
+        Session first = login(username, PASSWORD);
+
+        Session second = session(refresh(first.refreshCookie(), 200));
+        Session third = session(refresh(first.refreshCookie(), 200));
+        assertThat(third.refreshCookie()).isNotEqualTo(first.refreshCookie());
+        assertThat(third.refreshCookie()).isNotEqualTo(second.refreshCookie());
+
+        // whichever cookie the browser ended up with keeps working, and the session is not revoked
+        refresh(second.refreshCookie(), 200);
+        refresh(third.refreshCookie(), 200);
+
+        // the grace window does not extend: replaying the first token after it has passed still kills the family
+        ageRevocations(username, 60);
+        refresh(first.refreshCookie(), 401);
+    }
+
+    @Test
+    void aLoggedOutTokenGetsNoGraceEvenImmediately() throws Exception {
+        Session s = login(newUser(), PASSWORD);
+        Session rotated = session(refresh(s.refreshCookie(), 200));
+        mockMvc.perform(post("/api/auth/logout").cookie(new Cookie(COOKIE, rotated.refreshCookie())))
+                .andExpect(status().isNoContent());
+
+        // the successor was revoked by the logout, so the earlier token cannot slip through the grace window
+        refresh(s.refreshCookie(), 401);
+        refresh(rotated.refreshCookie(), 401);
+    }
+
+    /** Pretends the rotations happened {@code seconds} ago, so the reuse grace window has passed. */
+    private void ageRevocations(String username, int seconds) {
+        jdbc.update("""
+                UPDATE refresh_tokens SET revoked_at = revoked_at - make_interval(secs => ?)
+                 WHERE revoked_at IS NOT NULL
+                   AND user_id = (SELECT id FROM users WHERE username = ?)
+                """, seconds, username);
     }
 
     @Test

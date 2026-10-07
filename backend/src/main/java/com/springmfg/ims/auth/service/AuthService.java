@@ -57,6 +57,7 @@ public class AuthService {
     private final JavaMailSender mailSender;
     private final String frontendUrl;
     private final long refreshDays;
+    private final long reuseGraceSeconds;
 
     public AuthService(
             UserRepository userRepository,
@@ -70,7 +71,8 @@ public class AuthService {
             AuditService auditService,
             JavaMailSender mailSender,
             @Value("${ims.frontend-url:http://localhost:4200}") String frontendUrl,
-            @Value("${ims.security.jwt.refresh-token-days:7}") long refreshDays) {
+            @Value("${ims.security.jwt.refresh-token-days:7}") long refreshDays,
+            @Value("${ims.security.jwt.refresh-reuse-grace-seconds:10}") long reuseGraceSeconds) {
         this.userRepository = userRepository;
         this.refreshTokenRepo = refreshTokenRepo;
         this.resetTokenRepo = resetTokenRepo;
@@ -83,6 +85,20 @@ public class AuthService {
         this.mailSender = mailSender;
         this.frontendUrl = frontendUrl;
         this.refreshDays = refreshDays;
+        this.reuseGraceSeconds = reuseGraceSeconds;
+    }
+
+    /**
+     * A token that was rotated a moment ago and whose successor is still valid is a concurrent request, not theft:
+     * two tabs, or a fast Back navigation, send the same cookie before the first response has replaced it in the
+     * browser (D-20). Logout, password changes and administrator revocation leave no successor, so they never qualify.
+     */
+    private boolean withinReuseGrace(RefreshToken rt) {
+        return reuseGraceSeconds > 0
+                && rt.getReplacedBy() != null
+                && rt.getRevokedAt() != null
+                && rt.getRevokedAt().plusSeconds(reuseGraceSeconds).isAfter(Instant.now())
+                && refreshTokenRepo.findById(rt.getReplacedBy()).map(RefreshToken::isValid).orElse(false);
     }
 
     /**
@@ -157,12 +173,16 @@ public class AuthService {
         RefreshToken rt = refreshTokenRepo.findByTokenHash(hash)
             .orElseThrow(() -> new BusinessRuleException(ErrorCode.INVALID_TOKEN, "Invalid refresh token"));
 
+        boolean concurrentRotation = false;
         if (rt.isRevoked()) {
-            // Reuse of revoked token — revoke entire family
-            refreshTokenRepo.findByFamilyId(rt.getFamilyId())
-                .forEach(t -> { t.revoke(); refreshTokenRepo.save(t); });
-            clearRefreshCookie(httpResp);
-            throw new BusinessRuleException(ErrorCode.INVALID_TOKEN, "Token reuse detected");
+            concurrentRotation = withinReuseGrace(rt);
+            if (!concurrentRotation) {
+                // Reuse of revoked token — revoke entire family
+                refreshTokenRepo.findByFamilyId(rt.getFamilyId())
+                    .forEach(t -> { t.revoke(); refreshTokenRepo.save(t); });
+                clearRefreshCookie(httpResp);
+                throw new BusinessRuleException(ErrorCode.INVALID_TOKEN, "Token reuse detected");
+            }
         }
 
         if (rt.isExpired()) {
@@ -180,15 +200,20 @@ public class AuthService {
             throw new BusinessRuleException(ErrorCode.ACCOUNT_DISABLED, "Account is disabled");
         }
 
-        // Rotate: revoke old, issue new
-        rt.revoke();
+        // Rotate: revoke old, issue new. A token revoked a moment ago by a concurrent refresh keeps its original
+        // successor and its original revocation time, so the grace window never extends.
+        if (!concurrentRotation) {
+            rt.revoke();
+        }
         String newRaw = generateSecureToken();
         String newHash = sha256(newRaw);
         RefreshToken newRt = new RefreshToken(user, newHash, rt.getFamilyId(),
             Instant.now().plus(refreshDays, ChronoUnit.DAYS),
             httpReq.getHeader("User-Agent"), extractIp(httpReq));
         refreshTokenRepo.save(newRt);
-        rt.setReplacedBy(newRt.getId());
+        if (!concurrentRotation) {
+            rt.setReplacedBy(newRt.getId());
+        }
         refreshTokenRepo.save(rt);
         setRefreshCookie(httpResp, newRaw);
 
