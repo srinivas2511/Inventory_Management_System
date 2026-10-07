@@ -19,10 +19,24 @@ export interface UserDto {
   phone: string | null;
   active: boolean;
   mustChangePassword: boolean;
+  locked: boolean;
+  lockedUntil: string | null;
   lastLoginAt: string | null;
   passwordChangedAt: string | null;
   roles: string[];
   version: number;
+}
+
+export interface AdminResetPasswordRequest {
+  /** Leave out to have the server generate a one-time password. */
+  temporaryPassword?: string;
+  reason: string;
+}
+
+export interface AdminResetPasswordResponse {
+  /** Present only when the server generated it, and only in this response. */
+  temporaryPassword: string | null;
+  generated: boolean;
 }
 
 export interface PermissionDto {
@@ -93,6 +107,14 @@ export class AdminApi {
 
   reactivateUser(id: number): Observable<UserDto> {
     return this.http.post<UserDto>(`${this.base}/users/${id}/reactivate`, {});
+  }
+
+  resetPassword(id: number, req: AdminResetPasswordRequest): Observable<AdminResetPasswordResponse> {
+    return this.http.post<AdminResetPasswordResponse>(`${this.base}/users/${id}/reset-password`, req);
+  }
+
+  unlockUser(id: number): Observable<UserDto> {
+    return this.http.post<UserDto>(`${this.base}/users/${id}/unlock`, {});
   }
 
   getRoles(): Observable<RoleDto[]> {

@@ -19,6 +19,8 @@ import com.springmfg.ims.common.exception.ErrorCode;
 import com.springmfg.ims.common.exception.NotFoundException;
 import com.springmfg.ims.iam.domain.Role;
 import com.springmfg.ims.iam.domain.User;
+import com.springmfg.ims.iam.dto.AdminResetPasswordRequest;
+import com.springmfg.ims.iam.dto.AdminResetPasswordResponse;
 import com.springmfg.ims.iam.dto.CreateUserRequest;
 import com.springmfg.ims.iam.dto.UpdateUserRequest;
 import com.springmfg.ims.iam.dto.UserDto;
@@ -163,6 +165,48 @@ public class UserAdminService {
         userRepo.save(user);
         auditService.record("REACTIVATE", "USER", String.valueOf(id), "inactive", "active", null);
         permissionCache.evict(id);
+    }
+
+    /**
+     * Sets a temporary password on another user's account. The reason goes to the audit trail with the old and new
+     * flag state; the password itself is never audited, logged or stored in plaintext. An administrator resets their
+     * own password with Change password, which asks for the current one.
+     */
+    @Transactional
+    public AdminResetPasswordResponse resetPassword(Long id, AdminResetPasswordRequest req, Long actorId) {
+        User user = requireUser(id);
+        if (user.getId().equals(actorId)) {
+            throw new BusinessRuleException(ErrorCode.SELF_PASSWORD_RESET,
+                "Use Change password for your own account");
+        }
+        boolean generated = req.temporaryPassword() == null || req.temporaryPassword().isBlank();
+        String temporary = generated ? authService.generateTemporaryPassword(user.getUsername()) : req.temporaryPassword();
+        boolean hadFlag = user.isMustChangePassword();
+
+        authService.setTemporaryPassword(user, temporary);
+
+        auditService.record("ADMIN_PASSWORD_RESET", "USER", String.valueOf(id),
+            "mustChangePassword=" + hadFlag,
+            "mustChangePassword=true; sessions ended; " + (generated ? "generated" : "supplied"),
+            req.reason());
+        return new AdminResetPasswordResponse(generated ? temporary : null, generated);
+    }
+
+    /** Clears a lockout (the failed-attempt counter and the lock-until time). Nothing to do for an account that is not locked. */
+    @Transactional
+    public UserDto unlock(Long id) {
+        User user = requireUser(id);
+        boolean wasLocked = user.isLocked();
+        int attempts = user.getFailedAttempts();
+        if (!wasLocked && attempts == 0) {
+            return UserDto.from(user);
+        }
+        user.setFailedAttempts(0);
+        user.setLockedUntil(null);
+        userRepo.save(user);
+        auditService.record("UNLOCK", "USER", String.valueOf(id),
+            "locked=" + wasLocked + ", failedAttempts=" + attempts, "locked=false, failedAttempts=0", null);
+        return UserDto.from(user);
     }
 
     private User requireUser(Long id) {

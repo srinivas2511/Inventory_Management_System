@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -18,6 +19,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.springmfg.ims.auth.service.UserPermissionCache.CachedUser;
+import com.springmfg.ims.iam.dto.AdminResetPasswordRequest;
+import com.springmfg.ims.iam.dto.AdminResetPasswordResponse;
 import com.springmfg.ims.iam.dto.AssignRolesRequest;
 import com.springmfg.ims.iam.dto.CreateUserRequest;
 import com.springmfg.ims.iam.dto.UpdateUserRequest;
@@ -75,6 +79,20 @@ public class UserAdminController {
     @PreAuthorize("hasAuthority('USER_DELETE')")
     public void deactivate(@PathVariable Long id) {
         service.deactivate(id);
+    }
+
+    /** A dedicated permission: resetting a password lets the caller sign in as that user, so USER_UPDATE is not enough. */
+    @PostMapping("/{id}/reset-password")
+    @PreAuthorize("hasAuthority('USER_PASSWORD_RESET')")
+    public AdminResetPasswordResponse resetPassword(@PathVariable Long id,
+            @Valid @RequestBody AdminResetPasswordRequest req, @AuthenticationPrincipal CachedUser principal) {
+        return service.resetPassword(id, req, principal.id());
+    }
+
+    @PostMapping("/{id}/unlock")
+    @PreAuthorize("hasAuthority('USER_UPDATE')")
+    public UserDto unlock(@PathVariable Long id) {
+        return service.unlock(id);
     }
 
     @PostMapping("/{id}/reactivate")

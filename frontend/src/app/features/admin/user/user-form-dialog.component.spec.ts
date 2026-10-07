@@ -16,6 +16,8 @@ const SAVED: UserDto = {
   phone: null,
   active: true,
   mustChangePassword: true,
+  locked: false,
+  lockedUntil: null,
   lastLoginAt: null,
   passwordChangedAt: null,
   roles: [],

@@ -15,6 +15,8 @@ const USER: UserDto = {
   phone: null,
   active: true,
   mustChangePassword: false,
+  locked: false,
+  lockedUntil: null,
   lastLoginAt: null,
   passwordChangedAt: null,
   roles: ['OPERATOR'],

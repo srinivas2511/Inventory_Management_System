@@ -18,6 +18,8 @@ const user = (over: Partial<UserDto> = {}): UserDto => ({
   phone: null,
   active: true,
   mustChangePassword: false,
+  locked: false,
+  lockedUntil: null,
   lastLoginAt: null,
   passwordChangedAt: null,
   roles: ['OPERATOR'],
@@ -162,4 +164,58 @@ describe('UserListComponent', () => {
 
     http.expectOne((r) => r.url === '/api/admin/users' && r.params.get('q') === 'rav').flush(page([]));
   }));
+  describe('password reset and unlock', () => {
+    it('offers Reset password only to holders of USER_PASSWORD_RESET, and never on your own row', () => {
+      setup(['USER_VIEW', 'USER_PASSWORD_RESET'], [user(), user({ id: 1, username: 'admin' })]);
+      expect(buttons('reset-password-user').length).toBe(1);
+    });
+
+    it('hides Reset password from someone who can only update users', () => {
+      setup(['USER_VIEW', 'USER_UPDATE']);
+      expect(buttons('reset-password-user').length).toBe(0);
+    });
+
+    it('reloads and confirms once the reset dialog reports the password was reset', () => {
+      setup(['USER_VIEW', 'USER_PASSWORD_RESET']);
+      const open = spyOn(dialog, 'open').and.returnValue({ afterClosed: () => of(true) } as MatDialogRef<unknown>);
+
+      (buttons('reset-password-user')[0] as HTMLButtonElement).click();
+
+      expect(open).toHaveBeenCalledTimes(1);
+      http.expectOne(listCall()).flush(page([user()]));
+      expect(toast.success).toHaveBeenCalledWith('Password reset for ravi');
+    });
+
+    it('does not reload when the reset dialog is cancelled', () => {
+      setup(['USER_VIEW', 'USER_PASSWORD_RESET']);
+      spyOn(dialog, 'open').and.returnValue({ afterClosed: () => of(undefined) } as MatDialogRef<unknown>);
+
+      (buttons('reset-password-user')[0] as HTMLButtonElement).click();
+
+      http.expectNone(listCall());
+      expect(toast.success).not.toHaveBeenCalled();
+    });
+
+    it('shows Unlock only on a locked account, and unlocks it', () => {
+      setup(
+        ['USER_VIEW', 'USER_UPDATE'],
+        [user({ locked: true, lockedUntil: '2026-10-07T10:00:00Z' }), user({ id: 3, username: 'meena' })],
+      );
+      expect(buttons('unlock-user').length).toBe(1);
+      expect(buttons('locked-caption').length).toBe(1);
+
+      (buttons('unlock-user')[0] as HTMLButtonElement).click();
+
+      const req = http.expectOne('/api/admin/users/2/unlock');
+      expect(req.request.method).toBe('POST');
+      req.flush(user());
+      http.expectOne(listCall()).flush(page([user()]));
+      expect(toast.success).toHaveBeenCalledWith('ravi unlocked');
+    });
+
+    it('hides Unlock from someone who cannot update users', () => {
+      setup(['USER_VIEW'], [user({ locked: true, lockedUntil: '2026-10-07T10:00:00Z' })]);
+      expect(buttons('unlock-user').length).toBe(0);
+    });
+  });
 });

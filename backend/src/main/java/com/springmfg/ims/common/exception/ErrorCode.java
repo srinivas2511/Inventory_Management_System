@@ -28,6 +28,7 @@ public enum ErrorCode {
     PASSWORD_POLICY(HttpStatus.BAD_REQUEST, "Password does not meet policy requirements"),
     CURRENT_PASSWORD_INCORRECT(HttpStatus.BAD_REQUEST, "Current password is incorrect"),
     LAST_ADMIN(HttpStatus.BAD_REQUEST, "Cannot remove the last active administrator"),
+    SELF_PASSWORD_RESET(HttpStatus.UNPROCESSABLE_ENTITY, "Use Change password for your own account"),
     DEACTIVATION_BLOCKED(HttpStatus.BAD_REQUEST, "Cannot deactivate — active references exist"),
 
     // 409

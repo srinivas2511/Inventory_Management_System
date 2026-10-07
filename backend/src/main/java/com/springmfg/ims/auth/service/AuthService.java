@@ -313,6 +313,58 @@ public class AuthService {
             });
     }
 
+    /**
+     * An administrator's reset: the password becomes a temporary one the user must change at first sign-in. Every
+     * session of the user ends (refresh tokens revoked, permission version bumped so open access tokens stop
+     * validating), a lockout is cleared, and the permission cache is evicted after commit so the forced-change flag
+     * is enforced at once.
+     */
+    public void setTemporaryPassword(User user, String temporaryPassword) {
+        validatePasswordPolicy(temporaryPassword, user);
+        passwordHistoryRepo.save(new PasswordHistory(user, user.getPasswordHash()));
+        user.setPasswordHash(passwordEncoder.encode(temporaryPassword));
+        user.setPasswordChangedAt(Instant.now());
+        user.setMustChangePassword(true);
+        user.setFailedAttempts(0);
+        user.setLockedUntil(null);
+        user.setPermissionVersion(user.getPermissionVersion() + 1);
+        userRepository.save(user);
+        refreshTokenRepo.revokeAllForUser(user.getId(), Instant.now());
+        permissionCache.evictAfterCommit(user.getId());
+    }
+
+    /** A random password that satisfies the policy; ambiguous characters (0/O, 1/l/I) are left out so it can be read out. */
+    public String generateTemporaryPassword(String username) {
+        String upper = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+        String lower = "abcdefghijkmnpqrstuvwxyz";
+        String digits = "23456789";
+        String special = "!@#$%^&*-_+=?";
+        String all = upper + lower + digits + special;
+        int length = Math.max(16, settings.getInt("auth.password.min_length", 10));
+        SecureRandom random = new SecureRandom();
+        for (int attempt = 0; attempt < 20; attempt++) {
+            java.util.List<Character> chars = new java.util.ArrayList<>();
+            chars.add(upper.charAt(random.nextInt(upper.length())));
+            chars.add(lower.charAt(random.nextInt(lower.length())));
+            chars.add(digits.charAt(random.nextInt(digits.length())));
+            chars.add(special.charAt(random.nextInt(special.length())));
+            while (chars.size() < length) {
+                chars.add(all.charAt(random.nextInt(all.length())));
+            }
+            java.util.Collections.shuffle(chars, random);
+            StringBuilder sb = new StringBuilder(length);
+            chars.forEach(sb::append);
+            String candidate = sb.toString();
+            try {
+                validateComplexity(candidate, username);
+                return candidate;
+            } catch (BusinessRuleException tryAgain) {
+                // e.g. the random text happened to contain the username; draw again
+            }
+        }
+        throw new IllegalStateException("Could not generate a temporary password that meets the policy");
+    }
+
     private void applyNewPassword(User user, String newPassword) {
         passwordHistoryRepo.save(new PasswordHistory(user, user.getPasswordHash()));
         user.setPasswordHash(passwordEncoder.encode(newPassword));

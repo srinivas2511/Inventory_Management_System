@@ -15,6 +15,8 @@ public record UserDto(
         String phone,
         boolean active,
         boolean mustChangePassword,
+        boolean locked,
+        Instant lockedUntil,
         Instant lastLoginAt,
         Instant passwordChangedAt,
         Set<String> roles,
@@ -24,6 +26,7 @@ public record UserDto(
         return new UserDto(
             u.getId(), u.getUsername(), u.getEmployeeCode(), u.getFullName(),
             u.getEmail(), u.getPhone(), u.isActive(), u.isMustChangePassword(),
+            u.isLocked(), u.isLocked() ? u.getLockedUntil() : null,
             u.getLastLoginAt(), u.getPasswordChangedAt(),
             u.getRoleCodes(), u.getVersion());
     }

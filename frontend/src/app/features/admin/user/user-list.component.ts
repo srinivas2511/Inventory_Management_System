@@ -19,6 +19,7 @@ import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialo
 import { StatusBadgeComponent } from '../../../shared/components/status-badge.component';
 import { AdminApi, UserDto } from '../admin.api';
 import { UserFormDialogComponent } from './user-form-dialog.component';
+import { UserResetPasswordDialogComponent } from './user-reset-password-dialog.component';
 import { UserRolesDialogComponent } from './user-roles-dialog.component';
 
 @Component({
@@ -90,6 +91,11 @@ import { UserRolesDialogComponent } from './user-roles-dialog.component';
             @if (r.mustChangePassword) {
               <div class="mat-caption pending">Password change pending</div>
             }
+            @if (r.locked) {
+              <div class="mat-caption pending" data-testid="locked-caption">
+                Locked until {{ r.lockedUntil | date: 'shortTime' }}
+              </div>
+            }
           </td></ng-container
         >
         <ng-container matColumnDef="lastLogin"
@@ -144,6 +150,28 @@ import { UserRolesDialogComponent } from './user-roles-dialog.component';
                 data-testid="reactivate-user"
               >
                 <mat-icon>person_check</mat-icon>
+              </button>
+            }
+            @if (r.locked && session.hasPermission('USER_UPDATE')) {
+              <button
+                mat-icon-button
+                matTooltip="Unlock account"
+                [attr.aria-label]="'Unlock ' + r.username"
+                (click)="unlock(r)"
+                data-testid="unlock-user"
+              >
+                <mat-icon>lock_open</mat-icon>
+              </button>
+            }
+            @if (session.hasPermission('USER_PASSWORD_RESET') && !isSelf(r)) {
+              <button
+                mat-icon-button
+                matTooltip="Reset password"
+                [attr.aria-label]="'Reset password for ' + r.username"
+                (click)="resetPassword(r)"
+                data-testid="reset-password-user"
+              >
+                <mat-icon>lock_reset</mat-icon>
               </button>
             }
           </td></ng-container
@@ -318,6 +346,28 @@ export class UserListComponent implements OnInit {
         this.load();
       },
       error: (err) => this.toast.error(problemMessage(err, 'The user could not be reactivated.')),
+    });
+  }
+
+  protected resetPassword(user: UserDto): void {
+    this.dialog
+      .open(UserResetPasswordDialogComponent, { data: { user }, width: '520px' })
+      .afterClosed()
+      .subscribe((done?: boolean) => {
+        if (done) {
+          this.toast.success(`Password reset for ${user.username}`);
+          this.load();
+        }
+      });
+  }
+
+  protected unlock(user: UserDto): void {
+    this.api.unlockUser(user.id).subscribe({
+      next: () => {
+        this.toast.success(`${user.username} unlocked`);
+        this.load();
+      },
+      error: (err) => this.toast.error(problemMessage(err, 'The account could not be unlocked.')),
     });
   }
 }

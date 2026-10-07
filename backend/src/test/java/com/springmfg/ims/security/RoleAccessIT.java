@@ -178,6 +178,11 @@ class RoleAccessIT extends AbstractIntegrationTest {
             Probe.of(HttpMethod.GET, "/api/admin/users", Set.of("ADMIN", "MANAGEMENT"),
                     Set.of("ENGINEER", "OPERATOR")),
             Probe.of(HttpMethod.GET, "/api/admin/roles", Set.of("ADMIN"), Set.of("MANAGEMENT", "OPERATOR")),
+            // another user's password: a permission of its own, held by ADMIN only; unlock needs only USER_UPDATE
+            Probe.withBody(HttpMethod.POST, "/api/admin/users/" + MISSING + "/reset-password",
+                    "{\"reason\":\"probe\"}", Set.of("ADMIN"), Set.of("MANAGEMENT", "OPERATOR", "FINANCE_MANAGER")),
+            Probe.of(HttpMethod.POST, "/api/admin/users/" + MISSING + "/unlock", Set.of("ADMIN"),
+                    Set.of("MANAGEMENT", "OPERATOR", "FINANCE_MANAGER")),
             Probe.of(HttpMethod.GET, "/api/admin/settings", Set.of("ADMIN"), Set.of("MANAGEMENT")),
             Probe.of(HttpMethod.GET, "/api/settings", Set.of("ADMIN"), Set.of("MANAGEMENT")),
             Probe.of(HttpMethod.GET, "/api/audit-logs", Set.of("ADMIN", "MANAGEMENT"), Set.of("OPERATOR")),
@@ -401,6 +406,8 @@ class RoleAccessIT extends AbstractIntegrationTest {
             Map.entry("POST /api/admin/attribute-definitions", 400), // no body: validation answers 400 after method security
             Map.entry("POST /api/admin/attribute-definitions/999999/activate", 404),
             Map.entry("POST /api/admin/attribute-definitions/999999/deactivate", 404),
+            Map.entry("POST /api/admin/users/999999/reset-password", 404),
+            Map.entry("POST /api/admin/users/999999/unlock", 404),
             Map.entry("POST /api/capa/999999/close", 404),
             Map.entry("POST /api/capa/from-rejection/999999", 404),
             Map.entry("POST /api/complaints", 404), // the body names a customer and batch that do not exist
