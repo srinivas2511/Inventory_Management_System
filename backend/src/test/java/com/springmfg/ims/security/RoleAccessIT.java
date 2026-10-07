@@ -133,6 +133,11 @@ class RoleAccessIT extends AbstractIntegrationTest {
                     Set.of("ADMIN", "ENGINEER", "PRODUCTION_MANAGER", "SUPERVISOR", "QUALITY_MANAGER", "STORE_MANAGER",
                             "STORE_OPERATOR", "PURCHASE_MANAGER", "SALES", "MANAGEMENT", "CONTROLLER", "PLANNER"),
                     Set.of("OPERATOR", "DISPATCH", "MAINTENANCE", "FINANCE_MANAGER", "ACCOUNTANT")),
+            // the dashboard charts are fed by the trends endpoint under the same permission as the KPIs
+            Probe.of(HttpMethod.GET, "/api/dashboard/trends",
+                    Set.of("ADMIN", "ENGINEER", "PRODUCTION_MANAGER", "SUPERVISOR", "QUALITY_MANAGER", "STORE_MANAGER",
+                            "STORE_OPERATOR", "PURCHASE_MANAGER", "SALES", "MANAGEMENT", "CONTROLLER", "PLANNER"),
+                    Set.of("OPERATOR", "DISPATCH", "MAINTENANCE", "FINANCE_MANAGER", "ACCOUNTANT")),
             // DESIGN §12 steps 20-21: quality traces an FG batch back and a material batch forward (a missing id is 404)
             Probe.of(HttpMethod.GET, "/api/traceability/fg-batch/" + MISSING,
                     Set.of("ADMIN", "QUALITY_MANAGER", "MANAGEMENT"),
@@ -158,6 +163,12 @@ class RoleAccessIT extends AbstractIntegrationTest {
             Probe.withBody(HttpMethod.POST, "/api/production-orders/999999999/material-returns",
                     "{\"materialId\":1,\"quantity\":1}",
                     Set.of("ADMIN", "PRODUCTION_MANAGER"), Set.of("OPERATOR", "SALES", "QUALITY_MANAGER")),
+            // QCI-04/05: putting an incoming inspection on hold needs QUALITY_HOLD, re-inspecting needs QUALITY_INSPECT
+            Probe.withBody(HttpMethod.POST, "/api/quality/inspections/" + MISSING + "/hold",
+                    "{\"reason\":\"probe\"}",
+                    Set.of("ADMIN", "QUALITY_MANAGER"), Set.of("OPERATOR", "SALES", "STORE_MANAGER", "DISPATCH")),
+            Probe.of(HttpMethod.POST, "/api/quality/inspections/" + MISSING + "/reinspect",
+                    Set.of("ADMIN", "QUALITY_MANAGER"), Set.of("OPERATOR", "SALES", "STORE_MANAGER", "DISPATCH")),
             // assigning operators to production work needs PRODUCTION_ASSIGN (managers and supervisors); a missing target is a 404
             Probe.withBody(HttpMethod.PUT, "/api/production/operations/" + MISSING + "/assignment",
                     "{\"operatorId\":null,\"reason\":null}",
@@ -448,6 +459,8 @@ class RoleAccessIT extends AbstractIntegrationTest {
             Map.entry("GET /api/spare-parts/999999", 404),
             Map.entry("GET /api/spc/charts/999999", 404),
             Map.entry("POST /api/ap/invoices/999999/match-override", 404),
+            Map.entry("POST /api/quality/inspections/999999/hold", 404),
+            Map.entry("POST /api/quality/inspections/999999/reinspect", 404),
             Map.entry("POST /api/admin/attribute-definitions", 400), // no body: validation answers 400 after method security
             Map.entry("POST /api/admin/attribute-definitions/999999/activate", 404),
             Map.entry("POST /api/admin/attribute-definitions/999999/deactivate", 404),

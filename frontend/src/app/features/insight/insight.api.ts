@@ -2,6 +2,11 @@ import { inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
+export interface DashboardTrendsDto {
+  production: { month: string; goodQty: number; rejectedQty: number }[];
+  inventoryValue: { month: string; closingValue: number }[];
+}
+
 export interface DashboardKpiDto {
   inventory: { itemsWithStock: number; totalValueInr: number };
   production: {
@@ -73,6 +78,10 @@ export class InsightApi {
 
   getDashboardKpis(): Observable<DashboardKpiDto> {
     return this.http.get<DashboardKpiDto>('/api/dashboard/kpis');
+  }
+
+  getDashboardTrends(months = 6): Observable<DashboardTrendsDto> {
+    return this.http.get<DashboardTrendsDto>('/api/dashboard/trends', { params: { months } });
   }
 
   getAlertCount(): Observable<AlertCountDto> {

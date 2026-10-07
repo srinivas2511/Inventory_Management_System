@@ -1,16 +1,26 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CurrencyPipe, DecimalPipe } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { RouterLink } from '@angular/router';
-import { DashboardKpiDto, InsightApi } from '../insight/insight.api';
+import { AnalyticsChartComponent } from '../analytics/analytics-chart.component';
+import { AnalyticsRow } from '../analytics/analytics.api';
+import { DashboardKpiDto, DashboardTrendsDto, InsightApi } from '../insight/insight.api';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
   providers: [InsightApi],
-  imports: [MatCardModule, MatIconModule, MatProgressSpinnerModule, RouterLink, CurrencyPipe, DecimalPipe],
+  imports: [
+    MatCardModule,
+    MatIconModule,
+    MatProgressSpinnerModule,
+    RouterLink,
+    CurrencyPipe,
+    DecimalPipe,
+    AnalyticsChartComponent,
+  ],
   template: `
     <h1 class="mat-h1">Dashboard</h1>
 
@@ -132,6 +142,28 @@ import { DashboardKpiDto, InsightApi } from '../insight/insight.api';
         </mat-card>
       </div>
     }
+
+    @if (trends(); as t) {
+      <div class="chart-grid">
+        <mat-card appearance="outlined">
+          <mat-card-header><mat-card-title>Production output by month</mat-card-title></mat-card-header>
+          <mat-card-content>
+            <app-analytics-chart
+              [rows]="productionRows()"
+              xColumn="month"
+              [yColumns]="['goodQty', 'rejectedQty']"
+              type="BAR"
+            />
+          </mat-card-content>
+        </mat-card>
+        <mat-card appearance="outlined">
+          <mat-card-header><mat-card-title>Inventory value (INR)</mat-card-title></mat-card-header>
+          <mat-card-content>
+            <app-analytics-chart [rows]="inventoryRows()" xColumn="month" [yColumns]="['closingValue']" type="LINE" />
+          </mat-card-content>
+        </mat-card>
+      </div>
+    }
   `,
   styles: `
     .kpi-grid {
@@ -172,6 +204,12 @@ import { DashboardKpiDto, InsightApi } from '../insight/insight.api';
       justify-content: center;
       padding: 48px;
     }
+    .chart-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      gap: 16px;
+      padding-bottom: 16px;
+    }
   `,
 })
 export class DashboardComponent implements OnInit {
@@ -179,6 +217,18 @@ export class DashboardComponent implements OnInit {
 
   protected readonly loading = signal(false);
   protected readonly kpis = signal<DashboardKpiDto | null>(null);
+  protected readonly trends = signal<DashboardTrendsDto | null>(null);
+
+  protected readonly productionRows = computed<AnalyticsRow[]>(() =>
+    (this.trends()?.production ?? []).map((p) => ({
+      month: p.month.slice(0, 7),
+      goodQty: p.goodQty,
+      rejectedQty: p.rejectedQty,
+    })),
+  );
+  protected readonly inventoryRows = computed<AnalyticsRow[]>(() =>
+    (this.trends()?.inventoryValue ?? []).map((v) => ({ month: v.month.slice(0, 7), closingValue: v.closingValue })),
+  );
 
   ngOnInit(): void {
     this.loading.set(true);
@@ -188,6 +238,10 @@ export class DashboardComponent implements OnInit {
         this.loading.set(false);
       },
       error: () => this.loading.set(false),
+    });
+    this.api.getDashboardTrends().subscribe({
+      next: (t) => this.trends.set(t),
+      error: () => this.trends.set(null),
     });
   }
 }
