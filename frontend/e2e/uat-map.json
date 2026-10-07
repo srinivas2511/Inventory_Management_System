@@ -1,0 +1,27 @@
+{
+  "_comment": "UAT checklist IDs that are covered by a test whose title does not name the ID (workflow steps, combined tests). UatTraceabilityTest checks that every entry points at an existing spec containing the quoted test title, so the map cannot go stale. An ID that a test names in its own title (for example 'FIN-02 ...') needs no entry. Map an ID only to a test that really covers it.",
+  "PRC-02": [{ "spec": "demo-workflow.spec.ts", "test": "S01 purchase1 creates the PO (50 kg wire) and submits it" }],
+  "PRC-03": [{ "spec": "demo-workflow.spec.ts", "test": "S01 purchase1 creates the PO (50 kg wire) and submits it" }],
+  "PRC-05": [{ "spec": "demo-workflow.spec.ts", "test": "S02 admin approves and sends the PO" }],
+  "PRC-06": [{ "spec": "demo-workflow.spec.ts", "test": "S03 storemgr1 receives 50 kg: batch lands in QUARANTINE" }],
+  "PRD-01": [{ "spec": "demo-workflow.spec.ts", "test": "S07 prodmgr1 creates, approves and releases the production order" }],
+  "PRD-02": [{ "spec": "demo-workflow.spec.ts", "test": "S09 admin issues 2.25 kg wire to the order" }],
+  "PRD-03": [{ "spec": "negative/business-rules.spec.ts", "test": "NEG-02 issuing more than the available stock is refused" }],
+  "PRD-04": [{ "spec": "demo-workflow.spec.ts", "test": "S10 operator1 runs Coiling" }],
+  "PRD-05": [{ "spec": "demo-workflow.spec.ts", "test": "S11 operator1 completes the last operation" }],
+  "QCI-02": [{ "spec": "demo-workflow.spec.ts", "test": "S05 quality1 accepts the incoming inspection" }],
+  "QCF-01": [{ "spec": "demo-workflow.spec.ts", "test": "S13 quality1 records the final inspection" }],
+  "QCF-02": [{ "spec": "demo-workflow.spec.ts", "test": "S13 quality1 records the final inspection" }],
+  "QCF-03": [{ "spec": "demo-workflow.spec.ts", "test": "S11 operator1 completes the last operation" }],
+  "QCF-06": [{ "spec": "demo-workflow.spec.ts", "test": "S20 admin traces the FG batch back to its material batches" }],
+  "SAL-02": [{ "spec": "demo-workflow.spec.ts", "test": "S14 sales1 creates the sales order (30 pcs), confirms it; admin approves" }],
+  "SAL-03": [
+    { "spec": "demo-workflow.spec.ts", "test": "S14 sales1 creates the sales order (30 pcs), confirms it; admin approves" }
+  ],
+  "SAL-04": [{ "spec": "demo-workflow.spec.ts", "test": "S15 sales1 cannot reserve more than the available FG, then reserves 30 pcs" }],
+  "SAL-05": [{ "spec": "demo-workflow.spec.ts", "test": "S15 sales1 cannot reserve more than the available FG, then reserves 30 pcs" }],
+  "SAL-06": [{ "spec": "demo-workflow.spec.ts", "test": "S16 dispatch1 dispatches 30 pcs" }],
+  "SAL-07": [{ "spec": "demo-workflow.spec.ts", "test": "S16 dispatch1 dispatches 30 pcs" }],
+  "SEC-03": [{ "spec": "security/security.spec.ts", "test": "SEC-02/03/04 security headers are present on responses" }],
+  "SEC-04": [{ "spec": "security/security.spec.ts", "test": "SEC-02/03/04 security headers are present on responses" }]
+}
