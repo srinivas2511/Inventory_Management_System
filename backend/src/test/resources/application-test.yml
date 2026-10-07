@@ -10,3 +10,10 @@ ims:
     webhook:
       allow-private-targets: true    # the tests deliver to a server on localhost
       poll-delay-ms: 3600000         # the delivery job never fires on its own; tests call processDue()
+
+management:
+  endpoints:
+    web:
+      exposure:
+        # production-like exposure so ActuatorExposureIT proves the security rule (D-35); the dev profile exposes only health,info
+        include: health,info,metrics,prometheus
