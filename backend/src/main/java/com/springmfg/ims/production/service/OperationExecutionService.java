@@ -63,6 +63,7 @@ public class OperationExecutionService {
     private final Clock clock;
     private final List<ConversionCostLookup> conversionCostLookups;
     private final OperatorDirectory operatorDirectory;
+    private final FgBatchSourceRecorder sourceRecorder;
 
     public OperationExecutionService(
             ProductionOperationRepository opRepo,
@@ -83,7 +84,8 @@ public class OperationExecutionService {
             OrderMaterialService materialService,
             Clock clock,
             List<ConversionCostLookup> conversionCostLookups,
-            OperatorDirectory operatorDirectory) {
+            OperatorDirectory operatorDirectory,
+            FgBatchSourceRecorder sourceRecorder) {
         this.opRepo = opRepo;
         this.orderRepo = orderRepo;
         this.outputRepo = outputRepo;
@@ -103,6 +105,7 @@ public class OperationExecutionService {
         this.clock = clock;
         this.conversionCostLookups = conversionCostLookups;
         this.operatorDirectory = operatorDirectory;
+        this.sourceRecorder = sourceRecorder;
     }
 
     @Transactional
@@ -111,6 +114,11 @@ public class OperationExecutionService {
         if (!"PENDING".equals(op.getStatus())) {
             throw new BusinessRuleException(ErrorCode.ILLEGAL_STATE_TRANSITION,
                     "Operation must be PENDING to start, current: " + op.getStatus());
+        }
+        String blocked = opRepo.startBlockedReason(op);
+        if (blocked != null) {
+            throw new BusinessRuleException(ErrorCode.ILLEGAL_STATE_TRANSITION,
+                    "Operation " + op.getSequenceNo() + " cannot start: " + blocked);
         }
         op.setStatus("IN_PROGRESS");
         op.setStartedAt(Instant.now(clock));
@@ -306,6 +314,7 @@ public class OperationExecutionService {
         FinishedGoodsCostService.FgCost fgCost = fgCostService.resolve(orderId, order.getProductId(), lastOp.getGoodQty(), conversionCost);
         fgBatch.setUnitCost(fgCost.unitCost());
         fgBatch = fgBatchRepo.save(fgBatch);
+        sourceRecorder.record(orderId, fgBatch.getId());
 
         // Post PRODUCTION_RECEIPT to FG Quality Pending location
         Long warehouseId = findDefaultWarehouseId(orderId);
@@ -373,7 +382,8 @@ public class OperationExecutionService {
                 op.getProductionOrderId(),
                 owner != null ? owner.getOrderNumber() : null,
                 owner != null ? owner.getProductId() : null,
-                !opRepo.existsByProductionOrderIdAndSequenceNoGreaterThan(op.getProductionOrderId(), op.getSequenceNo()));
+                !opRepo.existsByProductionOrderIdAndSequenceNoGreaterThan(op.getProductionOrderId(), op.getSequenceNo()),
+                opRepo.startBlockedReason(op));
     }
 
     private Long currentUserId() {

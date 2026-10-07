@@ -99,6 +99,7 @@ class FgRejectionAndTraceIT extends AbstractIntegrationTest {
     @Autowired TraceabilityService traceabilityService;
     @Autowired JdbcTemplate jdbc;
     @Autowired TestData td;
+    @Autowired org.springframework.cache.CacheManager cacheManager;
 
     @BeforeEach
     void login() {
@@ -382,5 +383,162 @@ class FgRejectionAndTraceIT extends AbstractIntegrationTest {
         assertThat(material.trail()).extracting(TraceabilityDto.TraceStep::stepType)
                 .contains("GRN_RECEIPT", "QUALITY_INSPECTION", "MATERIAL_ISSUED");
         assertThat(material.trail()).allSatisfy(step -> assertThat(step.timestamp()).isNotNull());
+    }
+
+    // ---- D-25 -----------------------------------------------------------------------------------------------------
+
+    private record MaterialBatchRow(Long id, String number, String heat, String certificate, String poNumber) {
+    }
+
+    private List<MaterialBatchRow> materialBatchesIssuedTo(Long orderId) {
+        return jdbc.query("""
+                SELECT mb.id, mb.batch_number, mb.heat_number, mb.certificate_number, po.po_number
+                  FROM ims.material_issue_lines mil
+                  JOIN ims.material_issues mi ON mi.id = mil.material_issue_id
+                  JOIN ims.material_batches mb ON mb.id = mil.material_batch_id
+                  LEFT JOIN ims.purchase_orders po ON po.id = mb.purchase_order_id
+                 WHERE mi.production_order_id = ?
+                 GROUP BY mb.id, mb.batch_number, mb.heat_number, mb.certificate_number, po.po_number
+                 ORDER BY mb.batch_number
+                """, (rs, i) -> new MaterialBatchRow(rs.getLong(1), rs.getString(2), rs.getString(3),
+                rs.getString(4), rs.getString(5)), orderId);
+    }
+
+    @Test
+    @DisplayName("TRC-IT-2 (D-25): the FG trace names every material batch, quantity, supplier, PO and heat that fed it; the material trace reaches the FG batch, dispatch and customer")
+    void backwardTraceNamesTheMaterialBatchesAndForwardTraceReachesTheCustomer() {
+        Produced p = releasedOrder();
+        runEveryOperation(p.order());
+        Long fgBatchId = fgBatchOf(p.order().id());
+        finalDecision(fgBatchId, "100", "0");
+        DispatchDto created = reserveAndDispatch(p, fgBatchId, "60");
+
+        // D-26: the dispatch audit row carries the dispatch id and its state in the right columns.
+        var audit = jdbc.queryForMap("""
+                SELECT old_value::text AS old_value, new_value::text AS new_value
+                  FROM ims.audit_logs WHERE action = 'DISPATCH_CREATED' AND entity_id = ?
+                """, String.valueOf(created.id()));
+        assertThat(audit.get("old_value")).isNull();
+        assertThat((String) audit.get("new_value")).contains("DISPATCHED");
+
+        List<MaterialBatchRow> batches = materialBatchesIssuedTo(p.order().id());
+        assertThat(batches).as("80 kg were issued from the two receipts of 40 kg").hasSize(2);
+
+        TraceabilityDto fg = traceabilityService.traceFgBatch(fgBatchId);
+        List<TraceabilityDto.TraceStep> sources = fg.trail().stream()
+                .filter(s -> "MATERIAL_SOURCE".equals(s.stepType())).toList();
+        assertThat(sources).extracting(TraceabilityDto.TraceStep::reference)
+                .containsExactlyElementsOf(batches.stream().map(MaterialBatchRow::number).toList());
+        for (int i = 0; i < batches.size(); i++) {
+            MaterialBatchRow batch = batches.get(i);
+            assertThat(sources.get(i).description())
+                    .contains("qty used: 40.000")
+                    .contains("supplier: IT Supplier")
+                    .contains("PO: " + batch.poNumber())
+                    .contains("heat: " + batch.heat())
+                    .contains("certificate: " + batch.certificate());
+            assertThat(sources.get(i).timestamp()).isNotNull();
+        }
+
+        String customer = jdbc.queryForObject("""
+                SELECT c.name FROM ims.dispatches d
+                  JOIN ims.dispatch_items di ON di.dispatch_id = d.id
+                  JOIN ims.customers c ON c.id = d.customer_id
+                 WHERE di.fg_batch_id = ?
+                """, String.class, fgBatchId);
+        String fgNumber = jdbc.queryForObject("SELECT batch_number FROM ims.fg_batches WHERE id = ?", String.class, fgBatchId);
+        TraceabilityDto forward = traceabilityService.traceMaterialBatch(batches.get(0).id());
+        TraceabilityDto.TraceStep produced = forward.trail().stream()
+                .filter(s -> "PRODUCED".equals(s.stepType())).findFirst().orElseThrow();
+        assertThat(produced.reference()).isEqualTo(fgNumber);
+        assertThat(produced.description()).contains(p.order().orderNumber()).contains("produced qty: 100");
+        TraceabilityDto.TraceStep dispatched = forward.trail().stream()
+                .filter(s -> "DISPATCHED".equals(s.stepType())).findFirst().orElseThrow();
+        assertThat(dispatched.description()).contains("Dispatched qty: 60").contains(fgNumber).contains(customer);
+    }
+
+    @Test
+    @DisplayName("TRC-IT-3 (D-25): with batch-level granularity the FG batch carries source links, and the trace reads them")
+    void batchGranularityRecordsTheSourceLinksAndTheTraceUsesThem() {
+        jdbc.update("UPDATE ims.system_settings SET value = 'BATCH' WHERE key = 'quality.trace_granularity'");
+        cacheManager.getCache("systemSettings").clear();
+        try {
+            Produced p = releasedOrder();
+            runEveryOperation(p.order());
+            Long fgBatchId = fgBatchOf(p.order().id());
+
+            List<MaterialBatchRow> batches = materialBatchesIssuedTo(p.order().id());
+            List<BigDecimal> linked = jdbc.queryForList("""
+                    SELECT quantity FROM ims.fg_batch_material_sources WHERE fg_batch_id = ? ORDER BY material_batch_id
+                    """, BigDecimal.class, fgBatchId);
+            assertThat(linked).as("one link per issued material batch").hasSize(batches.size());
+            assertThat(linked).allSatisfy(q -> assertThat(q).isEqualByComparingTo("40"));
+
+            long sources = traceabilityService.traceFgBatch(fgBatchId).trail().stream()
+                    .filter(s -> "MATERIAL_SOURCE".equals(s.stepType())).count();
+            assertThat(sources).isEqualTo(2);
+        } finally {
+            jdbc.update("UPDATE ims.system_settings SET value = 'ORDER' WHERE key = 'quality.trace_granularity'");
+            cacheManager.getCache("systemSettings").clear();
+        }
+    }
+
+    // ---- D-15 / D-22b -----------------------------------------------------------------------------------------------
+
+    private List<ProductionOperationDto> orderedOperations(Long orderId) {
+        return orderService.findById(orderId).operations().stream()
+                .sorted(Comparator.comparing(ProductionOperationDto::sequenceNo)).toList();
+    }
+
+    @Test
+    @DisplayName("PRD-IT-SEQ (D-15): an operation cannot start before the previous one is complete, and says why")
+    void anOperationCannotStartBeforeThePreviousOneIsComplete() {
+        Produced p = releasedOrder();
+        List<ProductionOperationDto> ops = orderedOperations(p.order().id());
+        Long first = ops.get(0).id();
+        Long second = ops.get(1).id();
+        assertThat(ops.get(0).startBlockedReason()).as("the first operation can start").isNull();
+        assertThat(ops.get(1).startBlockedReason()).contains("Operation 10 must be completed first");
+
+        assertThatThrownBy(() -> executionService.startOperation(second, null))
+                .isInstanceOf(BusinessRuleException.class)
+                .hasMessageContaining("Operation 20 cannot start")
+                .hasMessageContaining("Operation 10 must be completed first");
+
+        executionService.startOperation(first, null);
+        assertThatThrownBy(() -> executionService.startOperation(second, null))
+                .as("started is not completed")
+                .isInstanceOf(BusinessRuleException.class)
+                .hasMessageContaining("it is IN_PROGRESS");
+
+        executionService.recordOutput(new RecordOutputRequest(first, new BigDecimal("100"), BigDecimal.ZERO,
+                BigDecimal.ZERO, null, null, null, null, "A", "seq"));
+        executionService.completeOperation(first);
+
+        assertThat(orderedOperations(p.order().id()).get(1).startBlockedReason()).isNull();
+        assertThat(executionService.startOperation(second, null).status()).isEqualTo("IN_PROGRESS");
+    }
+
+    @Test
+    @DisplayName("PRD-IT-PLAN (D-22b): the plan applies from the moment of release: the issue made right after release counted against it, and nothing outside it or above it is issued")
+    void theMaterialPlanAppliesRightAfterReleaseAndRefusesUnplannedOrExcessMaterial() {
+        Produced p = releasedOrder();
+        BigDecimal issued = jdbc.queryForObject(
+                "SELECT issued_qty FROM ims.production_order_materials WHERE production_order_id = ?",
+                BigDecimal.class, p.order().id());
+        assertThat(issued).as("the 80 kg issued straight after release were counted against the plan snapshot")
+                .isEqualByComparingTo("80");
+
+        Material other = td.material();
+        assertThatThrownBy(() -> issueService.issue(new CreateIssueRequest(p.order().id(), WAREHOUSE_ID,
+                List.of(new CreateIssueRequest.IssueLineRequest(other.getId(), new BigDecimal("1.000"), null)), "x")))
+                .isInstanceOf(BusinessRuleException.class)
+                .hasMessageContaining("not part of the plan");
+
+        assertThatThrownBy(() -> issueService.issue(new CreateIssueRequest(p.order().id(), WAREHOUSE_ID,
+                List.of(new CreateIssueRequest.IssueLineRequest(p.material().getId(), new BigDecimal("100.000"), null)),
+                "x")))
+                .isInstanceOf(BusinessRuleException.class)
+                .hasMessageContaining("exceed planned");
     }
 }

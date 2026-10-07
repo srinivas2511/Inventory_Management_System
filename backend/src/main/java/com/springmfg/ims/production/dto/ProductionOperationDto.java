@@ -25,4 +25,5 @@ public record ProductionOperationDto(
         Long productionOrderId,
         String productionOrderNumber,
         Long productId,
-        boolean finalOperation) {}
+        boolean finalOperation,
+        String startBlockedReason) {}

@@ -22,4 +22,6 @@ public interface ProductionOrderMaterialRepository extends JpaRepository<Product
     List<ProductionOrderMaterial> lockByProductionOrderId(@Param("orderId") Long orderId);
 
     Optional<ProductionOrderMaterial> findByProductionOrderIdAndMaterialId(Long productionOrderId, Long materialId);
+
+    boolean existsByProductionOrderId(Long productionOrderId);
 }

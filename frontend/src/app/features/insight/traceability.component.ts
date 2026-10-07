@@ -124,6 +124,7 @@ export class TraceabilityComponent {
       GRN_RECEIPT: 'local_shipping',
       QUALITY_INSPECTION: 'fact_check',
       MATERIAL_ISSUED: 'output',
+      MATERIAL_SOURCE: 'inventory_2',
       PRODUCED: 'precision_manufacturing',
       DISPATCHED: 'send',
     };

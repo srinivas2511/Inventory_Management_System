@@ -94,6 +94,17 @@ describe('MyWorkComponent', () => {
     expect(text).not.toContain('last operation');
   });
 
+  it('disables Start and says why when the previous operation is not complete', async () => {
+    await show([
+      { ...op, status: 'PENDING', startBlockedReason: 'Operation 10 must be completed first (it is PENDING)' },
+    ]);
+    const start = Array.from(fixture.nativeElement.querySelectorAll('button') as NodeListOf<HTMLButtonElement>).find(
+      (b) => b.textContent?.includes('Start'),
+    );
+    expect(start?.disabled).toBe(true);
+    expect(fixture.nativeElement.textContent).toContain('Operation 10 must be completed first');
+  });
+
   it('completes the operation by its own id and refreshes the list', async () => {
     await show([{ ...op, status: 'IN_PROGRESS', goodQty: 100 }]);
     click('Complete');

@@ -11,9 +11,10 @@ test.describe('Negative tests and business rules', () => {
     const { material, warehouse } = await demoIds();
     const rec = await receiveViaApi(10);
     const order = await releasedOrder(10);
-    // 10 pieces plan 0.45 of material (0.045 each). 0.4 is inside the plan, so only the quarantine rule can refuse it;
-    // 0.5 is above plan + 10% tolerance and is refused for that reason first once the order's material snapshot
-    // exists (it is created just after release returns, defect D-22).
+    // 10 pieces plan 0.45 kg of material (0.045 each). 0.4 kg is inside the plan whichever BOM is active, so only the
+    // quarantine rule can refuse it. 0.5 kg is not safe: with the BOM the workflow spec activates (0% scrap) the cap is
+    // plan + 10% tolerance = 0.495 and the plan check refuses it first; it only passed the plan check while the
+    // demo loader's 3% scrap BOM was still active (cap 0.50985).
     const r = await apiFor(U.storeMgr).post('/api/production/issues', {
       productionOrderId: order.id,
       warehouseId: warehouse.id,

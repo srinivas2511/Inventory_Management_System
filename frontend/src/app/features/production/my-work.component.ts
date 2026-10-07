@@ -29,6 +29,7 @@ export interface MyWorkItemDto {
   rejectedQty: number;
   scrapQty: number;
   finalOperation: boolean;
+  startBlockedReason?: string | null;
 }
 
 @Component({
@@ -144,9 +145,17 @@ export interface MyWorkItemDto {
             </mat-card-content>
             <mat-card-actions>
               @if (item.status === 'PENDING') {
-                <button mat-raised-button color="primary" (click)="startOp(item.id)">
+                <button
+                  mat-raised-button
+                  color="primary"
+                  [disabled]="!!item.startBlockedReason"
+                  (click)="startOp(item.id)"
+                >
                   <mat-icon>play_arrow</mat-icon> Start
                 </button>
+                @if (item.startBlockedReason) {
+                  <span class="start-blocked" data-testid="start-blocked-reason">{{ item.startBlockedReason }}</span>
+                }
               }
               @if (item.status === 'PAUSED') {
                 <button mat-raised-button color="primary" (click)="resumeOp(item.id)">
@@ -170,6 +179,11 @@ export interface MyWorkItemDto {
   `,
   styles: [
     `
+      .start-blocked {
+        color: #b3261e;
+        font-size: 12px;
+        margin-left: 8px;
+      }
       .work-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));

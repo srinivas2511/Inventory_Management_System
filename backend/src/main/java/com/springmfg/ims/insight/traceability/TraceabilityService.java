@@ -78,6 +78,38 @@ public class TraceabilityService {
                     "Issued qty: " + r[1], toInstant(r[2])));
         }
 
+        // Forward: orders that consumed the batch -> the FG batches they produced -> dispatches -> customers
+        // (DESIGN §5.7 forward query).
+        var forwardRows = (List<Object[]>) em.createNativeQuery("""
+                SELECT po.order_number, fg.batch_number, fg.produced_qty, fg.created_at,
+                       d.dispatch_number, di.quantity, d.dispatch_date, c.name
+                FROM ims.material_issue_lines mil
+                JOIN ims.material_issues mi ON mi.id = mil.material_issue_id
+                JOIN ims.production_orders po ON po.id = mi.production_order_id
+                JOIN ims.fg_batches fg ON fg.production_order_id = po.id
+                LEFT JOIN ims.dispatch_items di ON di.fg_batch_id = fg.id
+                LEFT JOIN ims.dispatches d ON d.id = di.dispatch_id
+                LEFT JOIN ims.customers c ON c.id = d.customer_id
+                WHERE mil.material_batch_id = :batchId
+                GROUP BY po.order_number, fg.batch_number, fg.produced_qty, fg.created_at,
+                         d.dispatch_number, di.quantity, d.dispatch_date, c.name
+                ORDER BY fg.created_at, fg.batch_number, d.dispatch_date, d.dispatch_number
+                """)
+                .setParameter("batchId", batchId)
+                .getResultList();
+        java.util.Set<String> producedSeen = new java.util.HashSet<>();
+        for (Object[] r : forwardRows) {
+            String fgNumber = r[1].toString();
+            if (producedSeen.add(fgNumber)) {
+                trail.add(new TraceabilityDto.TraceStep("PRODUCED", fgNumber,
+                        "Finished goods from order " + r[0] + ", produced qty: " + r[2], toInstant(r[3])));
+            }
+            if (r[4] != null) {
+                trail.add(new TraceabilityDto.TraceStep("DISPATCHED", r[4].toString(),
+                        "Dispatched qty: " + r[5] + " of " + fgNumber + " to " + r[7], toInstant(r[6])));
+            }
+        }
+
         return new TraceabilityDto("MATERIAL_BATCH", batchId, batchNumber, trail);
     }
 
@@ -105,6 +137,52 @@ public class TraceabilityService {
         for (Object[] r : poRows) {
             trail.add(new TraceabilityDto.TraceStep("PRODUCED", r[0].toString(),
                     "Produced qty: " + r[1], toInstant(r[2])));
+        }
+
+        // Backward (DESIGN §5.7): the raw-material batches, supplier and PO that fed this batch. Batch-level links in
+        // fg_batch_material_sources take precedence when they exist; otherwise every batch issued to the order counts.
+        Number linkCount = (Number) em.createNativeQuery(
+                "SELECT COUNT(*) FROM ims.fg_batch_material_sources WHERE fg_batch_id = :fgBatchId")
+                .setParameter("fgBatchId", fgBatchId)
+                .getSingleResult();
+        String sourceSql = linkCount.longValue() > 0
+                ? """
+                  SELECT mb.batch_number, m.material_code, mb.heat_number, mb.certificate_number, s.name,
+                         po.po_number, src.quantity, mb.received_date
+                  FROM ims.fg_batch_material_sources src
+                  JOIN ims.material_batches mb ON mb.id = src.material_batch_id
+                  JOIN ims.materials m ON m.id = mb.material_id
+                  LEFT JOIN ims.suppliers s ON s.id = mb.supplier_id
+                  LEFT JOIN ims.purchase_orders po ON po.id = mb.purchase_order_id
+                  WHERE src.fg_batch_id = :fgBatchId
+                  ORDER BY mb.batch_number
+                  """
+                : """
+                  SELECT mb.batch_number, m.material_code, mb.heat_number, mb.certificate_number, s.name,
+                         po.po_number, SUM(mil.quantity), mb.received_date
+                  FROM ims.fg_batches fg
+                  JOIN ims.material_issues mi ON mi.production_order_id = fg.production_order_id
+                  JOIN ims.material_issue_lines mil ON mil.material_issue_id = mi.id
+                  JOIN ims.material_batches mb ON mb.id = mil.material_batch_id
+                  JOIN ims.materials m ON m.id = mb.material_id
+                  LEFT JOIN ims.suppliers s ON s.id = mb.supplier_id
+                  LEFT JOIN ims.purchase_orders po ON po.id = mb.purchase_order_id
+                  WHERE fg.id = :fgBatchId
+                  GROUP BY mb.batch_number, m.material_code, mb.heat_number, mb.certificate_number, s.name,
+                           po.po_number, mb.received_date
+                  ORDER BY mb.batch_number
+                  """;
+        var sourceRows = (List<Object[]>) em.createNativeQuery(sourceSql)
+                .setParameter("fgBatchId", fgBatchId)
+                .getResultList();
+        for (Object[] r : sourceRows) {
+            StringBuilder what = new StringBuilder("Material ").append(r[1]).append(", qty used: ").append(r[6]);
+            if (r[4] != null) what.append(", supplier: ").append(r[4]);
+            if (r[5] != null) what.append(", PO: ").append(r[5]);
+            if (r[2] != null) what.append(", heat: ").append(r[2]);
+            if (r[3] != null) what.append(", certificate: ").append(r[3]);
+            trail.add(new TraceabilityDto.TraceStep("MATERIAL_SOURCE", r[0].toString(), what.toString(),
+                    toInstant(r[7])));
         }
 
         // Quality inspection

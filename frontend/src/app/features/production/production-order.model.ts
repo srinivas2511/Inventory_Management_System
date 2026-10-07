@@ -32,6 +32,7 @@ export interface ProductionOperationDto {
   rejectedQty: number;
   scrapQty: number;
   finalOperation: boolean;
+  startBlockedReason?: string | null;
 }
 
 /** Mirrors ProductionOrderDto on the backend. */

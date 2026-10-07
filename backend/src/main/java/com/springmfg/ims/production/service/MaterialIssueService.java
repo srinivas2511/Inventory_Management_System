@@ -104,12 +104,19 @@ public class MaterialIssueService {
         issue = issueRepo.save(issue);
 
         List<IssueDto.IssueLineDto> lineDtos = new ArrayList<>();
+        boolean planned = pomRepo.existsByProductionOrderId(req.productionOrderId());
 
         for (CreateIssueRequest.IssueLineRequest lineReq : req.lines()) {
             // Check tolerance
             ProductionOrderMaterial pom = pomRepo
                     .findByProductionOrderIdAndMaterialId(req.productionOrderId(), lineReq.materialId())
                     .orElse(null);
+            if (pom == null && planned) {
+                // The order has a material plan (the BOM snapshot taken at release) and this material is not in it:
+                // DESIGN 4.6 allows nothing above plan without an approved material request.
+                throw new BusinessRuleException(ErrorCode.ISSUE_EXCEEDS_PLAN,
+                        "Material " + lineReq.materialId() + " is not part of the plan for this production order");
+            }
             if (pom != null) {
                 BigDecimal maxIssue = pom.getPlannedQty()
                         .multiply(BigDecimal.ONE.add(tolerancePct.divide(BigDecimal.valueOf(100), 6, RoundingMode.HALF_UP)));

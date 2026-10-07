@@ -398,7 +398,8 @@ public class ProductionOrderService {
                 op.getStartedAt(), op.getCompletedAt(),
                 op.getScheduledStart(), op.getScheduledEnd(),
                 order.getId(), order.getOrderNumber(), order.getProductId(),
-                !operationRepo.existsByProductionOrderIdAndSequenceNoGreaterThan(order.getId(), op.getSequenceNo()));
+                !operationRepo.existsByProductionOrderIdAndSequenceNoGreaterThan(order.getId(), op.getSequenceNo()),
+                operationRepo.startBlockedReason(op));
     }
 
     private List<String> allowedActions(String status) {
