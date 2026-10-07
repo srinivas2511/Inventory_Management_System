@@ -108,6 +108,17 @@ class DemoDataLoaderIT {
     }
 
     @Test
+    void theDemoDataShowsAnOpenLowStockAlert() {
+        // DESIGN 11.4: the alerts screen is not empty after a demo load. The scheduled sweep ran once at startup,
+        // before any demo data existed, so the loader seeds a material with no stock and runs the sweep itself.
+        assertThat(count("""
+                SELECT COUNT(*) FROM ims.alerts a JOIN ims.materials m ON m.id = a.entity_id
+                 WHERE a.alert_type = 'LOW_STOCK' AND a.entity_type = 'MATERIAL' AND a.resolved_at IS NULL
+                   AND m.material_code = 'DEMO-WR-LOWSTK'
+                """)).isEqualTo(1);
+    }
+
+    @Test
     void loadingASecondTimeChangesNothing() {
         long users = count("SELECT COUNT(*) FROM ims.users");
         long orders = count("SELECT COUNT(*) FROM ims.production_orders");

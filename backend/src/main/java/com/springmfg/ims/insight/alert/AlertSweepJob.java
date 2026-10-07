@@ -56,6 +56,15 @@ public class AlertSweepJob {
     @SchedulerLock(name = "alert_sweep", lockAtLeastFor = "PT5M", lockAtMostFor = "PT14M")
     @Transactional
     public void sweep() {
+        runSweep();
+    }
+
+    /**
+     * One sweep without the scheduler lock. The scheduled run holds the lock for at least five minutes, so a caller that
+     * needs a sweep now (the demo loader, once its data exists) would otherwise be skipped silently.
+     */
+    @Transactional
+    public void runSweep() {
         if (!settings.getBoolean("alert.low_stock.enabled", true)) return;
         log.info("Starting alert sweep");
 

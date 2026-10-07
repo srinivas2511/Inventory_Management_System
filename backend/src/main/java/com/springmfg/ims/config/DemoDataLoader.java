@@ -61,6 +61,7 @@ import com.springmfg.ims.production.service.OperationExecutionService;
 import com.springmfg.ims.production.service.ProductionOrderService;
 import com.springmfg.ims.quality.dto.FinalInspectionDecisionRequest;
 import com.springmfg.ims.quality.dto.QualityInspectionDto;
+import com.springmfg.ims.insight.alert.AlertSweepJob;
 import com.springmfg.ims.quality.repository.QualityInspectionRepository;
 import com.springmfg.ims.quality.service.FinalInspectionService;
 import com.springmfg.ims.sales.dto.AddSalesOrderItemRequest;
@@ -97,6 +98,7 @@ public class DemoDataLoader {
     private static final String SUPPLIER_CODE = "DEMO-KRISHNA";
     private static final String CUSTOMER_CODE  = "DEMO-AUTOINC";
     private static final String MATERIAL_CODE  = "DEMO-WR-65SI2";
+    private static final String LOW_STOCK_MATERIAL_CODE = "DEMO-WR-LOWSTK";
     private static final String PRODUCT_CODE   = "DEMO-CS-25X3";
 
     // warehouse 1 / locations 1-8 are created by V2 migration (MAIN-WH)
@@ -136,6 +138,7 @@ public class DemoDataLoader {
     private final SalesOrderService salesOrderService;
     private final ReservationService reservationService;
     private final DispatchService dispatchService;
+    private final AlertSweepJob alertSweepJob;
 
     public DemoDataLoader(
             UserRepository userRepo,
@@ -162,7 +165,8 @@ public class DemoDataLoader {
             FinalInspectionService finalInspectionService,
             SalesOrderService salesOrderService,
             ReservationService reservationService,
-            DispatchService dispatchService) {
+            DispatchService dispatchService,
+            AlertSweepJob alertSweepJob) {
         this.userRepo = userRepo;
         this.roleRepo = roleRepo;
         this.passwordEncoder = passwordEncoder;
@@ -188,6 +192,7 @@ public class DemoDataLoader {
         this.salesOrderService = salesOrderService;
         this.reservationService = reservationService;
         this.dispatchService = dispatchService;
+        this.alertSweepJob = alertSweepJob;
     }
 
     @EventListener(ApplicationReadyEvent.class)
@@ -213,6 +218,7 @@ public class DemoDataLoader {
             long fgBatchId  = step11_finalInspection(prodOrderId);
             long soId       = step12_salesOrder(customerId, productId);
             step13_reserveAndDispatch(soId, productId, fgBatchId);
+            step14_alertConditions(supplierId);
             log.info("DemoDataLoader: demo data load complete");
         } catch (Exception e) {
             log.error("DemoDataLoader: load failed — env may be partially seeded: {}", e.getMessage(), e);
@@ -535,6 +541,32 @@ public class DemoDataLoader {
                         new BigDecimal("14.5000"))),
                 "Demo dispatch — full order fulfilled"));
         log.info("step13: dispatch created — demo workflow complete");
+    }
+
+    // ── Step 14: a visible alert (DESIGN §11.4) ───────────────────────────────
+
+    /**
+     * A second wire grade that is on the books with a minimum stock but none on hand, so the low-stock check has
+     * something to find, then one alert sweep now that the demo data exists. The scheduled sweep ran once at startup,
+     * before any of this existed, and would not run again for 15 minutes.
+     */
+    public void step14_alertConditions(long supplierId) {
+        try {
+            if (materialRepo.findByMaterialCode(LOW_STOCK_MATERIAL_CODE).isEmpty()) {
+                materialService.create(new SaveMaterialRequest(
+                        LOW_STOCK_MATERIAL_CODE, "Music Wire 2.0mm (low stock demo)",
+                        "WIRE_ROD", "MW-A", new BigDecimal("2.000"),
+                        "KG", supplierId,
+                        new BigDecimal("100"), new BigDecimal("200"),
+                        new BigDecimal("1000"), new BigDecimal("120.0000"),
+                        null, "No stock on hand: raises the low-stock alert in the demo", null));
+                log.info("step14: low-stock demo material created");
+            }
+            alertSweepJob.runSweep();
+            log.info("step14: alert sweep run");
+        } catch (Exception e) {
+            log.warn("step14: alert conditions not seeded: {}", e.getMessage());
+        }
     }
 
     // ── Security context helper ───────────────────────────────────────────────
