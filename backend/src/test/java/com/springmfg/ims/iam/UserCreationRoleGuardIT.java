@@ -65,6 +65,7 @@ class UserCreationRoleGuardIT extends AbstractIntegrationTest {
         String username = "roleguard-" + SEQ.incrementAndGet();
         userAdminService.create(new CreateUserRequest(username, null, "Guard caller", username + "@guard.test", null,
                 PASSWORD, Set.of(roleCode)));
+        jdbc.update("UPDATE users SET must_change_password = FALSE WHERE username = ?", username);
         String body = mockMvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"username\":\"" + username + "\",\"password\":\"" + PASSWORD + "\"}"))
                 .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();

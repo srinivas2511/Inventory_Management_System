@@ -22,8 +22,8 @@ function toChangePassword(router: Router, url: string): UrlTree {
  * refresh cookie before the router resolves (see the APP_INITIALIZER), so a reload or a deep link arrives here
  * already signed in; otherwise the login page remembers where the user was going.
  *
- * The forced change is enforced here, in the browser, as a convenience for the user: the server does not refuse
- * other calls while a temporary password is in use.
+ * The forced change is enforced by the server (403 PASSWORD_CHANGE_REQUIRED on everything but the password-change
+ * calls); this guard just takes the user straight to the page instead of letting them hit that refusal.
  */
 export const authGuard: CanActivateFn = (_route, state) => {
   const session = inject(SessionStore);

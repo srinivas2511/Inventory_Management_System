@@ -42,7 +42,7 @@ public class ProblemDetailSecurityHandlers implements AuthenticationEntryPoint, 
         write(response, Problems.of(ErrorCode.ACCESS_DENIED, "You do not have permission to perform this action."));
     }
 
-    private void write(HttpServletResponse response, ProblemDetail problem) throws IOException {
+    public void write(HttpServletResponse response, ProblemDetail problem) throws IOException {
         response.setStatus(problem.getStatus());
         response.setContentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE);
         objectMapper.writeValue(response.getOutputStream(), problem);

@@ -320,7 +320,7 @@ public class AuthService {
         user.setMustChangePassword(false);
         user.setPermissionVersion(user.getPermissionVersion() + 1);
         userRepository.save(user);
-        permissionCache.evict(user.getId());
+        permissionCache.evictAfterCommit(user.getId());
     }
 
     private static String generateSecureToken() {

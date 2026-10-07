@@ -93,6 +93,8 @@ class IndustryVerticalIT extends AbstractIntegrationTest {
         } finally {
             SecurityContextHolder.clearContext();
         }
+        // admin-created users start with a temporary password; these tests are about the endpoints, not that step
+        jdbc.update("UPDATE users SET must_change_password = FALSE WHERE email LIKE ?", "%@vertical.test");
         for (String role : ROLES) {
             MvcResult login = mockMvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
                     .content("{\"username\":\"" + username(role) + "\",\"password\":\"" + PASSWORD + "\"}"))

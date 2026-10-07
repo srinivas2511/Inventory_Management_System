@@ -74,6 +74,33 @@ describe('HTTP interceptors', () => {
     expect(toast.error).toHaveBeenCalledWith('You do not have permission to perform this action.');
   });
 
+  it('sends a user with a temporary password to the change-password page instead of showing a permission toast', () => {
+    const session = TestBed.inject(SessionStore);
+    session.setUser({
+      id: 1,
+      username: 'new.user',
+      fullName: 'New User',
+      roles: ['OPERATOR'],
+      permissions: ['PRODUCT_VIEW'],
+      mustChangePassword: false,
+    });
+    const router = TestBed.inject(Router);
+    const navigate = spyOn(router, 'navigate').and.resolveTo(true);
+
+    let propagated = false;
+    http.get('/api/products').subscribe({ error: () => (propagated = true) });
+    backend
+      .expectOne('/api/products')
+      .flush({ code: 'PASSWORD_CHANGE_REQUIRED', status: 403 }, { status: 403, statusText: 'Forbidden' });
+
+    expect(propagated).toBeTrue();
+    expect(toast.error).not.toHaveBeenCalled();
+    expect(session.mustChangePassword()).toBeTrue();
+    expect(session.isLoggedIn()).toBeTrue();
+    expect(navigate).toHaveBeenCalledTimes(1);
+    expect(navigate.calls.mostRecent().args[0]).toEqual(['/change-password']);
+  });
+
   it('shows the business-rule detail for 422 and still propagates the error', () => {
     let propagated = false;
     http.post('/api/dispatches', {}).subscribe({ error: () => (propagated = true) });

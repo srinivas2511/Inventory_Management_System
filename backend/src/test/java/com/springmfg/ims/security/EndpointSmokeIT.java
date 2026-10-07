@@ -75,6 +75,8 @@ class EndpointSmokeIT extends AbstractIntegrationTest {
         } finally {
             SecurityContextHolder.clearContext();
         }
+        // admin-created users start with a temporary password; these tests are about the endpoints, not that step
+        jdbc.update("UPDATE users SET must_change_password = FALSE WHERE email LIKE ?", "%@smoke.test");
         var login = mockMvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
                 .content("{\"username\":\"" + username() + "\",\"password\":\"" + PASSWORD + "\"}")).andReturn();
         assertThat(login.getResponse().getStatus()).as("login").isEqualTo(200);

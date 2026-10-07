@@ -18,6 +18,8 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import com.springmfg.ims.auth.service.JwtService;
 import com.springmfg.ims.auth.service.UserPermissionCache;
 import com.springmfg.ims.auth.service.UserPermissionCache.CachedUser;
+import com.springmfg.ims.common.exception.ErrorCode;
+import com.springmfg.ims.common.exception.Problems;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
@@ -25,16 +27,23 @@ import io.jsonwebtoken.JwtException;
 /**
  * Validates the Bearer token, checks permission_version against the live cache,
  * and builds a fully-populated Authentication for Spring Security.
+ * <p>
+ * A user who still has to change a temporary password is held to the password-change allow-list here, on the
+ * server: every other {@code /api/**} call is answered with 403 {@code PASSWORD_CHANGE_REQUIRED}. The flag comes
+ * from the permission cache, which is evicted after commit whenever the flag changes.
  */
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final UserPermissionCache permissionCache;
+    private final ProblemDetailSecurityHandlers problemWriter;
 
-    public JwtAuthenticationFilter(JwtService jwtService, UserPermissionCache permissionCache) {
+    public JwtAuthenticationFilter(JwtService jwtService, UserPermissionCache permissionCache,
+                                   ProblemDetailSecurityHandlers problemWriter) {
         this.jwtService = jwtService;
         this.permissionCache = permissionCache;
+        this.problemWriter = problemWriter;
     }
 
     @Override
@@ -67,6 +76,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 return;
             }
 
+            if (user.mustChangePassword() && isBlockedWhilePasswordChangeIsPending(request)) {
+                problemWriter.write(response, Problems.of(ErrorCode.PASSWORD_CHANGE_REQUIRED,
+                    "You must change your temporary password before using the application."));
+                return;
+            }
+
             List<SimpleGrantedAuthority> authorities = user.permissions().stream()
                 .map(SimpleGrantedAuthority::new)
                 .toList();
@@ -81,5 +96,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    /**
+     * Everything under {@code /api/} except {@code /api/auth/**} (change-password, me, logout, refresh and the
+     * public sign-in endpoints) and the public ping. Non-API paths (actuator, docs) are not user data.
+     */
+    private static boolean isBlockedWhilePasswordChangeIsPending(HttpServletRequest request) {
+        String path = request.getRequestURI();
+        String context = request.getContextPath();
+        if (context != null && !context.isEmpty() && path.startsWith(context)) {
+            path = path.substring(context.length());
+        }
+        return path.startsWith("/api/") && !path.startsWith("/api/auth/") && !path.equals("/api/system/ping");
     }
 }
