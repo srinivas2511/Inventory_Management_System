@@ -47,6 +47,18 @@ public class AccountingFailureReporter {
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void conversionCostUnposted(Long productionOrderId, String orderNumber, String reason) {
+        alertService.raise(MISSING_JOURNAL, "HIGH", "PRODUCTION_ORDER", productionOrderId,
+                fit("Conversion cost of production order " + orderNumber + " is not in the GL: " + reason));
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void conversionCostPosted(Long productionOrderId, String orderNumber) {
+        alertService.resolveOpen(MISSING_JOURNAL, "PRODUCTION_ORDER", productionOrderId,
+                "Conversion cost of production order " + orderNumber + " absorbed into WIP");
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void maintenanceCostUnposted(Long maintenanceRequestId, String requestNumber, String reason) {
         alertService.raise(MAINTENANCE_COST_UNPOSTED, "HIGH", "MAINTENANCE_REQUEST", maintenanceRequestId,
                 fit("Labour cost of maintenance request " + requestNumber + " is not in the GL: " + reason));

@@ -1647,6 +1647,11 @@ Post variance journal:
   If negative (favourable):   Dr WIP / Cr Production Variance Income
 ```
 
+
+### 16.4 Conversion cost absorption [Implemented]
+
+The variance in 16.3 compares actual cost (material + labour + machine + overhead) with the standard, so WIP must also be debited for the conversion cost. When a production order completes, the actual conversion cost is fixed (`production_order_conversion_costs`, same arithmetic as 16.3) and absorbed after commit: `Dr 1501 WIP / Cr 5303 Conversion Cost Absorbed`, once. FG is received at the released standard (material + conversion), or without an estimate at (material consumed - scrap relieved + absorbed conversion) / good quantity. WIP then nets to zero after the variance journal. 5303 is a credit-balance clearing account: at period end it clears against the real labour and overhead expense, and its balance is the under- or over-absorbed conversion cost (a finance reconciliation step; payroll is not posted by cost centre, so it is not automated). No rate means no journal. The journal lines carry no cost or profit centre tag, so the cost-centre reports are unchanged. See docs/decisions.md "Conversion cost absorption".
+
 ---
 
 ## 17. MRP Module Design (R11)

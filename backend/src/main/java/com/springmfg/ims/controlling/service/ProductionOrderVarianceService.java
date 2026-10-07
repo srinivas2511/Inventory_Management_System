@@ -2,7 +2,6 @@ package com.springmfg.ims.controlling.service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.HashMap;
@@ -25,10 +24,12 @@ import com.springmfg.ims.common.settings.SystemSettingService;
 import com.springmfg.ims.controlling.domain.CostCentre;
 import com.springmfg.ims.controlling.domain.CostEstimateLine;
 import com.springmfg.ims.controlling.domain.ProductCostEstimate;
+import com.springmfg.ims.controlling.domain.ProductionOrderConversionCost;
 import com.springmfg.ims.controlling.domain.ProductionOrderVariance;
 import com.springmfg.ims.controlling.dto.VarianceDto;
 import com.springmfg.ims.controlling.repository.CostCentreRepository;
 import com.springmfg.ims.controlling.repository.ProductCostEstimateRepository;
+import com.springmfg.ims.controlling.repository.ProductionOrderConversionCostRepository;
 import com.springmfg.ims.controlling.repository.ProductionOrderVarianceRepository;
 import com.springmfg.ims.finance.gl.dto.AutoJournalRequest;
 import com.springmfg.ims.finance.gl.dto.JournalHeaderDto;
@@ -39,13 +40,11 @@ import com.springmfg.ims.product.domain.Product;
 import com.springmfg.ims.product.repository.ProductRepository;
 import com.springmfg.ims.production.domain.MaterialIssue;
 import com.springmfg.ims.production.domain.MaterialIssueLine;
-import com.springmfg.ims.production.domain.ProductionOperation;
 import com.springmfg.ims.production.domain.ProductionOrder;
 import com.springmfg.ims.production.domain.ProductionOrderMaterial;
 import com.springmfg.ims.production.service.FinishedGoodsCostService;
 import com.springmfg.ims.production.repository.MaterialIssueLineRepository;
 import com.springmfg.ims.production.repository.MaterialIssueRepository;
-import com.springmfg.ims.production.repository.ProductionOperationRepository;
 import com.springmfg.ims.production.repository.ProductionOrderMaterialRepository;
 import com.springmfg.ims.production.repository.ProductionOrderRepository;
 
@@ -62,14 +61,15 @@ public class ProductionOrderVarianceService {
     static final String ACCOUNT_WIP = "1501";
 
     private static final BigDecimal HUNDRED = BigDecimal.valueOf(100);
-    private static final BigDecimal SECONDS_PER_HOUR = BigDecimal.valueOf(3600);
     private static final BigDecimal MIN_POSTING_AMOUNT = new BigDecimal("0.0001");
 
     private final ProductionOrderRepository orderRepo;
     private final ProductionOrderMaterialRepository orderMaterialRepo;
     private final MaterialIssueRepository issueRepo;
     private final MaterialIssueLineRepository issueLineRepo;
-    private final ProductionOperationRepository operationRepo;
+    private final ProductionOrderConversionCostRepository conversionRepo;
+    private final OrderConversionCostService conversionService;
+    private final ConversionAbsorptionPoster absorptionPoster;
     private final ProductCostEstimateRepository estimateRepo;
     private final ProductionOrderVarianceRepository varianceRepo;
     private final CostCentreRepository costCentreRepo;
@@ -84,7 +84,9 @@ public class ProductionOrderVarianceService {
                                           ProductionOrderMaterialRepository orderMaterialRepo,
                                           MaterialIssueRepository issueRepo,
                                           MaterialIssueLineRepository issueLineRepo,
-                                          ProductionOperationRepository operationRepo,
+                                          ProductionOrderConversionCostRepository conversionRepo,
+                                          OrderConversionCostService conversionService,
+                                          ConversionAbsorptionPoster absorptionPoster,
                                           ProductCostEstimateRepository estimateRepo,
                                           ProductionOrderVarianceRepository varianceRepo,
                                           CostCentreRepository costCentreRepo,
@@ -98,7 +100,9 @@ public class ProductionOrderVarianceService {
         this.orderMaterialRepo = orderMaterialRepo;
         this.issueRepo = issueRepo;
         this.issueLineRepo = issueLineRepo;
-        this.operationRepo = operationRepo;
+        this.conversionRepo = conversionRepo;
+        this.conversionService = conversionService;
+        this.absorptionPoster = absorptionPoster;
         this.estimateRepo = estimateRepo;
         this.varianceRepo = varianceRepo;
         this.costCentreRepo = costCentreRepo;
@@ -129,10 +133,17 @@ public class ProductionOrderVarianceService {
             return toDto(existing);
         }
 
+        // The conversion cost was fixed when the order completed and absorbed into WIP then; an order that completed
+        // before that existed is fixed and absorbed now. A failed absorption is retried here.
+        conversionService.ensureFrozen(productionOrderId);
+        ProductionOrderConversionCost conversion = conversionRepo.findByProductionOrderId(productionOrderId)
+                .orElseThrow(() -> new NotFoundException("ProductionOrderConversionCost", productionOrderId));
+        if (conversion.needsPosting()) {
+            absorptionPoster.postAndReport(productionOrderId);
+        }
+
         CostCentre cc = productionCostCentre();
         BigDecimal labourRate = cc != null ? cc.getLabourRatePerHour() : BigDecimal.ZERO;
-        BigDecimal machineRate = cc != null ? cc.getMachineRatePerHour() : BigDecimal.ZERO;
-        BigDecimal overheadPct = cc != null ? cc.getOverheadPct() : BigDecimal.ZERO;
 
         ProductCostEstimate estimate = estimateRepo.findByProductIdAndStatus(order.getProductId(), "RELEASED").orElse(null);
         BigDecimal goodQty = order.getGoodQty();
@@ -185,23 +196,14 @@ public class ProductionOrderVarianceService {
             quantityVariance = quantityVariance.add(netQty.subtract(stdQty).multiply(stdRate));
         }
 
-        // Actual labour and machine: elapsed operation time at the cost centre rates
-        BigDecimal actualHours = BigDecimal.ZERO;
-        BigDecimal actualLabour = BigDecimal.ZERO;
-        BigDecimal actualMachine = BigDecimal.ZERO;
-        for (ProductionOperation op : operationRepo.findByProductionOrderId(productionOrderId)) {
-            if (op.getStartedAt() == null || op.getCompletedAt() == null) continue;
-            BigDecimal hours = BigDecimal.valueOf(Duration.between(op.getStartedAt(), op.getCompletedAt()).toSeconds())
-                    .divide(SECONDS_PER_HOUR, 6, RoundingMode.HALF_UP);
-            actualHours = actualHours.add(hours);
-            actualLabour = actualLabour.add(hours.multiply(labourRate));
-            if (op.getMachineId() != null) {
-                actualMachine = actualMachine.add(hours.multiply(machineRate));
-            }
-        }
-        BigDecimal actualOverhead = actualLabour.add(actualMachine).multiply(overheadPct).divide(HUNDRED, 8, RoundingMode.HALF_UP);
+        // Actual labour, machine and overhead: the figures fixed when the order completed (elapsed operation time at
+        // the cost centre rates), which is also what was absorbed into WIP, so WIP is not relieved twice or short.
+        BigDecimal actualHours = conversion.getActualHours();
+        BigDecimal actualLabour = conversion.getLabourCost();
+        BigDecimal actualMachine = conversion.getMachineCost();
+        BigDecimal actualOverhead = conversion.getOverheadCost();
 
-        BigDecimal actualCost = scale(actualMaterial.add(actualLabour).add(actualMachine).add(actualOverhead));
+        BigDecimal actualCost = scale(actualMaterial).add(conversion.getTotalCost());
         BigDecimal standardCost = estimate != null
                 ? scale(estimate.getTotalStandardCost().multiply(goodQty).divide(lot, 8, RoundingMode.HALF_UP))
                 : BigDecimal.ZERO.setScale(4);

@@ -1,6 +1,7 @@
 package com.springmfg.ims.production.service;
 
 import java.math.BigDecimal;
+import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
@@ -29,6 +30,7 @@ import com.springmfg.ims.production.dto.RecordOutputRequest;
 import com.springmfg.ims.production.event.FinalInspectionRequiredEvent;
 import com.springmfg.ims.production.event.OperationCompletedEvent;
 import com.springmfg.ims.production.event.OperationStartedEvent;
+import com.springmfg.ims.production.event.ProductionOrderCompletedEvent;
 import com.springmfg.ims.production.repository.ProductionOperationRepository;
 import com.springmfg.ims.production.repository.ProductionOrderRepository;
 import com.springmfg.ims.production.repository.ProductionOutputRepository;
@@ -58,6 +60,8 @@ public class OperationExecutionService {
     private final ProductRepository productRepo;
     private final FinishedGoodsCostService fgCostService;
     private final OrderMaterialService materialService;
+    private final Clock clock;
+    private final List<ConversionCostLookup> conversionCostLookups;
 
     public OperationExecutionService(
             ProductionOperationRepository opRepo,
@@ -75,7 +79,9 @@ public class OperationExecutionService {
             MachineRepository machineRepo,
             ProductRepository productRepo,
             FinishedGoodsCostService fgCostService,
-            OrderMaterialService materialService) {
+            OrderMaterialService materialService,
+            Clock clock,
+            List<ConversionCostLookup> conversionCostLookups) {
         this.opRepo = opRepo;
         this.orderRepo = orderRepo;
         this.outputRepo = outputRepo;
@@ -92,6 +98,8 @@ public class OperationExecutionService {
         this.productRepo = productRepo;
         this.fgCostService = fgCostService;
         this.materialService = materialService;
+        this.clock = clock;
+        this.conversionCostLookups = conversionCostLookups;
     }
 
     @Transactional
@@ -102,7 +110,7 @@ public class OperationExecutionService {
                     "Operation must be PENDING to start, current: " + op.getStatus());
         }
         op.setStatus("IN_PROGRESS");
-        op.setStartedAt(Instant.now());
+        op.setStartedAt(Instant.now(clock));
         if (machineId != null) op.setMachineId(machineId);
         opRepo.save(op);
         orderService.moveToInProgressIfNeeded(op.getProductionOrderId());
@@ -147,7 +155,7 @@ public class OperationExecutionService {
         }
         String previousStatus = op.getStatus();
         op.setStatus("COMPLETED");
-        op.setCompletedAt(Instant.now());
+        op.setCompletedAt(Instant.now(clock));
         opRepo.save(op);
         auditService.record("OP_COMPLETE", "ProductionOperation", String.valueOf(operationId),
                 previousStatus, "COMPLETED", null);
@@ -271,6 +279,13 @@ public class OperationExecutionService {
         // and whatever is left over is returned or written off when the order is closed.
         materialService.consumeForOutput(orderId);
 
+        // What the operations cost to run (labour, machine, overhead) is fixed now, in this transaction, so the FG cost
+        // and the absorption journal posted after commit agree to the cent even if the rates change later.
+        BigDecimal conversionCost = BigDecimal.ZERO;
+        for (ConversionCostLookup lookup : conversionCostLookups) {
+            conversionCost = conversionCost.add(lookup.freezeConversionCost(orderId));
+        }
+
         // Create FG batch
         String fgBatchNum = numberService.next("FG");
         FgBatch fgBatch = new FgBatch();
@@ -283,9 +298,9 @@ public class OperationExecutionService {
         fgBatch.setRemainingQty(lastOp.getGoodQty());
         fgBatch.setProducedOn(LocalDate.now());
         fgBatch.setQualityStatus("PRODUCTION_COMPLETED");
-        // Received at standard (released estimate) or at the actual material cost still in WIP after scrap; the
-        // ledger value of the receipt is what the bridge journals as Dr 1410 FG / Cr 1501 WIP.
-        FinishedGoodsCostService.FgCost fgCost = fgCostService.resolve(orderId, order.getProductId(), lastOp.getGoodQty());
+        // Received at standard (released estimate) or at the actual material cost still in WIP after scrap plus the
+        // conversion cost absorbed; the ledger value of the receipt is what the bridge journals as Dr 1410 FG / Cr 1501 WIP.
+        FinishedGoodsCostService.FgCost fgCost = fgCostService.resolve(orderId, order.getProductId(), lastOp.getGoodQty(), conversionCost);
         fgBatch.setUnitCost(fgCost.unitCost());
         fgBatch = fgBatchRepo.save(fgBatch);
 
@@ -309,6 +324,7 @@ public class OperationExecutionService {
         orderRepo.save(order);
         orderService.onAllOperationsComplete(orderId);
 
+        eventPublisher.publishEvent(new ProductionOrderCompletedEvent(orderId));
         eventPublisher.publishEvent(new FinalInspectionRequiredEvent(
                 orderId, order.getProductId(), order.getOrderNumber(),
                 order.getPlannedQty(), lastOp.getGoodQty(), fgBatch.getId()));

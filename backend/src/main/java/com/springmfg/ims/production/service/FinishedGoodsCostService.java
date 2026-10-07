@@ -21,7 +21,9 @@ import com.springmfg.ims.production.repository.ProductionOutputRepository;
  * <p>With a RELEASED cost estimate the output is received at standard cost, which is what the controlling variance
  * journal assumes: it relieves WIP by (actual - standard), so the receipt must relieve WIP by the standard. Without
  * one, the output is received at the actual material cost left in WIP after scrap, so WIP is relieved exactly once.
- * Conversion cost (labour, machine, overhead) is only ever part of a released standard; no rate is invented here.
+ * Conversion cost (labour, machine, overhead) is part of a released standard; without one, the conversion cost that was
+ * absorbed into WIP when the order completed (actual hours at the cost centre rates, see {@link ConversionCostLookup})
+ * is added to the material. No rate is invented here: with no rate the conversion cost is zero.
  */
 @Service
 public class FinishedGoodsCostService {
@@ -29,7 +31,8 @@ public class FinishedGoodsCostService {
     public enum Basis { STANDARD, ACTUAL_MATERIAL, NONE }
 
     /** The unit cost to post, how it was derived, and the figures behind it. */
-    public record FgCost(BigDecimal unitCost, Basis basis, BigDecimal materialCost, BigDecimal scrapRelief) {
+    public record FgCost(BigDecimal unitCost, Basis basis, BigDecimal materialCost, BigDecimal scrapRelief,
+                         BigDecimal conversionCost) {
     }
 
     private final MaterialIssueLineRepository issueLineRepo;
@@ -48,22 +51,23 @@ public class FinishedGoodsCostService {
     }
 
     @Transactional(readOnly = true)
-    public FgCost resolve(Long productionOrderId, Long productId, BigDecimal goodQty) {
+    public FgCost resolve(Long productionOrderId, Long productId, BigDecimal goodQty, BigDecimal conversionCost) {
+        BigDecimal conversion = conversionCost != null ? conversionCost : BigDecimal.ZERO;
         BigDecimal material = materialCost(productionOrderId);
         List<Long> outputIds = outputRepo.findByProductionOrderId(productionOrderId).stream()
                 .map(ProductionOutput::getId).toList();
         BigDecimal scrap = stockQuery.scrapValueOfOutputs(outputIds);
         if (goodQty == null || goodQty.signum() <= 0) {
-            return new FgCost(BigDecimal.ZERO.setScale(4), Basis.NONE, material, scrap);
+            return new FgCost(BigDecimal.ZERO.setScale(4), Basis.NONE, material, scrap, conversion);
         }
         for (StandardCostLookup lookup : standardCostLookups) {
             var standard = lookup.releasedUnitCost(productId);
             if (standard.isPresent()) {
-                return new FgCost(standard.get(), Basis.STANDARD, material, scrap);
+                return new FgCost(standard.get(), Basis.STANDARD, material, scrap, conversion);
             }
         }
-        BigDecimal unit = actualUnitCost(material, scrap, goodQty);
-        return new FgCost(unit, unit.signum() > 0 ? Basis.ACTUAL_MATERIAL : Basis.NONE, material, scrap);
+        BigDecimal unit = actualUnitCost(material, scrap, conversion, goodQty);
+        return new FgCost(unit, unit.signum() > 0 ? Basis.ACTUAL_MATERIAL : Basis.NONE, material, scrap, conversion);
     }
 
     /**
@@ -79,7 +83,13 @@ public class FinishedGoodsCostService {
 
     /** (material cost still in WIP after scrap) / good quantity, at ledger precision; never negative. */
     static BigDecimal actualUnitCost(BigDecimal materialCost, BigDecimal scrapRelief, BigDecimal goodQty) {
-        BigDecimal inWip = materialCost.subtract(scrapRelief);
+        return actualUnitCost(materialCost, scrapRelief, BigDecimal.ZERO, goodQty);
+    }
+
+    /** (material cost still in WIP after scrap + absorbed conversion cost) / good quantity, at ledger precision. */
+    static BigDecimal actualUnitCost(BigDecimal materialCost, BigDecimal scrapRelief, BigDecimal conversionCost,
+                                     BigDecimal goodQty) {
+        BigDecimal inWip = materialCost.subtract(scrapRelief).add(conversionCost);
         if (inWip.signum() <= 0 || goodQty.signum() <= 0) {
             return BigDecimal.ZERO.setScale(4);
         }

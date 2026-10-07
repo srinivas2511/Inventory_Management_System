@@ -54,4 +54,18 @@ class FinishedGoodsCostServiceTest {
         BigDecimal received = cost("393.9750", "0", "100").multiply(good);
         assertThat(received.subtract(material).abs()).isLessThanOrEqualTo(good.multiply(new BigDecimal("0.00005")));
     }
+
+    @Test
+    @DisplayName("FGC-7: absorbed conversion cost joins the material: (4,000 - 240 + 3,300) / 80 = 88.2500")
+    void conversionCostIsPartOfTheActualCost() {
+        assertThat(FinishedGoodsCostService.actualUnitCost(new BigDecimal("4000.0000"), new BigDecimal("240.0000"),
+                new BigDecimal("3300.0000"), new BigDecimal("80"))).isEqualByComparingTo("88.2500");
+    }
+
+    @Test
+    @DisplayName("FGC-8: with no conversion cost the four-argument form equals the material-only cost")
+    void zeroConversionChangesNothing() {
+        assertThat(FinishedGoodsCostService.actualUnitCost(new BigDecimal("4000.0000"), new BigDecimal("240.0000"),
+                BigDecimal.ZERO, new BigDecimal("80"))).isEqualByComparingTo(cost("4000.0000", "240.0000", "80"));
+    }
 }
