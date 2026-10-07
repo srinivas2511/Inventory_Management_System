@@ -139,6 +139,7 @@ public class DemoDataLoader {
     private final ReservationService reservationService;
     private final DispatchService dispatchService;
     private final AlertSweepJob alertSweepJob;
+    private final org.springframework.jdbc.core.JdbcTemplate jdbc;
 
     public DemoDataLoader(
             UserRepository userRepo,
@@ -166,7 +167,9 @@ public class DemoDataLoader {
             SalesOrderService salesOrderService,
             ReservationService reservationService,
             DispatchService dispatchService,
-            AlertSweepJob alertSweepJob) {
+            AlertSweepJob alertSweepJob,
+            org.springframework.jdbc.core.JdbcTemplate jdbc) {
+        this.jdbc = jdbc;
         this.userRepo = userRepo;
         this.roleRepo = roleRepo;
         this.passwordEncoder = passwordEncoder;
@@ -218,6 +221,7 @@ public class DemoDataLoader {
             long fgBatchId  = step11_finalInspection(prodOrderId);
             long soId       = step12_salesOrder(customerId, productId);
             step13_reserveAndDispatch(soId, productId, fgBatchId);
+            step15_lateRunAndWaitingInspection(productId, bomId);
             step14_alertConditions(supplierId);
             log.info("DemoDataLoader: demo data load complete");
         } catch (Exception e) {
@@ -541,6 +545,55 @@ public class DemoDataLoader {
                         new BigDecimal("14.5000"))),
                 "Demo dispatch — full order fulfilled"));
         log.info("step13: dispatch created — demo workflow complete");
+    }
+
+    // ── Step 15: a late production run and an inspection nobody has picked up (DESIGN §11.4) ─────────────────
+
+    /**
+     * A second production order whose first operation is under way and whose expected completion date has passed
+     * (the PRODUCTION_DELAY alert), with an in-process inspection raised on that operation that has waited longer
+     * than the pending-inspection limit (the PENDING_INSPECTION alert). Everything goes through the real services;
+     * the only direct writes are the two dates that cannot be set to the past by a service: the expected completion
+     * date and the inspection's creation time. Demo profile only, and only on the first load.
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void step15_lateRunAndWaitingInspection(long productId, long bomId) {
+        try {
+            ProductionOrderDto order = productionOrderService.create(new CreateProductionOrderRequest(
+                    productId, bomId, new BigDecimal("50"), LocalDate.now(), LocalDate.now().plusDays(5),
+                    "LINE-B", null, null, null, (short) 3, "Demo late run — 50 pcs, behind schedule"));
+            order = productionOrderService.approve(order.id());
+            order = productionOrderService.release(order.id());
+            // the sequence rule: coiling and grinding are done, the inspection step (the routing's inspection point)
+            // is the one under way, and a sample from it is waiting for a decision
+            var operations = order.operations();
+            for (int i = 0; i < operations.size() - 1; i++) {
+                Long operationId = operations.get(i).id();
+                opExecService.startOperation(operationId, null);
+                opExecService.recordOutput(new RecordOutputRequest(
+                        operationId,
+                        new BigDecimal("50"), BigDecimal.ZERO, BigDecimal.ZERO,
+                        null, null, null, null, "B", "Demo late run"));
+                opExecService.completeOperation(operationId);
+            }
+            Long inspectionOperationId = operations.get(operations.size() - 1).id();
+            opExecService.startOperation(inspectionOperationId, null);
+
+            var inspection = finalInspectionService.createInProcess(
+                    new com.springmfg.ims.quality.dto.CreateInProcessInspectionRequest(
+                            inspectionOperationId, new BigDecimal("10")));
+
+            int delayedOrders = jdbc.update(
+                    "UPDATE ims.production_orders SET expected_completion_date = ? WHERE id = ?",
+                    java.sql.Date.valueOf(LocalDate.now().minusDays(1)), order.id());
+            int agedInspections = jdbc.update(
+                    "UPDATE ims.quality_inspections SET created_at = now() - interval '4 days' WHERE id = ?",
+                    inspection.id());
+            log.info("step15: late order {} ({} row) and waiting inspection {} ({} row) seeded",
+                    order.orderNumber(), delayedOrders, inspection.id(), agedInspections);
+        } catch (Exception e) {
+            log.warn("step15: late run and waiting inspection not seeded: {}", e.getMessage());
+        }
     }
 
     // ── Step 14: a visible alert (DESIGN §11.4) ───────────────────────────────

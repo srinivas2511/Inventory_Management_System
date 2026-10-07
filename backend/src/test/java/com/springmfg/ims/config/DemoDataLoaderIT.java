@@ -48,6 +48,7 @@ class DemoDataLoaderIT {
     @Autowired MockMvc mockMvc;
     @Autowired JdbcTemplate jdbc;
     @Autowired DemoDataLoader loader;
+    @Autowired com.springmfg.ims.insight.dashboard.DashboardTrendService trendService;
 
     private long count(String sql, Object... args) {
         Long n = jdbc.queryForObject(sql, Long.class, args);
@@ -116,6 +117,37 @@ class DemoDataLoaderIT {
                  WHERE a.alert_type = 'LOW_STOCK' AND a.entity_type = 'MATERIAL' AND a.resolved_at IS NULL
                    AND m.material_code = 'DEMO-WR-LOWSTK'
                 """)).isEqualTo(1);
+    }
+
+    @Test
+    void theDemoDataAlsoShowsALateProductionRunAndAWaitingInspection() {
+        // DESIGN 11.4 names three alerts: low stock, production delay and pending inspection
+        assertThat(count("""
+                SELECT COUNT(*) FROM ims.alerts a JOIN ims.production_orders po ON po.id = a.entity_id
+                 WHERE a.alert_type = 'PRODUCTION_DELAY' AND a.entity_type = 'PRODUCTION_ORDER'
+                   AND a.resolved_at IS NULL AND po.status = 'IN_PROGRESS'
+                   AND po.expected_completion_date < current_date
+                """)).isEqualTo(1);
+        assertThat(count("""
+                SELECT COUNT(*) FROM ims.alerts a JOIN ims.quality_inspections q ON q.id = a.entity_id
+                 WHERE a.alert_type = 'PENDING_INSPECTION' AND a.entity_type = 'QUALITY_INSPECTION'
+                   AND a.resolved_at IS NULL AND q.status = 'PENDING'
+                """)).isEqualTo(1);
+    }
+
+    @Test
+    void theDashboardChartsHaveDataAfterTheDemoLoad() {
+        // UAT INS-01/INS-02: throughput and inventory value series come from live data, not from stale views
+        var trends = trendService.trends(6);
+        assertThat(trends.production()).isNotEmpty();
+        assertThat(trends.production()).anyMatch(m -> m.goodQty().signum() > 0);
+        assertThat(trends.inventoryValue()).isNotEmpty();
+        assertThat(trends.inventoryValue()).anyMatch(m -> m.closingValue().signum() > 0);
+        assertThat(trends.inventoryValue()).extracting(m -> m.month()).isSorted();
+        assertThat(trends.production()).extracting(m -> m.month()).isSorted();
+        // the request is clamped: a silly month count cannot read the whole ledger
+        assertThat(trendService.trends(1000).inventoryValue().size()).isLessThanOrEqualTo(24);
+        assertThat(trendService.trends(0).inventoryValue().size()).isLessThanOrEqualTo(1);
     }
 
     @Test
