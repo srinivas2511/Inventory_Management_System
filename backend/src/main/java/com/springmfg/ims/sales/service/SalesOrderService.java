@@ -38,6 +38,7 @@ public class SalesOrderService {
     private final DocumentNumberService numberService;
     private final AuditService auditService;
     private final org.springframework.context.ApplicationEventPublisher eventPublisher;
+    private final ReservationService reservationService;
 
     public SalesOrderService(SalesOrderRepository orderRepo,
                              SalesOrderItemRepository itemRepo,
@@ -45,7 +46,8 @@ public class SalesOrderService {
                              ProductRepository productRepo,
                              DocumentNumberService numberService,
                              AuditService auditService,
-                             org.springframework.context.ApplicationEventPublisher eventPublisher) {
+                             org.springframework.context.ApplicationEventPublisher eventPublisher,
+                             ReservationService reservationService) {
         this.orderRepo = orderRepo;
         this.itemRepo = itemRepo;
         this.customerRepo = customerRepo;
@@ -53,6 +55,7 @@ public class SalesOrderService {
         this.numberService = numberService;
         this.auditService = auditService;
         this.eventPublisher = eventPublisher;
+        this.reservationService = reservationService;
     }
 
     public SalesOrderDto create(CreateSalesOrderRequest req) {
@@ -136,11 +139,14 @@ public class SalesOrderService {
             throw new BusinessRuleException(ErrorCode.ILLEGAL_STATE_TRANSITION,
                     "Cannot cancel a " + order.getStatus() + " order");
         }
+        String previousStatus = order.getStatus();
+        // Reserved finished goods go back to available stock; cancelling must never leave them locked.
+        reservationService.releaseAll(orderId);
         order.setStatus("CANCELLED");
         order.setCancelledBy(currentUserId());
         order.setCancelledAt(Instant.now());
         order.setCancelReason(reason);
-        auditService.record("SO_CANCELLED", "SALES_ORDER", order.getStatus(), "CANCELLED", String.valueOf(orderId), reason);
+        auditService.record("SO_CANCELLED", "SALES_ORDER", String.valueOf(orderId), previousStatus, "CANCELLED", reason);
         return toDto(order, itemRepo.findBySalesOrderId(orderId));
     }
 

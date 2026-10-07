@@ -11,6 +11,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.springmfg.ims.audit.service.AuditService;
 import com.springmfg.ims.common.exception.BusinessRuleException;
 import com.springmfg.ims.common.exception.ErrorCode;
 import com.springmfg.ims.common.exception.NotFoundException;
@@ -38,19 +39,25 @@ public class ReservationService {
     private final FgBatchRepository fgBatchRepo;
     private final InventoryPostingService postingService;
     private final SystemSettingService settingService;
+    private final AuditService auditService;
+
+    private static final java.util.Set<String> RESERVABLE_STATUSES =
+            java.util.Set.of("ORDERED", "APPROVED", "ALLOCATED", "PARTIALLY_DISPATCHED");
 
     public ReservationService(SalesReservationRepository reservationRepo,
                               SalesOrderItemRepository itemRepo,
                               SalesOrderRepository orderRepo,
                               FgBatchRepository fgBatchRepo,
                               InventoryPostingService postingService,
-                              SystemSettingService settingService) {
+                              SystemSettingService settingService,
+                              AuditService auditService) {
         this.reservationRepo = reservationRepo;
         this.itemRepo = itemRepo;
         this.orderRepo = orderRepo;
         this.fgBatchRepo = fgBatchRepo;
         this.postingService = postingService;
         this.settingService = settingService;
+        this.auditService = auditService;
     }
 
     public ReservationDto reserve(ReserveRequest req) {
@@ -59,9 +66,9 @@ public class ReservationService {
         SalesOrder order = orderRepo.findById(item.getSalesOrderId())
                 .orElseThrow(() -> new NotFoundException("SalesOrder", item.getSalesOrderId()));
 
-        if (!"APPROVED".equals(order.getStatus()) && !"ORDERED".equals(order.getStatus())) {
+        if (!RESERVABLE_STATUSES.contains(order.getStatus())) {
             throw new BusinessRuleException(ErrorCode.ILLEGAL_STATE_TRANSITION,
-                    "Reservations can only be made for ORDERED or APPROVED orders");
+                    "Reservations can only be made for ORDERED, APPROVED, ALLOCATED or PARTIALLY_DISPATCHED orders");
         }
 
         FgBatch batch = fgBatchRepo.findById(req.fgBatchId())
@@ -112,6 +119,8 @@ public class ReservationService {
         item.setReservedQty(item.getReservedQty().add(req.qty()));
         itemRepo.save(item);
 
+        refreshAllocation(order);
+
         return toDto(reservation, batch.getBatchNumber());
     }
 
@@ -136,6 +145,39 @@ public class ReservationService {
             BigDecimal newReserved = item.getReservedQty().subtract(reservation.getReservedQty()).max(BigDecimal.ZERO);
             item.setReservedQty(newReserved);
             itemRepo.save(item);
+            orderRepo.findById(item.getSalesOrderId()).ifPresent(this::refreshAllocation);
+        }
+    }
+
+    /**
+     * ALLOCATED means every line is covered: its active reservations plus what has already been dispatched reach the
+     * ordered quantity (DESIGN §12 step 15, REQUIREMENTS SAL-001). The order goes ORDERED/APPROVED → ALLOCATED when
+     * the last line is covered, and back to APPROVED when a release or expiry uncovers a line. Orders that have started
+     * dispatching, or are finished or cancelled, keep their own status.
+     */
+    private void refreshAllocation(SalesOrder order) {
+        String status = order.getStatus();
+        boolean open = "ORDERED".equals(status) || "APPROVED".equals(status);
+        if (!open && !"ALLOCATED".equals(status)) return;
+
+        List<SalesOrderItem> items = itemRepo.findBySalesOrderId(order.getId());
+        boolean covered = !items.isEmpty() && items.stream().allMatch(i -> {
+            BigDecimal active = reservationRepo.findBySalesOrderItemIdAndStatus(i.getId(), "ACTIVE").stream()
+                    .map(SalesReservation::getReservedQty)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            return active.add(i.getDispatchedQty()).compareTo(i.getOrderedQty()) >= 0;
+        });
+
+        if (covered && open) {
+            order.setStatus("ALLOCATED");
+            orderRepo.save(order);
+            auditService.record("SO_ALLOCATED", "SALES_ORDER", String.valueOf(order.getId()), status, "ALLOCATED",
+                    "All order lines are reserved");
+        } else if (!covered && "ALLOCATED".equals(status)) {
+            order.setStatus("APPROVED");
+            orderRepo.save(order);
+            auditService.record("SO_ALLOCATION_RELEASED", "SALES_ORDER", String.valueOf(order.getId()), "ALLOCATED",
+                    "APPROVED", "A reservation was released or expired");
         }
     }
 
