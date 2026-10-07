@@ -75,15 +75,16 @@ describe('WmsWavesComponent', () => {
     backend
       .expectOne((r) => r.url === '/api/wms/waves')
       .flush({ content: [wave], totalElements: 1, totalPages: 1, size: 50, number: 0 });
-    backend
-      .expectOne((r) => r.url === '/api/sales/orders')
-      .flush({
-        content: [{ id: 10, orderNumber: 'SO/26/00010' }],
-        page: 0,
-        size: 100,
-        totalElements: 1,
-        totalPages: 1,
-      });
+    if (permissions.includes('WAVE_MANAGE')) {
+      // D-33: the planner picks from a lookup that needs only WAVE_MANAGE, never the sales list
+      backend
+        .expectOne('/api/lookups/sales-orders/approved')
+        .flush([{ id: 10, orderNumber: 'SO/26/00010', customerName: 'Demo Customer' }]);
+    } else {
+      // a user who cannot create waves makes no request for orders at all (store roles may not read sales)
+      backend.expectNone('/api/lookups/sales-orders/approved');
+      backend.expectNone((r) => r.url === '/api/sales/orders');
+    }
     fixture.detectChanges();
   }
 

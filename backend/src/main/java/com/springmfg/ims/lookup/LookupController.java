@@ -18,6 +18,7 @@ import com.springmfg.ims.lookup.LookupDtos.ItemOption;
 import com.springmfg.ims.lookup.LookupDtos.LocationOption;
 import com.springmfg.ims.lookup.LookupDtos.MaterialStock;
 import com.springmfg.ims.lookup.LookupDtos.Option;
+import com.springmfg.ims.lookup.LookupDtos.PickableOrder;
 import com.springmfg.ims.lookup.LookupDtos.ReceivablePo;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -46,25 +47,25 @@ public class LookupController {
     }
 
     @GetMapping("/warehouses")
-    @PreAuthorize("hasAnyAuthority('INVENTORY_RECEIVE','INVENTORY_VIEW','INVENTORY_ISSUE','DISPATCH_CREATE','RESERVE_FG','WAREHOUSE_MANAGE')")
+    @PreAuthorize("hasAnyAuthority('INVENTORY_RECEIVE','INVENTORY_VIEW','INVENTORY_ISSUE','INVENTORY_ADJUST','DISPATCH_CREATE','RESERVE_FG','WAREHOUSE_MANAGE')")
     public List<Option> warehouses(@RequestParam(required = false) String q) {
         return service.warehouses(q);
     }
 
     @GetMapping("/locations")
-    @PreAuthorize("hasAnyAuthority('INVENTORY_RECEIVE','INVENTORY_VIEW','DISPATCH_CREATE','RESERVE_FG','WAREHOUSE_MANAGE')")
+    @PreAuthorize("hasAnyAuthority('INVENTORY_RECEIVE','INVENTORY_VIEW','INVENTORY_ADJUST','DISPATCH_CREATE','RESERVE_FG','WAREHOUSE_MANAGE')")
     public List<LocationOption> locations(@RequestParam(required = false) Long warehouseId) {
         return service.locations(warehouseId);
     }
 
     @GetMapping("/materials")
-    @PreAuthorize("hasAnyAuthority('PURCHASE_CREATE','PURCHASE_VIEW','BOM_CREATE','BOM_UPDATE','MATERIAL_VIEW','MASTERDATA_MANAGE')")
+    @PreAuthorize("hasAnyAuthority('PURCHASE_CREATE','PURCHASE_VIEW','BOM_CREATE','BOM_UPDATE','MATERIAL_VIEW','MASTERDATA_MANAGE','INVENTORY_ADJUST')")
     public List<ItemOption> materials(@RequestParam(required = false) String q) {
         return service.materials(q);
     }
 
     @GetMapping("/products")
-    @PreAuthorize("hasAnyAuthority('SALES_CREATE','SALES_VIEW','BOM_CREATE','BOM_UPDATE','PRODUCTION_CREATE','PRODUCT_VIEW')")
+    @PreAuthorize("hasAnyAuthority('SALES_CREATE','SALES_VIEW','BOM_CREATE','BOM_UPDATE','PRODUCTION_CREATE','PRODUCT_VIEW','INVENTORY_ADJUST')")
     public List<ItemOption> products(@RequestParam(required = false) String q) {
         return service.products(q);
     }
@@ -103,5 +104,11 @@ public class LookupController {
     @PreAuthorize("hasAnyAuthority('DISPATCH_CREATE','RESERVE_FG','SALES_VIEW')")
     public List<DispatchableOrder> dispatchableOrders() {
         return service.dispatchableOrders();
+    }
+
+    @GetMapping("/sales-orders/approved")
+    @PreAuthorize("hasAuthority('WAVE_MANAGE')")
+    public List<PickableOrder> pickableOrders() {
+        return service.pickableOrders();
     }
 }

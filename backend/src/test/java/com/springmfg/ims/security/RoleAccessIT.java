@@ -128,16 +128,16 @@ class RoleAccessIT extends AbstractIntegrationTest {
             Probe.of(HttpMethod.GET, "/api/warehouses",
                     Set.of("ADMIN", "STORE_MANAGER", "STORE_OPERATOR", "MANAGEMENT"), Set.of("OPERATOR")),
             // DESIGN §8.6: the roles whose landing screen is a dashboard can read it; OPERATOR (My Work), DISPATCH
-            // (dispatch queue) and MAINTENANCE (machine status) land elsewhere, as do the finance roles
+            // (dispatch queue) and MAINTENANCE (machine status) land elsewhere; FINANCE_MANAGER got DASHBOARD_VIEW in V45 (UAT Role 8, FIN-04)
             Probe.of(HttpMethod.GET, "/api/dashboard/kpis",
                     Set.of("ADMIN", "ENGINEER", "PRODUCTION_MANAGER", "SUPERVISOR", "QUALITY_MANAGER", "STORE_MANAGER",
-                            "STORE_OPERATOR", "PURCHASE_MANAGER", "SALES", "MANAGEMENT", "CONTROLLER", "PLANNER"),
-                    Set.of("OPERATOR", "DISPATCH", "MAINTENANCE", "FINANCE_MANAGER", "ACCOUNTANT")),
+                            "STORE_OPERATOR", "PURCHASE_MANAGER", "SALES", "MANAGEMENT", "CONTROLLER", "PLANNER", "FINANCE_MANAGER"),
+                    Set.of("OPERATOR", "DISPATCH", "MAINTENANCE", "ACCOUNTANT")),
             // the dashboard charts are fed by the trends endpoint under the same permission as the KPIs
             Probe.of(HttpMethod.GET, "/api/dashboard/trends",
                     Set.of("ADMIN", "ENGINEER", "PRODUCTION_MANAGER", "SUPERVISOR", "QUALITY_MANAGER", "STORE_MANAGER",
-                            "STORE_OPERATOR", "PURCHASE_MANAGER", "SALES", "MANAGEMENT", "CONTROLLER", "PLANNER"),
-                    Set.of("OPERATOR", "DISPATCH", "MAINTENANCE", "FINANCE_MANAGER", "ACCOUNTANT")),
+                            "STORE_OPERATOR", "PURCHASE_MANAGER", "SALES", "MANAGEMENT", "CONTROLLER", "PLANNER", "FINANCE_MANAGER"),
+                    Set.of("OPERATOR", "DISPATCH", "MAINTENANCE", "ACCOUNTANT")),
             // DESIGN §12 steps 20-21: quality traces an FG batch back and a material batch forward (a missing id is 404)
             Probe.of(HttpMethod.GET, "/api/traceability/fg-batch/" + MISSING,
                     Set.of("ADMIN", "QUALITY_MANAGER", "MANAGEMENT"),
@@ -197,6 +197,9 @@ class RoleAccessIT extends AbstractIntegrationTest {
                     Set.of("ADMIN", "PRODUCTION_MANAGER", "ENGINEER"), Set.of("OPERATOR")),
             Probe.of(HttpMethod.GET, "/api/lookups/purchase-orders/receivable", Set.of("ADMIN"), Set.of("OPERATOR")),
             Probe.of(HttpMethod.GET, "/api/lookups/fg-stock", Set.of("ADMIN", "SALES", "DISPATCH"), Set.of("OPERATOR")),
+            // D-33: the pick wave planner reads approved orders through a lookup, not the sales list it may not read
+            Probe.of(HttpMethod.GET, "/api/lookups/sales-orders/approved", Set.of("ADMIN", "STORE_MANAGER"),
+                    Set.of("OPERATOR", "SALES", "STORE_OPERATOR")),
             Probe.of(HttpMethod.GET, "/api/lookups/sales-orders/dispatchable", Set.of("ADMIN", "DISPATCH"),
                     Set.of("OPERATOR")),
             Probe.of(HttpMethod.DELETE, "/api/materials/" + MISSING, Set.of("ADMIN"),

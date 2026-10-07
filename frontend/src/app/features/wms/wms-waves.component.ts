@@ -10,7 +10,8 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
-import { SalesApi, SalesOrderDto } from '../sales/sales.api';
+import { SessionStore } from '../../core/auth/session.store';
+import { LookupApi, PickableOrder } from '../../shared/lookup.api';
 import { PickListLineDto, WaveDto, WaveStatus, WmsApi } from './wms.api';
 
 const STATUSES: WaveStatus[] = ['CREATED', 'RELEASED', 'COMPLETED', 'CANCELLED'];
@@ -18,7 +19,6 @@ const STATUSES: WaveStatus[] = ['CREATED', 'RELEASED', 'COMPLETED', 'CANCELLED']
 @Component({
   selector: 'app-wms-waves',
   standalone: true,
-  providers: [SalesApi],
   imports: [
     ReactiveFormsModule,
     DecimalPipe,
@@ -42,7 +42,7 @@ const STATUSES: WaveStatus[] = ['CREATED', 'RELEASED', 'COMPLETED', 'CANCELLED']
         <mat-label>Approved sales orders</mat-label>
         <mat-select [formControl]="ordersCtrl" multiple data-test="wave-orders">
           @for (o of salesOrders(); track o.id) {
-            <mat-option [value]="o.id">{{ o.orderNumber }}</mat-option>
+            <mat-option [value]="o.id">{{ o.orderNumber }} · {{ o.customerName }}</mat-option>
           }
         </mat-select>
       </mat-form-field>
@@ -202,7 +202,8 @@ const STATUSES: WaveStatus[] = ['CREATED', 'RELEASED', 'COMPLETED', 'CANCELLED']
 })
 export class WmsWavesComponent implements OnInit {
   private api = inject(WmsApi);
-  private salesApi = inject(SalesApi);
+  private lookups = inject(LookupApi);
+  private session = inject(SessionStore);
   private snack = inject(MatSnackBar);
 
   statuses = STATUSES;
@@ -210,7 +211,7 @@ export class WmsWavesComponent implements OnInit {
   pickColumns = ['zone', 'bin', 'item', 'batch', 'qty', 'orders'];
 
   waves = signal<WaveDto[]>([]);
-  salesOrders = signal<SalesOrderDto[]>([]);
+  salesOrders = signal<PickableOrder[]>([]);
   selected = signal<WaveDto | null>(null);
   pickList = signal<PickListLineDto[]>([]);
   zoneOptions = signal<{ id: number; code: string }[]>([]);
@@ -222,7 +223,10 @@ export class WmsWavesComponent implements OnInit {
 
   ngOnInit(): void {
     this.load();
-    this.salesApi.getSalesOrders('APPROVED', undefined, 0, 100).subscribe((p) => this.salesOrders.set(p.content));
+    // Only planners can create a wave (the picker is hidden for others), so only they may read the orders to pick.
+    if (this.session.hasAnyPermission(['WAVE_MANAGE'])) {
+      this.lookups.pickableOrders().subscribe((orders) => this.salesOrders.set(orders));
+    }
   }
 
   load(): void {

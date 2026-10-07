@@ -23,6 +23,7 @@ import com.springmfg.ims.lookup.LookupDtos.ItemOption;
 import com.springmfg.ims.lookup.LookupDtos.LocationOption;
 import com.springmfg.ims.lookup.LookupDtos.MaterialStock;
 import com.springmfg.ims.lookup.LookupDtos.Option;
+import com.springmfg.ims.lookup.LookupDtos.PickableOrder;
 import com.springmfg.ims.lookup.LookupDtos.ReceivablePo;
 import com.springmfg.ims.lookup.LookupDtos.ReceivablePoItem;
 
@@ -228,6 +229,19 @@ public class LookupService {
                     (String) first.get("delivery_address"), (String) first.get("status"), items));
         });
         return result;
+    }
+
+    /** Approved sales orders, newest first, for the pick wave planner. */
+    public List<PickableOrder> pickableOrders() {
+        return jdbc.query("""
+                SELECT so.id, so.order_number, c.name AS customer_name
+                  FROM sales_orders so
+                  JOIN customers c ON c.id = so.customer_id
+                 WHERE so.status = 'APPROVED'
+                 ORDER BY so.id DESC
+                 LIMIT\s""" + LIMIT,
+                new MapSqlParameterSource(),
+                (rs, i) -> new PickableOrder(rs.getLong("id"), rs.getString("order_number"), rs.getString("customer_name")));
     }
 
     private List<Option> options(String select, String codeColumn, String q) {

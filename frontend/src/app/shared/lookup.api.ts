@@ -72,6 +72,12 @@ export interface DispatchableItem {
   unitPrice: number;
 }
 
+export interface PickableOrder {
+  id: number;
+  orderNumber: string;
+  customerName: string;
+}
+
 export interface DispatchableOrder {
   id: number;
   orderNumber: string;
@@ -166,5 +172,10 @@ export class LookupApi {
 
   dispatchableOrders(): Observable<DispatchableOrder[]> {
     return this.http.get<DispatchableOrder[]>('/api/lookups/sales-orders/dispatchable');
+  }
+
+  /** Approved sales orders a pick wave can take in; needs only the wave permission, not sales-read rights. */
+  pickableOrders(): Observable<PickableOrder[]> {
+    return this.http.get<PickableOrder[]>('/api/lookups/sales-orders/approved');
   }
 }
