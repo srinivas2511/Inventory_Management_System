@@ -96,7 +96,13 @@ import { ProductFormComponent } from './product-form.component';
         <ng-container matColumnDef="actions">
           <th mat-header-cell *matHeaderCellDef></th>
           <td mat-cell *matCellDef="let r">
-            <button mat-icon-button matTooltip="Edit" (click)="openForm(r)" [disabled]="r.status === 'OBSOLETE'">
+            <button
+              mat-icon-button
+              matTooltip="Edit"
+              aria-label="Edit"
+              (click)="openForm(r)"
+              [disabled]="r.status === 'OBSOLETE'"
+            >
               <mat-icon>edit</mat-icon>
             </button>
             <button

@@ -119,6 +119,7 @@ export interface BomDto {
               <button
                 mat-icon-button
                 matTooltip="Submit for Review"
+                aria-label="Submit for Review"
                 *appHasPermission="'BOM_CREATE'"
                 (click)="doAction(r.id, 'submit')"
               >
@@ -129,6 +130,7 @@ export interface BomDto {
               <button
                 mat-icon-button
                 matTooltip="Approve"
+                aria-label="Approve"
                 *appHasPermission="'BOM_APPROVE'"
                 (click)="doAction(r.id, 'approve')"
               >
@@ -139,6 +141,7 @@ export interface BomDto {
               <button
                 mat-icon-button
                 matTooltip="Activate"
+                aria-label="Activate"
                 *appHasPermission="'BOM_APPROVE'"
                 (click)="doAction(r.id, 'activate')"
               >
@@ -149,6 +152,7 @@ export interface BomDto {
               <button
                 mat-icon-button
                 matTooltip="Copy Revision"
+                aria-label="Copy Revision"
                 *appHasPermission="'BOM_UPDATE'"
                 (click)="doAction(r.id, 'copy-revision')"
               >
@@ -159,6 +163,7 @@ export interface BomDto {
               <button
                 mat-icon-button
                 matTooltip="Recall"
+                aria-label="Recall"
                 *appHasPermission="'BOM_CREATE'"
                 (click)="doAction(r.id, 'recall')"
               >

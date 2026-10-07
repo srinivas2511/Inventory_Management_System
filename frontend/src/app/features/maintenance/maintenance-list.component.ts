@@ -102,6 +102,7 @@ import { MaintenanceApi, MaintenanceRequestDto, PmScheduleDto } from './maintena
                   <button
                     mat-icon-button
                     matTooltip="Start"
+                    aria-label="Start"
                     *appHasPermission="'MAINTENANCE_MANAGE'"
                     (click)="updateStatus(r, 'IN_PROGRESS')"
                   >
@@ -112,6 +113,7 @@ import { MaintenanceApi, MaintenanceRequestDto, PmScheduleDto } from './maintena
                   <button
                     mat-icon-button
                     matTooltip="Complete"
+                    aria-label="Complete"
                     *appHasPermission="'MAINTENANCE_MANAGE'"
                     (click)="updateStatus(r, 'COMPLETED')"
                   >
@@ -156,6 +158,7 @@ import { MaintenanceApi, MaintenanceRequestDto, PmScheduleDto } from './maintena
                 <button
                   mat-icon-button
                   matTooltip="Generate work request"
+                  aria-label="Generate work request"
                   *appHasPermission="'MAINTENANCE_MANAGE'"
                   (click)="generatePmRequest(s)"
                 >

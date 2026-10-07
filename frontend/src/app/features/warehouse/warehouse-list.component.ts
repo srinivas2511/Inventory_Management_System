@@ -100,6 +100,7 @@ import {
                     mat-icon-button
                     color="warn"
                     matTooltip="Delete"
+                    aria-label="Delete"
                     *appHasPermission="'LOCATION_MANAGE'"
                     (click)="deleteLocation(wh, l)"
                   >

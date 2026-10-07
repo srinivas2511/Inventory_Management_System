@@ -118,6 +118,7 @@ export interface PurchaseOrderDto {
               <button
                 mat-icon-button
                 matTooltip="Submit"
+                aria-label="Submit"
                 *appHasPermission="'PURCHASE_CREATE'"
                 (click)="doAction(r.id, 'submit')"
               >
@@ -128,6 +129,7 @@ export interface PurchaseOrderDto {
               <button
                 mat-icon-button
                 matTooltip="Approve"
+                aria-label="Approve"
                 *appHasPermission="'PURCHASE_APPROVE'"
                 (click)="doAction(r.id, 'approve')"
               >
@@ -138,6 +140,7 @@ export interface PurchaseOrderDto {
               <button
                 mat-icon-button
                 matTooltip="Send to Supplier"
+                aria-label="Send to Supplier"
                 *appHasPermission="'PURCHASE_APPROVE'"
                 (click)="doAction(r.id, 'send-to-supplier')"
               >

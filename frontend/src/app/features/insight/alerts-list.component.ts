@@ -89,6 +89,7 @@ import { AlertDto, InsightApi } from './insight.api';
               <button
                 mat-icon-button
                 matTooltip="Acknowledge"
+                aria-label="Acknowledge"
                 *appHasPermission="'ALERT_MANAGE'"
                 (click)="acknowledge(a)"
               >
@@ -96,7 +97,13 @@ import { AlertDto, InsightApi } from './insight.api';
               </button>
             }
             @if (a.status !== 'RESOLVED') {
-              <button mat-icon-button matTooltip="Resolve" *appHasPermission="'ALERT_MANAGE'" (click)="resolve(a)">
+              <button
+                mat-icon-button
+                matTooltip="Resolve"
+                aria-label="Resolve"
+                *appHasPermission="'ALERT_MANAGE'"
+                (click)="resolve(a)"
+              >
                 <mat-icon>done_all</mat-icon>
               </button>
             }

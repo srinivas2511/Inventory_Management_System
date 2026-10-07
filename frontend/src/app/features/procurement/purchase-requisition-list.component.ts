@@ -98,7 +98,13 @@ export interface PurchaseRequisitionDto {
           <th mat-header-cell *matHeaderCellDef></th>
           <td mat-cell *matCellDef="let r">
             @if (r.status === 'OPEN') {
-              <button mat-icon-button matTooltip="Cancel" *appHasPermission="'PURCHASE_CREATE'" (click)="cancel(r.id)">
+              <button
+                mat-icon-button
+                matTooltip="Cancel"
+                aria-label="Cancel"
+                *appHasPermission="'PURCHASE_CREATE'"
+                (click)="cancel(r.id)"
+              >
                 <mat-icon>cancel</mat-icon>
               </button>
             }

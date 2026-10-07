@@ -40,7 +40,13 @@ import { AuthService } from '../../core/auth/auth.service';
                   autocomplete="new-password"
                   data-testid="new-password"
                 />
-                <button mat-icon-button matSuffix type="button" (click)="showPwd.set(!showPwd())">
+                <button
+                  mat-icon-button
+                  matSuffix
+                  type="button"
+                  [attr.aria-label]="showPwd() ? 'Hide password' : 'Show password'"
+                  (click)="showPwd.set(!showPwd())"
+                >
                   <mat-icon>{{ showPwd() ? 'visibility_off' : 'visibility' }}</mat-icon>
                 </button>
                 @if (form.controls.password.hasError('required') && form.controls.password.touched) {

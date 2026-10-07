@@ -83,7 +83,7 @@ import { SupplierFormComponent } from './supplier-form.component';
         <ng-container matColumnDef="actions">
           <th mat-header-cell *matHeaderCellDef></th>
           <td mat-cell *matCellDef="let r">
-            <button mat-icon-button matTooltip="Edit" (click)="openForm(r)">
+            <button mat-icon-button matTooltip="Edit" aria-label="Edit" (click)="openForm(r)">
               <mat-icon>edit</mat-icon>
             </button>
           </td>

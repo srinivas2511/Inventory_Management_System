@@ -105,6 +105,7 @@ export interface FgBatchDto {
               <button
                 mat-icon-button
                 matTooltip="Record Final Inspection"
+                aria-label="Record Final Inspection"
                 *appHasPermission="'QUALITY_INSPECT'"
                 (click)="openFinalDecision(r)"
               >
@@ -115,6 +116,7 @@ export interface FgBatchDto {
               <button
                 mat-icon-button
                 matTooltip="Resolve Hold"
+                aria-label="Resolve Hold"
                 *appHasPermission="'QUALITY_APPROVE'"
                 (click)="resolveHold(r)"
               >

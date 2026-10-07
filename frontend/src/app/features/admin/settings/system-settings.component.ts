@@ -71,12 +71,16 @@ export interface SystemSettingDto {
           <th mat-header-cell *matHeaderCellDef></th>
           <td mat-cell *matCellDef="let s">
             @if (editing() === s.key) {
-              <button mat-icon-button matTooltip="Save" color="primary" (click)="save(s)">
+              <button mat-icon-button matTooltip="Save" aria-label="Save" color="primary" (click)="save(s)">
                 <mat-icon>save</mat-icon>
               </button>
-              <button mat-icon-button matTooltip="Cancel" (click)="cancel()"><mat-icon>close</mat-icon></button>
+              <button mat-icon-button matTooltip="Cancel" aria-label="Cancel" (click)="cancel()">
+                <mat-icon>close</mat-icon>
+              </button>
             } @else {
-              <button mat-icon-button matTooltip="Edit" (click)="startEdit(s)"><mat-icon>edit</mat-icon></button>
+              <button mat-icon-button matTooltip="Edit" aria-label="Edit" (click)="startEdit(s)">
+                <mat-icon>edit</mat-icon>
+              </button>
             }
           </td>
         </ng-container>

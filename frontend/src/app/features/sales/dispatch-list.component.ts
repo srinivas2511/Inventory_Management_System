@@ -80,6 +80,7 @@ import { ListPaginatorComponent } from '../../shared/components/list-paginator.c
             <button
               mat-icon-button
               matTooltip="Dispatch Note"
+              aria-label="Dispatch Note"
               *appHasPermission="'DISPATCH_VIEW'"
               (click)="viewNote(d)"
             >

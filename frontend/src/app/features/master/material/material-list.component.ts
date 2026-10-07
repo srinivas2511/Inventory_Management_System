@@ -89,7 +89,13 @@ import { MaterialFormComponent } from './material-form.component';
         <ng-container matColumnDef="actions">
           <th mat-header-cell *matHeaderCellDef></th>
           <td mat-cell *matCellDef="let r">
-            <button mat-icon-button matTooltip="Edit" (click)="openForm(r)" data-testid="edit-material">
+            <button
+              mat-icon-button
+              matTooltip="Edit"
+              aria-label="Edit"
+              (click)="openForm(r)"
+              data-testid="edit-material"
+            >
               <mat-icon>edit</mat-icon>
             </button>
           </td>

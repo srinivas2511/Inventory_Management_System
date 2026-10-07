@@ -170,15 +170,33 @@ export interface ProductTypeOption {
         <ng-container matColumnDef="actions">
           <th mat-header-cell *matHeaderCellDef></th>
           <td mat-cell *matCellDef="let r">
-            <button mat-icon-button matTooltip="Edit" (click)="startEdit(r)" data-testid="edit-attribute">
+            <button
+              mat-icon-button
+              matTooltip="Edit"
+              aria-label="Edit"
+              (click)="startEdit(r)"
+              data-testid="edit-attribute"
+            >
               <mat-icon>edit</mat-icon>
             </button>
             @if (r.active) {
-              <button mat-icon-button matTooltip="Deactivate" (click)="toggle(r)" data-testid="deactivate-attribute">
+              <button
+                mat-icon-button
+                matTooltip="Deactivate"
+                aria-label="Deactivate"
+                (click)="toggle(r)"
+                data-testid="deactivate-attribute"
+              >
                 <mat-icon>visibility_off</mat-icon>
               </button>
             } @else {
-              <button mat-icon-button matTooltip="Activate" (click)="toggle(r)" data-testid="activate-attribute">
+              <button
+                mat-icon-button
+                matTooltip="Activate"
+                aria-label="Activate"
+                (click)="toggle(r)"
+                data-testid="activate-attribute"
+              >
                 <mat-icon>visibility</mat-icon>
               </button>
             }

@@ -81,7 +81,9 @@ import { CustomerFormComponent } from './customer-form.component';
         <ng-container matColumnDef="actions">
           <th mat-header-cell *matHeaderCellDef></th>
           <td mat-cell *matCellDef="let r">
-            <button mat-icon-button matTooltip="Edit" (click)="openForm(r)"><mat-icon>edit</mat-icon></button>
+            <button mat-icon-button matTooltip="Edit" aria-label="Edit" (click)="openForm(r)">
+              <mat-icon>edit</mat-icon>
+            </button>
           </td>
         </ng-container>
         <tr mat-header-row *matHeaderRowDef="columns"></tr>

@@ -102,6 +102,7 @@ import { ListPaginatorComponent } from '../../shared/components/list-paginator.c
               <button
                 mat-icon-button
                 matTooltip="Reserve stock"
+                aria-label="Reserve stock"
                 *appHasPermission="'SALES_CREATE,RESERVE_FG'"
                 (click)="reserve(o)"
               >
@@ -109,12 +110,24 @@ import { ListPaginatorComponent } from '../../shared/components/list-paginator.c
               </button>
             }
             @if (o.allowedActions.includes('confirm')) {
-              <button mat-icon-button matTooltip="Confirm" *appHasPermission="'SALES_CREATE'" (click)="confirm(o)">
+              <button
+                mat-icon-button
+                matTooltip="Confirm"
+                aria-label="Confirm"
+                *appHasPermission="'SALES_CREATE'"
+                (click)="confirm(o)"
+              >
                 <mat-icon>check_circle</mat-icon>
               </button>
             }
             @if (o.allowedActions.includes('approve')) {
-              <button mat-icon-button matTooltip="Approve" *appHasPermission="'SALES_APPROVE'" (click)="approve(o)">
+              <button
+                mat-icon-button
+                matTooltip="Approve"
+                aria-label="Approve"
+                *appHasPermission="'SALES_APPROVE'"
+                (click)="approve(o)"
+              >
                 <mat-icon>thumb_up</mat-icon>
               </button>
             }
@@ -122,6 +135,7 @@ import { ListPaginatorComponent } from '../../shared/components/list-paginator.c
               <button
                 mat-icon-button
                 matTooltip="Cancel"
+                aria-label="Cancel"
                 color="warn"
                 *appHasPermission="'SALES_UPDATE'"
                 (click)="cancel(o)"

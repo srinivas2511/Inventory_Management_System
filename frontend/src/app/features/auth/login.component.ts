@@ -51,7 +51,13 @@ import { SessionStore } from '../../core/auth/session.store';
                 autocomplete="current-password"
                 data-testid="password"
               />
-              <button mat-icon-button matSuffix type="button" (click)="showPassword.set(!showPassword())">
+              <button
+                mat-icon-button
+                matSuffix
+                type="button"
+                [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
+                (click)="showPassword.set(!showPassword())"
+              >
                 <mat-icon>{{ showPassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
               </button>
               @if (form.controls.password.hasError('required') && form.controls.password.touched) {
