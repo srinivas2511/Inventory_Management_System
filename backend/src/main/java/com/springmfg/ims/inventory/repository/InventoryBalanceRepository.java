@@ -37,6 +37,16 @@ public interface InventoryBalanceRepository extends JpaRepository<InventoryBalan
             @Param("mbId") Long materialBatchId, @Param("fgId") Long fgBatchId,
             @Param("status") String stockStatus);
 
+    /** Every batch of an item held at one location and status: a count that names no batch covers all of them. */
+    @Query("SELECT b FROM InventoryBalance b WHERE b.warehouseId = :wh AND b.locationId = :loc AND b.itemType = :it " +
+           "AND COALESCE(b.materialId,0) = COALESCE(:matId,0) AND COALESCE(b.productId,0) = COALESCE(:prodId,0) " +
+           "AND b.stockStatus = :status ORDER BY b.id")
+    List<InventoryBalance> findAllForItemAtLocation(
+            @Param("wh") Long warehouseId, @Param("loc") Long locationId,
+            @Param("it") String itemType,
+            @Param("matId") Long materialId, @Param("prodId") Long productId,
+            @Param("status") String stockStatus);
+
     @Query("SELECT b FROM InventoryBalance b WHERE b.materialId = :matId AND b.stockStatus = 'AVAILABLE' AND b.qtyOnHand > b.qtyReserved ORDER BY b.id")
     List<InventoryBalance> findAvailableByMaterial(@Param("matId") Long materialId);
 

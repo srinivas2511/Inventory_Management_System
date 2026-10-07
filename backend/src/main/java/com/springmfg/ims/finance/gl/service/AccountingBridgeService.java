@@ -52,6 +52,12 @@ public class AccountingBridgeService {
         if ("MATERIAL_CONSUMPTION".equals(tx.getTransactionType())) {
             return;
         }
+        // Final inspection (and the release of a held batch) writes rejected finished goods off with a SCRAP out-leg (Dr 5202 / Cr 1410) and records the
+        // pieces in the scrap location with this zero-value in-leg; journalling it too would relieve WIP a second time.
+        if ("PRODUCTION_REJECTION".equals(tx.getTransactionType())
+                && ("QUALITY_INSPECTION".equals(tx.getReferenceType()) || "FG_BATCH".equals(tx.getReferenceType()))) {
+            return;
+        }
         // The in-leg of a material issue puts the same stock into the WIP location; the issue journal (Dr 1501 / Cr 1401)
         // already covers the move.
         if ("MATERIAL_RECEIPT".equals(tx.getTransactionType())) {

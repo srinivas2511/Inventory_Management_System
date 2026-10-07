@@ -17,6 +17,7 @@ import com.springmfg.ims.common.exception.ErrorCode;
 import com.springmfg.ims.common.exception.NotFoundException;
 import com.springmfg.ims.common.numbering.DocumentNumberService;
 import com.springmfg.ims.inventory.domain.FgBatch;
+import com.springmfg.ims.inventory.dto.PostingCommand;
 import com.springmfg.ims.inventory.dto.TransferCommand;
 import com.springmfg.ims.inventory.repository.FgBatchRepository;
 import com.springmfg.ims.inventory.service.InventoryPostingService;
@@ -259,15 +260,10 @@ public class FinalInspectionService {
                     "FG approved in final inspection"));
         }
 
-        // Rejected: move QUALITY_PENDING → SCRAP
+        // Rejected: written off the FG books and held as REJECTED stock in the scrap location (see writeOffRejectedFg).
         if (rejected.compareTo(BigDecimal.ZERO) > 0 && fgqLoc != null && scrapLoc != null) {
-            postingService.transfer(new TransferCommand(
-                    "PRODUCT", null, productId, null, batchId,
-                    DEFAULT_WAREHOUSE_ID, fgqLoc.getId(), "QUALITY_PENDING",
-                    DEFAULT_WAREHOUSE_ID, scrapLoc.getId(), "AVAILABLE",
-                    rejected, null,
-                    "QUALITY_INSPECTION", inspectionId, inspNumber,
-                    "FG rejected in final inspection"));
+            writeOffRejectedFg(batch, fgqLoc, "QUALITY_PENDING", scrapLoc, rejected,
+                    "QUALITY_INSPECTION", inspectionId, inspNumber);
 
             if (req.rejectionReasons() != null) {
                 Long userId = currentUserId();
@@ -357,6 +353,28 @@ public class FinalInspectionService {
         return toDto(insp);
     }
 
+    /**
+     * Rejected finished goods leave the FG books at the cost the batch carries (SCRAP out-leg, bridge Dr 5202 Scrap
+     * Loss / Cr 1410 FG Stock; the FG receipt already relieved WIP, so WIP is not touched again) and arrive in the
+     * scrap location as REJECTED stock at zero value (PRODUCTION_REJECTION, GL-neutral for these references). REJECTED
+     * stock is never AVAILABLE, so it cannot be reserved, dispatched or picked.
+     */
+    private void writeOffRejectedFg(FgBatch batch, WarehouseLocation from, String fromStatus,
+                                    WarehouseLocation scrapLoc, BigDecimal qty,
+                                    String refType, Long refId, String refNumber) {
+        Long productId = batch.getProduct().getId();
+        postingService.post(new PostingCommand(
+                "SCRAP", "PRODUCT", null, productId, null, batch.getId(),
+                DEFAULT_WAREHOUSE_ID, from.getId(), fromStatus,
+                qty, null, batch.getUnitCost(),
+                refType, refId, refNumber, "FG rejected: written off"));
+        postingService.post(new PostingCommand(
+                "PRODUCTION_REJECTION", "PRODUCT", null, productId, null, batch.getId(),
+                DEFAULT_WAREHOUSE_ID, scrapLoc.getId(), "REJECTED",
+                qty, null, BigDecimal.ZERO,
+                refType, refId, refNumber, "FG rejected: held as rejected stock"));
+    }
+
     // ── Task 5.3 — FG hold approval ──────────────────────────────────────────
 
     @Transactional
@@ -389,12 +407,7 @@ public class FinalInspectionService {
         }
 
         if (rejected.compareTo(BigDecimal.ZERO) > 0 && fgqLoc != null && scrapLoc != null) {
-            postingService.transfer(new TransferCommand(
-                    "PRODUCT", null, productId, null, fgBatchId,
-                    DEFAULT_WAREHOUSE_ID, fgqLoc.getId(), "HOLD",
-                    DEFAULT_WAREHOUSE_ID, scrapLoc.getId(), "AVAILABLE",
-                    rejected, null,
-                    "FG_BATCH", fgBatchId, batchNum, req.reason()));
+            writeOffRejectedFg(batch, fgqLoc, "HOLD", scrapLoc, rejected, "FG_BATCH", fgBatchId, batchNum);
 
             if (req.rejectionReasons() != null) {
                 Long userId = currentUserId();

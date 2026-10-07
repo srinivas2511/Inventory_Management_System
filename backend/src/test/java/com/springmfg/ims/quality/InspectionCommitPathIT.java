@@ -363,9 +363,11 @@ class InspectionCommitPathIT extends AbstractIntegrationTest {
         assertThat(rejectionRepo.findByInspectionId(created.id())).hasSize(1)
                 .allSatisfy(r -> assertThat(r.getQuantity()).isEqualByComparingTo("6.000"));
 
-        // 90 released to FINISHED and 6 to SCRAP are both AVAILABLE; 4 are on HOLD; nothing is left pending.
+        // 90 released to FINISHED are AVAILABLE; the 6 rejected sit in the scrap location as REJECTED stock (DESIGN
+        // step 14, QCF-04) and so are not available; 4 are on HOLD; nothing is left pending.
         Map<String, BigDecimal> balances = balancesByStatus(batch.getId());
-        assertThat(balances.get("AVAILABLE")).isEqualByComparingTo("96.000");
+        assertThat(balances.get("AVAILABLE")).isEqualByComparingTo("90.000");
+        assertThat(balances.get("REJECTED")).isEqualByComparingTo("6.000");
         assertThat(balances.get("HOLD")).isEqualByComparingTo("4.000");
         assertThat(balances.getOrDefault("QUALITY_PENDING", BigDecimal.ZERO)).isEqualByComparingTo("0");
     }

@@ -1,6 +1,7 @@
 package com.springmfg.ims.inventory.service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,11 +20,14 @@ import com.springmfg.ims.common.exception.ErrorCode;
 import com.springmfg.ims.common.exception.NotFoundException;
 import com.springmfg.ims.common.numbering.DocumentNumberService;
 import com.springmfg.ims.common.settings.SystemSettingService;
+import com.springmfg.ims.inventory.domain.InventoryBalance;
 import com.springmfg.ims.inventory.domain.StockAdjustment;
 import com.springmfg.ims.inventory.dto.PostingCommand;
 import com.springmfg.ims.inventory.dto.StockAdjustmentDto;
 import com.springmfg.ims.inventory.repository.InventoryBalanceRepository;
 import com.springmfg.ims.inventory.repository.StockAdjustmentRepository;
+import com.springmfg.ims.material.repository.MaterialRepository;
+import com.springmfg.ims.product.repository.ProductRepository;
 
 /**
  * Adjustment workflow: REQUESTED → SUPERVISOR_REVIEW → MANAGER_APPROVAL → [ADMIN_APPROVAL] → POSTED.
@@ -41,6 +45,8 @@ public class StockAdjustmentService {
     private final DocumentNumberService numberService;
     private final SystemSettingService settingService;
     private final AuditService auditService;
+    private final MaterialRepository materialRepo;
+    private final ProductRepository productRepo;
 
     public StockAdjustmentService(StockAdjustmentRepository adjRepo,
                                    InventoryBalanceRepository balanceRepo,
@@ -48,7 +54,9 @@ public class StockAdjustmentService {
                                    ApprovalService approvalService,
                                    DocumentNumberService numberService,
                                    SystemSettingService settingService,
-                                   AuditService auditService) {
+                                   AuditService auditService,
+                                   MaterialRepository materialRepo,
+                                   ProductRepository productRepo) {
         this.adjRepo = adjRepo;
         this.balanceRepo = balanceRepo;
         this.postingService = postingService;
@@ -56,21 +64,26 @@ public class StockAdjustmentService {
         this.numberService = numberService;
         this.settingService = settingService;
         this.auditService = auditService;
+        this.materialRepo = materialRepo;
+        this.productRepo = productRepo;
     }
 
     @Transactional
     public StockAdjustmentDto request(String itemType, Long materialId, Long productId,
                                        Long batchId, Long warehouseId, Long locationId,
                                        String stockStatus, BigDecimal countedQty, String reason) {
-        // Read current system quantity from the balance
-        BigDecimal systemQty = balanceRepo.findBalance(
-                        warehouseId, locationId, itemType,
-                        materialId, productId,
-                        "MATERIAL".equals(itemType) ? batchId : null,
-                        "PRODUCT".equals(itemType) ? batchId : null,
-                        stockStatus)
-                .map(b -> b.getQtyOnHand())
-                .orElse(BigDecimal.ZERO);
+        // The system quantity is what the ledger holds for what was counted: the named batch, or, when the count names
+        // no batch, every batch of the item at that location and status (balances are kept per batch).
+        List<InventoryBalance> counted = balancesCovered(itemType, materialId, productId, batchId,
+                warehouseId, locationId, stockStatus);
+        BigDecimal systemQty = counted.stream().map(InventoryBalance::getQtyOnHand)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        if (batchId == null && countedQty.compareTo(systemQty) > 0) {
+            throw new BusinessRuleException(ErrorCode.VALIDATION_FAILED,
+                    "The count is " + countedQty.subtract(systemQty).stripTrailingZeros().toPlainString()
+                            + " above the system quantity of " + systemQty.stripTrailingZeros().toPlainString()
+                            + ". Stock can only be added to a named batch: select the batch to adjust.");
+        }
 
         StockAdjustment adj = new StockAdjustment();
         adj.setAdjustmentNumber(numberService.next("ADJ"));
@@ -88,17 +101,11 @@ public class StockAdjustmentService {
         adj.setRequestedBy(currentUserId());
         adjRepo.save(adj);
 
-        // Compute variance value
+        // Value of the variance at the weighted average cost of the stock counted (the item's standard cost when the
+        // ledger holds nothing to average), so the Admin-approval threshold is decided on the real money at stake.
         BigDecimal varianceQty = adj.varianceQty();
-        // A rough variance value (qty × avg cost) — will be refined when approved
-        BigDecimal avgCost = balanceRepo.findBalance(warehouseId, locationId, itemType,
-                        materialId, productId,
-                        "MATERIAL".equals(itemType) ? batchId : null,
-                        "PRODUCT".equals(itemType) ? batchId : null,
-                        stockStatus)
-                .map(b -> b.getAvgUnitCost())
-                .orElse(BigDecimal.ZERO);
-        adj.setVarianceValue(varianceQty.abs().multiply(avgCost));
+        BigDecimal unitCost = unitCostOf(counted, itemType, materialId, productId);
+        adj.setVarianceValue(varianceQty.abs().multiply(unitCost).setScale(4, RoundingMode.HALF_UP));
         adjRepo.save(adj);
 
         // Build approval steps
@@ -162,32 +169,77 @@ public class StockAdjustmentService {
             return;
         }
 
-        PostingCommand cmd = new PostingCommand(
-                "STOCK_ADJUSTMENT",
-                adj.getItemType(), adj.getMaterialId(), adj.getProductId(),
-                "MATERIAL".equals(adj.getItemType()) ? adj.getBatchId() : null,
-                "PRODUCT".equals(adj.getItemType()) ? adj.getBatchId() : null,
-                adj.getWarehouseId(), adj.getLocationId(), adj.getStockStatus(),
-                variance.abs(), "KG", null,
-                "STOCK_ADJUSTMENT", adj.getId(), adj.getAdjustmentNumber(), adj.getReason());
-
-        // For negative variance we need an out-leg type
-        PostingCommand finalCmd = variance.compareTo(BigDecimal.ZERO) < 0
-                ? new PostingCommand("STOCK_ADJUSTMENT_OUT",
-                        cmd.itemType(), cmd.materialId(), cmd.productId(),
-                        cmd.materialBatchId(), cmd.fgBatchId(),
-                        cmd.warehouseId(), cmd.locationId(), cmd.stockStatus(),
-                        cmd.quantity(), cmd.uom(), cmd.unitCost(),
-                        cmd.referenceType(), cmd.referenceId(), cmd.referenceNumber(), cmd.remarks())
-                : cmd;
-
-        var result = postingService.post(finalCmd);
-        adj.setPostedTransactionId(result.transactionId());
+        Long firstTransactionId = null;
+        if (variance.compareTo(BigDecimal.ZERO) > 0) {
+            // A gain is added to the named batch (request() refuses a gain without one).
+            firstTransactionId = postLeg("STOCK_ADJUSTMENT", adj, adj.getBatchId(), variance);
+        } else {
+            // A loss is taken from the named batch, or, for a count that named none, from the batches at the location
+            // oldest first, never more than each can give up once reservations are respected.
+            BigDecimal remaining = variance.abs();
+            for (InventoryBalance b : balancesCovered(adj.getItemType(), adj.getMaterialId(), adj.getProductId(),
+                    adj.getBatchId(), adj.getWarehouseId(), adj.getLocationId(), adj.getStockStatus())) {
+                if (remaining.signum() == 0) break;
+                BigDecimal take = remaining.min(b.available());
+                if (take.signum() <= 0) continue;
+                Long batch = "MATERIAL".equals(adj.getItemType()) ? b.getMaterialBatchId() : b.getFgBatchId();
+                Long txId = postLeg("STOCK_ADJUSTMENT_OUT", adj, batch, take);
+                if (firstTransactionId == null) firstTransactionId = txId;
+                remaining = remaining.subtract(take);
+            }
+            if (remaining.signum() > 0) {
+                throw new BusinessRuleException(ErrorCode.INSUFFICIENT_STOCK,
+                        "Adjustment " + adj.getAdjustmentNumber() + " needs " + variance.abs().toPlainString()
+                                + " but " + remaining.toPlainString() + " of it is reserved or no longer on hand.");
+            }
+        }
+        adj.setPostedTransactionId(firstTransactionId);
         adj.setStatus("POSTED");
         adjRepo.save(adj);
 
         auditService.record("ADJ_POSTED", "STOCK_ADJUSTMENT", String.valueOf(adj.getId()),
                 String.valueOf(adj.getSystemQty()), String.valueOf(adj.getCountedQty()), adj.getReason());
+    }
+
+    private List<InventoryBalance> balancesCovered(String itemType, Long materialId, Long productId, Long batchId,
+                                                   Long warehouseId, Long locationId, String stockStatus) {
+        if (batchId != null) {
+            return balanceRepo.findBalance(warehouseId, locationId, itemType, materialId, productId,
+                            "MATERIAL".equals(itemType) ? batchId : null,
+                            "PRODUCT".equals(itemType) ? batchId : null, stockStatus)
+                    .map(List::of).orElse(List.of());
+        }
+        return balanceRepo.findAllForItemAtLocation(warehouseId, locationId, itemType, materialId, productId, stockStatus);
+    }
+
+    /** Weighted average cost of the counted stock; the item's standard cost when there is nothing to average. */
+    private BigDecimal unitCostOf(List<InventoryBalance> counted, String itemType, Long materialId, Long productId) {
+        BigDecimal qty = BigDecimal.ZERO;
+        BigDecimal value = BigDecimal.ZERO;
+        for (InventoryBalance b : counted) {
+            if (b.getQtyOnHand().signum() > 0) {
+                qty = qty.add(b.getQtyOnHand());
+                value = value.add(b.getQtyOnHand().multiply(b.getAvgUnitCost()));
+            }
+        }
+        if (qty.signum() > 0 && value.signum() > 0) {
+            return value.divide(qty, 4, RoundingMode.HALF_UP);
+        }
+        BigDecimal standard = "MATERIAL".equals(itemType)
+                ? materialRepo.findById(materialId).map(m -> m.getStandardCost()).orElse(null)
+                : productRepo.findById(productId).map(p -> p.getStandardCost()).orElse(null);
+        return standard == null ? BigDecimal.ZERO : standard;
+    }
+
+    private Long postLeg(String transactionType, StockAdjustment adj, Long batchId, BigDecimal quantity) {
+        var result = postingService.post(new PostingCommand(
+                transactionType, adj.getItemType(), adj.getMaterialId(), adj.getProductId(),
+                "MATERIAL".equals(adj.getItemType()) ? batchId : null,
+                "PRODUCT".equals(adj.getItemType()) ? batchId : null,
+                adj.getWarehouseId(), adj.getLocationId(), adj.getStockStatus(),
+                quantity, null, null,
+                "STOCK_ADJUSTMENT", adj.getId(), adj.getAdjustmentNumber(), adj.getReason()));
+        return result.transactionId();
     }
 
     private StockAdjustment findByApprovalRequest(Long approvalRequestId) {

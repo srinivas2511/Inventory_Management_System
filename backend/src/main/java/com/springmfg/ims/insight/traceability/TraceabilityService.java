@@ -35,11 +35,11 @@ public class TraceabilityService {
 
         // GRN receipt
         var grnRows = (List<Object[]>) em.createNativeQuery("""
-                SELECT gr.grn_number, gri.quantity_received, gr.received_date
+                SELECT gr.gr_number, gri.received_qty, gr.receipt_date
                 FROM ims.goods_receipt_items gri
                 JOIN ims.goods_receipts gr ON gr.id = gri.goods_receipt_id
                 WHERE gri.material_batch_id = :batchId
-                ORDER BY gr.received_date
+                ORDER BY gr.receipt_date
                 """)
                 .setParameter("batchId", batchId)
                 .getResultList();
@@ -139,10 +139,25 @@ public class TraceabilityService {
         return new TraceabilityDto("FG_BATCH", fgBatchId, batchNumber, trail);
     }
 
+    /**
+     * Native queries return whatever the driver maps the column to: a TIMESTAMPTZ arrives as a Timestamp or Instant,
+     * but a DATE column arrives as a java.sql.Date (whose toInstant() throws) or a LocalDate. A date-only value is the
+     * start of that day in UTC.
+     */
     private Instant toInstant(Object val) {
         if (val == null) return null;
+        if (val instanceof Instant i) return i;
         if (val instanceof java.sql.Timestamp ts) return ts.toInstant();
+        if (val instanceof java.sql.Date d) return d.toLocalDate().atStartOfDay(java.time.ZoneOffset.UTC).toInstant();
+        if (val instanceof java.util.Date d) return d.toInstant();
         if (val instanceof java.time.LocalDate ld) return ld.atStartOfDay(java.time.ZoneOffset.UTC).toInstant();
-        return Instant.parse(val.toString());
+        if (val instanceof java.time.LocalDateTime ldt) return ldt.toInstant(java.time.ZoneOffset.UTC);
+        if (val instanceof java.time.OffsetDateTime odt) return odt.toInstant();
+        String text = val.toString();
+        try {
+            return Instant.parse(text);
+        } catch (java.time.format.DateTimeParseException notATimestamp) {
+            return java.time.LocalDate.parse(text).atStartOfDay(java.time.ZoneOffset.UTC).toInstant();
+        }
     }
 }
