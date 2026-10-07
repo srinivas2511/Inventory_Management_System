@@ -6,7 +6,10 @@ export const dialog = (page: Page) => page.getByRole('dialog');
 export async function pick(scope: Locator, label: string | RegExp, option: string | RegExp | number): Promise<void> {
   const page = scope.page();
   const field = scope.locator('mat-form-field').filter({ has: page.locator('mat-label', { hasText: label }) });
-  await field.first().locator('mat-select').click();
+  const select = field.first().locator('mat-select');
+  await select.waitFor({ state: 'visible' });
+  // Material selects sometimes never report "stable" while their panel animates; the click itself is reliable.
+  await select.click({ force: true });
   const options = page.getByRole('option');
   if (typeof option === 'number') await options.nth(option).click();
   else await options.filter({ hasText: option }).first().click();

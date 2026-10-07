@@ -104,3 +104,47 @@ export async function releasedOrder(plannedQty: number) {
   const ops = await admin().list<any>(`/api/production-orders/${order.id}/operations`);
   return { id: order.id as number, orderNumber: order.orderNumber as string, ops };
 }
+
+/**
+ * A one-piece sales order -> reservation -> dispatch through the real API, so a spec that needs an OPEN AR invoice
+ * creates its own instead of consuming the shared demo invoices. Needs AVAILABLE finished goods (the workflow spec or
+ * the demo data provides them) and says so clearly when there are none.
+ */
+export async function dispatchOnePiece(unitPrice = 200): Promise<{ dispatchId: number; invoice: any }> {
+  const { product, customer } = await demoIds();
+  const fg = (await balances()).find(
+    (b) => b.itemType === 'PRODUCT' && b.productId === product.id && b.stockStatus === 'AVAILABLE' && Number(b.qtyAvailable) >= 1,
+  );
+  if (!fg) throw new Error('dispatchOnePiece needs AVAILABLE finished goods: run demo-workflow.spec.ts first (or load the demo data)');
+  const sales = apiFor(U.sales);
+  const so = await sales.must('POST', '/api/sales/orders', {
+    customerId: customer.id,
+    orderDate: isoToday(),
+    requiredDate: isoToday(10),
+    deliveryAddress: 'E2E Plot 1, Test Industrial Area',
+    items: [{ productId: product.id, orderedQty: 1, unitPrice }],
+  });
+  await sales.must('POST', `/api/sales/orders/${so.id}/confirm`);
+  await admin().must('POST', `/api/sales/orders/${so.id}/approve`);
+  const full = await admin().must('GET', `/api/sales/orders/${so.id}`);
+  await sales.must('POST', '/api/sales/reservations', {
+    salesOrderItemId: full.items[0].id,
+    fgBatchId: fg.fgBatchId,
+    warehouseId: fg.warehouseId,
+    locationId: fg.locationId,
+    qty: 1,
+  });
+  const dispatch = await apiFor(U.dispatch).must('POST', '/api/sales/dispatches', {
+    salesOrderId: so.id,
+    dispatchDate: isoToday(),
+    deliveryAddress: 'E2E Plot 1, Test Industrial Area',
+    lines: [{ salesOrderItemId: full.items[0].id, fgBatchId: fg.fgBatchId, quantity: 1, warehouseId: fg.warehouseId, locationId: fg.locationId, unitPrice }],
+  });
+  let invoice: any;
+  for (let i = 0; i < 30 && !invoice; i++) {
+    invoice = (await admin().list<any>('/api/ar/invoices?size=200')).find((x) => x.dispatchId === dispatch.id);
+    if (!invoice) await new Promise((r) => setTimeout(r, 500));
+  }
+  if (!invoice) throw new Error(`no AR invoice appeared for dispatch ${dispatch.id}`);
+  return { dispatchId: dispatch.id, invoice };
+}
