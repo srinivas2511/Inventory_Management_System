@@ -82,7 +82,7 @@ public class SupplierService {
         s.setPhone(req.phone());
         s.setEmail(req.email());
         s.setAddress(req.address());
-        s.setGstNumber(req.gstNumber());
+        s.setGstNumber(req.gstNumber() == null || req.gstNumber().isBlank() ? null : req.gstNumber().trim());
         s.setPaymentTerms(req.paymentTerms());
         s.setLeadTimeDays(req.leadTimeDays());
     }

@@ -5,6 +5,7 @@ import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/materia
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { applyFieldErrors } from '../../../core/models/problem.model';
 import { CustomerApi, CustomerDto } from './customer.api';
 
 const GST_PATTERN = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
@@ -131,7 +132,9 @@ export class CustomerFormComponent {
       return;
     }
     this.saving.set(true);
-    const req = this.form.getRawValue();
+    const raw = this.form.getRawValue();
+    // GST is optional (DESIGN section 14): a blank field means 'none', not an empty string the API must reject.
+    const req = { ...raw, gstNumber: raw.gstNumber.trim() === '' ? undefined : raw.gstNumber.trim() };
     const obs = this.customer ? this.api.update(this.customer.id, req) : this.api.create(req);
     obs.subscribe({
       next: () => {
@@ -140,7 +143,7 @@ export class CustomerFormComponent {
       },
       error: (err) => {
         this.saving.set(false);
-        this.errorMessage.set(err?.error?.detail ?? 'Save failed.');
+        this.errorMessage.set(applyFieldErrors(this.form, err, 'Save failed.'));
       },
     });
   }

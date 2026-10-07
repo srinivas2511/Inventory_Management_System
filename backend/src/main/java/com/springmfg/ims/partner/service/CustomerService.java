@@ -82,7 +82,7 @@ public class CustomerService {
         c.setPhone(req.phone());
         c.setEmail(req.email());
         c.setAddress(req.address());
-        c.setGstNumber(req.gstNumber());
+        c.setGstNumber(req.gstNumber() == null || req.gstNumber().isBlank() ? null : req.gstNumber().trim());
         c.setPaymentTerms(req.paymentTerms());
     }
 
