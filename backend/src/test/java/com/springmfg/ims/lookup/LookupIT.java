@@ -3,6 +3,7 @@ package com.springmfg.ims.lookup;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 import org.junit.jupiter.api.DisplayName;
@@ -10,6 +11,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 
+import com.springmfg.ims.inventory.dto.OpeningBalanceLine;
+import com.springmfg.ims.inventory.service.OpeningBalanceService;
+import com.springmfg.ims.lookup.LookupDtos.MaterialStock;
 import com.springmfg.ims.lookup.LookupDtos.ReceivablePo;
 import com.springmfg.ims.material.domain.Material;
 import com.springmfg.ims.partner.domain.Customer;
@@ -25,6 +29,7 @@ import com.springmfg.ims.support.TestData;
 class LookupIT extends AbstractIntegrationTest {
 
     @Autowired LookupService lookups;
+    @Autowired OpeningBalanceService openingBalances;
     @Autowired JdbcTemplate jdbc;
     @Autowired TestData td;
 
@@ -120,5 +125,43 @@ class LookupIT extends AbstractIntegrationTest {
         assertThat(lookups.finishedGoodsStock(td.product().getId())).isEmpty();
         assertThat(lookups.finishedGoodsStock(null)).isNotNull();
         assertThat(lookups.dispatchableOrders()).isNotNull();
+    }
+
+    @Test
+    @DisplayName("LOOK-7: material stock lists available batches earliest expiry first, with reserved stock taken off and quarantine left out")
+    void materialStockFollowsTheIssueOrder() {
+        Material material = td.material();
+        long warehouse = 1L;
+        long location = 1L;
+        for (String qty : List.of("10.000", "5.000")) {
+            openingBalances.loadOpeningBalances(List.of(new OpeningBalanceLine("MATERIAL", material.getId(), null, null,
+                    warehouse, location, "AVAILABLE", new BigDecimal(qty), "KG", new BigDecimal("80.0000"), "LOOK-7")));
+        }
+        openingBalances.loadOpeningBalances(List.of(new OpeningBalanceLine("MATERIAL", material.getId(), null, null,
+                warehouse, location, "QUARANTINE", new BigDecimal("7.000"), "KG", new BigDecimal("80.0000"), "LOOK-7")));
+
+        List<Long> batchIds = jdbc.queryForList("""
+                SELECT DISTINCT mb.id FROM ims.material_batches mb
+                  JOIN ims.inventory_balances b ON b.material_batch_id = mb.id
+                 WHERE b.material_id = ? AND b.stock_status = 'AVAILABLE' ORDER BY mb.id
+                """, Long.class, material.getId());
+        assertThat(batchIds).hasSize(2);
+        jdbc.update("UPDATE ims.material_batches SET expiry_date = ? WHERE id = ?",
+                LocalDate.now().plusDays(400), batchIds.get(0));
+        jdbc.update("UPDATE ims.material_batches SET expiry_date = ? WHERE id = ?",
+                LocalDate.now().plusDays(30), batchIds.get(1));
+        jdbc.update("UPDATE ims.inventory_balances SET qty_reserved = 2 WHERE material_batch_id = ? AND stock_status = 'AVAILABLE'",
+                batchIds.get(1));
+
+        List<MaterialStock> stock = lookups.materialStock(material.getId(), warehouse);
+
+        assertThat(stock).extracting(MaterialStock::batchId).containsExactly(batchIds.get(1), batchIds.get(0));
+        assertThat(stock.get(0).onHand()).isEqualByComparingTo("5.000");
+        assertThat(stock.get(0).reserved()).isEqualByComparingTo("2.000");
+        assertThat(stock.get(0).available()).isEqualByComparingTo("3.000");
+        assertThat(stock.get(1).available()).isEqualByComparingTo("10.000");
+        assertThat(stock.get(0).locationCode()).isNotBlank();
+        assertThat(lookups.materialStock(material.getId(), 999999L)).isEmpty();
+        assertThat(lookups.materialStock(999999L, warehouse)).isEmpty();
     }
 }

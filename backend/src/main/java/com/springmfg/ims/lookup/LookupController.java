@@ -16,6 +16,7 @@ import com.springmfg.ims.lookup.LookupDtos.FgStock;
 import com.springmfg.ims.lookup.LookupDtos.InvoiceableReceipt;
 import com.springmfg.ims.lookup.LookupDtos.ItemOption;
 import com.springmfg.ims.lookup.LookupDtos.LocationOption;
+import com.springmfg.ims.lookup.LookupDtos.MaterialStock;
 import com.springmfg.ims.lookup.LookupDtos.Option;
 import com.springmfg.ims.lookup.LookupDtos.ReceivablePo;
 
@@ -45,7 +46,7 @@ public class LookupController {
     }
 
     @GetMapping("/warehouses")
-    @PreAuthorize("hasAnyAuthority('INVENTORY_RECEIVE','INVENTORY_VIEW','DISPATCH_CREATE','RESERVE_FG','WAREHOUSE_MANAGE')")
+    @PreAuthorize("hasAnyAuthority('INVENTORY_RECEIVE','INVENTORY_VIEW','INVENTORY_ISSUE','DISPATCH_CREATE','RESERVE_FG','WAREHOUSE_MANAGE')")
     public List<Option> warehouses(@RequestParam(required = false) String q) {
         return service.warehouses(q);
     }
@@ -84,6 +85,12 @@ public class LookupController {
     @PreAuthorize("hasAuthority('AP_MANAGE')")
     public List<InvoiceableReceipt> invoiceableReceipts(@RequestParam(required = false) Long supplierId) {
         return service.invoiceableReceipts(supplierId);
+    }
+
+    @GetMapping("/material-stock")
+    @PreAuthorize("hasAuthority('INVENTORY_ISSUE')")
+    public List<MaterialStock> materialStock(@RequestParam Long materialId, @RequestParam Long warehouseId) {
+        return service.materialStock(materialId, warehouseId);
     }
 
     @GetMapping("/fg-stock")

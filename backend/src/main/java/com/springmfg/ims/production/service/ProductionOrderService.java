@@ -5,6 +5,8 @@ import java.math.RoundingMode;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
@@ -59,6 +61,7 @@ public class ProductionOrderService {
     private final AuditService auditService;
     private final ApplicationEventPublisher eventPublisher;
     private final OrderMaterialService orderMaterialService;
+    private final OperatorDirectory operatorDirectory;
 
     public ProductionOrderService(
             ProductionOrderRepository orderRepo,
@@ -73,7 +76,8 @@ public class ProductionOrderService {
             DocumentNumberService numberService,
             AuditService auditService,
             ApplicationEventPublisher eventPublisher,
-            OrderMaterialService orderMaterialService) {
+            OrderMaterialService orderMaterialService,
+            OperatorDirectory operatorDirectory) {
         this.orderRepo = orderRepo;
         this.materialRepo = materialRepo;
         this.operationRepo = operationRepo;
@@ -87,6 +91,7 @@ public class ProductionOrderService {
         this.auditService = auditService;
         this.eventPublisher = eventPublisher;
         this.orderMaterialService = orderMaterialService;
+        this.operatorDirectory = operatorDirectory;
     }
 
     @Transactional
@@ -283,9 +288,10 @@ public class ProductionOrderService {
     public List<ProductionOperationDto> getOperations(Long orderId) {
         ProductionOrder order = orderRepo.findById(orderId)
                 .orElseThrow(() -> new NotFoundException("Production order not found: " + orderId));
-        return operationRepo.findByProductionOrderIdOrderBySequenceNo(orderId).stream()
-                .map(op -> toOperationDto(op, order))
-                .toList();
+        List<ProductionOperation> operations = operationRepo.findByProductionOrderIdOrderBySequenceNo(orderId);
+        Map<Long, String> operatorNames = operatorDirectory.names(operations.stream()
+                .map(ProductionOperation::getAssignedOperatorId).filter(Objects::nonNull).distinct().toList());
+        return operations.stream().map(op -> toOperationDto(op, order, operatorNames)).toList();
     }
 
     @Transactional(readOnly = true)
@@ -355,8 +361,11 @@ public class ProductionOrderService {
                             pom.getUom(), null, null);
                 })
                 .toList();
-        List<ProductionOperationDto> ops = operationRepo.findByProductionOrderIdOrderBySequenceNo(order.getId()).stream()
-                .map(op -> toOperationDto(op, order))
+        List<ProductionOperation> operations = operationRepo.findByProductionOrderIdOrderBySequenceNo(order.getId());
+        Map<Long, String> operatorNames = operatorDirectory.names(operations.stream()
+                .map(ProductionOperation::getAssignedOperatorId).filter(Objects::nonNull).distinct().toList());
+        List<ProductionOperationDto> ops = operations.stream()
+                .map(op -> toOperationDto(op, order, operatorNames))
                 .toList();
 
         return new ProductionOrderDto(
@@ -375,13 +384,15 @@ public class ProductionOrderService {
                 mats, ops, allowedActions(order.getStatus()));
     }
 
-    private ProductionOperationDto toOperationDto(ProductionOperation op, ProductionOrder order) {
+    private ProductionOperationDto toOperationDto(ProductionOperation op, ProductionOrder order,
+                                                  Map<Long, String> operatorNames) {
         String opName = opMasterRepo.findById(op.getOperationId()).map(o -> o.getName()).orElse(null);
         String machineName = op.getMachineId() != null
                 ? machineRepo.findById(op.getMachineId()).map(m -> m.getName()).orElse(null) : null;
         return new ProductionOperationDto(
                 op.getId(), op.getSequenceNo(), op.getOperationId(), opName,
                 op.getMachineId(), machineName, op.getAssignedOperatorId(),
+                op.getAssignedOperatorId() == null ? null : operatorNames.get(op.getAssignedOperatorId()),
                 op.isInspectionPoint(), op.getStatus(),
                 op.getInputQty(), op.getGoodQty(), op.getRejectedQty(), op.getScrapQty(),
                 op.getStartedAt(), op.getCompletedAt(),

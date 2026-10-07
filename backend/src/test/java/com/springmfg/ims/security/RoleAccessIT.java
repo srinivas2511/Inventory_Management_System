@@ -131,6 +131,18 @@ class RoleAccessIT extends AbstractIntegrationTest {
             Probe.withBody(HttpMethod.POST, "/api/production-orders/999999999/material-returns",
                     "{\"materialId\":1,\"quantity\":1}",
                     Set.of("ADMIN", "PRODUCTION_MANAGER"), Set.of("OPERATOR", "SALES", "QUALITY_MANAGER")),
+            // assigning operators to production work needs PRODUCTION_ASSIGN (managers and supervisors); a missing target is a 404
+            Probe.withBody(HttpMethod.PUT, "/api/production/operations/" + MISSING + "/assignment",
+                    "{\"operatorId\":null,\"reason\":null}",
+                    Set.of("ADMIN", "PRODUCTION_MANAGER", "SUPERVISOR"), Set.of("OPERATOR", "SALES", "QUALITY_MANAGER")),
+            Probe.withBody(HttpMethod.PUT, "/api/production-orders/" + MISSING + "/operator-assignment",
+                    "{\"operatorId\":null,\"reason\":null}",
+                    Set.of("ADMIN", "PRODUCTION_MANAGER", "SUPERVISOR"), Set.of("OPERATOR", "SALES", "QUALITY_MANAGER")),
+            Probe.of(HttpMethod.GET, "/api/production/assignable-operators",
+                    Set.of("ADMIN", "PRODUCTION_MANAGER", "SUPERVISOR"), Set.of("OPERATOR", "SALES", "QUALITY_MANAGER")),
+            // the issue dialog's batch picker needs INVENTORY_ISSUE (store staff), not the production permissions
+            Probe.of(HttpMethod.GET, "/api/lookups/material-stock?materialId=" + MISSING + "&warehouseId=" + MISSING,
+                    Set.of("ADMIN", "STORE_MANAGER"), Set.of("OPERATOR", "PRODUCTION_MANAGER", "SALES")),
             // dropdown lookups for the create forms: readable with the transactional permission, not the master data one
             Probe.of(HttpMethod.GET, "/api/lookups/suppliers", Set.of("ADMIN", "PURCHASE_MANAGER", "ACCOUNTANT"),
                     Set.of("OPERATOR")),
@@ -442,6 +454,8 @@ class RoleAccessIT extends AbstractIntegrationTest {
             Map.entry("PUT /api/document-categories/999999", 404),
             Map.entry("PUT /api/integration/webhooks/999999", 404),
             Map.entry("PUT /api/notification-templates/999999", 404),
+            Map.entry("PUT /api/production-orders/999999/operator-assignment", 404),
+            Map.entry("PUT /api/production/operations/999999/assignment", 404),
             Map.entry("PUT /api/scheduling/operations/999999/schedule", 404),
             Map.entry("PUT /api/spare-parts/999999", 404));
 

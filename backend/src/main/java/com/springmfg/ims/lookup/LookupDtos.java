@@ -35,4 +35,8 @@ public final class LookupDtos {
     /** A posted goods receipt that still has value open to invoice; what a supplier invoice can claim against it. */
     public record InvoiceableReceipt(Long id, String grNumber, LocalDate receiptDate, String poNumber, Long supplierId,
             BigDecimal receivedValue, BigDecimal receivedTax, BigDecimal invoicedValue, BigDecimal openValue) {}
+
+    /** Raw material in one batch at one location, available to issue; listed first-expiry-first-out. */
+    public record MaterialStock(Long batchId, String batchNumber, LocalDate expiryDate, LocalDate receivedDate,
+            Long locationId, String locationCode, BigDecimal onHand, BigDecimal reserved, BigDecimal available) {}
 }

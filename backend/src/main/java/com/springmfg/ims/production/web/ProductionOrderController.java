@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.springmfg.ims.production.dto.AssignOperatorRequest;
 import com.springmfg.ims.production.dto.CloseOrderRequest;
 import com.springmfg.ims.production.dto.CreateProductionOrderRequest;
 import com.springmfg.ims.production.dto.ProductionOperationDto;
@@ -24,6 +25,7 @@ import com.springmfg.ims.production.dto.ProductionOrderDto;
 import com.springmfg.ims.production.dto.ProductionOrderMaterialDto;
 import com.springmfg.ims.production.dto.ReturnMaterialRequest;
 import com.springmfg.ims.production.dto.WipDto;
+import com.springmfg.ims.production.service.OperationAssignmentService;
 import com.springmfg.ims.production.service.OrderMaterialService;
 import com.springmfg.ims.production.service.ProductionOrderService;
 
@@ -35,10 +37,13 @@ public class ProductionOrderController {
 
     private final ProductionOrderService service;
     private final OrderMaterialService orderMaterialService;
+    private final OperationAssignmentService assignmentService;
 
-    public ProductionOrderController(ProductionOrderService service, OrderMaterialService orderMaterialService) {
+    public ProductionOrderController(ProductionOrderService service, OrderMaterialService orderMaterialService,
+                                     OperationAssignmentService assignmentService) {
         this.service = service;
         this.orderMaterialService = orderMaterialService;
+        this.assignmentService = assignmentService;
     }
 
     @GetMapping
@@ -100,6 +105,13 @@ public class ProductionOrderController {
     @PreAuthorize("hasAuthority('PRODUCTION_REOPEN')")
     public ProductionOrderDto reopen(@PathVariable Long id) {
         return service.reopen(id);
+    }
+
+    @PutMapping("/{id}/operator-assignment")
+    @PreAuthorize("hasAuthority('PRODUCTION_ASSIGN')")
+    public List<ProductionOperationDto> assignOperator(@PathVariable Long id,
+                                                       @Valid @RequestBody AssignOperatorRequest req) {
+        return assignmentService.assignAll(id, req.operatorId(), req.reason());
     }
 
     @GetMapping("/{id}/materials")

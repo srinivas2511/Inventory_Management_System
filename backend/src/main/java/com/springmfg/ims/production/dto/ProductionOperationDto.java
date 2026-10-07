@@ -11,6 +11,7 @@ public record ProductionOperationDto(
         Long machineId,
         String machineName,
         Long assignedOperatorId,
+        String assignedOperatorName,
         boolean inspectionPoint,
         String status,
         BigDecimal inputQty,

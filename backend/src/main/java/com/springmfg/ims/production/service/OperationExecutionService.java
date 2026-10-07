@@ -62,6 +62,7 @@ public class OperationExecutionService {
     private final OrderMaterialService materialService;
     private final Clock clock;
     private final List<ConversionCostLookup> conversionCostLookups;
+    private final OperatorDirectory operatorDirectory;
 
     public OperationExecutionService(
             ProductionOperationRepository opRepo,
@@ -81,7 +82,8 @@ public class OperationExecutionService {
             FinishedGoodsCostService fgCostService,
             OrderMaterialService materialService,
             Clock clock,
-            List<ConversionCostLookup> conversionCostLookups) {
+            List<ConversionCostLookup> conversionCostLookups,
+            OperatorDirectory operatorDirectory) {
         this.opRepo = opRepo;
         this.orderRepo = orderRepo;
         this.outputRepo = outputRepo;
@@ -100,6 +102,7 @@ public class OperationExecutionService {
         this.materialService = materialService;
         this.clock = clock;
         this.conversionCostLookups = conversionCostLookups;
+        this.operatorDirectory = operatorDirectory;
     }
 
     @Transactional
@@ -346,11 +349,15 @@ public class OperationExecutionService {
         return auth != null && auth.getPrincipal() instanceof CachedUser u ? u.id() : null;
     }
 
+    private String operatorName(Long operatorId) {
+        return operatorId == null ? null : operatorDirectory.names(List.of(operatorId)).get(operatorId);
+    }
+
     private ProductionOperation findOp(Long id) {
         return opRepo.findById(id).orElseThrow(() -> new NotFoundException("Operation not found: " + id));
     }
 
-    private ProductionOperationDto toDto(ProductionOperation op) {
+    ProductionOperationDto toDto(ProductionOperation op) {
         String opName = opMasterRepo.findById(op.getOperationId()).map(o -> o.getName()).orElse(null);
         String machineName = op.getMachineId() != null
                 ? machineRepo.findById(op.getMachineId()).map(m -> m.getName()).orElse(null) : null;
@@ -358,6 +365,7 @@ public class OperationExecutionService {
         return new ProductionOperationDto(
                 op.getId(), op.getSequenceNo(), op.getOperationId(), opName,
                 op.getMachineId(), machineName, op.getAssignedOperatorId(),
+                operatorName(op.getAssignedOperatorId()),
                 op.isInspectionPoint(), op.getStatus(),
                 op.getInputQty(), op.getGoodQty(), op.getRejectedQty(), op.getScrapQty(),
                 op.getStartedAt(), op.getCompletedAt(),

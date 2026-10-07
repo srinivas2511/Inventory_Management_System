@@ -21,6 +21,7 @@ import com.springmfg.ims.lookup.LookupDtos.FgStock;
 import com.springmfg.ims.lookup.LookupDtos.InvoiceableReceipt;
 import com.springmfg.ims.lookup.LookupDtos.ItemOption;
 import com.springmfg.ims.lookup.LookupDtos.LocationOption;
+import com.springmfg.ims.lookup.LookupDtos.MaterialStock;
 import com.springmfg.ims.lookup.LookupDtos.Option;
 import com.springmfg.ims.lookup.LookupDtos.ReceivablePo;
 import com.springmfg.ims.lookup.LookupDtos.ReceivablePoItem;
@@ -171,6 +172,26 @@ public class LookupService {
                         rs.getLong("product_id"), rs.getLong("warehouse_id"), rs.getLong("location_id"),
                         rs.getString("location_code"), rs.getBigDecimal("qty_on_hand"),
                         rs.getBigDecimal("qty_reserved"),
+                        rs.getBigDecimal("qty_on_hand").subtract(rs.getBigDecimal("qty_reserved"))));
+    }
+
+    /** Raw material the issue allocator can draw from, in the order it draws: earliest expiry first, then oldest receipt. */
+    public List<MaterialStock> materialStock(Long materialId, Long warehouseId) {
+        return jdbc.query("""
+                SELECT b.material_batch_id, mb.batch_number, mb.expiry_date, mb.received_date, b.location_id,
+                       l.location_code, b.qty_on_hand, b.qty_reserved
+                  FROM inventory_balances b
+                  JOIN material_batches mb ON mb.id = b.material_batch_id
+                  JOIN warehouse_locations l ON l.id = b.location_id
+                 WHERE b.item_type = 'MATERIAL' AND b.stock_status = 'AVAILABLE' AND mb.status = 'AVAILABLE'
+                   AND b.material_id = :m AND b.warehouse_id = :w AND b.qty_on_hand - b.qty_reserved > 0
+                 ORDER BY mb.expiry_date NULLS LAST, mb.received_date, mb.id, b.location_id LIMIT 500
+                """, new MapSqlParameterSource("m", materialId).addValue("w", warehouseId),
+                (rs, i) -> new MaterialStock(rs.getLong("material_batch_id"), rs.getString("batch_number"),
+                        rs.getObject("expiry_date", java.time.LocalDate.class),
+                        rs.getObject("received_date", java.time.LocalDate.class),
+                        rs.getLong("location_id"), rs.getString("location_code"),
+                        rs.getBigDecimal("qty_on_hand"), rs.getBigDecimal("qty_reserved"),
                         rs.getBigDecimal("qty_on_hand").subtract(rs.getBigDecimal("qty_reserved"))));
     }
 
