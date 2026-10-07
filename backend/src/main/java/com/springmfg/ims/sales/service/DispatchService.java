@@ -187,8 +187,8 @@ public class DispatchService {
         // Update order status
         updateOrderStatus(order);
 
-        auditService.record("DISPATCH_CREATED", "DISPATCH", null, "DISPATCHED",
-                dispatch.getDispatchNumber(), null);
+        auditService.record("DISPATCH_CREATED", "DISPATCH", String.valueOf(dispatch.getId()), null,
+                "DISPATCHED", null);
 
         // The AR invoice is created by finance after this transaction commits. An accounting problem must never
         // roll back stock that has physically left the building; it surfaces as an alert and a retryable work item.

@@ -81,7 +81,7 @@ public class SalesOrderService {
             }
         }
 
-        auditService.record("SO_CREATED", "SALES_ORDER", null, null, String.valueOf(order.getId()), null);
+        auditService.record("SO_CREATED", "SALES_ORDER", String.valueOf(order.getId()), null, order.getStatus(), null);
         return findById(order.getId());
     }
 
@@ -118,7 +118,7 @@ public class SalesOrderService {
             throw new BusinessRuleException(ErrorCode.VALIDATION_FAILED, "Order has no items");
         }
         order.setStatus("ORDERED");
-        auditService.record("SO_CONFIRMED", "SALES_ORDER", "DRAFT", "ORDERED", String.valueOf(orderId), null);
+        auditService.record("SO_CONFIRMED", "SALES_ORDER", String.valueOf(orderId), "DRAFT", "ORDERED", null);
         return toDto(order, items);
     }
 
@@ -128,7 +128,7 @@ public class SalesOrderService {
         order.setStatus("APPROVED");
         order.setApprovedBy(currentUserId());
         order.setApprovedAt(Instant.now());
-        auditService.record("SO_APPROVED", "SALES_ORDER", "ORDERED", "APPROVED", String.valueOf(orderId), null);
+        auditService.record("SO_APPROVED", "SALES_ORDER", String.valueOf(orderId), "ORDERED", "APPROVED", null);
         eventPublisher.publishEvent(new com.springmfg.ims.sales.event.SalesOrderApprovedEvent(orderId));
         return toDto(order, itemRepo.findBySalesOrderId(orderId));
     }
