@@ -1,21 +1,15 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { MatButtonModule } from '@angular/material/button';
+import { MatDialog } from '@angular/material/dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTableModule } from '@angular/material/table';
-import { AppConfigService } from '../../../core/config/app-config.service';
-
-interface RoleDto {
-  id: number;
-  code: string;
-  name: string;
-  description?: string;
-  permissions: string[];
-}
+import { AdminApi, RoleDto } from '../admin.api';
+import { RoleDetailDialogComponent } from './role-detail-dialog.component';
 
 @Component({
   selector: 'app-role-list',
   standalone: true,
-  imports: [MatTableModule, MatProgressSpinnerModule],
+  imports: [MatTableModule, MatButtonModule, MatProgressSpinnerModule],
   template: `
     <div style="padding:16px 16px 0"><h2 class="mat-h2">Roles</h2></div>
     @if (loading()) {
@@ -36,28 +30,37 @@ interface RoleDto {
         >
         <ng-container matColumnDef="perms"
           ><th mat-header-cell *matHeaderCellDef>Permissions</th>
-          <td mat-cell *matCellDef="let r">{{ r.permissions?.length }}</td></ng-container
+          <td mat-cell *matCellDef="let r">
+            <button mat-button (click)="show(r)" [attr.data-testid]="'role-' + r.code">
+              {{ r.permissions?.length ?? 0 }} permissions
+            </button>
+          </td></ng-container
         >
-        <tr mat-header-row *matHeaderRowDef="['code', 'name', 'desc', 'perms']"></tr>
-        <tr mat-row *matRowDef="let row; columns: ['code', 'name', 'desc', 'perms']"></tr>
+        <tr mat-header-row *matHeaderRowDef="columns"></tr>
+        <tr mat-row *matRowDef="let row; columns: columns"></tr>
       </table>
     }
   `,
 })
 export class RoleListComponent implements OnInit {
+  protected readonly columns = ['code', 'name', 'desc', 'perms'];
   protected readonly rows = signal<RoleDto[]>([]);
   protected readonly loading = signal(false);
-  private readonly http = inject(HttpClient);
-  private readonly base = inject(AppConfigService).apiBaseUrl;
+  private readonly api = inject(AdminApi);
+  private readonly dialog = inject(MatDialog);
 
   ngOnInit(): void {
     this.loading.set(true);
-    this.http.get<RoleDto[]>(`${this.base}/api/admin/roles`).subscribe({
+    this.api.getRoles().subscribe({
       next: (list) => {
         this.rows.set(list);
         this.loading.set(false);
       },
       error: () => this.loading.set(false),
     });
+  }
+
+  protected show(role: RoleDto): void {
+    this.dialog.open(RoleDetailDialogComponent, { data: { role }, width: '720px' });
   }
 }

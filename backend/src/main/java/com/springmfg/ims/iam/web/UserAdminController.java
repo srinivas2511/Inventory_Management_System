@@ -51,7 +51,9 @@ public class UserAdminController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAuthority('USER_CREATE')")
+    // Holding USER_CREATE alone must not let a caller hand out roles (and so permissions): that needs ROLE_MANAGE.
+    @PreAuthorize("hasAuthority('USER_CREATE') and (#req.roleCodes() == null or #req.roleCodes().isEmpty()"
+            + " or hasAuthority('ROLE_MANAGE'))")
     public UserDto create(@Valid @RequestBody CreateUserRequest req) {
         return service.create(req);
     }

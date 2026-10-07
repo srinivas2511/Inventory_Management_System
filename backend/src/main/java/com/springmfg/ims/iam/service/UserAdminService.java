@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.springmfg.ims.audit.service.AuditService;
+import com.springmfg.ims.auth.service.AuthService;
 import com.springmfg.ims.auth.service.UserPermissionCache;
 import com.springmfg.ims.common.exception.BusinessRuleException;
 import com.springmfg.ims.common.exception.ConflictException;
@@ -32,16 +33,19 @@ public class UserAdminService {
     private final PasswordEncoder passwordEncoder;
     private final UserPermissionCache permissionCache;
     private final AuditService auditService;
+    private final AuthService authService;
 
     public UserAdminService(UserRepository userRepo, RoleRepository roleRepo,
                             PasswordEncoder passwordEncoder,
                             UserPermissionCache permissionCache,
-                            AuditService auditService) {
+                            AuditService auditService,
+                            AuthService authService) {
         this.userRepo = userRepo;
         this.roleRepo = roleRepo;
         this.passwordEncoder = passwordEncoder;
         this.permissionCache = permissionCache;
         this.auditService = auditService;
+        this.authService = authService;
     }
 
     @Transactional(readOnly = true)
@@ -56,6 +60,7 @@ public class UserAdminService {
 
     @Transactional
     public UserDto create(CreateUserRequest req) {
+        authService.validateComplexity(req.password(), req.username());
         if (userRepo.existsByUsername(req.username())) {
             throw new ConflictException(ErrorCode.DUPLICATE_KEY, "Username already taken: " + req.username());
         }
@@ -73,11 +78,14 @@ public class UserAdminService {
         user.setMustChangePassword(true);
 
         if (req.roleCodes() != null && !req.roleCodes().isEmpty()) {
-            Set<Role> roles = new HashSet<>(roleRepo.findAllById(
-                roleRepo.findAll().stream()
-                    .filter(r -> req.roleCodes().contains(r.getCode()))
-                    .map(Role::getId).toList()));
-            user.setRoles(roles);
+            List<Role> found = roleRepo.findAll().stream()
+                .filter(r -> req.roleCodes().contains(r.getCode())).toList();
+            Set<String> unknown = new HashSet<>(req.roleCodes());
+            found.forEach(r -> unknown.remove(r.getCode()));
+            if (!unknown.isEmpty()) {
+                throw new NotFoundException("Unknown role codes: " + unknown);
+            }
+            user.setRoles(new HashSet<>(found));
         }
 
         userRepo.save(user);
