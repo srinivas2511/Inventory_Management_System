@@ -1,7 +1,6 @@
 package com.springmfg.ims.production.service;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
@@ -24,7 +23,6 @@ import com.springmfg.ims.inventory.repository.FgBatchRepository;
 import com.springmfg.ims.inventory.service.InventoryPostingService;
 import com.springmfg.ims.production.domain.ProductionOperation;
 import com.springmfg.ims.production.domain.ProductionOrder;
-import com.springmfg.ims.production.domain.ProductionOrderMaterial;
 import com.springmfg.ims.production.domain.ProductionOutput;
 import com.springmfg.ims.production.dto.ProductionOperationDto;
 import com.springmfg.ims.production.dto.RecordOutputRequest;
@@ -32,7 +30,6 @@ import com.springmfg.ims.production.event.FinalInspectionRequiredEvent;
 import com.springmfg.ims.production.event.OperationCompletedEvent;
 import com.springmfg.ims.production.event.OperationStartedEvent;
 import com.springmfg.ims.production.repository.ProductionOperationRepository;
-import com.springmfg.ims.production.repository.ProductionOrderMaterialRepository;
 import com.springmfg.ims.production.repository.ProductionOrderRepository;
 import com.springmfg.ims.production.repository.ProductionOutputRepository;
 import com.springmfg.ims.product.domain.Product;
@@ -48,7 +45,6 @@ public class OperationExecutionService {
     private final ProductionOperationRepository opRepo;
     private final ProductionOrderRepository orderRepo;
     private final ProductionOutputRepository outputRepo;
-    private final ProductionOrderMaterialRepository pomRepo;
     private final FgBatchRepository fgBatchRepo;
     private final InventoryPostingService postingService;
     private final WarehouseLocationRepository locationRepo;
@@ -61,12 +57,12 @@ public class OperationExecutionService {
     private final MachineRepository machineRepo;
     private final ProductRepository productRepo;
     private final FinishedGoodsCostService fgCostService;
+    private final OrderMaterialService materialService;
 
     public OperationExecutionService(
             ProductionOperationRepository opRepo,
             ProductionOrderRepository orderRepo,
             ProductionOutputRepository outputRepo,
-            ProductionOrderMaterialRepository pomRepo,
             FgBatchRepository fgBatchRepo,
             InventoryPostingService postingService,
             WarehouseLocationRepository locationRepo,
@@ -78,11 +74,11 @@ public class OperationExecutionService {
             OperationRepository opMasterRepo,
             MachineRepository machineRepo,
             ProductRepository productRepo,
-            FinishedGoodsCostService fgCostService) {
+            FinishedGoodsCostService fgCostService,
+            OrderMaterialService materialService) {
         this.opRepo = opRepo;
         this.orderRepo = orderRepo;
         this.outputRepo = outputRepo;
-        this.pomRepo = pomRepo;
         this.fgBatchRepo = fgBatchRepo;
         this.postingService = postingService;
         this.locationRepo = locationRepo;
@@ -95,6 +91,7 @@ public class OperationExecutionService {
         this.machineRepo = machineRepo;
         this.productRepo = productRepo;
         this.fgCostService = fgCostService;
+        this.materialService = materialService;
     }
 
     @Transactional
@@ -240,9 +237,11 @@ public class OperationExecutionService {
             }
         }
 
-        // Backflush on first op (if enabled)
-        if (settingService.getBoolean("production.auto_backflush", false) && op.getSequenceNo() == 1) {
-            backflush(op.getProductionOrderId(), req.goodQty(), allOps.get(0));
+        // Backflush (if enabled): the first operation's output consumes the material it used. The first operation is the
+        // one with the lowest sequence number (routing steps are numbered 10, 20, 30), and completion consumes whatever
+        // is still outstanding, so backflush only moves the consumption earlier.
+        if (idx == 0 && settingService.getBoolean("production.auto_backflush", false)) {
+            materialService.consumeForOutput(op.getProductionOrderId());
         }
 
         // Check if last op with all completed
@@ -267,6 +266,10 @@ public class OperationExecutionService {
 
         ProductionOrder order = orderRepo.findById(orderId)
                 .orElseThrow(() -> new NotFoundException("Order not found: " + orderId));
+
+        // The material the made pieces used leaves WIP before the output is costed: FG is received at what was consumed,
+        // and whatever is left over is returned or written off when the order is closed.
+        materialService.consumeForOutput(orderId);
 
         // Create FG batch
         String fgBatchNum = numberService.next("FG");
@@ -309,36 +312,6 @@ public class OperationExecutionService {
         eventPublisher.publishEvent(new FinalInspectionRequiredEvent(
                 orderId, order.getProductId(), order.getOrderNumber(),
                 order.getPlannedQty(), lastOp.getGoodQty(), fgBatch.getId()));
-    }
-
-    private void backflush(Long orderId, BigDecimal goodQty, ProductionOperation firstOp) {
-        List<ProductionOrderMaterial> mats = pomRepo.findByProductionOrderId(orderId);
-        ProductionOrder order = orderRepo.findById(orderId).orElseThrow();
-
-        for (ProductionOrderMaterial pom : mats) {
-            if (pom.getIssuedQty().compareTo(BigDecimal.ZERO) == 0) continue;
-            BigDecimal consumeQty = pom.getPlannedQty()
-                    .multiply(goodQty)
-                    .divide(order.getPlannedQty(), 3, RoundingMode.HALF_UP);
-
-            BigDecimal canConsume = pom.getIssuedQty()
-                    .subtract(pom.getConsumedQty())
-                    .subtract(pom.getReturnedQty())
-                    .subtract(pom.getScrapQty());
-            consumeQty = consumeQty.min(canConsume);
-
-            if (consumeQty.compareTo(BigDecimal.ZERO) <= 0) continue;
-
-            postingService.post(new PostingCommand(
-                    "MATERIAL_CONSUMPTION", "MATERIAL",
-                    pom.getMaterialId(), null, null, null,
-                    findDefaultWarehouseId(orderId), null, "WIP",
-                    consumeQty, null, null,
-                    "PRODUCTION_ORDER", orderId, order.getOrderNumber(), "Auto backflush"));
-
-            pom.setConsumedQty(pom.getConsumedQty().add(consumeQty));
-            pomRepo.save(pom);
-        }
     }
 
     private Long findDefaultWarehouseId(Long orderId) {

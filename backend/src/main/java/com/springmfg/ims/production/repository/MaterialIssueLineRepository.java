@@ -12,4 +12,13 @@ public interface MaterialIssueLineRepository extends JpaRepository<MaterialIssue
 
     @Query("SELECT l FROM MaterialIssueLine l WHERE l.materialIssue.id = :issueId")
     List<MaterialIssueLine> findByMaterialIssueId(@Param("issueId") Long issueId);
+
+    /** Every line the order has issued, oldest first (the order in which batches are consumed). */
+    @Query("SELECT l FROM MaterialIssueLine l WHERE l.materialIssue.productionOrderId = :orderId ORDER BY l.id")
+    List<MaterialIssueLine> findByProductionOrder(@Param("orderId") Long orderId);
+
+    @Query("SELECT l FROM MaterialIssueLine l WHERE l.materialIssue.productionOrderId = :orderId "
+            + "AND l.materialId = :materialId ORDER BY l.id")
+    List<MaterialIssueLine> findByProductionOrderAndMaterial(@Param("orderId") Long orderId,
+                                                             @Param("materialId") Long materialId);
 }

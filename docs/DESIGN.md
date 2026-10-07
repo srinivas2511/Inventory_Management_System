@@ -694,7 +694,7 @@ order.good/rejected/scrap totals updated ; first output moves order RELEASED→I
 
 **WIP view** (derived, no extra table): for each operation, `wip_after_op = good_qty(op) − input_qty(next op processed)`; per order, quantity "sitting" before operation *n* = `good(n−1) − (good+rejected+scrap)(n)`.
 
-**Material reconciliation at close**: unconsumed `remaining_qty` must be returned (`MATERIAL_RETURN`) or scrapped (`SCRAP`) before `CLOSED`; the close action lists open remainders and refuses to proceed until zero or explicitly written off (`PRODUCTION_CLOSE` + reason).
+**Material reconciliation at close**: unconsumed `remaining_qty` must be returned (`MATERIAL_RETURN`) or scrapped (`SCRAP`) before `CLOSED`; the close action lists open remainders and refuses to proceed until zero or explicitly written off (`PRODUCTION_CLOSE` + reason). *As built (decisions.md, "Production order close"): consumption is tracked per issue line; the order completion consumes the material the made pieces used; the leftover is returned (`POST /api/production-orders/{id}/material-returns`) or written off by closing with a reason (scrap in-leg, Dr 5202 / Cr 1501).*
 
 ### 4.8 Final inspection
 `approve(qtyApproved, qtyRejected, reasons[])`: `changeStatus(QUALITY_PENDING→AVAILABLE)` and move to `FG-01` (`PRODUCTION_RECEIPT`); rejected quantity → `PRODUCTION_REJECTION` to `SCRAP-01` + `rejections` rows; `fg_batch.approved_qty/rejected_qty/remaining_qty/quality_status` updated; if hold quantity > 0 → stock status HOLD. Measurements are validated automatically: `result = PASS` iff `lower ≤ actual ≤ upper`; any FAIL forces the batch decision to REJECT/HOLD unless a Quality Manager records a deviation note and override (audited).

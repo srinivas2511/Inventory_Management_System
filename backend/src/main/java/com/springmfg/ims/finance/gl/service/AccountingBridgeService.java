@@ -52,6 +52,11 @@ public class AccountingBridgeService {
         if ("MATERIAL_CONSUMPTION".equals(tx.getTransactionType())) {
             return;
         }
+        // The in-leg of a material issue puts the same stock into the WIP location; the issue journal (Dr 1501 / Cr 1401)
+        // already covers the move.
+        if ("MATERIAL_RECEIPT".equals(tx.getTransactionType())) {
+            return;
+        }
         try {
             Optional<InventoryAccountAssignment> assignmentOpt =
                     assignmentRepo.findByCompanyIdAndTransactionTypeAndItemType(

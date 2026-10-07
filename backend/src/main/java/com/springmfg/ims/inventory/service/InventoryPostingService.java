@@ -104,6 +104,11 @@ public class InventoryPostingService {
         if (cmd.materialBatchId() != null && signedQty.compareTo(BigDecimal.ZERO) < 0 && "AVAILABLE".equals(cmd.stockStatus())) {
             updateBatchRemaining(cmd.materialBatchId(), signedQty);
         }
+        // Material returned from production brings the batch's remaining quantity back (and its CONSUMED status)
+        if (cmd.materialBatchId() != null && "MATERIAL_RETURN".equals(cmd.transactionType())
+                && "AVAILABLE".equals(cmd.stockStatus())) {
+            restoreBatchRemaining(cmd.materialBatchId(), signedQty);
+        }
 
         InventoryTransaction tx = buildTransaction(cmd, signedQty, unitCost, bal.getQtyOnHand());
         txRepo.save(tx);
@@ -356,6 +361,16 @@ public class InventoryPostingService {
         batch.setRemainingQty(newRemaining);
         if (newRemaining.compareTo(BigDecimal.ZERO) == 0) {
             batch.setStatus("CONSUMED");
+        }
+        batchRepo.save(batch);
+    }
+
+    private void restoreBatchRemaining(Long batchId, BigDecimal returnedQty) {
+        MaterialBatch batch = batchRepo.findById(batchId).orElse(null);
+        if (batch == null) return;
+        batch.setRemainingQty(batch.getRemainingQty().add(returnedQty));
+        if ("CONSUMED".equals(batch.getStatus())) {
+            batch.setStatus("AVAILABLE");
         }
         batchRepo.save(batch);
     }

@@ -37,7 +37,21 @@ public class MaterialIssueLine extends BaseEntity {
     @Column(name = "unit_cost", nullable = false, precision = 18, scale = 4)
     private BigDecimal unitCost = BigDecimal.ZERO;
 
+    @Column(name = "consumed_qty", nullable = false, precision = 18, scale = 3)
+    private BigDecimal consumedQty = BigDecimal.ZERO;
+
+    @Column(name = "returned_qty", nullable = false, precision = 18, scale = 3)
+    private BigDecimal returnedQty = BigDecimal.ZERO;
+
+    @Column(name = "written_off_qty", nullable = false, precision = 18, scale = 3)
+    private BigDecimal writtenOffQty = BigDecimal.ZERO;
+
     public MaterialIssueLine() {}
+
+    /** Issued but not yet consumed, returned or written off. */
+    public BigDecimal openQty() {
+        return quantity.subtract(consumedQty).subtract(returnedQty).subtract(writtenOffQty);
+    }
 
     public MaterialIssue getMaterialIssue() { return materialIssue; }
     public void setMaterialIssue(MaterialIssue v) { this.materialIssue = v; }
@@ -59,4 +73,13 @@ public class MaterialIssueLine extends BaseEntity {
 
     public BigDecimal getUnitCost() { return unitCost; }
     public void setUnitCost(BigDecimal v) { this.unitCost = v; }
+
+    public BigDecimal getConsumedQty() { return consumedQty; }
+    public void setConsumedQty(BigDecimal v) { this.consumedQty = v; }
+
+    public BigDecimal getReturnedQty() { return returnedQty; }
+    public void setReturnedQty(BigDecimal v) { this.returnedQty = v; }
+
+    public BigDecimal getWrittenOffQty() { return writtenOffQty; }
+    public void setWrittenOffQty(BigDecimal v) { this.writtenOffQty = v; }
 }

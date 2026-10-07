@@ -121,6 +121,10 @@ class RoleAccessIT extends AbstractIntegrationTest {
                     Set.of("OPERATOR", "STORE_OPERATOR", "DISPATCH")),
             Probe.of(HttpMethod.GET, "/api/warehouses",
                     Set.of("ADMIN", "STORE_MANAGER", "STORE_OPERATOR", "MANAGEMENT"), Set.of("OPERATOR")),
+            // returning issued material to stock needs PRODUCTION_CLOSE; a missing order answers 404 to the permitted
+            Probe.withBody(HttpMethod.POST, "/api/production-orders/999999999/material-returns",
+                    "{\"materialId\":1,\"quantity\":1}",
+                    Set.of("ADMIN", "PRODUCTION_MANAGER"), Set.of("OPERATOR", "SALES", "QUALITY_MANAGER")),
             // dropdown lookups for the create forms: readable with the transactional permission, not the master data one
             Probe.of(HttpMethod.GET, "/api/lookups/suppliers", Set.of("ADMIN", "PURCHASE_MANAGER"), Set.of("OPERATOR")),
             Probe.of(HttpMethod.GET, "/api/lookups/customers", Set.of("ADMIN", "SALES"), Set.of("OPERATOR")),

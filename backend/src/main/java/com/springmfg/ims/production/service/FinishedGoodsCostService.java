@@ -2,25 +2,21 @@ package com.springmfg.ims.production.service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.springmfg.ims.inventory.service.StockLocationQueryService;
-import com.springmfg.ims.production.domain.MaterialIssue;
 import com.springmfg.ims.production.domain.MaterialIssueLine;
-import com.springmfg.ims.production.domain.ProductionOrderMaterial;
 import com.springmfg.ims.production.domain.ProductionOutput;
 import com.springmfg.ims.production.repository.MaterialIssueLineRepository;
-import com.springmfg.ims.production.repository.MaterialIssueRepository;
-import com.springmfg.ims.production.repository.ProductionOrderMaterialRepository;
 import com.springmfg.ims.production.repository.ProductionOutputRepository;
 
 /**
  * Decides the unit cost at which a production order's good output enters finished-goods stock (DESIGN 4 and 16).
+ * The material in the cost is what the order's pieces consumed; issued material that was not consumed is returned or
+ * written off when the order is closed and never reaches FG.
  *
  * <p>With a RELEASED cost estimate the output is received at standard cost, which is what the controlling variance
  * journal assumes: it relieves WIP by (actual - standard), so the receipt must relieve WIP by the standard. Without
@@ -36,22 +32,16 @@ public class FinishedGoodsCostService {
     public record FgCost(BigDecimal unitCost, Basis basis, BigDecimal materialCost, BigDecimal scrapRelief) {
     }
 
-    private final MaterialIssueRepository issueRepo;
     private final MaterialIssueLineRepository issueLineRepo;
-    private final ProductionOrderMaterialRepository orderMaterialRepo;
     private final ProductionOutputRepository outputRepo;
     private final StockLocationQueryService stockQuery;
     private final List<StandardCostLookup> standardCostLookups;
 
-    public FinishedGoodsCostService(MaterialIssueRepository issueRepo,
-                                    MaterialIssueLineRepository issueLineRepo,
-                                    ProductionOrderMaterialRepository orderMaterialRepo,
+    public FinishedGoodsCostService(MaterialIssueLineRepository issueLineRepo,
                                     ProductionOutputRepository outputRepo,
                                     StockLocationQueryService stockQuery,
                                     List<StandardCostLookup> standardCostLookups) {
-        this.issueRepo = issueRepo;
         this.issueLineRepo = issueLineRepo;
-        this.orderMaterialRepo = orderMaterialRepo;
         this.outputRepo = outputRepo;
         this.stockQuery = stockQuery;
         this.standardCostLookups = standardCostLookups;
@@ -76,6 +66,17 @@ public class FinishedGoodsCostService {
         return new FgCost(unit, unit.signum() > 0 ? Basis.ACTUAL_MATERIAL : Basis.NONE, material, scrap);
     }
 
+    /**
+     * The value of the scrap recorded on the order's operations. It was charged to scrap loss (Dr 5202) and relieved from
+     * WIP (Cr 1501) when it was recorded, so no later journal may charge it again.
+     */
+    @Transactional(readOnly = true)
+    public BigDecimal scrapRelieved(Long productionOrderId) {
+        List<Long> outputIds = outputRepo.findByProductionOrderId(productionOrderId).stream()
+                .map(ProductionOutput::getId).toList();
+        return stockQuery.scrapValueOfOutputs(outputIds);
+    }
+
     /** (material cost still in WIP after scrap) / good quantity, at ledger precision; never negative. */
     static BigDecimal actualUnitCost(BigDecimal materialCost, BigDecimal scrapRelief, BigDecimal goodQty) {
         BigDecimal inWip = materialCost.subtract(scrapRelief);
@@ -85,30 +86,11 @@ public class FinishedGoodsCostService {
         return inWip.divide(goodQty, 4, RoundingMode.HALF_UP);
     }
 
-    /** Issued value net of returns, per material at its average issue cost. */
+    /** What the order's pieces consumed: each line's consumed quantity at the price it was issued at. */
     private BigDecimal materialCost(Long productionOrderId) {
-        Map<Long, BigDecimal[]> issued = new HashMap<>(); // materialId -> [qty, value]
-        for (MaterialIssue issue : issueRepo.findByProductionOrderId(productionOrderId)) {
-            for (MaterialIssueLine line : issueLineRepo.findByMaterialIssueId(issue.getId())) {
-                BigDecimal[] acc = issued.computeIfAbsent(line.getMaterialId(),
-                        k -> new BigDecimal[] { BigDecimal.ZERO, BigDecimal.ZERO });
-                acc[0] = acc[0].add(line.getQuantity());
-                acc[1] = acc[1].add(line.getQuantity().multiply(line.getUnitCost()));
-            }
-        }
-        Map<Long, BigDecimal> returned = new HashMap<>();
-        for (ProductionOrderMaterial pom : orderMaterialRepo.findByProductionOrderId(productionOrderId)) {
-            returned.put(pom.getMaterialId(), pom.getReturnedQty());
-        }
         BigDecimal total = BigDecimal.ZERO;
-        for (Map.Entry<Long, BigDecimal[]> e : issued.entrySet()) {
-            BigDecimal qty = e.getValue()[0];
-            if (qty.signum() == 0) {
-                continue;
-            }
-            BigDecimal avg = e.getValue()[1].divide(qty, 8, RoundingMode.HALF_UP);
-            BigDecimal net = qty.subtract(returned.getOrDefault(e.getKey(), BigDecimal.ZERO)).max(BigDecimal.ZERO);
-            total = total.add(net.multiply(avg));
+        for (MaterialIssueLine line : issueLineRepo.findByProductionOrder(productionOrderId)) {
+            total = total.add(line.getConsumedQty().multiply(line.getUnitCost()));
         }
         return total.setScale(4, RoundingMode.HALF_UP);
     }

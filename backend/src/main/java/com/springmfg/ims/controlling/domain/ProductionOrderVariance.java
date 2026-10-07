@@ -60,6 +60,10 @@ public class ProductionOrderVariance {
     @Column(name = "other_variance", nullable = false, precision = 18, scale = 4)
     private BigDecimal otherVariance = BigDecimal.ZERO;
 
+    /** Scrap already charged to scrap loss and relieved from WIP; the variance journal excludes it. */
+    @Column(name = "scrap_relieved", nullable = false, precision = 18, scale = 4)
+    private BigDecimal scrapRelieved = BigDecimal.ZERO;
+
     @Column(name = "total_variance", nullable = false, precision = 18, scale = 4)
     private BigDecimal totalVariance = BigDecimal.ZERO;
 
@@ -93,6 +97,7 @@ public class ProductionOrderVariance {
     public BigDecimal getQuantityVariance() { return quantityVariance; }
     public BigDecimal getEfficiencyVariance() { return efficiencyVariance; }
     public BigDecimal getOtherVariance() { return otherVariance; }
+    public BigDecimal getScrapRelieved() { return scrapRelieved; }
     public BigDecimal getTotalVariance() { return totalVariance; }
     public String getStatus() { return status; }
     public Long getJournalHeaderId() { return journalHeaderId; }
@@ -113,6 +118,7 @@ public class ProductionOrderVariance {
     public void setQuantityVariance(BigDecimal v) { this.quantityVariance = v; }
     public void setEfficiencyVariance(BigDecimal v) { this.efficiencyVariance = v; }
     public void setOtherVariance(BigDecimal v) { this.otherVariance = v; }
+    public void setScrapRelieved(BigDecimal v) { this.scrapRelieved = v; }
     public void setTotalVariance(BigDecimal v) { this.totalVariance = v; }
     public void setStatus(String v) { this.status = v; }
     public void setJournalHeaderId(Long v) { this.journalHeaderId = v; }

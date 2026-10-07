@@ -139,7 +139,7 @@ class ProductionIT extends AbstractIntegrationTest {
         pomRepo.save(pom);
 
         Long orderId = order.getId();
-        assertThatThrownBy(() -> orderService.close(orderId))
+        assertThatThrownBy(() -> orderService.close(orderId, null))
                 .isInstanceOf(BusinessRuleException.class)
                 .extracting("code")
                 .isEqualTo(ErrorCode.ORDER_LOCKED);
@@ -167,7 +167,7 @@ class ProductionIT extends AbstractIntegrationTest {
         pom.setUom("KG");
         pomRepo.save(pom);
 
-        ProductionOrderDto result = orderService.close(order.getId());
+        ProductionOrderDto result = orderService.close(order.getId(), null);
         assertThat(result.status()).isEqualTo("CLOSED");
     }
 

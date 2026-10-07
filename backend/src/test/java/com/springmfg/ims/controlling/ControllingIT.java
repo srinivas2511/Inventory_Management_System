@@ -324,7 +324,7 @@ class ControllingIT extends AbstractIntegrationTest {
         releasedEstimate(fx);
         long order = completedOrder(fx, "COMPLETED", "5.000", "105.0000", "12.000", "20.0000", 60, 36);
 
-        orderService.close(order);
+        orderService.close(order, null);
 
         var variance = varianceRepo.findByProductionOrderId(order).orElseThrow();
         assertThat(variance.getStatus()).isEqualTo("POSTED");

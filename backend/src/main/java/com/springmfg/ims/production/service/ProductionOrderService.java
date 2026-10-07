@@ -58,6 +58,7 @@ public class ProductionOrderService {
     private final DocumentNumberService numberService;
     private final AuditService auditService;
     private final ApplicationEventPublisher eventPublisher;
+    private final OrderMaterialService orderMaterialService;
 
     public ProductionOrderService(
             ProductionOrderRepository orderRepo,
@@ -71,7 +72,8 @@ public class ProductionOrderService {
             MachineRepository machineRepo,
             DocumentNumberService numberService,
             AuditService auditService,
-            ApplicationEventPublisher eventPublisher) {
+            ApplicationEventPublisher eventPublisher,
+            OrderMaterialService orderMaterialService) {
         this.orderRepo = orderRepo;
         this.materialRepo = materialRepo;
         this.operationRepo = operationRepo;
@@ -84,6 +86,7 @@ public class ProductionOrderService {
         this.numberService = numberService;
         this.auditService = auditService;
         this.eventPublisher = eventPublisher;
+        this.orderMaterialService = orderMaterialService;
     }
 
     @Transactional
@@ -199,25 +202,29 @@ public class ProductionOrderService {
         return toDto(order);
     }
 
+    /**
+     * Closes a COMPLETED order (DESIGN 4.7). Every issued kilo must be consumed, returned or written off first: the
+     * material the made pieces used is consumed here if that has not happened yet, and anything still left over has to
+     * be returned beforehand ({@link OrderMaterialService#returnMaterial}) or is written off as scrap when a reason is
+     * given. The variance journal is posted after this transaction commits, once the closed order's cost is final.
+     */
     @Transactional
-    public ProductionOrderDto close(Long orderId) {
+    public ProductionOrderDto close(Long orderId, String writeOffReason) {
         ProductionOrder order = findOrder(orderId);
         assertTransition(order, "COMPLETED", "CLOSED");
 
-        // Check all materials are reconciled
-        List<ProductionOrderMaterial> materials = materialRepo.findByProductionOrderId(orderId);
-        List<String> unclosed = new ArrayList<>();
-        for (ProductionOrderMaterial pom : materials) {
-            BigDecimal remaining = pom.getRemainingQty();
-            if (remaining != null && remaining.compareTo(BigDecimal.ZERO) != 0) {
-                Material mat = matRepo.findById(pom.getMaterialId()).orElse(null);
-                String name = mat != null ? mat.getMaterialCode() : String.valueOf(pom.getMaterialId());
-                unclosed.add(name + " (remaining: " + remaining + " " + pom.getUom() + ")");
+        orderMaterialService.consumeForOutput(orderId);
+        List<OrderMaterialService.OpenMaterial> unreconciled = orderMaterialService.openMaterials(orderId);
+        if (!unreconciled.isEmpty()) {
+            if (writeOffReason == null || writeOffReason.isBlank()) {
+                String list = unreconciled.stream()
+                        .map(m -> m.materialCode() + " (remaining: " + m.quantity().toPlainString() + " " + m.uom() + ")")
+                        .collect(java.util.stream.Collectors.joining(", "));
+                throw new BusinessRuleException(ErrorCode.ORDER_LOCKED,
+                        "Cannot close order — unreturned materials: " + list
+                                + ". Return them, or close with a write-off reason.");
             }
-        }
-        if (!unclosed.isEmpty()) {
-            throw new BusinessRuleException(ErrorCode.ORDER_LOCKED,
-                    "Cannot close order — unreturned materials: " + String.join(", ", unclosed));
+            orderMaterialService.writeOffRemaining(orderId, writeOffReason);
         }
 
         order.setStatus("CLOSED");

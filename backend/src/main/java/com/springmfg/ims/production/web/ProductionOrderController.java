@@ -17,11 +17,14 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.springmfg.ims.production.dto.CloseOrderRequest;
 import com.springmfg.ims.production.dto.CreateProductionOrderRequest;
 import com.springmfg.ims.production.dto.ProductionOperationDto;
 import com.springmfg.ims.production.dto.ProductionOrderDto;
 import com.springmfg.ims.production.dto.ProductionOrderMaterialDto;
+import com.springmfg.ims.production.dto.ReturnMaterialRequest;
 import com.springmfg.ims.production.dto.WipDto;
+import com.springmfg.ims.production.service.OrderMaterialService;
 import com.springmfg.ims.production.service.ProductionOrderService;
 
 import jakarta.validation.Valid;
@@ -31,9 +34,11 @@ import jakarta.validation.Valid;
 public class ProductionOrderController {
 
     private final ProductionOrderService service;
+    private final OrderMaterialService orderMaterialService;
 
-    public ProductionOrderController(ProductionOrderService service) {
+    public ProductionOrderController(ProductionOrderService service, OrderMaterialService orderMaterialService) {
         this.service = service;
+        this.orderMaterialService = orderMaterialService;
     }
 
     @GetMapping
@@ -79,8 +84,16 @@ public class ProductionOrderController {
 
     @PostMapping("/{id}/close")
     @PreAuthorize("hasAuthority('PRODUCTION_CLOSE')")
-    public ProductionOrderDto close(@PathVariable Long id) {
-        return service.close(id);
+    public ProductionOrderDto close(@PathVariable Long id,
+                                    @Valid @RequestBody(required = false) CloseOrderRequest req) {
+        return service.close(id, req != null ? req.writeOffReason() : null);
+    }
+
+    @PostMapping("/{id}/material-returns")
+    @PreAuthorize("hasAuthority('PRODUCTION_CLOSE')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void returnMaterial(@PathVariable Long id, @Valid @RequestBody ReturnMaterialRequest req) {
+        orderMaterialService.returnMaterial(id, req);
     }
 
     @PostMapping("/{id}/reopen")

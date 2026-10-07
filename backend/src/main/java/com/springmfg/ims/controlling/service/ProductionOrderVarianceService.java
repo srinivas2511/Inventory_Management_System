@@ -42,6 +42,7 @@ import com.springmfg.ims.production.domain.MaterialIssueLine;
 import com.springmfg.ims.production.domain.ProductionOperation;
 import com.springmfg.ims.production.domain.ProductionOrder;
 import com.springmfg.ims.production.domain.ProductionOrderMaterial;
+import com.springmfg.ims.production.service.FinishedGoodsCostService;
 import com.springmfg.ims.production.repository.MaterialIssueLineRepository;
 import com.springmfg.ims.production.repository.MaterialIssueRepository;
 import com.springmfg.ims.production.repository.ProductionOperationRepository;
@@ -77,6 +78,7 @@ public class ProductionOrderVarianceService {
     private final JournalService journalService;
     private final SystemSettingService settings;
     private final AuditService auditService;
+    private final FinishedGoodsCostService fgCostService;
 
     public ProductionOrderVarianceService(ProductionOrderRepository orderRepo,
                                           ProductionOrderMaterialRepository orderMaterialRepo,
@@ -90,7 +92,8 @@ public class ProductionOrderVarianceService {
                                           GlAccountRepository glAccountRepo,
                                           JournalService journalService,
                                           SystemSettingService settings,
-                                          AuditService auditService) {
+                                          AuditService auditService,
+                                          FinishedGoodsCostService fgCostService) {
         this.orderRepo = orderRepo;
         this.orderMaterialRepo = orderMaterialRepo;
         this.issueRepo = issueRepo;
@@ -104,6 +107,7 @@ public class ProductionOrderVarianceService {
         this.journalService = journalService;
         this.settings = settings;
         this.auditService = auditService;
+        this.fgCostService = fgCostService;
     }
 
     /**
@@ -158,7 +162,8 @@ public class ProductionOrderVarianceService {
         }
         Map<Long, BigDecimal> returned = new HashMap<>();
         for (ProductionOrderMaterial pom : orderMaterialRepo.findByProductionOrderId(productionOrderId)) {
-            returned.put(pom.getMaterialId(), pom.getReturnedQty());
+            // returned to stock or written off as scrap: neither is part of what the order's pieces cost
+            returned.put(pom.getMaterialId(), pom.getReturnedQty().add(pom.getScrapQty()));
         }
 
         BigDecimal actualMaterial = BigDecimal.ZERO;
@@ -201,6 +206,10 @@ public class ProductionOrderVarianceService {
                 ? scale(estimate.getTotalStandardCost().multiply(goodQty).divide(lot, 8, RoundingMode.HALF_UP))
                 : BigDecimal.ZERO.setScale(4);
         BigDecimal total = estimate != null ? actualCost.subtract(standardCost) : BigDecimal.ZERO.setScale(4);
+        // Scrap recorded on the operations was already charged (Dr 5202 / Cr 1501) when it was recorded, but its material
+        // is part of the actual cost, so it sits in the total variance. The journal posts only the rest.
+        BigDecimal scrapRelieved = estimate != null ? scale(fgCostService.scrapRelieved(productionOrderId)) : BigDecimal.ZERO.setScale(4);
+        BigDecimal journalAmount = total.subtract(scrapRelieved);
 
         BigDecimal standardHours = standardHoursPerLot.multiply(goodQty).divide(lot, 6, RoundingMode.HALF_UP);
         BigDecimal efficiencyVariance = actualHours.subtract(standardHours).multiply(labourRate);
@@ -226,20 +235,21 @@ public class ProductionOrderVarianceService {
         v.setQuantityVariance(scale(quantityVariance));
         v.setEfficiencyVariance(scale(efficiencyVariance));
         v.setOtherVariance(scale(other));
+        v.setScrapRelieved(scrapRelieved);
         v.setTotalVariance(total);
         v.setCalculatedAt(Instant.now());
         v.setCalculatedBy(currentUserId() != null ? currentUserId() : order.getClosedBy());
 
         if (estimate == null) {
             v.setStatus("NO_ESTIMATE");
-        } else if (total.abs().compareTo(MIN_POSTING_AMOUNT) < 0) {
+        } else if (journalAmount.abs().compareTo(MIN_POSTING_AMOUNT) < 0) {
             v.setStatus("NO_VARIANCE");
         } else {
-            JournalHeaderDto journal = postVarianceJournal(order, total, cc);
+            JournalHeaderDto journal = postVarianceJournal(order, journalAmount, cc);
             v.setStatus("POSTED");
             v.setJournalHeaderId(journal.id());
             auditService.record("PRODUCTION_VARIANCE_POST", "ProductionOrder", String.valueOf(productionOrderId),
-                    null, total.toPlainString(), "journal=" + journal.journalNumber());
+                    null, journalAmount.toPlainString(), "journal=" + journal.journalNumber());
         }
         return toDto(varianceRepo.save(v));
     }
