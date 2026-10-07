@@ -11,7 +11,7 @@ import { forkJoin } from 'rxjs';
 import { problemMessage } from '../../core/models/problem.model';
 import { LookupApi, LookupOption, MaterialStock } from '../../shared/lookup.api';
 import { ProductionExecutionApi } from './production-execution.api';
-import { CreateIssueRequest, IssueDto, ProductionOrderMaterialDto } from './production-order.model';
+import { CreateIssueRequest, IssueDto, ProductionOrderMaterialDto, stillToIssueQty } from './production-order.model';
 
 export interface IssueDialogData {
   orderId: number;
@@ -191,7 +191,7 @@ export class IssueMaterialDialogComponent implements OnInit {
       this.data.materials.map((m) =>
         this.fb.nonNullable.group({
           materialId: [m.materialId],
-          quantity: this.fb.control<number | null>(Math.max(m.remainingQty, 0), [Validators.min(0)]),
+          quantity: this.fb.control<number | null>(stillToIssueQty(m), [Validators.min(0)]),
           batchId: this.fb.control<number | null>(null),
         }),
       ),
@@ -234,7 +234,7 @@ export class IssueMaterialDialogComponent implements OnInit {
   }
 
   protected toIssue(i: number): number {
-    return Math.max(this.data.materials[i].remainingQty, 0);
+    return stillToIssueQty(this.data.materials[i]);
   }
 
   protected availableFor(i: number): number {

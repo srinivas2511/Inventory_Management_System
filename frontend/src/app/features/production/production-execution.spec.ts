@@ -17,6 +17,7 @@ import {
   ProductionOrderMaterialDto,
   isRunning,
   leftoverQty,
+  stillToIssueQty,
 } from './production-order.model';
 import { ReturnMaterialDialogComponent } from './return-material-dialog.component';
 
@@ -31,7 +32,7 @@ function material(over: Partial<ProductionOrderMaterialDto> = {}): ProductionOrd
     consumedQty: 0,
     returnedQty: 0,
     scrapQty: 0,
-    remainingQty: 4.635,
+    remainingQty: 0, // the real value on a fresh line: issued - consumed - returned - scrapped
     uom: 'KG',
     availableQty: null,
     shortage: null,
@@ -101,6 +102,12 @@ describe('production order model helpers', () => {
   it('works out the leftover as issued minus consumed, returned and written off', () => {
     expect(leftoverQty(material({ issuedQty: 5, consumedQty: 3.5, returnedQty: 0.5, scrapQty: 0.25 }))).toBe(0.75);
     expect(leftoverQty(material({ issuedQty: 0 }))).toBe(0);
+  });
+
+  it('still to issue is planned minus issued, never the leftover in WIP (D-06)', () => {
+    expect(stillToIssueQty(material())).toBe(4.635);
+    expect(stillToIssueQty(material({ plannedQty: 5, issuedQty: 2, consumedQty: 0, remainingQty: 2 }))).toBe(3);
+    expect(stillToIssueQty(material({ plannedQty: 5, issuedQty: 6, remainingQty: 6 }))).toBe(0);
   });
 
   it('treats only released and in-progress orders as running', () => {

@@ -23,6 +23,7 @@ import {
   ProductionOrderMaterialDto,
   isRunning,
   leftoverQty,
+  stillToIssueQty,
 } from './production-order.model';
 import { ReturnMaterialDialogComponent } from './return-material-dialog.component';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
@@ -182,7 +183,7 @@ import { ListPaginatorComponent } from '../../shared/components/list-paginator.c
                   </ng-container>
                   <ng-container matColumnDef="remainingQty">
                     <th mat-header-cell *matHeaderCellDef>Still to issue</th>
-                    <td mat-cell *matCellDef="let m">{{ m.remainingQty | number: '1.0-3' }}</td>
+                    <td mat-cell *matCellDef="let m">{{ stillToIssue(m) | number: '1.0-3' }}</td>
                   </ng-container>
                   <ng-container matColumnDef="actions">
                     <th mat-header-cell *matHeaderCellDef></th>
@@ -376,6 +377,10 @@ export class ProductionOrderListComponent implements OnInit {
 
   protected running(order: ProductionOrderDto): boolean {
     return isRunning(order);
+  }
+
+  protected stillToIssue(m: ProductionOrderMaterialDto): number {
+    return stillToIssueQty(m);
   }
 
   protected leftover(m: ProductionOrderMaterialDto): number {

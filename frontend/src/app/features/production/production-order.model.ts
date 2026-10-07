@@ -110,6 +110,14 @@ export interface AssignableOperatorDto {
   fullName: string;
 }
 
+/**
+ * What still has to be issued to cover the plan. Not the DTO's remainingQty: that is the database's generated
+ * issued - consumed - returned - scrapped, i.e. the leftover in WIP, which is 0 on a fresh line (D-06).
+ */
+export function stillToIssueQty(m: ProductionOrderMaterialDto): number {
+  return Math.max(Math.round((m.plannedQty - m.issuedQty) * 1000) / 1000, 0);
+}
+
 /** Issued material that is neither consumed, returned nor written off: it has to go back to stock or be written off. */
 export function leftoverQty(m: ProductionOrderMaterialDto): number {
   return Math.round((m.issuedQty - m.consumedQty - m.returnedQty - m.scrapQty) * 1000) / 1000;
