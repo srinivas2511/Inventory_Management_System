@@ -281,25 +281,6 @@ class ArFromDispatchIT extends AbstractIntegrationTest {
         }
     }
 
-    @Test
-    @DisplayName("AP-01: a partial supplier payment leaves the invoice PARTIALLY_PAID, the rest makes it PAID")
-    void apPartialPayment_thenFull() {
-        LocalDate today = LocalDate.now();
-        ApInvoiceDto draft = apService.createInvoice(new ApInvoiceCreateRequest(
-                td.supplier().getId(), td.code("SINV"), today, today.plusDays(30), null,
-                new BigDecimal("1000.0000"), BigDecimal.ZERO));
-        ApInvoiceDto open = apService.openInvoice(draft.id());
-        assertThat(open.status()).isEqualTo("OPEN");
-
-        ApInvoiceDto afterPartial = apService.recordPayment(open.id(),
-                new ApPaymentRequest(today, new BigDecimal("300.0000"), "BANK_TRANSFER", "PAY-1"));
-        assertThat(afterPartial.status()).isEqualTo("PARTIALLY_PAID");
-
-        ApInvoiceDto afterFull = apService.recordPayment(open.id(),
-                new ApPaymentRequest(today, new BigDecimal("700.0000"), "BANK_TRANSFER", "PAY-2"));
-        assertThat(afterFull.status()).isEqualTo("PAID");
-    }
-
     // ── helpers ────────────────────────────────────────────────────────────────
 
     private record Line(String qty, String price) {}

@@ -1547,6 +1547,8 @@ CREATE TABLE ap_payments (
 );
 ```
 
+**Three-way match (implemented 2026-10-07, V40).** `ap_invoices` also carries `match_status` (MATCHED / EXCEPTION / OVERRIDDEN / NOT_REQUIRED), `match_expected_amount` (receipt value still open), `match_cleared_amount` (the part that clears GR/IR), `match_variance` (the part above it, booked to 5207 Purchase Price Variance), `match_message` and the override audit columns. `goods_receipt_id` is mandatory for new invoices. The invoice journal is Dr 2401 (cleared) / Dr 5207 (variance) / Dr 1301 (tax) / Cr 2402 (total). Rules and tolerances: `docs/decisions.md`, "AP three-way match".
+
 ### 15.5 AccountingBridgeService algorithm
 
 ```java

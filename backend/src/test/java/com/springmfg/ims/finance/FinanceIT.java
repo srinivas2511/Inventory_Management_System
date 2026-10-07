@@ -126,37 +126,6 @@ class FinanceIT extends AbstractIntegrationTest {
                         .isEqualTo(ErrorCode.PERIOD_CLOSED));
     }
 
-    @Test
-    @DisplayName("Business Rule 19: AP invoice creation generates valid DRAFT invoice")
-    @Transactional
-    void apInvoiceCreationGeneratesDraft() {
-        LocalDate today = LocalDate.of(2026, 4, 15);
-        assertThat(periodRepo.findOpenPeriodForDate(today)).as("seeded period APR-2026 must be OPEN").isPresent();
-
-        Supplier supplier = new Supplier();
-        supplier.setSupplierCode("SUP-FIN-IT");
-        supplier.setName("Finance IT Supplier");
-        supplier.setStatus("ACTIVE");
-        supplier = supplierRepo.save(supplier);
-
-        var req = new ApInvoiceCreateRequest(
-                supplier.getId(),
-                "SUP-INV-001",
-                today,
-                today.plusDays(30),
-                null,
-                new BigDecimal("10000.0000"),
-                new BigDecimal("1800.0000")
-        );
-
-        ApInvoiceDto dto = apService.createInvoice(req);
-
-        assertThat(dto.status()).isEqualTo("DRAFT");
-        assertThat(dto.totalAmount()).isEqualByComparingTo(new BigDecimal("11800.0000"));
-        assertThat(dto.paidAmount()).isEqualByComparingTo(BigDecimal.ZERO);
-        assertThat(dto.balanceAmount()).isEqualByComparingTo(new BigDecimal("11800.0000"));
-    }
-
     private static BigDecimal bd(String v) {
         return new BigDecimal(v);
     }

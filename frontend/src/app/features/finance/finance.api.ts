@@ -69,6 +69,11 @@ export interface ApInvoiceDto {
   paidAmount: number;
   balanceAmount: number;
   status: string;
+  goodsReceiptId: number | null;
+  matchStatus: 'MATCHED' | 'EXCEPTION' | 'OVERRIDDEN' | 'NOT_REQUIRED';
+  matchExpectedAmount: number | null;
+  matchVarianceAmount: number;
+  matchMessage: string | null;
 }
 
 export interface ArInvoiceDto {
@@ -235,6 +240,10 @@ export class FinanceApi {
   getApInvoices(page = 0, size = 20): Observable<Page<ApInvoiceDto>> {
     const params = new HttpParams().set('page', page).set('size', size);
     return this.http.get<Page<ApInvoiceDto>>(`${this.base}/ap/invoices`, { params });
+  }
+
+  overrideApMatch(id: number, reason: string): Observable<ApInvoiceDto> {
+    return this.http.post<ApInvoiceDto>(`${this.base}/ap/invoices/${id}/match-override`, { reason });
   }
 
   getApAgeing(): Observable<ApAgeingRow[]> {

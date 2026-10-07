@@ -18,5 +18,9 @@ public record ApInvoiceDto(
         BigDecimal balanceAmount,
         String status,
         Long periodId,
-        Long journalHeaderId
+        Long journalHeaderId,
+        String matchStatus,
+        BigDecimal matchExpectedAmount,
+        BigDecimal matchVarianceAmount,
+        String matchMessage
 ) {}

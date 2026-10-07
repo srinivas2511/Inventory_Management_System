@@ -40,6 +40,8 @@ public class ApService {
     private static final String GR_IR_CLEARING = "2401";
     private static final String AP_CONTROL = "2402";
     private static final String BANK = "1201";
+    private static final String INPUT_TAX = "1301";
+    private static final String PURCHASE_PRICE_VARIANCE = "5207";
 
     private final ApInvoiceRepository apInvoiceRepo;
     private final ApPaymentRepository apPaymentRepo;
@@ -49,6 +51,7 @@ public class ApService {
     private final AuditService auditService;
     private final SupplierRepository supplierRepo;
     private final GlAccountResolver glAccounts;
+    private final ThreeWayMatchService matchService;
 
     public ApService(ApInvoiceRepository apInvoiceRepo,
                      ApPaymentRepository apPaymentRepo,
@@ -57,7 +60,8 @@ public class ApService {
                      DocumentNumberService numberService,
                      AuditService auditService,
                      SupplierRepository supplierRepo,
-                     GlAccountResolver glAccounts) {
+                     GlAccountResolver glAccounts,
+                     ThreeWayMatchService matchService) {
         this.apInvoiceRepo = apInvoiceRepo;
         this.apPaymentRepo = apPaymentRepo;
         this.periodRepo = periodRepo;
@@ -66,6 +70,7 @@ public class ApService {
         this.auditService = auditService;
         this.supplierRepo = supplierRepo;
         this.glAccounts = glAccounts;
+        this.matchService = matchService;
     }
 
     public ApInvoiceDto createInvoice(ApInvoiceCreateRequest req) {
@@ -73,8 +78,14 @@ public class ApService {
                 .orElseThrow(() -> new BusinessRuleException(ErrorCode.PERIOD_CLOSED,
                         "No open period for " + req.invoiceDate()));
 
+        if (req.goodsReceiptId() == null) {
+            throw new BusinessRuleException(ErrorCode.VALIDATION_FAILED,
+                    "A supplier invoice must reference the goods receipt it bills: the three-way match is required (rule 18)");
+        }
         BigDecimal tax = req.taxTotal() != null ? req.taxTotal() : BigDecimal.ZERO;
         BigDecimal total = req.subtotal().add(tax);
+        var position = matchService.lockAndRead(req.goodsReceiptId(), req.supplierId(), null);
+        var outcome = matchService.evaluate(position, req.subtotal(), tax);
 
         ApInvoice inv = new ApInvoice();
         inv.setInvoiceNumber(numberService.next("APINV"));
@@ -89,10 +100,14 @@ public class ApService {
         inv.setPaidAmount(BigDecimal.ZERO);
         inv.setStatus("DRAFT");
         inv.setPeriodId(period.getId());
+        inv.setMatchStatus(outcome.status());
+        inv.setMatchExpectedAmount(outcome.open());
+        inv.setMatchClearedAmount(outcome.cleared());
+        inv.setMatchVariance(outcome.variance());
+        inv.setMatchMessage(outcome.message());
         inv = apInvoiceRepo.save(inv);
-
         auditService.record("AP_INVOICE_CREATED", "AP_INVOICE", String.valueOf(inv.getId()),
-                null, "DRAFT", null);
+                null, "DRAFT/" + outcome.status(), outcome.message());
         return toDto(inv);
     }
 
@@ -103,17 +118,17 @@ public class ApService {
                     "Invoice " + inv.getInvoiceNumber() + " is not DRAFT");
         }
 
+        if ("EXCEPTION".equals(inv.getMatchStatus())) {
+            throw new BusinessRuleException(ErrorCode.ILLEGAL_STATE_TRANSITION,
+                    "Invoice " + inv.getInvoiceNumber() + " does not match its goods receipt and cannot be opened. "
+                            + inv.getMatchMessage());
+        }
         var jnlReq = new AutoJournalRequest(
                 "AP_INVOICE", "AP", "SUPPLIER_INVOICE", inv.getId(),
                 inv.getInvoiceDate(),
                 "AP Invoice " + inv.getInvoiceNumber(),
                 currentUserId(),
-                List.of(
-                        new JournalLineRequest(glAccounts.idOf(GR_IR_CLEARING), inv.getTotalAmount(), BigDecimal.ZERO,
-                                "AP Invoice Dr"),
-                        new JournalLineRequest(glAccounts.idOf(AP_CONTROL), BigDecimal.ZERO, inv.getTotalAmount(),
-                                "AP Invoice Cr")
-                )
+                invoiceJournalLines(inv)
         );
         var jnl = journalService.postSourceJournal(jnlReq);
 
@@ -164,6 +179,74 @@ public class ApService {
         return toDto(apInvoiceRepo.save(inv));
     }
 
+    /**
+     * A finance manager approves an invoice that is outside the match tolerance. Never the person who entered it,
+     * and always with a reason; the approval and the variance it books are audited with the invoice.
+     */
+    public ApInvoiceDto overrideMatch(Long id, String reason) {
+        ApInvoice inv = findInvoice(id);
+        if (!"EXCEPTION".equals(inv.getMatchStatus()) || !"DRAFT".equals(inv.getStatus())) {
+            throw new BusinessRuleException(ErrorCode.ILLEGAL_STATE_TRANSITION,
+                    "Invoice " + inv.getInvoiceNumber() + " has no match exception to approve");
+        }
+        if (reason == null || reason.isBlank()) {
+            throw new BusinessRuleException(ErrorCode.VALIDATION_FAILED, "A reason is required to approve a match exception");
+        }
+        Long actor = currentUserId();
+        if (inv.getCreatedBy() != null && inv.getCreatedBy().equals(actor)) {
+            throw new BusinessRuleException(ErrorCode.SEGREGATION_OF_DUTIES,
+                    "You entered invoice " + inv.getInvoiceNumber() + "; a different finance manager must approve its variance");
+        }
+        var position = matchService.lockAndRead(inv.getGoodsReceiptId(), inv.getSupplierId(), inv.getId());
+        var settled = ThreeWayMatchCalculator.settle(inv.getSubtotal(), position.value(), position.invoiced());
+        inv.setMatchStatus("OVERRIDDEN");
+        inv.setMatchExpectedAmount(settled.open());
+        inv.setMatchClearedAmount(settled.cleared());
+        inv.setMatchVariance(settled.variance());
+        inv.setMatchOverrideBy(actor);
+        inv.setMatchOverrideAt(java.time.Instant.now());
+        inv.setMatchOverrideReason(reason.trim());
+        ApInvoice saved = apInvoiceRepo.save(inv);
+        auditService.record("AP_MATCH_OVERRIDE", "AP_INVOICE", String.valueOf(id), "EXCEPTION",
+                "OVERRIDDEN variance " + settled.variance().toPlainString(), reason.trim());
+        return toDto(saved);
+    }
+
+    /** Withdraws a draft invoice, which frees its goods receipt to be invoiced again (for example corrected). */
+    public ApInvoiceDto cancelInvoice(Long id) {
+        ApInvoice inv = findInvoice(id);
+        if (!"DRAFT".equals(inv.getStatus())) {
+            throw new BusinessRuleException(ErrorCode.ILLEGAL_STATE_TRANSITION,
+                    "Only a draft invoice can be cancelled; invoice " + inv.getInvoiceNumber() + " is " + inv.getStatus());
+        }
+        inv.setStatus("CANCELLED");
+        auditService.record("AP_INVOICE_CANCELLED", "AP_INVOICE", String.valueOf(id), "DRAFT", "CANCELLED", null);
+        return toDto(apInvoiceRepo.save(inv));
+    }
+
+    /**
+     * Dr GR/IR for the receipt value the invoice clears, Dr price variance for what it bills above that, Dr input tax
+     * for its tax; Cr AP control for the total. An invoice entered before the match existed clears its whole subtotal.
+     */
+    private List<JournalLineRequest> invoiceJournalLines(ApInvoice inv) {
+        boolean legacy = "NOT_REQUIRED".equals(inv.getMatchStatus());
+        BigDecimal cleared = legacy ? inv.getSubtotal() : inv.getMatchClearedAmount();
+        BigDecimal variance = legacy ? BigDecimal.ZERO : inv.getMatchVariance();
+        List<JournalLineRequest> lines = new java.util.ArrayList<>();
+        if (cleared.signum() > 0) {
+            lines.add(new JournalLineRequest(glAccounts.idOf(GR_IR_CLEARING), cleared, BigDecimal.ZERO, "GR/IR cleared"));
+        }
+        if (variance.signum() > 0) {
+            lines.add(new JournalLineRequest(glAccounts.idOf(PURCHASE_PRICE_VARIANCE), variance, BigDecimal.ZERO,
+                    "Purchase price variance"));
+        }
+        if (inv.getTaxTotal().signum() > 0) {
+            lines.add(new JournalLineRequest(glAccounts.idOf(INPUT_TAX), inv.getTaxTotal(), BigDecimal.ZERO, "Input tax"));
+        }
+        lines.add(new JournalLineRequest(glAccounts.idOf(AP_CONTROL), BigDecimal.ZERO, inv.getTotalAmount(), "AP Invoice Cr"));
+        return lines;
+    }
+
     @Transactional(readOnly = true)
     public Page<ApInvoiceDto> findAll(Pageable pageable) {
         return apInvoiceRepo.findAll(pageable).map(this::toDto);
@@ -208,7 +291,8 @@ public class ApService {
                 inv.getSupplierId(), inv.getInvoiceDate(), inv.getDueDate(),
                 inv.getGoodsReceiptId(), inv.getSubtotal(), inv.getTaxTotal(),
                 inv.getTotalAmount(), inv.getPaidAmount(), balance, inv.getStatus(),
-                inv.getPeriodId(), inv.getJournalHeaderId());
+                inv.getPeriodId(), inv.getJournalHeaderId(),
+                inv.getMatchStatus(), inv.getMatchExpectedAmount(), inv.getMatchVariance(), inv.getMatchMessage());
     }
 
     private Long currentUserId() {

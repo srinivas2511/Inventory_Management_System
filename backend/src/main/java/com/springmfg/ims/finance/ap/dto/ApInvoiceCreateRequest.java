@@ -10,7 +10,7 @@ public record ApInvoiceCreateRequest(
         String supplierInvoiceNo,
         @NotNull LocalDate invoiceDate,
         @NotNull LocalDate dueDate,
-        Long goodsReceiptId,
+        @NotNull Long goodsReceiptId,
         @NotNull @Positive BigDecimal subtotal,
         BigDecimal taxTotal
 ) {}

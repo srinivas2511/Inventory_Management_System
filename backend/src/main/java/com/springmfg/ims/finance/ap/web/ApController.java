@@ -3,6 +3,7 @@ package com.springmfg.ims.finance.ap.web;
 import com.springmfg.ims.finance.ap.dto.ApAgeingRow;
 import com.springmfg.ims.finance.ap.dto.ApInvoiceCreateRequest;
 import com.springmfg.ims.finance.ap.dto.ApInvoiceDto;
+import com.springmfg.ims.finance.ap.dto.ApMatchOverrideRequest;
 import com.springmfg.ims.finance.ap.dto.ApPaymentRequest;
 import com.springmfg.ims.finance.ap.service.ApService;
 import jakarta.validation.Valid;
@@ -41,6 +42,19 @@ public class ApController {
     @PreAuthorize("hasAuthority('AP_MANAGE')")
     public ApInvoiceDto openInvoice(@PathVariable Long id) {
         return apService.openInvoice(id);
+    }
+
+    @PostMapping("/invoices/{id}/match-override")
+    @PreAuthorize("hasAuthority('AP_MATCH_OVERRIDE')")
+    public ApInvoiceDto overrideMatch(@PathVariable Long id,
+                                      @Valid @RequestBody ApMatchOverrideRequest req) {
+        return apService.overrideMatch(id, req.reason());
+    }
+
+    @PutMapping("/invoices/{id}/cancel")
+    @PreAuthorize("hasAuthority('AP_MANAGE')")
+    public ApInvoiceDto cancelInvoice(@PathVariable Long id) {
+        return apService.cancelInvoice(id);
     }
 
     @PostMapping("/invoices/{id}/payments")

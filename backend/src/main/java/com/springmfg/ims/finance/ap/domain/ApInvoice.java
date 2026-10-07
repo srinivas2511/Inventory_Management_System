@@ -51,6 +51,30 @@ public class ApInvoice extends BaseEntity {
     @Column(name = "journal_header_id")
     private Long journalHeaderId;
 
+    @Column(name = "match_status", nullable = false, length = 12)
+    private String matchStatus = "NOT_REQUIRED";
+
+    @Column(name = "match_expected_amount", precision = 18, scale = 4)
+    private BigDecimal matchExpectedAmount;
+
+    @Column(name = "match_cleared_amount", nullable = false, precision = 18, scale = 4)
+    private BigDecimal matchClearedAmount = BigDecimal.ZERO;
+
+    @Column(name = "match_variance", nullable = false, precision = 18, scale = 4)
+    private BigDecimal matchVariance = BigDecimal.ZERO;
+
+    @Column(name = "match_message", length = 500)
+    private String matchMessage;
+
+    @Column(name = "match_override_by")
+    private Long matchOverrideBy;
+
+    @Column(name = "match_override_at")
+    private java.time.Instant matchOverrideAt;
+
+    @Column(name = "match_override_reason", length = 500)
+    private String matchOverrideReason;
+
     public String getInvoiceNumber() { return invoiceNumber; }
     public String getSupplierInvoiceNo() { return supplierInvoiceNo; }
     public Long getSupplierId() { return supplierId; }
@@ -80,4 +104,21 @@ public class ApInvoice extends BaseEntity {
     public void setCurrencyCode(String currencyCode) { this.currencyCode = currencyCode; }
     public void setPeriodId(Long periodId) { this.periodId = periodId; }
     public void setJournalHeaderId(Long journalHeaderId) { this.journalHeaderId = journalHeaderId; }
+
+    public String getMatchStatus() { return matchStatus; }
+    public BigDecimal getMatchExpectedAmount() { return matchExpectedAmount; }
+    public BigDecimal getMatchClearedAmount() { return matchClearedAmount; }
+    public BigDecimal getMatchVariance() { return matchVariance; }
+    public String getMatchMessage() { return matchMessage; }
+    public Long getMatchOverrideBy() { return matchOverrideBy; }
+    public java.time.Instant getMatchOverrideAt() { return matchOverrideAt; }
+    public String getMatchOverrideReason() { return matchOverrideReason; }
+    public void setMatchStatus(String matchStatus) { this.matchStatus = matchStatus; }
+    public void setMatchExpectedAmount(BigDecimal matchExpectedAmount) { this.matchExpectedAmount = matchExpectedAmount; }
+    public void setMatchClearedAmount(BigDecimal matchClearedAmount) { this.matchClearedAmount = matchClearedAmount; }
+    public void setMatchVariance(BigDecimal matchVariance) { this.matchVariance = matchVariance; }
+    public void setMatchMessage(String matchMessage) { this.matchMessage = matchMessage; }
+    public void setMatchOverrideBy(Long matchOverrideBy) { this.matchOverrideBy = matchOverrideBy; }
+    public void setMatchOverrideAt(java.time.Instant matchOverrideAt) { this.matchOverrideAt = matchOverrideAt; }
+    public void setMatchOverrideReason(String matchOverrideReason) { this.matchOverrideReason = matchOverrideReason; }
 }

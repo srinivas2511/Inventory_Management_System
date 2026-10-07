@@ -194,6 +194,11 @@ class RoleAccessIT extends AbstractIntegrationTest {
                     Set.of("ADMIN", "FINANCE_MANAGER", "ACCOUNTANT"), Set.of("OPERATOR", "SALES", "MANAGEMENT")),
             Probe.of(HttpMethod.POST, "/api/ar/reconciliation/missing-invoices/retry",
                     Set.of("ADMIN", "FINANCE_MANAGER"), Set.of("ACCOUNTANT", "OPERATOR", "SALES")),
+            // AP three-way match: only AP_MATCH_OVERRIDE holders approve a variance, AP users may cancel a draft
+            Probe.withBody(HttpMethod.POST, "/api/ap/invoices/" + MISSING + "/match-override", "{\"reason\":\"probe\"}",
+                    Set.of("ADMIN", "FINANCE_MANAGER"), Set.of("ACCOUNTANT", "OPERATOR", "SALES", "MANAGEMENT")),
+            Probe.of(HttpMethod.PUT, "/api/ap/invoices/" + MISSING + "/cancel",
+                    Set.of("ADMIN", "FINANCE_MANAGER", "ACCOUNTANT"), Set.of("OPERATOR", "SALES", "MANAGEMENT")),
             // goods receipt
             Probe.of(HttpMethod.GET, "/api/procurement/goods-receipts",
                     Set.of("ADMIN", "STORE_OPERATOR", "PURCHASE_MANAGER"), Set.of("OPERATOR", "SALES")),
@@ -392,6 +397,7 @@ class RoleAccessIT extends AbstractIntegrationTest {
             Map.entry("GET /api/procurement/goods-receipts/999999", 404),
             Map.entry("GET /api/spare-parts/999999", 404),
             Map.entry("GET /api/spc/charts/999999", 404),
+            Map.entry("POST /api/ap/invoices/999999/match-override", 404),
             Map.entry("POST /api/admin/attribute-definitions", 400), // no body: validation answers 400 after method security
             Map.entry("POST /api/admin/attribute-definitions/999999/activate", 404),
             Map.entry("POST /api/admin/attribute-definitions/999999/deactivate", 404),
@@ -422,6 +428,7 @@ class RoleAccessIT extends AbstractIntegrationTest {
             Map.entry("POST /api/spc/charts/999999/recalculate-limits", 404),
             Map.entry("PUT /api/admin/attribute-definitions/999999", 404),
             Map.entry("PUT /api/alerts/999999/acknowledge", 404),
+            Map.entry("PUT /api/ap/invoices/999999/cancel", 404),
             Map.entry("PUT /api/document-categories/999999", 404),
             Map.entry("PUT /api/integration/webhooks/999999", 404),
             Map.entry("PUT /api/notification-templates/999999", 404),
