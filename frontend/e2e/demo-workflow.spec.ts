@@ -481,9 +481,12 @@ test.describe.serial('22-step demonstration workflow', () => {
     await p.getByRole('button', { name: /request adjustment/i }).click();
     const d = dialog(p);
     await pick(d, 'Item Type', 'Material');
-    await fill(d, 'Material ID', m.materialId);
-    await fill(d, 'Warehouse ID', bal.warehouseId);
-    await fill(d, 'Location ID', bal.locationId);
+    // D-09: the dialog offers pickers (code and name), not raw numeric ids.
+    const warehouse = (await admin().list<any>('/api/lookups/warehouses')).find((w) => w.id === bal.warehouseId);
+    const location = (await admin().list<any>(`/api/lookups/locations?warehouseId=${bal.warehouseId}`)).find((l) => l.id === bal.locationId);
+    await pick(d, 'Material', S.ids!.material.materialCode);
+    await pick(d, 'Warehouse', warehouse.code);
+    await pick(d, 'Location', location.code);
     await pick(d, 'Stock Status', 'Available');
     await fill(d, 'Counted Qty', counted.toFixed(3));
     await fill(d, 'Reason', 'Physical stock verification');

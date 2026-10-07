@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatDialog, MatDialogModule, MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
@@ -13,6 +13,7 @@ import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
+import { LookupApi, LookupItem, LookupLocation, LookupOption } from '../../shared/lookup.api';
 import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
 import { InventoryApi, StockAdjustmentDto } from './inventory.api';
 import { Page } from '../master/material/material.api';
@@ -108,6 +109,7 @@ import { Page } from '../master/material/material.api';
                 mat-icon-button
                 color="primary"
                 matTooltip="Approve / Review"
+                aria-label="Approve / Review"
                 *appHasPermission="'ADJUST_REVIEW'"
                 (click)="openApprovalDialog(r, 'approve')"
               >
@@ -117,6 +119,7 @@ import { Page } from '../master/material/material.api';
                 mat-icon-button
                 color="warn"
                 matTooltip="Reject"
+                aria-label="Reject"
                 *appHasPermission="'ADJUST_REVIEW'"
                 (click)="openApprovalDialog(r, 'reject')"
               >
@@ -185,6 +188,7 @@ export class StockAdjustmentListComponent implements OnInit {
     const form = this.fb.group({
       itemType: ['MATERIAL', Validators.required],
       materialId: [null],
+      productId: [null],
       warehouseId: [null, Validators.required],
       locationId: [null, Validators.required],
       stockStatus: ['AVAILABLE', Validators.required],
@@ -233,17 +237,40 @@ export class StockAdjustmentListComponent implements OnInit {
           <mat-option value="PRODUCT">Product</mat-option>
         </mat-select>
       </mat-form-field>
+      @if (data.form.value.itemType === 'PRODUCT') {
+        <mat-form-field appearance="outline">
+          <mat-label>Product</mat-label>
+          <mat-select formControlName="productId" data-testid="adj-product">
+            @for (p of products(); track p.id) {
+              <mat-option [value]="p.id">{{ p.code }} · {{ p.name }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      } @else {
+        <mat-form-field appearance="outline">
+          <mat-label>Material</mat-label>
+          <mat-select formControlName="materialId" data-testid="adj-material">
+            @for (m of materials(); track m.id) {
+              <mat-option [value]="m.id">{{ m.code }} · {{ m.name }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      }
       <mat-form-field appearance="outline">
-        <mat-label>Material ID</mat-label>
-        <input matInput type="number" formControlName="materialId" />
+        <mat-label>Warehouse</mat-label>
+        <mat-select formControlName="warehouseId" data-testid="adj-warehouse">
+          @for (w of warehouses(); track w.id) {
+            <mat-option [value]="w.id">{{ w.code }} · {{ w.name }}</mat-option>
+          }
+        </mat-select>
       </mat-form-field>
       <mat-form-field appearance="outline">
-        <mat-label>Warehouse ID</mat-label>
-        <input matInput type="number" formControlName="warehouseId" />
-      </mat-form-field>
-      <mat-form-field appearance="outline">
-        <mat-label>Location ID</mat-label>
-        <input matInput type="number" formControlName="locationId" />
+        <mat-label>Location</mat-label>
+        <mat-select formControlName="locationId" data-testid="adj-location">
+          @for (l of locations(); track l.id) {
+            <mat-option [value]="l.id">{{ l.code }} · {{ l.name }}</mat-option>
+          }
+        </mat-select>
       </mat-form-field>
       <mat-form-field appearance="outline">
         <mat-label>Stock Status</mat-label>
@@ -269,9 +296,41 @@ export class StockAdjustmentListComponent implements OnInit {
     </mat-dialog-actions>
   `,
 })
-export class AdjustmentFormDialogComponent {
+export class AdjustmentFormDialogComponent implements OnInit {
   readonly data = inject(MAT_DIALOG_DATA);
   readonly ref = inject(MatDialogRef<AdjustmentFormDialogComponent>);
+  private readonly lookups = inject(LookupApi);
+
+  readonly materials = signal<LookupItem[]>([]);
+  readonly products = signal<LookupItem[]>([]);
+  readonly warehouses = signal<LookupOption[]>([]);
+  readonly locations = signal<LookupLocation[]>([]);
+
+  ngOnInit(): void {
+    const form = this.data.form as FormGroup;
+    this.lookups.materials().subscribe((list) => this.materials.set(list));
+    this.lookups.products().subscribe((list) => this.products.set(list));
+    this.lookups.warehouses().subscribe((list) => this.warehouses.set(list));
+    // Exactly one of material / product is needed, according to the item type.
+    const requireItem = (itemType: string | null): void => {
+      const material = form.get('materialId')!;
+      const product = form.get('productId')!;
+      material.setValidators(itemType === 'PRODUCT' ? [] : [Validators.required]);
+      product.setValidators(itemType === 'PRODUCT' ? [Validators.required] : []);
+      (itemType === 'PRODUCT' ? material : product).reset(null);
+      material.updateValueAndValidity();
+      product.updateValueAndValidity();
+    };
+    requireItem(form.get('itemType')!.value);
+    form.get('itemType')!.valueChanges.subscribe(requireItem);
+    form.get('warehouseId')!.valueChanges.subscribe((warehouseId) => {
+      form.get('locationId')!.reset(null);
+      this.locations.set([]);
+      if (warehouseId) {
+        this.lookups.locations(warehouseId).subscribe((list) => this.locations.set(list));
+      }
+    });
+  }
 }
 
 @Component({

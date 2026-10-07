@@ -116,6 +116,29 @@ export interface AdjustmentRequest {
   reason: string;
 }
 
+/** Mirrors OpeningBalanceLine on the backend. */
+export interface OpeningBalanceLine {
+  itemType: 'MATERIAL' | 'PRODUCT';
+  materialId?: number;
+  productId?: number;
+  batchId?: number | null;
+  warehouseId: number;
+  locationId: number;
+  stockStatus: string;
+  quantity: number;
+  uom: string;
+  unitCost?: number | null;
+  remarks?: string;
+}
+
+/** Mirrors PostingResult on the backend. */
+export interface PostingResultDto {
+  transactionId: number;
+  transactionNumber: string;
+  balanceAfter: number;
+  unitCost: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class InventoryApi {
   private readonly http = inject(HttpClient);
@@ -127,6 +150,11 @@ export class InventoryApi {
     if (materialId) params = params.set('materialId', materialId);
     if (stockStatus) params = params.set('stockStatus', stockStatus);
     return this.http.get<InventoryBalanceDto[]>(`${this.base}/api/inventory/balances`, { params });
+  }
+
+  /** Loads opening stock; each line becomes an OPENING_BALANCE ledger entry (and its journal, Dr stock / Cr 3901). */
+  loadOpeningBalances(lines: OpeningBalanceLine[]): Observable<PostingResultDto[]> {
+    return this.http.post<PostingResultDto[]>(`${this.base}/api/inventory/opening-balances`, lines);
   }
 
   getValuation(warehouseId?: number): Observable<ValuationDto> {

@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -10,7 +11,9 @@ import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { DecimalPipe } from '@angular/common';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
+import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
 import { InventoryApi, InventoryBalanceDto } from './inventory.api';
+import { OpeningBalanceDialogComponent } from './opening-balance-dialog.component';
 
 @Component({
   selector: 'app-stock-balance-list',
@@ -19,6 +22,7 @@ import { InventoryApi, InventoryBalanceDto } from './inventory.api';
     ReactiveFormsModule,
     MatTableModule,
     MatButtonModule,
+    MatDialogModule,
     MatIconModule,
     MatFormFieldModule,
     MatInputModule,
@@ -27,10 +31,20 @@ import { InventoryApi, InventoryBalanceDto } from './inventory.api';
     MatTooltipModule,
     DecimalPipe,
     StatusBadgeComponent,
+    HasPermissionDirective,
   ],
   template: `
     <div class="page-header">
       <h2 class="mat-h2">Current Stock</h2>
+      <button
+        *appHasPermission="'INVENTORY_ADJUST'"
+        mat-flat-button
+        color="primary"
+        (click)="openOpeningBalance()"
+        data-testid="opening-balance"
+      >
+        <mat-icon>inventory</mat-icon> Opening balance
+      </button>
     </div>
 
     <div class="filter-bar">
@@ -95,6 +109,7 @@ import { InventoryApi, InventoryBalanceDto } from './inventory.api';
 })
 export class StockBalanceListComponent implements OnInit {
   private readonly api = inject(InventoryApi);
+  private readonly dialog = inject(MatDialog);
 
   readonly loading = signal(false);
   readonly rows = signal<InventoryBalanceDto[]>([]);
@@ -104,6 +119,15 @@ export class StockBalanceListComponent implements OnInit {
   ngOnInit(): void {
     this.statusCtrl.valueChanges.subscribe(() => this.load());
     this.load();
+  }
+
+  openOpeningBalance(): void {
+    this.dialog
+      .open(OpeningBalanceDialogComponent, { width: '560px' })
+      .afterClosed()
+      .subscribe((recorded) => {
+        if (recorded) this.load();
+      });
   }
 
   load(): void {
