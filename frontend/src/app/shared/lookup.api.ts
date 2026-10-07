@@ -82,6 +82,19 @@ export interface DispatchableOrder {
   items: DispatchableItem[];
 }
 
+/** A posted goods receipt with value still open to invoice (mirrors LookupDtos.InvoiceableReceipt). */
+export interface InvoiceableReceipt {
+  id: number;
+  grNumber: string;
+  receiptDate: string;
+  poNumber: string;
+  supplierId: number;
+  receivedValue: number;
+  receivedTax: number;
+  invoicedValue: number;
+  openValue: number;
+}
+
 /** Dropdown data for the create forms; readable with the transactional permission, not the master-data ones. */
 @Injectable({ providedIn: 'root' })
 export class LookupApi {
@@ -93,6 +106,12 @@ export class LookupApi {
 
   customers(): Observable<LookupOption[]> {
     return this.http.get<LookupOption[]>('/api/lookups/customers');
+  }
+
+  invoiceableReceipts(supplierId?: number): Observable<InvoiceableReceipt[]> {
+    let params = new HttpParams();
+    if (supplierId) params = params.set('supplierId', supplierId);
+    return this.http.get<InvoiceableReceipt[]>('/api/lookups/goods-receipts/invoiceable', { params });
   }
 
   warehouses(): Observable<LookupOption[]> {

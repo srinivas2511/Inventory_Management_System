@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.springmfg.ims.lookup.LookupDtos.ActiveBom;
 import com.springmfg.ims.lookup.LookupDtos.DispatchableOrder;
 import com.springmfg.ims.lookup.LookupDtos.FgStock;
+import com.springmfg.ims.lookup.LookupDtos.InvoiceableReceipt;
 import com.springmfg.ims.lookup.LookupDtos.ItemOption;
 import com.springmfg.ims.lookup.LookupDtos.LocationOption;
 import com.springmfg.ims.lookup.LookupDtos.Option;
@@ -32,13 +33,13 @@ public class LookupController {
     }
 
     @GetMapping("/suppliers")
-    @PreAuthorize("hasAnyAuthority('PURCHASE_CREATE','PURCHASE_VIEW','SUPPLIER_MANAGE','MASTERDATA_MANAGE')")
+    @PreAuthorize("hasAnyAuthority('PURCHASE_CREATE','PURCHASE_VIEW','SUPPLIER_MANAGE','MASTERDATA_MANAGE','AP_MANAGE')")
     public List<Option> suppliers(@RequestParam(required = false) String q) {
         return service.suppliers(q);
     }
 
     @GetMapping("/customers")
-    @PreAuthorize("hasAnyAuthority('SALES_CREATE','SALES_VIEW','CUSTOMER_MANAGE','MASTERDATA_MANAGE')")
+    @PreAuthorize("hasAnyAuthority('SALES_CREATE','SALES_VIEW','CUSTOMER_MANAGE','MASTERDATA_MANAGE','AR_MANAGE')")
     public List<Option> customers(@RequestParam(required = false) String q) {
         return service.customers(q);
     }
@@ -77,6 +78,12 @@ public class LookupController {
     @PreAuthorize("hasAnyAuthority('INVENTORY_RECEIVE','PURCHASE_VIEW')")
     public List<ReceivablePo> receivablePurchaseOrders() {
         return service.receivablePurchaseOrders();
+    }
+
+    @GetMapping("/goods-receipts/invoiceable")
+    @PreAuthorize("hasAuthority('AP_MANAGE')")
+    public List<InvoiceableReceipt> invoiceableReceipts(@RequestParam(required = false) Long supplierId) {
+        return service.invoiceableReceipts(supplierId);
     }
 
     @GetMapping("/fg-stock")

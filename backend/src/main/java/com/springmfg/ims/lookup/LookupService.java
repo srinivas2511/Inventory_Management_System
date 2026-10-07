@@ -18,6 +18,7 @@ import com.springmfg.ims.lookup.LookupDtos.ActiveBom;
 import com.springmfg.ims.lookup.LookupDtos.DispatchableItem;
 import com.springmfg.ims.lookup.LookupDtos.DispatchableOrder;
 import com.springmfg.ims.lookup.LookupDtos.FgStock;
+import com.springmfg.ims.lookup.LookupDtos.InvoiceableReceipt;
 import com.springmfg.ims.lookup.LookupDtos.ItemOption;
 import com.springmfg.ims.lookup.LookupDtos.LocationOption;
 import com.springmfg.ims.lookup.LookupDtos.Option;
@@ -119,6 +120,42 @@ public class LookupService {
     }
 
     /** Finished goods that can be reserved or dispatched: released stock per batch and location. */
+    /**
+     * Posted goods receipts that still have value open to invoice, optionally for one supplier. The received value
+     * uses the same per-line rounding as the three-way match (quantity x PO rate, 4 dp) and what is already claimed
+     * is what the match counts: invoices that are not cancelled and not in exception.
+     */
+    public List<InvoiceableReceipt> invoiceableReceipts(Long supplierId) {
+        List<InvoiceableReceipt> all = jdbc.query("""
+                SELECT gr.id, gr.gr_number, gr.receipt_date, po.po_number, po.supplier_id,
+                       COALESCE(SUM(ROUND(gi.received_qty * pi.rate, 4)), 0) AS received_value,
+                       COALESCE(SUM(ROUND(ROUND(gi.received_qty * pi.rate, 4) * pi.tax_pct / 100, 4)), 0) AS received_tax,
+                       (SELECT COALESCE(SUM(a.match_cleared_amount), 0)
+                          FROM ap_invoices a
+                         WHERE a.goods_receipt_id = gr.id
+                           AND a.status <> 'CANCELLED'
+                           AND a.match_status IN ('MATCHED', 'OVERRIDDEN', 'NOT_REQUIRED')) AS invoiced_value
+                  FROM goods_receipts gr
+                  JOIN purchase_orders po ON po.id = gr.purchase_order_id
+                  JOIN goods_receipt_items gi ON gi.goods_receipt_id = gr.id
+                  JOIN purchase_order_items pi ON pi.id = gi.po_item_id
+                 WHERE gr.status = 'POSTED'
+                   AND (:s = 0 OR po.supplier_id = :s)
+                 GROUP BY gr.id, gr.gr_number, gr.receipt_date, po.po_number, po.supplier_id
+                 ORDER BY gr.receipt_date DESC, gr.id DESC
+                 LIMIT 1000
+                """, new MapSqlParameterSource("s", supplierId == null ? 0L : supplierId),
+                (rs, i) -> {
+                    BigDecimal value = rs.getBigDecimal("received_value");
+                    BigDecimal invoiced = rs.getBigDecimal("invoiced_value");
+                    BigDecimal open = value.subtract(invoiced).max(BigDecimal.ZERO);
+                    return new InvoiceableReceipt(rs.getLong("id"), rs.getString("gr_number"),
+                            rs.getDate("receipt_date").toLocalDate(), rs.getString("po_number"),
+                            rs.getLong("supplier_id"), value, rs.getBigDecimal("received_tax"), invoiced, open);
+                });
+        return all.stream().filter(r -> r.openValue().signum() > 0).toList();
+    }
+
     public List<FgStock> finishedGoodsStock(Long productId) {
         return jdbc.query("""
                 SELECT b.fg_batch_id, f.batch_number, b.product_id, b.warehouse_id, b.location_id,

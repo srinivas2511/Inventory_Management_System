@@ -26,6 +26,8 @@ import com.springmfg.ims.finance.ap.dto.ApInvoiceCreateRequest;
 import com.springmfg.ims.finance.ap.dto.ApInvoiceDto;
 import com.springmfg.ims.finance.ap.dto.ApPaymentRequest;
 import com.springmfg.ims.finance.ap.service.ApService;
+import com.springmfg.ims.lookup.LookupDtos.InvoiceableReceipt;
+import com.springmfg.ims.lookup.LookupService;
 import com.springmfg.ims.procurement.dto.CreateGrRequest;
 import com.springmfg.ims.procurement.dto.CreatePoRequest;
 import com.springmfg.ims.procurement.dto.GoodsReceiptDto;
@@ -46,6 +48,7 @@ class ThreeWayMatchIT extends AbstractIntegrationTest {
     private static final String TOLERANCE_KEY = "ap.match.price_tolerance_pct";
 
     @Autowired ApService apService;
+    @Autowired LookupService lookups;
     @Autowired PurchaseOrderService poService;
     @Autowired GoodsReceiptService grService;
     @Autowired SystemSettingService settings;
@@ -325,6 +328,46 @@ class ThreeWayMatchIT extends AbstractIntegrationTest {
         ApInvoiceDto afterFull = apService.recordPayment(open.id(),
                 new ApPaymentRequest(LocalDate.now(), bd("700.0000"), "BANK_TRANSFER", "PAY-2"));
         assertThat(afterFull.status()).isEqualTo("PAID");
+    }
+
+    @Test
+    @DisplayName("TWM-LK: the invoiceable-receipts lookup shows the value still open and hides a fully invoiced receipt")
+    void invoiceableReceiptsLookupShowsOpenValue() {
+        Receipt gr = receipt("100", "200.0000", null, "100");   // 20,000
+        Receipt taxed = receipt("10", "100.0000", "18", "10");  // 1,000 + 180 tax
+
+        InvoiceableReceipt fresh = listed(gr);
+        assertThat(fresh.receivedValue()).isEqualByComparingTo("20000");
+        assertThat(fresh.invoicedValue()).isEqualByComparingTo("0");
+        assertThat(fresh.openValue()).isEqualByComparingTo("20000");
+        assertThat(fresh.grNumber()).isNotBlank();
+        assertThat(fresh.poNumber()).isNotBlank();
+        InvoiceableReceipt withTax = listed(taxed);
+        assertThat(withTax.receivedValue()).isEqualByComparingTo("1000");
+        assertThat(withTax.receivedTax()).isEqualByComparingTo("180");
+
+        // a matched invoice for part of it claims that part
+        assertThat(invoice(gr, "12000.0000", "0").matchStatus()).isEqualTo("MATCHED");
+        assertThat(listed(gr).invoicedValue()).isEqualByComparingTo("12000");
+        assertThat(listed(gr).openValue()).isEqualByComparingTo("8000");
+
+        // an invoice in exception claims nothing, so the open value does not move
+        assertThat(invoice(gr, "25000.0000", "0").matchStatus()).isEqualTo("EXCEPTION");
+        assertThat(listed(gr).openValue()).isEqualByComparingTo("8000");
+
+        // the rest, matched, closes the receipt and it leaves the list
+        assertThat(invoice(gr, "8000.0000", "0").matchStatus()).isEqualTo("MATCHED");
+        assertThat(lookups.invoiceableReceipts(gr.supplierId())).noneMatch(r -> r.id().equals(gr.id()));
+
+        // the supplier filter narrows the list; no supplier lists every supplier's receipts
+        assertThat(lookups.invoiceableReceipts(999_999_999L)).isEmpty();
+        assertThat(lookups.invoiceableReceipts(null)).anyMatch(r -> r.id().equals(taxed.id()));
+    }
+
+    private InvoiceableReceipt listed(Receipt gr) {
+        return lookups.invoiceableReceipts(gr.supplierId()).stream()
+                .filter(r -> r.id().equals(gr.id())).findFirst()
+                .orElseThrow(() -> new AssertionError("receipt " + gr.id() + " is not listed"));
     }
 
     // ── fixtures ───────────────────────────────────────────────────────────────

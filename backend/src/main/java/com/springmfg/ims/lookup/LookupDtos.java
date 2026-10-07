@@ -1,6 +1,7 @@
 package com.springmfg.ims.lookup;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 /** Read-only shapes for the dropdowns on the create forms. */
@@ -31,4 +32,7 @@ public final class LookupDtos {
 
     public record DispatchableOrder(Long id, String orderNumber, Long customerId, String customerName,
             String deliveryAddress, String status, List<DispatchableItem> items) {}
+    /** A posted goods receipt that still has value open to invoice; what a supplier invoice can claim against it. */
+    public record InvoiceableReceipt(Long id, String grNumber, LocalDate receiptDate, String poNumber, Long supplierId,
+            BigDecimal receivedValue, BigDecimal receivedTax, BigDecimal invoicedValue, BigDecimal openValue) {}
 }

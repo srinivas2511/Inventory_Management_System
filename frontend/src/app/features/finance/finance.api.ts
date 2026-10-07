@@ -11,6 +11,8 @@ export interface JournalLineDto {
   debitAmount: number;
   creditAmount: number;
   description?: string;
+  costCentreId?: number | null;
+  profitCentreId?: number | null;
 }
 
 export interface JournalHeaderDto {
@@ -18,15 +20,38 @@ export interface JournalHeaderDto {
   journalNumber: string;
   journalType: string;
   sourceModule?: string;
+  sourceDocumentType?: string | null;
+  sourceDocumentId?: number | null;
   postingDate: string;
   periodId: number;
   description: string;
   currencyCode: string;
+  exchangeRate?: number;
   status: string;
+  reversalOfId?: number | null;
   preparedBy?: number;
   approvedBy?: number;
+  approvedAt?: string | null;
   postedBy?: number;
+  postedAt?: string | null;
   lines: JournalLineDto[];
+}
+
+/** Mirrors JournalLineRequest: a line carries a debit or a credit, never both. */
+export interface JournalLineRequest {
+  glAccountId: number;
+  debitAmount: number;
+  creditAmount: number;
+  description: string | null;
+}
+
+/** Mirrors JournalCreateRequest. */
+export interface JournalCreateRequest {
+  journalType: string;
+  postingDate: string;
+  description: string;
+  currencyCode: string;
+  lines: JournalLineRequest[];
 }
 
 export interface FiscalPeriodDto {
@@ -62,13 +87,18 @@ export interface TrialBalanceRow {
 export interface ApInvoiceDto {
   id: number;
   invoiceNumber: string;
+  supplierInvoiceNo?: string | null;
   supplierId: number;
   invoiceDate: string;
   dueDate: string;
+  subtotal?: number;
+  taxTotal?: number;
   totalAmount: number;
   paidAmount: number;
   balanceAmount: number;
   status: string;
+  periodId?: number;
+  journalHeaderId?: number | null;
   goodsReceiptId: number | null;
   matchStatus: 'MATCHED' | 'EXCEPTION' | 'OVERRIDDEN' | 'NOT_REQUIRED';
   matchExpectedAmount: number | null;
@@ -80,12 +110,43 @@ export interface ArInvoiceDto {
   id: number;
   invoiceNumber: string;
   customerId: number;
+  dispatchId?: number | null;
   invoiceDate: string;
   dueDate: string;
+  subtotal?: number;
+  taxTotal?: number;
   totalAmount: number;
   receivedAmount: number;
   balanceAmount: number;
   status: string;
+  periodId?: number;
+  journalHeaderId?: number | null;
+}
+
+/** Mirrors ApInvoiceCreateRequest. The goods receipt is mandatory: the invoice is matched against it. */
+export interface ApInvoiceCreateRequest {
+  supplierId: number;
+  supplierInvoiceNo: string | null;
+  invoiceDate: string;
+  dueDate: string;
+  goodsReceiptId: number;
+  subtotal: number;
+  taxTotal: number | null;
+}
+
+/** Mirrors ApPaymentRequest (paying a supplier) and ArReceiptRequest (a customer paying) - the payload is the same. */
+export interface ApPaymentRequest {
+  paymentDate: string;
+  amount: number;
+  paymentMode: string;
+  referenceNumber: string | null;
+}
+
+export interface ArReceiptRequest {
+  receiptDate: string;
+  amount: number;
+  paymentMode: string;
+  referenceNumber: string | null;
 }
 
 export interface ApAgeingRow {
@@ -189,6 +250,10 @@ export class FinanceApi {
     return this.http.get<Page<JournalHeaderDto>>(`${this.base}/journals`, { params });
   }
 
+  createJournal(request: JournalCreateRequest): Observable<JournalHeaderDto> {
+    return this.http.post<JournalHeaderDto>(`${this.base}/journals`, request);
+  }
+
   getJournal(id: number): Observable<JournalHeaderDto> {
     return this.http.get<JournalHeaderDto>(`${this.base}/journals/${id}`);
   }
@@ -242,6 +307,22 @@ export class FinanceApi {
     return this.http.get<Page<ApInvoiceDto>>(`${this.base}/ap/invoices`, { params });
   }
 
+  createApInvoice(request: ApInvoiceCreateRequest): Observable<ApInvoiceDto> {
+    return this.http.post<ApInvoiceDto>(`${this.base}/ap/invoices`, request);
+  }
+
+  openApInvoice(id: number): Observable<ApInvoiceDto> {
+    return this.http.put<ApInvoiceDto>(`${this.base}/ap/invoices/${id}/open`, {});
+  }
+
+  cancelApInvoice(id: number): Observable<ApInvoiceDto> {
+    return this.http.put<ApInvoiceDto>(`${this.base}/ap/invoices/${id}/cancel`, {});
+  }
+
+  recordApPayment(id: number, request: ApPaymentRequest): Observable<ApInvoiceDto> {
+    return this.http.post<ApInvoiceDto>(`${this.base}/ap/invoices/${id}/payments`, request);
+  }
+
   overrideApMatch(id: number, reason: string): Observable<ApInvoiceDto> {
     return this.http.post<ApInvoiceDto>(`${this.base}/ap/invoices/${id}/match-override`, { reason });
   }
@@ -253,6 +334,10 @@ export class FinanceApi {
   getArInvoices(page = 0, size = 20): Observable<Page<ArInvoiceDto>> {
     const params = new HttpParams().set('page', page).set('size', size);
     return this.http.get<Page<ArInvoiceDto>>(`${this.base}/ar/invoices`, { params });
+  }
+
+  recordArReceipt(id: number, request: ArReceiptRequest): Observable<ArInvoiceDto> {
+    return this.http.post<ArInvoiceDto>(`${this.base}/ar/invoices/${id}/receipts`, request);
   }
 
   getArAgeing(): Observable<ArAgeingRow[]> {

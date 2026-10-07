@@ -132,8 +132,11 @@ class RoleAccessIT extends AbstractIntegrationTest {
                     "{\"materialId\":1,\"quantity\":1}",
                     Set.of("ADMIN", "PRODUCTION_MANAGER"), Set.of("OPERATOR", "SALES", "QUALITY_MANAGER")),
             // dropdown lookups for the create forms: readable with the transactional permission, not the master data one
-            Probe.of(HttpMethod.GET, "/api/lookups/suppliers", Set.of("ADMIN", "PURCHASE_MANAGER"), Set.of("OPERATOR")),
-            Probe.of(HttpMethod.GET, "/api/lookups/customers", Set.of("ADMIN", "SALES"), Set.of("OPERATOR")),
+            Probe.of(HttpMethod.GET, "/api/lookups/suppliers", Set.of("ADMIN", "PURCHASE_MANAGER", "ACCOUNTANT"),
+                    Set.of("OPERATOR")),
+            Probe.of(HttpMethod.GET, "/api/lookups/customers", Set.of("ADMIN", "SALES", "ACCOUNTANT"), Set.of("OPERATOR")),
+            Probe.of(HttpMethod.GET, "/api/lookups/goods-receipts/invoiceable",
+                    Set.of("ADMIN", "ACCOUNTANT", "FINANCE_MANAGER"), Set.of("OPERATOR", "SALES", "PURCHASE_MANAGER")),
             Probe.of(HttpMethod.GET, "/api/lookups/materials", Set.of("ADMIN", "PURCHASE_MANAGER", "ENGINEER"),
                     Set.of("OPERATOR")),
             Probe.of(HttpMethod.GET, "/api/lookups/products", Set.of("ADMIN", "SALES", "PRODUCTION_MANAGER"),
