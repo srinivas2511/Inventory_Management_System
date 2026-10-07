@@ -12,6 +12,9 @@
       <mat-icon>arrow_drop_down</mat-icon>
     </button>
     <mat-menu #userMenu>
+      <a mat-menu-item routerLink="/change-password" data-testid="change-password-link"
+        ><mat-icon>key</mat-icon> Change password</a
+      >
       <button mat-menu-item (click)="logout()" data-testid="logout-btn"><mat-icon>logout</mat-icon> Sign out</button>
     </mat-menu>
   } @else {

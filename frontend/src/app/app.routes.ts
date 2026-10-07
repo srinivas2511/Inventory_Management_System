@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard, guestGuard, permissionGuard } from './core/auth/auth.guard';
+import { authGuard, guestGuard, permissionGuard, signedInGuard } from './core/auth/auth.guard';
 import { ShellComponent } from './core/layout/shell.component';
 
 export const routes: Routes = [
@@ -18,6 +18,12 @@ export const routes: Routes = [
     path: 'reset-password/:token',
     title: 'Set New Password',
     loadComponent: () => import('./features/auth/reset-password.component').then((m) => m.ResetPasswordComponent),
+  },
+  {
+    path: 'change-password',
+    title: 'Change password',
+    canActivate: [signedInGuard],
+    loadComponent: () => import('./features/auth/change-password.component').then((m) => m.ChangePasswordComponent),
   },
   {
     path: '',

@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { Router, RouterStateSnapshot, UrlTree, provideRouter } from '@angular/router';
-import { authGuard, guestGuard, permissionGuard } from './auth.guard';
+import { authGuard, guestGuard, permissionGuard, signedInGuard } from './auth.guard';
 import { SessionStore } from './session.store';
 
 const state = (url: string) => ({ url }) as RouterStateSnapshot;
@@ -18,14 +18,14 @@ describe('auth guards', () => {
     router = TestBed.inject(Router);
   });
 
-  const signIn = (permissions: string[]) =>
+  const signIn = (permissions: string[], mustChangePassword = false) =>
     session.setUser({
       id: 1,
       username: 'asha',
       fullName: 'Asha Rao',
       roles: [],
       permissions,
-      mustChangePassword: false,
+      mustChangePassword,
     });
 
   it('lets a signed-in user through', () => {
@@ -58,5 +58,24 @@ describe('auth guards', () => {
     expect(run(guestGuard)).toBeTrue();
     signIn([]);
     expect(router.serializeUrl(run(guestGuard) as UrlTree)).toBe('/dashboard');
+  });
+  it('holds a user with a temporary password at the change-password page, remembering where they were going', () => {
+    signIn(['USER_VIEW'], true);
+    expect(router.serializeUrl(run(authGuard, '/inventory/stock') as UrlTree)).toBe(
+      '/change-password?returnUrl=%2Finventory%2Fstock',
+    );
+    expect(router.serializeUrl(run(permissionGuard('USER_VIEW'), '/admin/users') as UrlTree)).toBe(
+      '/change-password?returnUrl=%2Fadmin%2Fusers',
+    );
+  });
+
+  it('lets the change-password page itself through for any signed-in user, forced or not', () => {
+    expect(router.serializeUrl(run(signedInGuard, '/change-password') as UrlTree)).toBe(
+      '/login?returnUrl=%2Fchange-password',
+    );
+    signIn([], true);
+    expect(run(signedInGuard, '/change-password')).toBeTrue();
+    signIn([], false);
+    expect(run(signedInGuard, '/change-password')).toBeTrue();
   });
 });
