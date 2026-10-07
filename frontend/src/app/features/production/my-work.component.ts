@@ -69,7 +69,7 @@ export interface MyWorkItemDto {
           <mat-card class="work-card" [class.active-card]="item.status === 'IN_PROGRESS'">
             <mat-card-header>
               <mat-card-title>{{ item.productionOrderNumber }}</mat-card-title>
-              <mat-card-subtitle>Op {{ item.sequenceNo }} · {{ item.operationName ?? 'Operation' }}</mat-card-subtitle>
+              <mat-card-subtitle>Op {{ item.sequenceNo }} · {{ item.operationName }}</mat-card-subtitle>
             </mat-card-header>
             <mat-card-content>
               <div class="wip-stats">
