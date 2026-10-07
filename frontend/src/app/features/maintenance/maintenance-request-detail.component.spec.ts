@@ -149,6 +149,8 @@ describe('MaintenanceRequestDetailComponent', () => {
         },
       ],
     }).compileComponents();
+    // Not only in setup(): a test that never calls setup() must still have a controller for afterEach.
+    backend = TestBed.inject(HttpTestingController);
   });
 
   afterEach(() => backend.verify());
