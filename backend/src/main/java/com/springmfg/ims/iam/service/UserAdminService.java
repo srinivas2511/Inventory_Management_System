@@ -36,18 +36,21 @@ public class UserAdminService {
     private final UserPermissionCache permissionCache;
     private final AuditService auditService;
     private final AuthService authService;
+    private final AdminGuard adminGuard;
 
     public UserAdminService(UserRepository userRepo, RoleRepository roleRepo,
                             PasswordEncoder passwordEncoder,
                             UserPermissionCache permissionCache,
                             AuditService auditService,
-                            AuthService authService) {
+                            AuthService authService,
+                            AdminGuard adminGuard) {
         this.userRepo = userRepo;
         this.roleRepo = roleRepo;
         this.passwordEncoder = passwordEncoder;
         this.permissionCache = permissionCache;
         this.auditService = auditService;
         this.authService = authService;
+        this.adminGuard = adminGuard;
     }
 
     @Transactional(readOnly = true)
@@ -118,6 +121,7 @@ public class UserAdminService {
 
     @Transactional
     public UserDto assignRoles(Long id, Set<String> roleCodes) {
+        adminGuard.lock();
         User user = requireUser(id);
         List<Role> roles = roleRepo.findAll().stream()
             .filter(r -> roleCodes.contains(r.getCode())).toList();
@@ -128,6 +132,11 @@ public class UserAdminService {
         unknown.removeAll(foundCodes);
         if (!unknown.isEmpty()) {
             throw new NotFoundException("Unknown role codes: " + unknown);
+        }
+
+        if (adminGuard.isActiveAdmin(user) && !foundCodes.contains(AdminGuard.ADMIN_ROLE)) {
+            adminGuard.requireAnotherAdmin(user,
+                "Cannot remove the Administrator role from the last active administrator");
         }
 
         String oldRoles = String.join(",", user.getRoleCodes());
@@ -143,12 +152,12 @@ public class UserAdminService {
 
     @Transactional
     public void deactivate(Long id) {
+        adminGuard.lock();
         User user = requireUser(id);
         if (!user.isActive()) return;
 
-        if ("ADMIN".equals(getOnlyRole(user)) && userRepo.countActiveAdmins() <= 1) {
-            throw new BusinessRuleException(ErrorCode.LAST_ADMIN,
-                "Cannot deactivate the last active administrator");
+        if (adminGuard.isActiveAdmin(user)) {
+            adminGuard.requireAnotherAdmin(user, "Cannot deactivate the last active administrator");
         }
 
         user.setActive(false);
@@ -212,10 +221,5 @@ public class UserAdminService {
     private User requireUser(Long id) {
         return userRepo.findById(id)
             .orElseThrow(() -> new NotFoundException("User not found: " + id));
-    }
-
-    private String getOnlyRole(User user) {
-        Set<String> codes = user.getRoleCodes();
-        return codes.size() == 1 ? codes.iterator().next() : null;
     }
 }

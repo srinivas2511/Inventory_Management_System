@@ -30,8 +30,16 @@ public interface UserRepository extends JpaRepository<User, Long> {
                       @Param("active") Boolean active,
                       Pageable pageable);
 
-    @Query("SELECT COUNT(u) FROM User u JOIN u.roles r WHERE r.code = 'ADMIN' AND u.active = true")
-    long countActiveAdmins();
+    /** Active administrators other than {@code excludedId} whose account is not locked at {@code now}. */
+    @Query("SELECT COUNT(u) FROM User u JOIN u.roles r WHERE r.code = 'ADMIN' AND u.active = true "
+            + "AND u.id <> :excludedId AND (u.lockedUntil IS NULL OR u.lockedUntil <= :now)")
+    long countActiveUnlockedAdminsExcept(@Param("excludedId") Long excludedId,
+                                         @Param("now") java.time.Instant now);
+
+    /** Serialises changes that can remove an administrator; released when the transaction ends. */
+    @Query(value = "SELECT 1 FROM (SELECT pg_advisory_xact_lock(7101)) AS admin_invariant_lock",
+           nativeQuery = true)
+    Integer lockAdminInvariant();
 
     default Page<User> search(String search, Boolean active, Pageable pageable) {
         return searchNormalised(SearchText.normalise(search), active, pageable);
