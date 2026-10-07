@@ -67,12 +67,20 @@ Once any user exists the variables are ignored, so remove them from the environm
 In the `dev`/`demo` profiles the demo loader (`ims.demo.load-data=true`) creates `admin` / `Admin@123` instead; that
 account never exists in production.
 
-Reset a password later via **Settings → Users → admin → Reset password** or the API.
+The first sign-in is held to the password-change screen: while a password is temporary the server refuses every call
+except change-password, me, refresh and logout (403 `PASSWORD_CHANGE_REQUIRED`), so choose a new password first.
+
+Reset another user's password later via **Administration → Users → (the user) → Reset password** (needs the
+`USER_PASSWORD_RESET` permission, which only ADMIN holds). The system can generate a one-time password and shows it
+once; the user must change it at their next sign-in and every session they had ends. You cannot reset your own
+password this way: use **Change password** in the user menu. A locked account is released with **Unlock** on the same
+screen. At least one active, unlocked administrator must always remain, so the last administrator cannot be
+deactivated or have the Administrator role removed; keep a second administrator in case the first is locked out.
 
 ----------|-----------------|
 | `admin` | `Admin@123` ← **change immediately** |
 
-Change via **Settings → Users → admin → Reset password** or via the API.
+Change it at first sign-in (**Change password** in the user menu), or reset it from **Administration → Users** as another administrator.
 
 ---
 
