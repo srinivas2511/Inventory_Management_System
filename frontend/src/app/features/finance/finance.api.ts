@@ -245,8 +245,9 @@ export class FinanceApi {
     return this.http.get<Page<FinanceAlertDto>>(`${this.base}/alerts`, { params });
   }
 
-  getJournals(page = 0, size = 20): Observable<Page<JournalHeaderDto>> {
-    const params = new HttpParams().set('page', page).set('size', size);
+  getJournals(page = 0, size = 20, sort?: string): Observable<Page<JournalHeaderDto>> {
+    let params = new HttpParams().set('page', page).set('size', size);
+    if (sort) params = params.set('sort', sort);
     return this.http.get<Page<JournalHeaderDto>>(`${this.base}/journals`, { params });
   }
 
@@ -302,8 +303,9 @@ export class FinanceApi {
     return this.http.get<TrialBalanceRow[]>(`${this.base}/gl/trial-balance`, { params });
   }
 
-  getApInvoices(page = 0, size = 20): Observable<Page<ApInvoiceDto>> {
-    const params = new HttpParams().set('page', page).set('size', size);
+  getApInvoices(page = 0, size = 20, sort?: string): Observable<Page<ApInvoiceDto>> {
+    let params = new HttpParams().set('page', page).set('size', size);
+    if (sort) params = params.set('sort', sort);
     return this.http.get<Page<ApInvoiceDto>>(`${this.base}/ap/invoices`, { params });
   }
 
@@ -331,8 +333,9 @@ export class FinanceApi {
     return this.http.get<ApAgeingRow[]>(`${this.base}/ap/ageing`);
   }
 
-  getArInvoices(page = 0, size = 20): Observable<Page<ArInvoiceDto>> {
-    const params = new HttpParams().set('page', page).set('size', size);
+  getArInvoices(page = 0, size = 20, sort?: string): Observable<Page<ArInvoiceDto>> {
+    let params = new HttpParams().set('page', page).set('size', size);
+    if (sort) params = params.set('sort', sort);
     return this.http.get<Page<ArInvoiceDto>>(`${this.base}/ar/invoices`, { params });
   }
 

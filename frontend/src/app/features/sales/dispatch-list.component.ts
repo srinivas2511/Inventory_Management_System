@@ -11,12 +11,15 @@ import { StatusBadgeComponent } from '../../shared/components/status-badge.compo
 import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
 import { DispatchFormComponent } from './dispatch-form.component';
 import { SalesApi, DispatchDto } from './sales.api';
+import { PagedList } from '../../shared/paged-list';
+import { ListPaginatorComponent } from '../../shared/components/list-paginator.component';
 
 @Component({
   selector: 'app-dispatch-list',
   standalone: true,
   providers: [SalesApi],
   imports: [
+    ListPaginatorComponent,
     MatTableModule,
     MatButtonModule,
     MatIconModule,
@@ -93,6 +96,7 @@ import { SalesApi, DispatchDto } from './sales.api';
           </td>
         </tr>
       </table>
+      <app-list-paginator [paged]="paged" (changed)="load()" />
     }
   `,
 })
@@ -103,6 +107,7 @@ export class DispatchListComponent implements OnInit {
 
   dispatches = signal<DispatchDto[]>([]);
   loading = signal(false);
+  readonly paged = new PagedList();
   columns = [
     'dispatchNumber',
     'orderNumber',
@@ -120,9 +125,9 @@ export class DispatchListComponent implements OnInit {
 
   load(): void {
     this.loading.set(true);
-    this.api.getDispatches().subscribe({
+    this.api.getDispatches(undefined, this.paged.pageIndex(), this.paged.pageSize(), 'id,desc').subscribe({
       next: (page) => {
-        this.dispatches.set(page.content);
+        this.dispatches.set(this.paged.apply(page));
         this.loading.set(false);
       },
       error: () => {

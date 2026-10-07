@@ -123,8 +123,15 @@ export interface CreateDispatchRequest {
 export class SalesApi {
   private http = inject(HttpClient);
 
-  getSalesOrders(status?: string, customerId?: number, page = 0, size = 20): Observable<PageResponse<SalesOrderDto>> {
+  getSalesOrders(
+    status?: string,
+    customerId?: number,
+    page = 0,
+    size = 20,
+    sort?: string,
+  ): Observable<PageResponse<SalesOrderDto>> {
     let params = new HttpParams().set('page', page).set('size', size);
+    if (sort) params = params.set('sort', sort);
     if (status) params = params.set('status', status);
     if (customerId) params = params.set('customerId', customerId);
     return this.http.get<PageResponse<SalesOrderDto>>('/api/sales/orders', { params });
@@ -158,8 +165,9 @@ export class SalesApi {
     return this.http.post<SalesOrderDto>(`/api/sales/orders/${id}/cancel`, { reason });
   }
 
-  getDispatches(customerId?: number, page = 0, size = 20): Observable<PageResponse<DispatchDto>> {
+  getDispatches(customerId?: number, page = 0, size = 20, sort?: string): Observable<PageResponse<DispatchDto>> {
     let params = new HttpParams().set('page', page).set('size', size);
+    if (sort) params = params.set('sort', sort);
     if (customerId) params = params.set('customerId', customerId);
     return this.http.get<PageResponse<DispatchDto>>('/api/sales/dispatches', { params });
   }

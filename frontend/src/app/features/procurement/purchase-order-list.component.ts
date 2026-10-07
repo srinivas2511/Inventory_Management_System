@@ -15,6 +15,8 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { PurchaseOrderFormComponent } from './purchase-order-form.component';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
+import { PagedList } from '../../shared/paged-list';
+import { ListPaginatorComponent } from '../../shared/components/list-paginator.component';
 
 export interface PurchaseOrderItemDto {
   id: number;
@@ -44,6 +46,7 @@ export interface PurchaseOrderDto {
   selector: 'app-purchase-order-list',
   standalone: true,
   imports: [
+    ListPaginatorComponent,
     ReactiveFormsModule,
     MatTableModule,
     MatButtonModule,
@@ -147,6 +150,7 @@ export interface PurchaseOrderDto {
         <tr mat-header-row *matHeaderRowDef="columns"></tr>
         <tr mat-row *matRowDef="let r; columns: columns"></tr>
       </table>
+      <app-list-paginator [paged]="paged" (changed)="load()" />
     }
   `,
 })
@@ -158,10 +162,14 @@ export class PurchaseOrderListComponent implements OnInit {
   columns = ['poNumber', 'supplierId', 'poDate', 'grandTotal', 'status', 'actions'];
   rows = signal<PurchaseOrderDto[]>([]);
   loading = signal(false);
+  readonly paged = new PagedList();
   statusCtrl = new FormControl<string | null>(null);
 
   ngOnInit(): void {
-    this.statusCtrl.valueChanges.subscribe(() => this.load());
+    this.statusCtrl.valueChanges.subscribe(() => {
+      this.paged.reset();
+      this.load();
+    });
     this.load();
   }
 
@@ -182,13 +190,15 @@ export class PurchaseOrderListComponent implements OnInit {
     const params: Record<string, string> = {};
     const s = this.statusCtrl.value;
     if (s) params['status'] = s;
-    this.http.get<{ content: PurchaseOrderDto[] }>('/api/procurement/purchase-orders', { params }).subscribe({
-      next: (page) => {
-        this.rows.set(page.content ?? []);
-        this.loading.set(false);
-      },
-      error: () => this.loading.set(false),
-    });
+    this.http
+      .get<{ content: PurchaseOrderDto[] }>('/api/procurement/purchase-orders', { params: this.paged.params(params) })
+      .subscribe({
+        next: (page) => {
+          this.rows.set(this.paged.apply(page));
+          this.loading.set(false);
+        },
+        error: () => this.loading.set(false),
+      });
   }
 
   doAction(id: number, action: string): void {

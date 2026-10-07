@@ -12,11 +12,14 @@ import { HasPermissionDirective } from '../../shared/directives/has-permission.d
 import { LookupApi } from '../../shared/lookup.api';
 import { FinanceApi, ArInvoiceDto, ArAgeingRow } from './finance.api';
 import { SettlementDialogComponent } from './settlement-dialog.component';
+import { PagedList } from '../../shared/paged-list';
+import { ListPaginatorComponent } from '../../shared/components/list-paginator.component';
 
 @Component({
   selector: 'app-ar-list',
   standalone: true,
   imports: [
+    ListPaginatorComponent,
     DecimalPipe,
     HasPermissionDirective,
     MatButtonModule,
@@ -89,6 +92,7 @@ import { SettlementDialogComponent } from './settlement-dialog.component';
             <tr mat-header-row *matHeaderRowDef="invoiceColumns"></tr>
             <tr mat-row *matRowDef="let row; columns: invoiceColumns"></tr>
           </table>
+          <app-list-paginator [paged]="paged" (changed)="load()" />
         }
       </mat-tab>
       <mat-tab label="Ageing">
@@ -145,6 +149,7 @@ export class ArListComponent implements OnInit {
   invoices = signal<ArInvoiceDto[]>([]);
   ageing = signal<ArAgeingRow[]>([]);
   loading = signal(false);
+  readonly paged = new PagedList();
   private customers = signal<Record<number, string>>({});
 
   ngOnInit() {
@@ -189,9 +194,9 @@ export class ArListComponent implements OnInit {
 
   load() {
     this.loading.set(true);
-    this.api.getArInvoices().subscribe({
+    this.api.getArInvoices(this.paged.pageIndex(), this.paged.pageSize(), 'id,desc').subscribe({
       next: (p) => {
-        this.invoices.set(p.content);
+        this.invoices.set(this.paged.apply(p));
         this.loading.set(false);
       },
       error: () => this.loading.set(false),

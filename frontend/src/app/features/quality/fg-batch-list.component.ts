@@ -12,6 +12,8 @@ import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
+import { PagedList } from '../../shared/paged-list';
+import { ListPaginatorComponent } from '../../shared/components/list-paginator.component';
 
 export interface FgBatchDto {
   id: number;
@@ -34,6 +36,7 @@ export interface FgBatchDto {
   selector: 'app-fg-batch-list',
   standalone: true,
   imports: [
+    ListPaginatorComponent,
     ReactiveFormsModule,
     MatTableModule,
     MatButtonModule,
@@ -124,6 +127,7 @@ export interface FgBatchDto {
         <tr mat-header-row *matHeaderRowDef="columns"></tr>
         <tr mat-row *matRowDef="let r; columns: columns"></tr>
       </table>
+      <app-list-paginator [paged]="paged" (changed)="load()" />
     }
   `,
 })
@@ -134,10 +138,14 @@ export class FgBatchListComponent implements OnInit {
   columns = ['batchNumber', 'product', 'producedOn', 'producedQty', 'approvedQty', 'qualityStatus', 'actions'];
   rows = signal<FgBatchDto[]>([]);
   loading = signal(false);
+  readonly paged = new PagedList();
   statusCtrl = new FormControl<string | null>(null);
 
   ngOnInit(): void {
-    this.statusCtrl.valueChanges.subscribe(() => this.load());
+    this.statusCtrl.valueChanges.subscribe(() => {
+      this.paged.reset();
+      this.load();
+    });
     this.load();
   }
 
@@ -146,13 +154,15 @@ export class FgBatchListComponent implements OnInit {
     const params: Record<string, string> = {};
     const s = this.statusCtrl.value;
     if (s) params['status'] = s;
-    this.http.get<{ content: FgBatchDto[] }>('/api/quality/fg-batches', { params }).subscribe({
-      next: (page) => {
-        this.rows.set(page.content ?? []);
-        this.loading.set(false);
-      },
-      error: () => this.loading.set(false),
-    });
+    this.http
+      .get<{ content: FgBatchDto[] }>('/api/quality/fg-batches', { params: this.paged.params(params) })
+      .subscribe({
+        next: (page) => {
+          this.rows.set(this.paged.apply(page));
+          this.loading.set(false);
+        },
+        error: () => this.loading.set(false),
+      });
   }
 
   openFinalDecision(batch: FgBatchDto): void {

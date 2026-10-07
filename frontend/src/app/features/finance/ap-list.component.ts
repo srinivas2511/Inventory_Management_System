@@ -18,11 +18,14 @@ import { LookupApi } from '../../shared/lookup.api';
 import { ApInvoiceFormComponent } from './ap-invoice-form.component';
 import { FinanceApi, ApInvoiceDto, ApAgeingRow } from './finance.api';
 import { SettlementDialogComponent } from './settlement-dialog.component';
+import { PagedList } from '../../shared/paged-list';
+import { ListPaginatorComponent } from '../../shared/components/list-paginator.component';
 
 @Component({
   selector: 'app-ap-list',
   standalone: true,
   imports: [
+    ListPaginatorComponent,
     DecimalPipe,
     FormsModule,
     HasPermissionDirective,
@@ -153,6 +156,7 @@ import { SettlementDialogComponent } from './settlement-dialog.component';
             <tr mat-header-row *matHeaderRowDef="invoiceColumns"></tr>
             <tr mat-row *matRowDef="let row; columns: invoiceColumns"></tr>
           </table>
+          <app-list-paginator [paged]="paged" (changed)="load()" />
         }
       </mat-tab>
       <mat-tab label="Ageing">
@@ -240,6 +244,7 @@ export class ApListComponent implements OnInit {
   invoices = signal<ApInvoiceDto[]>([]);
   ageing = signal<ApAgeingRow[]>([]);
   loading = signal(false);
+  readonly paged = new PagedList();
   overrideTarget = signal<ApInvoiceDto | null>(null);
   saving = signal(false);
   reason = '';
@@ -343,9 +348,9 @@ export class ApListComponent implements OnInit {
 
   load() {
     this.loading.set(true);
-    this.api.getApInvoices().subscribe({
+    this.api.getApInvoices(this.paged.pageIndex(), this.paged.pageSize(), 'id,desc').subscribe({
       next: (p) => {
-        this.invoices.set(p.content);
+        this.invoices.set(this.paged.apply(p));
         this.loading.set(false);
       },
       error: () => this.loading.set(false),

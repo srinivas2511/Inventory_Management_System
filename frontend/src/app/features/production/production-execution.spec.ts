@@ -427,9 +427,18 @@ describe('ProductionOrderListComponent execution actions', () => {
     const fixture = TestBed.createComponent(ProductionOrderListComponent);
     backend = TestBed.inject(HttpTestingController);
     fixture.detectChanges();
-    backend.expectOne('/api/production-orders').flush({ content: orders });
+    expectOrderList().flush({ content: orders, totalElements: orders.length });
     fixture.detectChanges();
     return fixture;
+  }
+
+  /** The list asks for one page of the newest orders first; the paginator offers the older ones. */
+  function expectOrderList() {
+    const req = backend.expectOne((r) => r.method === 'GET' && r.url === '/api/production-orders');
+    expect(req.request.params.get('page')).toBe('0');
+    expect(req.request.params.get('size')).toBe('20');
+    expect(req.request.params.get('sort')).toBe('id,desc');
+    return req;
   }
 
   function buttonLabels(fixture: { nativeElement: HTMLElement }): string[] {
@@ -495,7 +504,7 @@ describe('ProductionOrderListComponent execution actions', () => {
     expect(open.calls.mostRecent().args[0]).toBe(CloseOrderDialogComponent);
     // the dialog does the posting; the list only reloads
     backend.expectNone('/api/production-orders/11/close');
-    backend.expectOne('/api/production-orders').flush({ content: [completed] });
+    expectOrderList().flush({ content: [completed], totalElements: 1 });
   });
 
   it('does not offer a return when nothing is left over', () => {
@@ -524,6 +533,6 @@ describe('ProductionOrderListComponent execution actions', () => {
     expect(open.calls.mostRecent().args[0]).toBe(IssueMaterialDialogComponent);
     expect(config.data.orderId).toBe(11);
     expect(config.data.materials.length).toBe(1);
-    backend.expectOne('/api/production-orders').flush({ content: [running] });
+    expectOrderList().flush({ content: [running], totalElements: 1 });
   });
 });

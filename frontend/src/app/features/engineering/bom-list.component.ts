@@ -16,6 +16,8 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
 import { openDocumentsDialog } from '../documents/documents-dialog.component';
+import { PagedList } from '../../shared/paged-list';
+import { ListPaginatorComponent } from '../../shared/components/list-paginator.component';
 
 export interface BomDto {
   id: number;
@@ -33,6 +35,7 @@ export interface BomDto {
   selector: 'app-bom-list',
   standalone: true,
   imports: [
+    ListPaginatorComponent,
     ReactiveFormsModule,
     MatTableModule,
     MatButtonModule,
@@ -168,6 +171,7 @@ export interface BomDto {
         <tr mat-header-row *matHeaderRowDef="columns"></tr>
         <tr mat-row *matRowDef="let r; columns: columns"></tr>
       </table>
+      <app-list-paginator [paged]="paged" (changed)="load()" />
     }
   `,
 })
@@ -179,6 +183,7 @@ export class BomListComponent implements OnInit {
   columns = ['bomNumber', 'revision', 'productId', 'baseQuantity', 'effectiveFrom', 'status', 'actions'];
   rows = signal<BomDto[]>([]);
   loading = signal(false);
+  readonly paged = new PagedList();
   statusCtrl = new FormControl<string | null>(null);
 
   openDocuments(bom: BomDto): void {
@@ -186,7 +191,10 @@ export class BomListComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.statusCtrl.valueChanges.subscribe(() => this.load());
+    this.statusCtrl.valueChanges.subscribe(() => {
+      this.paged.reset();
+      this.load();
+    });
     this.load();
   }
 
@@ -195,9 +203,9 @@ export class BomListComponent implements OnInit {
     const params: Record<string, string> = {};
     const s = this.statusCtrl.value;
     if (s) params['status'] = s;
-    this.http.get<{ content: BomDto[] }>('/api/boms', { params }).subscribe({
+    this.http.get<{ content: BomDto[] }>('/api/boms', { params: this.paged.params(params) }).subscribe({
       next: (page) => {
-        this.rows.set(page.content ?? []);
+        this.rows.set(this.paged.apply(page));
         this.loading.set(false);
       },
       error: () => this.loading.set(false),

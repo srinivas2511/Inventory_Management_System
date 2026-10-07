@@ -124,6 +124,8 @@ test.describe('Known defects (documented behaviour not yet met)', () => {
     const all = await buyer.list<any>('/api/procurement/purchase-orders?size=500');
     const newest = all.sort((x, y) => y.id - x.id)[0];
     const a = await openAs(browser, guard, U.purchase, '/procurement/purchase-orders');
+    // Wait for the list to finish loading (the first body row, after the header row) before looking for the newest PO.
+    await expect(a.page.getByRole('row').nth(1)).toBeVisible();
     const paginator = a.page.locator('mat-paginator');
     const visible = await a.page.getByRole('row').filter({ hasText: newest.poNumber }).count();
     const reachable = visible > 0 || (await paginator.count()) > 0;

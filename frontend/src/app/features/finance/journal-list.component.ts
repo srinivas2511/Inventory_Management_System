@@ -7,11 +7,14 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
 import { FinanceApi, JournalHeaderDto } from './finance.api';
+import { PagedList } from '../../shared/paged-list';
+import { ListPaginatorComponent } from '../../shared/components/list-paginator.component';
 
 @Component({
   selector: 'app-journal-list',
   standalone: true,
   imports: [
+    ListPaginatorComponent,
     HasPermissionDirective,
     RouterLink,
     MatTableModule,
@@ -60,6 +63,7 @@ import { FinanceApi, JournalHeaderDto } from './finance.api';
         <tr mat-header-row *matHeaderRowDef="columns"></tr>
         <tr mat-row *matRowDef="let row; columns: columns"></tr>
       </table>
+      <app-list-paginator [paged]="paged" (changed)="load()" />
     }
   `,
   styles: [
@@ -77,6 +81,7 @@ export class JournalListComponent implements OnInit {
   columns = ['journalNumber', 'journalType', 'postingDate', 'description', 'status'];
   journals = signal<JournalHeaderDto[]>([]);
   loading = signal(false);
+  readonly paged = new PagedList();
 
   ngOnInit() {
     this.load();
@@ -84,9 +89,9 @@ export class JournalListComponent implements OnInit {
 
   load() {
     this.loading.set(true);
-    this.api.getJournals().subscribe({
+    this.api.getJournals(this.paged.pageIndex(), this.paged.pageSize(), 'id,desc').subscribe({
       next: (p) => {
-        this.journals.set(p.content);
+        this.journals.set(this.paged.apply(p));
         this.loading.set(false);
       },
       error: () => this.loading.set(false),

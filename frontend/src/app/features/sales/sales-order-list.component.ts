@@ -16,12 +16,15 @@ import { HasPermissionDirective } from '../../shared/directives/has-permission.d
 import { ReservationFormComponent } from './reservation-form.component';
 import { SalesOrderFormComponent } from './sales-order-form.component';
 import { SalesApi, SalesOrderDto } from './sales.api';
+import { PagedList } from '../../shared/paged-list';
+import { ListPaginatorComponent } from '../../shared/components/list-paginator.component';
 
 @Component({
   selector: 'app-sales-order-list',
   standalone: true,
   providers: [SalesApi],
   imports: [
+    ListPaginatorComponent,
     ReactiveFormsModule,
     MatTableModule,
     MatButtonModule,
@@ -137,6 +140,7 @@ import { SalesApi, SalesOrderDto } from './sales.api';
           </td>
         </tr>
       </table>
+      <app-list-paginator [paged]="paged" (changed)="load()" />
     }
   `,
 })
@@ -148,25 +152,37 @@ export class SalesOrderListComponent implements OnInit {
   statusCtrl = new FormControl<string | null>(null);
   orders = signal<SalesOrderDto[]>([]);
   loading = signal(false);
+  readonly paged = new PagedList();
   columns = ['orderNumber', 'customer', 'orderDate', 'requiredDate', 'totalValue', 'status', 'actions'];
 
   ngOnInit(): void {
     this.load();
-    this.statusCtrl.valueChanges.subscribe(() => this.load());
+    this.statusCtrl.valueChanges.subscribe(() => {
+      this.paged.reset();
+      this.load();
+    });
   }
 
   load(): void {
     this.loading.set(true);
-    this.api.getSalesOrders(this.statusCtrl.value ?? undefined).subscribe({
-      next: (page) => {
-        this.orders.set(page.content);
-        this.loading.set(false);
-      },
-      error: () => {
-        this.loading.set(false);
-        this.snack.open('Failed to load orders', 'Dismiss', { duration: 3000 });
-      },
-    });
+    this.api
+      .getSalesOrders(
+        this.statusCtrl.value ?? undefined,
+        undefined,
+        this.paged.pageIndex(),
+        this.paged.pageSize(),
+        'id,desc',
+      )
+      .subscribe({
+        next: (page) => {
+          this.orders.set(this.paged.apply(page));
+          this.loading.set(false);
+        },
+        error: () => {
+          this.loading.set(false);
+          this.snack.open('Failed to load orders', 'Dismiss', { duration: 3000 });
+        },
+      });
   }
 
   createOrder(): void {

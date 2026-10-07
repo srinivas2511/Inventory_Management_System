@@ -15,6 +15,8 @@ import { GoodsReceiptFormComponent } from './goods-receipt-form.component';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
+import { PagedList } from '../../shared/paged-list';
+import { ListPaginatorComponent } from '../../shared/components/list-paginator.component';
 
 export interface GoodsReceiptDto {
   id: number;
@@ -30,6 +32,7 @@ export interface GoodsReceiptDto {
   selector: 'app-goods-receipt-list',
   standalone: true,
   imports: [
+    ListPaginatorComponent,
     ReactiveFormsModule,
     MatTableModule,
     MatButtonModule,
@@ -84,6 +87,7 @@ export interface GoodsReceiptDto {
         <tr mat-header-row *matHeaderRowDef="columns"></tr>
         <tr mat-row *matRowDef="let r; columns: columns"></tr>
       </table>
+      <app-list-paginator [paged]="paged" (changed)="load()" />
     }
   `,
 })
@@ -95,6 +99,7 @@ export class GoodsReceiptListComponent implements OnInit {
   columns = ['grNumber', 'poNumber', 'receiptDate', 'status'];
   rows = signal<GoodsReceiptDto[]>([]);
   loading = signal(false);
+  readonly paged = new PagedList();
   poCtrl = new FormControl<string>('');
 
   ngOnInit(): void {
@@ -117,10 +122,12 @@ export class GoodsReceiptListComponent implements OnInit {
     this.loading.set(true);
     const po = (this.poCtrl.value ?? '').trim();
     this.http
-      .get<{ content: GoodsReceiptDto[] }>('/api/procurement/goods-receipts', { params: po ? { po } : {} })
+      .get<{ content: GoodsReceiptDto[] }>('/api/procurement/goods-receipts', {
+        params: this.paged.params(po ? { po } : {}),
+      })
       .subscribe({
         next: (page) => {
-          this.rows.set(page.content ?? []);
+          this.rows.set(this.paged.apply(page));
           this.loading.set(false);
         },
         error: () => {

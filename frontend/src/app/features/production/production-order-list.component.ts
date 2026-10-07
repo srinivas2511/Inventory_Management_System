@@ -27,11 +27,14 @@ import {
 import { ReturnMaterialDialogComponent } from './return-material-dialog.component';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
+import { PagedList } from '../../shared/paged-list';
+import { ListPaginatorComponent } from '../../shared/components/list-paginator.component';
 
 @Component({
   selector: 'app-production-order-list',
   standalone: true,
   imports: [
+    ListPaginatorComponent,
     ReactiveFormsModule,
     MatTableModule,
     MatButtonModule,
@@ -265,6 +268,7 @@ import { HasPermissionDirective } from '../../shared/directives/has-permission.d
           </mat-expansion-panel>
         }
       </mat-accordion>
+      <app-list-paginator [paged]="paged" (changed)="load()" />
 
       @if (rows().length === 0) {
         <p class="empty-state">No production orders found.</p>
@@ -321,10 +325,14 @@ export class ProductionOrderListComponent implements OnInit {
   opCols = ['sequenceNo', 'operation', 'operator', 'status', 'goodQty'];
   rows = signal<ProductionOrderDto[]>([]);
   loading = signal(false);
+  readonly paged = new PagedList();
   statusCtrl = new FormControl<string | null>(null);
 
   ngOnInit(): void {
-    this.statusCtrl.valueChanges.subscribe(() => this.load());
+    this.statusCtrl.valueChanges.subscribe(() => {
+      this.paged.reset();
+      this.load();
+    });
     this.load();
   }
 
@@ -333,13 +341,15 @@ export class ProductionOrderListComponent implements OnInit {
     const params: Record<string, string> = {};
     const s = this.statusCtrl.value;
     if (s) params['status'] = s;
-    this.http.get<{ content: ProductionOrderDto[] }>('/api/production-orders', { params }).subscribe({
-      next: (page) => {
-        this.rows.set(page.content ?? []);
-        this.loading.set(false);
-      },
-      error: () => this.loading.set(false),
-    });
+    this.http
+      .get<{ content: ProductionOrderDto[] }>('/api/production-orders', { params: this.paged.params(params) })
+      .subscribe({
+        next: (page) => {
+          this.rows.set(this.paged.apply(page));
+          this.loading.set(false);
+        },
+        error: () => this.loading.set(false),
+      });
   }
 
   createOrder(): void {
