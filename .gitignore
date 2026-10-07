@@ -23,3 +23,7 @@ docker/.env
 # OS
 .DS_Store
 Thumbs.db
+
+# Playwright output
+**/test-results/
+**/playwright-report/
