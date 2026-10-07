@@ -182,6 +182,10 @@ public class JournalService {
                 .toList();
         buildLines(reversal, reversedLines);
 
+        // The original stays POSTED forever otherwise, and could be reversed again and again.
+        original.setStatus("REVERSED");
+        journalHeaderRepo.save(original);
+
         auditService.record("JOURNAL_REVERSED", "JOURNAL", String.valueOf(id),
                 "POSTED", "REVERSED", reason);
         return toDto(journalHeaderRepo.findById(reversal.getId()).orElseThrow());
