@@ -189,7 +189,8 @@ class RoleAccessIT extends AbstractIntegrationTest {
                     Set.of("ADMIN", "ACCOUNTANT", "FINANCE_MANAGER"), Set.of("OPERATOR", "SALES", "PURCHASE_MANAGER")),
             Probe.of(HttpMethod.GET, "/api/lookups/materials", Set.of("ADMIN", "PURCHASE_MANAGER", "ENGINEER"),
                     Set.of("OPERATOR")),
-            Probe.of(HttpMethod.GET, "/api/lookups/products", Set.of("ADMIN", "SALES", "PRODUCTION_MANAGER"),
+            // FINANCE_MANAGER holds TAX_MANAGE and picks the product whose GST slab it sets (R9-7.5)
+            Probe.of(HttpMethod.GET, "/api/lookups/products", Set.of("ADMIN", "SALES", "PRODUCTION_MANAGER", "FINANCE_MANAGER"),
                     Set.of("OPERATOR")),
             // R9-7.5 GST tax engine: reading slabs and previewing a determination needs a finance permission
             Probe.of(HttpMethod.GET, "/api/finance/tax/slabs", Set.of("ADMIN", "ACCOUNTANT", "FINANCE_MANAGER"),
@@ -295,6 +296,17 @@ class RoleAccessIT extends AbstractIntegrationTest {
                     Set.of("ADMIN", "FINANCE_MANAGER"), Set.of("ACCOUNTANT", "OPERATOR", "SALES", "MANAGEMENT")),
             Probe.of(HttpMethod.PUT, "/api/ap/invoices/" + MISSING + "/cancel",
                     Set.of("ADMIN", "FINANCE_MANAGER", "ACCOUNTANT"), Set.of("OPERATOR", "SALES", "MANAGEMENT")),
+            // R9-7 screens: settlement history with the realised exchange difference, budget against actual, period reasons
+            Probe.of(HttpMethod.GET, "/api/ap/invoices/" + MISSING + "/payments",
+                    Set.of("ADMIN", "FINANCE_MANAGER", "ACCOUNTANT"), Set.of("OPERATOR", "SALES", "MANAGEMENT")),
+            Probe.of(HttpMethod.GET, "/api/ar/invoices/" + MISSING + "/receipts",
+                    Set.of("ADMIN", "FINANCE_MANAGER", "ACCOUNTANT"), Set.of("OPERATOR", "SALES", "DISPATCH")),
+            Probe.of(HttpMethod.GET, "/api/config/budgets/vs-actual?fiscalYear=2026",
+                    Set.of("ADMIN", "FINANCE_MANAGER", "ACCOUNTANT"), Set.of("OPERATOR", "SALES")),
+            Probe.withBody(HttpMethod.POST, "/api/periods/" + MISSING + "/finalize-close", "{\"reason\":\"probe\"}",
+                    Set.of("ADMIN", "FINANCE_MANAGER"), Set.of("OPERATOR", "SALES", "ACCOUNTANT")),
+            Probe.withBody(HttpMethod.POST, "/api/periods/" + MISSING + "/reopen", "{\"reason\":\"probe\"}",
+                    Set.of("ADMIN", "FINANCE_MANAGER"), Set.of("OPERATOR", "SALES", "ACCOUNTANT")),
             // goods receipt
             Probe.of(HttpMethod.GET, "/api/procurement/goods-receipts",
                     Set.of("ADMIN", "STORE_OPERATOR", "PURCHASE_MANAGER"), Set.of("OPERATOR", "SALES")),
@@ -539,6 +551,10 @@ class RoleAccessIT extends AbstractIntegrationTest {
             Map.entry("PUT /api/admin/attribute-definitions/999999", 404),
             Map.entry("PUT /api/alerts/999999/acknowledge", 404),
             Map.entry("PUT /api/ap/invoices/999999/cancel", 404),
+            Map.entry("GET /api/ap/invoices/999999/payments", 404),
+            Map.entry("GET /api/ar/invoices/999999/receipts", 404),
+            Map.entry("POST /api/periods/999999/finalize-close", 404),
+            Map.entry("POST /api/periods/999999/reopen", 404),
             Map.entry("PUT /api/document-categories/999999", 404),
             Map.entry("PUT /api/integration/webhooks/999999", 404),
             Map.entry("PUT /api/notification-templates/999999", 404),

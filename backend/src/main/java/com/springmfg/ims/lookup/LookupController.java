@@ -65,7 +65,7 @@ public class LookupController {
     }
 
     @GetMapping("/products")
-    @PreAuthorize("hasAnyAuthority('SALES_CREATE','SALES_VIEW','BOM_CREATE','BOM_UPDATE','PRODUCTION_CREATE','PRODUCT_VIEW','INVENTORY_ADJUST')")
+    @PreAuthorize("hasAnyAuthority('SALES_CREATE','SALES_VIEW','BOM_CREATE','BOM_UPDATE','PRODUCTION_CREATE','PRODUCT_VIEW','INVENTORY_ADJUST','TAX_MANAGE')")
     public List<ItemOption> products(@RequestParam(required = false) String q) {
         return service.products(q);
     }
