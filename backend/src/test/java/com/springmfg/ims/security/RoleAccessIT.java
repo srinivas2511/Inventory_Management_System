@@ -222,6 +222,10 @@ class RoleAccessIT extends AbstractIntegrationTest {
             Probe.of(HttpMethod.GET, "/api/modules", Set.of("ADMIN", "OPERATOR", "SALES", "DISPATCH"), Set.of()),
             Probe.withBody(HttpMethod.PUT, "/api/modules/CRM", "{\"active\":true}", Set.of("ADMIN"),
                     Set.of("OPERATOR", "SALES", "FINANCE_MANAGER")),
+            // R9-7.9 step-up authentication: any signed-in user can ask for the status or re-authenticate
+            Probe.of(HttpMethod.GET, "/api/auth/step-up", Set.of("ADMIN", "OPERATOR", "SALES", "FINANCE_MANAGER"), Set.of()),
+            Probe.withBody(HttpMethod.POST, "/api/auth/step-up", "{\"credential\":\"not-the-password\"}",
+                    Set.of("ADMIN", "OPERATOR", "SALES", "FINANCE_MANAGER"), Set.of()),
             Probe.of(HttpMethod.GET, "/api/lookups/warehouses", Set.of("ADMIN", "STORE_MANAGER"), Set.of("OPERATOR")),
             Probe.of(HttpMethod.GET, "/api/lookups/locations", Set.of("ADMIN", "STORE_MANAGER"), Set.of("OPERATOR")),
             Probe.of(HttpMethod.GET, "/api/lookups/products/" + MISSING + "/active-bom",
@@ -473,6 +477,7 @@ class RoleAccessIT extends AbstractIntegrationTest {
      * gets any other status, including an undeclared 404, fails the test.
      */
     private static final Map<String, Integer> DECLARED_STATUS = Map.ofEntries(
+            Map.entry("POST /api/auth/step-up", 400), // the probe users hold no real password, so the credential is wrong
             Map.entry("GET /api/ar/credit-notes/999999", 404),
             Map.entry("POST /api/ar/credit-notes", 404),
             Map.entry("POST /api/ar/credit-notes/999999/approve", 404),

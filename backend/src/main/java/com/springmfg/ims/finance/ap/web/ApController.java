@@ -1,5 +1,6 @@
 package com.springmfg.ims.finance.ap.web;
 
+import com.springmfg.ims.auth.stepup.StepUpService;
 import com.springmfg.ims.finance.ap.dto.ApAgeingRow;
 import com.springmfg.ims.finance.ap.dto.ApInvoiceCreateRequest;
 import com.springmfg.ims.finance.ap.dto.ApInvoiceDto;
@@ -20,9 +21,11 @@ import java.util.List;
 public class ApController {
 
     private final ApService apService;
+    private final StepUpService stepUp;
 
-    public ApController(ApService apService) {
+    public ApController(ApService apService, StepUpService stepUp) {
         this.apService = apService;
+        this.stepUp = stepUp;
     }
 
     @PostMapping("/invoices")
@@ -62,6 +65,7 @@ public class ApController {
     @PreAuthorize("hasAuthority('AP_MANAGE')")
     public ApInvoiceDto recordPayment(@PathVariable Long id,
                                       @Valid @RequestBody ApPaymentRequest req) {
+        stepUp.requireFresh();
         return apService.recordPayment(id, req);
     }
 

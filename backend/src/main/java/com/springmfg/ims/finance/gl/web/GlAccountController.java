@@ -1,5 +1,6 @@
 package com.springmfg.ims.finance.gl.web;
 
+import com.springmfg.ims.auth.stepup.StepUpService;
 import com.springmfg.ims.finance.gl.dto.GlAccountDto;
 import com.springmfg.ims.finance.gl.dto.TrialBalanceRow;
 import com.springmfg.ims.finance.gl.service.GlAccountService;
@@ -15,10 +16,12 @@ public class GlAccountController {
 
     private final GlAccountService glAccountService;
     private final JournalService journalService;
+    private final StepUpService stepUp;
 
-    public GlAccountController(GlAccountService glAccountService, JournalService journalService) {
+    public GlAccountController(GlAccountService glAccountService, JournalService journalService, StepUpService stepUp) {
         this.glAccountService = glAccountService;
         this.journalService = journalService;
+        this.stepUp = stepUp;
     }
 
     @GetMapping("/accounts")
@@ -30,6 +33,7 @@ public class GlAccountController {
     @GetMapping("/trial-balance")
     @PreAuthorize("hasAuthority('FINANCE_REPORT')")
     public List<TrialBalanceRow> trialBalance(@RequestParam Long periodId) {
+        stepUp.requireFresh();
         return journalService.getTrialBalance(periodId);
     }
 }
