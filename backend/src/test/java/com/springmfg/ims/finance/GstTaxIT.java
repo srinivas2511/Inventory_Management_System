@@ -46,6 +46,7 @@ class GstTaxIT extends AbstractIntegrationTest {
     private static final String KARNATAKA = "29AAAAA0000A1Z5";
     private static final String CHANDIGARH = "04BBBBB0000B1Z5";
 
+    @Autowired com.springmfg.ims.insight.report.definitions.GstInputCreditReport inputCredit;
     @Autowired TaxDeterminationService tax;
     @Autowired TaxAdminService taxAdmin;
     @Autowired ApService apService;
@@ -183,6 +184,27 @@ class GstTaxIT extends AbstractIntegrationTest {
     }
 
     @Test
+    @DisplayName("GST-REP-1: the input tax credit register lists CGST 1,800 and SGST 1,800 of an opened invoice, and nothing for a draft")
+    void inputCreditRegisterListsOpenedInvoices() {
+        Receipt gr = receipt(MAHARASHTRA);
+        ApInvoiceDto draft = apService.createInvoice(new ApInvoiceCreateRequest(gr.supplierId, td.code("SINV"),
+                LocalDate.now(), LocalDate.now().plusDays(30), gr.id, bd("20000"), null, "GST18"));
+        assertThat(itcRows(draft.invoiceNumber())).as("a draft claims no credit").isEmpty();
+
+        apService.openInvoice(draft.id());
+
+        var rows = itcRows(draft.invoiceNumber());
+        assertThat(rows).extracting(r -> r.get("Tax type") + " "
+                + ((BigDecimal) r.get("Input tax (INR)")).stripTrailingZeros().toPlainString())
+                .containsExactlyInAnyOrder("CGST 1800", "SGST 1800");
+        assertThat(rows).allSatisfy(r -> {
+            assertThat((BigDecimal) r.get("Taxable value (INR)")).isEqualByComparingTo("20000");
+            assertThat(r.get("GSTIN")).isEqualTo(MAHARASHTRA);
+            assertThat(r.get("Supply type")).isEqualTo("INTRA");
+        });
+    }
+
+    @Test
     @DisplayName("GST-9: a slab and a typed tax amount together are refused, because one would silently win")
     void slabAndAmountTogetherAreRefused() {
         Receipt gr = receipt(MAHARASHTRA);
@@ -221,6 +243,11 @@ class GstTaxIT extends AbstractIntegrationTest {
     }
 
     // ── helpers ────────────────────────────────────────────────────────────────
+
+    private java.util.List<java.util.Map<String, Object>> itcRows(String invoiceNumber) {
+        return inputCredit.runQuery(new com.springmfg.ims.insight.report.ReportRequest(null, null, null, null, 0, 500)).stream()
+                .filter(r -> invoiceNumber.equals(r.get("Invoice"))).toList();
+    }
 
     private record Receipt(Long id, Long supplierId) {}
 

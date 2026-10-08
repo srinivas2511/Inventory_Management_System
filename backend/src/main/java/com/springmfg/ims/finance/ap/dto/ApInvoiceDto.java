@@ -30,5 +30,6 @@ public record ApInvoiceDto(
         List<TaxLineDto> taxLines,
         String currencyCode,
         BigDecimal exchangeRate,
-        BigDecimal totalInr
+        BigDecimal totalInr,
+        BigDecimal priceVarianceInr
 ) {}

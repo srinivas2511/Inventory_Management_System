@@ -37,6 +37,12 @@ public class ArController {
         return arService.recordReceipt(id, req);
     }
 
+    @GetMapping("/invoices/{id}/receipts")
+    @PreAuthorize("hasAuthority('AR_MANAGE')")
+    public List<com.springmfg.ims.finance.ap.dto.SettlementDto> receipts(@PathVariable Long id) {
+        return arService.receipts(id);
+    }
+
     @GetMapping("/ageing")
     @PreAuthorize("hasAuthority('FINANCE_REPORT')")
     public List<ArAgeingRow> ageing() {

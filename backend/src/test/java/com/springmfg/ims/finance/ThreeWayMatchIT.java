@@ -47,6 +47,7 @@ class ThreeWayMatchIT extends AbstractIntegrationTest {
     private static final Long LOCATION_ID = 1L;
     private static final String TOLERANCE_KEY = "ap.match.price_tolerance_pct";
 
+    @Autowired com.springmfg.ims.insight.report.definitions.ApPriceVarianceReport priceVarianceReport;
     @Autowired ApService apService;
     @Autowired LookupService lookups;
     @Autowired PurchaseOrderService poService;
@@ -111,6 +112,7 @@ class ThreeWayMatchIT extends AbstractIntegrationTest {
         Receipt gr = receipt("100", "200.0000", null, "100");
 
         ApInvoiceDto exception = invoice(gr, "25000.0000", "0");
+        assertThat(exception.priceVarianceInr()).as("captured at entry, before any override").isEqualByComparingTo("5000");
 
         assertThat(exception.matchStatus()).isEqualTo("EXCEPTION");
         assertThat(exception.status()).isEqualTo("DRAFT");
@@ -136,6 +138,7 @@ class ThreeWayMatchIT extends AbstractIntegrationTest {
         ApInvoiceDto draft = invoice(gr, "20300.0000", "0");
         assertThat(draft.matchStatus()).isEqualTo("MATCHED");
         assertThat(draft.matchVarianceAmount()).isEqualByComparingTo("300");
+        assertThat(draft.priceVarianceInr()).isEqualByComparingTo("300");
         ApInvoiceDto open = apService.openInvoice(draft.id());
 
         assertThat(lines(open.journalHeaderId())).containsExactlyInAnyOrder(
@@ -328,6 +331,33 @@ class ThreeWayMatchIT extends AbstractIntegrationTest {
         ApInvoiceDto afterFull = apService.recordPayment(open.id(),
                 new ApPaymentRequest(LocalDate.now(), bd("700.0000"), "BANK_TRANSFER", "PAY-2"));
         assertThat(afterFull.status()).isEqualTo("PAID");
+    }
+
+    @Test
+    @DisplayName("TWM-PPV: the supplier price variance report adds what was invoiced above the receipt value: 300 on 20,300")
+    void supplierPriceVarianceReport() {
+        settings.update(TOLERANCE_KEY, "2");
+        Receipt gr = receipt("100", "200.0000", null, "100");
+        String supplier = jdbc.queryForObject("SELECT name FROM ims.suppliers WHERE id = ?", String.class, gr.supplierId());
+        BigDecimal invoicedBefore = reportTotal(supplier, "Invoiced (INR)");
+        BigDecimal varianceBefore = reportTotal(supplier, "Price variance (INR)");
+
+        invoice(gr, "20300.0000", "0");
+
+        assertThat(reportTotal(supplier, "Invoiced (INR)").subtract(invoicedBefore)).isEqualByComparingTo("20300");
+        assertThat(reportTotal(supplier, "Price variance (INR)").subtract(varianceBefore)).isEqualByComparingTo("300");
+        var row = priceVarianceReport.runQuery(new com.springmfg.ims.insight.report.ReportRequest(null, null, null, null, 0, 500))
+                .stream().filter(r -> supplier.equals(r.get("Supplier"))).findFirst().orElseThrow();
+        BigDecimal invoiced = (BigDecimal) row.get("Invoiced (INR)");
+        BigDecimal variance = (BigDecimal) row.get("Price variance (INR)");
+        assertThat((BigDecimal) row.get("Variance %")).as("variance as a percent of what was invoiced")
+                .isEqualByComparingTo(variance.multiply(new BigDecimal("100")).divide(invoiced, 2, java.math.RoundingMode.HALF_UP));
+    }
+
+    private BigDecimal reportTotal(String supplier, String column) {
+        return priceVarianceReport.runQuery(new com.springmfg.ims.insight.report.ReportRequest(null, null, null, null, 0, 500))
+                .stream().filter(r -> supplier.equals(r.get("Supplier")))
+                .map(r -> (BigDecimal) r.get(column)).reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     @Test

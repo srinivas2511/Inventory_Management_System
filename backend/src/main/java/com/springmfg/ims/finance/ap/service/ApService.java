@@ -142,6 +142,7 @@ public class ApService {
         inv.setMatchExpectedAmount(outcome.open());
         inv.setMatchClearedAmount(outcome.cleared());
         inv.setMatchVariance(outcome.variance());
+        inv.setPriceVarianceInr(priceVariance(ExchangeRateService.toInr(req.subtotal(), rate), outcome.open()));
         inv.setMatchMessage(outcome.message());
         if (determination != null) {
             inv.setTaxSlabCode(determination.slabCode());
@@ -271,6 +272,7 @@ public class ApService {
         inv.setMatchExpectedAmount(settled.open());
         inv.setMatchClearedAmount(settled.cleared());
         inv.setMatchVariance(settled.variance());
+        inv.setPriceVarianceInr(settled.variance().max(BigDecimal.ZERO));
         inv.setMatchOverrideBy(actor);
         inv.setMatchOverrideAt(java.time.Instant.now());
         inv.setMatchOverrideReason(reason.trim());
@@ -384,7 +386,7 @@ public class ApService {
                 inv.getPeriodId(), inv.getJournalHeaderId(),
                 inv.getMatchStatus(), inv.getMatchExpectedAmount(), inv.getMatchVariance(), inv.getMatchMessage(),
                 inv.getTaxSlabCode(), inv.getSupplyType(), invoiceTax.lines("AP_INVOICE", inv.getId()),
-                inv.getCurrencyCode(), inv.getExchangeRate(), inv.getTotalInr());
+                inv.getCurrencyCode(), inv.getExchangeRate(), inv.getTotalInr(), inv.getPriceVarianceInr());
     }
 
     private Long currentUserId() {
@@ -395,5 +397,26 @@ public class ApService {
             }
         } catch (Exception ignored) {}
         return -1L;
+    }
+
+    /**
+     * The payments made against an invoice, oldest first. A payment stores paid less carried (positive is a loss), the list
+     * reports it as a gain (+) or loss (-) like the receipts do.
+     */
+    @Transactional(readOnly = true)
+    public List<com.springmfg.ims.finance.ap.dto.SettlementDto> payments(Long invoiceId) {
+        apInvoiceRepo.findById(invoiceId).orElseThrow(() -> new NotFoundException("ApInvoice", invoiceId));
+        return paymentRepo.findByApInvoiceId(invoiceId).stream()
+                .sorted(Comparator.comparing(com.springmfg.ims.finance.ap.domain.ApPayment::getPaymentDate)
+                        .thenComparing(com.springmfg.ims.finance.ap.domain.ApPayment::getId))
+                .map(p -> new com.springmfg.ims.finance.ap.dto.SettlementDto(p.getId(), p.getPaymentNumber(),
+                        p.getPaymentDate(), p.getAmount(), p.getPaymentMode(), p.getReferenceNumber(),
+                        p.getExchangeRate(), p.getCarryingInr(), p.getFxDifference().negate(), p.getJournalHeaderId()))
+                .toList();
+    }
+
+    /** What the invoice bills above the value still open on its goods receipt, in INR; a partial invoice has none. */
+    private static BigDecimal priceVariance(BigDecimal subtotalInr, BigDecimal open) {
+        return subtotalInr.subtract(open).max(BigDecimal.ZERO).setScale(4, java.math.RoundingMode.HALF_UP);
     }
 }

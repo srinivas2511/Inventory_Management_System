@@ -155,6 +155,12 @@ class ForeignCurrencyIT extends AbstractIntegrationTest {
         ApInvoiceDto paid = apService.recordPayment(open.id(), new ApPaymentRequest(PAY_DAY, bd("250"), "BANK_TRANSFER", "FX-1"));
 
         assertThat(paid.status()).isEqualTo("PAID");
+        var settlements = apService.payments(open.id());
+        assertThat(settlements).hasSize(1);
+        assertThat(settlements.get(0).amount()).isEqualByComparingTo("250");
+        assertThat(settlements.get(0).exchangeRate()).as("the rate of the payment month").isEqualByComparingTo("82");
+        assertThat(settlements.get(0).carryingInr()).as("what came off the payable").isEqualByComparingTo("20000");
+        assertThat(settlements.get(0).fxDifference()).as("a loss is negative").isEqualByComparingTo("-500");
         Long journal = jdbc.queryForObject("""
                 SELECT journal_header_id FROM ims.ap_payments WHERE ap_invoice_id = ?
                 """, Long.class, open.id());

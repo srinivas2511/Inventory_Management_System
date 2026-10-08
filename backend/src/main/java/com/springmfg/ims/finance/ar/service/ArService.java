@@ -365,4 +365,17 @@ public class ArService {
         } catch (Exception ignored) {}
         return -1L;
     }
+
+    /** The receipts taken against an invoice, oldest first, with the realised exchange difference of each. */
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    public List<com.springmfg.ims.finance.ap.dto.SettlementDto> receipts(Long invoiceId) {
+        arInvoiceRepo.findById(invoiceId).orElseThrow(() -> new NotFoundException("ArInvoice", invoiceId));
+        return arReceiptRepo.findByArInvoiceId(invoiceId).stream()
+                .sorted(java.util.Comparator.comparing(com.springmfg.ims.finance.ar.domain.ArReceipt::getReceiptDate)
+                        .thenComparing(com.springmfg.ims.finance.ar.domain.ArReceipt::getId))
+                .map(r -> new com.springmfg.ims.finance.ap.dto.SettlementDto(r.getId(), r.getReceiptNumber(),
+                        r.getReceiptDate(), r.getAmount(), r.getPaymentMode(), r.getReferenceNumber(),
+                        r.getExchangeRate(), r.getCarryingInr(), r.getFxDifference(), r.getJournalHeaderId()))
+                .toList();
+    }
 }

@@ -89,6 +89,7 @@ class ArFromDispatchIT extends AbstractIntegrationTest {
     @Autowired TestData td;
     @Autowired JdbcTemplate jdbc;
     @Autowired CreditNoteService creditNotes;
+    @Autowired com.springmfg.ims.insight.report.definitions.GstOutwardSuppliesReport outward;
     @Autowired com.springmfg.ims.integration.webhook.service.WebhookAdminService webhooks;
     @Autowired com.springmfg.ims.integration.webhook.repository.WebhookDeliveryRepository webhookDeliveries;
 
@@ -619,6 +620,32 @@ class ArFromDispatchIT extends AbstractIntegrationTest {
 
     private static Line line(String qty, String price) {
         return new Line(qty, price);
+    }
+
+    @Test
+    @DisplayName("GST-REP-2: the outward register lists CGST/SGST 1,800 each on a 20,000 invoice and nets a 10,000 credit note as -900 each")
+    void outwardRegisterListsInvoicesAndNetsCreditNotes() {
+        sellUnderSlab("GST18", "27AAAAA0000A1Z5");
+        DispatchDto d = dispatch(LocalDate.now(), line("100.000", "200.0000"));
+        ArInvoice inv = arInvoiceRepo.findByDispatchId(d.id()).orElseThrow();
+        CreditNoteDto note = approveAsSecondUser(credit(inv, "10000", LocalDate.now()).id());
+
+        var all = outward.runQuery(new com.springmfg.ims.insight.report.ReportRequest(null, null, null, null, 0, 500));
+        var invoiceRows = all.stream().filter(r -> inv.getInvoiceNumber().equals(r.get("Number"))).toList();
+        var noteRows = all.stream().filter(r -> note.creditNoteNumber().equals(r.get("Number"))).toList();
+
+        assertThat(invoiceRows).extracting(r -> r.get("Tax type") + " " + plain(r.get("Taxable value (INR)")) + " "
+                + plain(r.get("Tax (INR)"))).containsExactlyInAnyOrder("CGST 20000 1800", "SGST 20000 1800");
+        assertThat(invoiceRows).allSatisfy(r -> {
+            assertThat(r.get("Document")).isEqualTo("Invoice");
+            assertThat(r.get("GSTIN")).isEqualTo("27AAAAA0000A1Z5");
+        });
+        assertThat(noteRows).extracting(r -> r.get("Tax type") + " " + plain(r.get("Taxable value (INR)")) + " "
+                + plain(r.get("Tax (INR)"))).containsExactlyInAnyOrder("CGST -10000 -900", "SGST -10000 -900");
+    }
+
+    private static String plain(Object value) {
+        return ((BigDecimal) value).stripTrailingZeros().toPlainString();
     }
 
     private DispatchDto dispatch(LocalDate date, Line... lines) {

@@ -63,6 +63,9 @@ public class ApInvoice extends BaseEntity {
     @Column(name = "match_variance", nullable = false, precision = 18, scale = 4)
     private BigDecimal matchVariance = BigDecimal.ZERO;
 
+    @Column(name = "price_variance_inr", nullable = false, precision = 18, scale = 4)
+    private BigDecimal priceVarianceInr = BigDecimal.ZERO;
+
     @Column(name = "match_message", length = 500)
     private String matchMessage;
 
@@ -139,6 +142,8 @@ public class ApInvoice extends BaseEntity {
     public void setMatchExpectedAmount(BigDecimal matchExpectedAmount) { this.matchExpectedAmount = matchExpectedAmount; }
     public void setMatchClearedAmount(BigDecimal matchClearedAmount) { this.matchClearedAmount = matchClearedAmount; }
     public void setMatchVariance(BigDecimal matchVariance) { this.matchVariance = matchVariance; }
+    public BigDecimal getPriceVarianceInr() { return priceVarianceInr; }
+    public void setPriceVarianceInr(BigDecimal priceVarianceInr) { this.priceVarianceInr = priceVarianceInr; }
     public void setMatchMessage(String matchMessage) { this.matchMessage = matchMessage; }
     public void setMatchOverrideBy(Long matchOverrideBy) { this.matchOverrideBy = matchOverrideBy; }
     public void setMatchOverrideAt(java.time.Instant matchOverrideAt) { this.matchOverrideAt = matchOverrideAt; }

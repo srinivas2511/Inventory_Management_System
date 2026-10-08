@@ -69,6 +69,12 @@ public class ApController {
         return apService.recordPayment(id, req);
     }
 
+    @GetMapping("/invoices/{id}/payments")
+    @PreAuthorize("hasAuthority('AP_MANAGE')")
+    public List<com.springmfg.ims.finance.ap.dto.SettlementDto> payments(@PathVariable Long id) {
+        return apService.payments(id);
+    }
+
     @GetMapping("/ageing")
     @PreAuthorize("hasAuthority('FINANCE_REPORT')")
     public List<ApAgeingRow> ageing() {
