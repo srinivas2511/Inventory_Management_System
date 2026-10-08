@@ -16,6 +16,7 @@ public record ArInvoiceDto(
         BigDecimal taxTotal,
         BigDecimal totalAmount,
         BigDecimal receivedAmount,
+        BigDecimal creditedAmount,
         BigDecimal balanceAmount,
         String status,
         Long periodId,

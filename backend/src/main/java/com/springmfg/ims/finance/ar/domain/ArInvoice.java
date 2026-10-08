@@ -48,6 +48,12 @@ public class ArInvoice extends BaseEntity {
     @Column(name = "journal_header_id")
     private Long journalHeaderId;
 
+    @Column(name = "credited_amount", nullable = false, precision = 18, scale = 4)
+    private BigDecimal creditedAmount = BigDecimal.ZERO;
+
+    public BigDecimal getCreditedAmount() { return creditedAmount; }
+    public void setCreditedAmount(BigDecimal creditedAmount) { this.creditedAmount = creditedAmount; }
+
     @Column(name = "exchange_rate", nullable = false, precision = 12, scale = 6)
     private BigDecimal exchangeRate = BigDecimal.ONE;
 

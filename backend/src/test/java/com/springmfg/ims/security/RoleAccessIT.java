@@ -206,6 +206,18 @@ class RoleAccessIT extends AbstractIntegrationTest {
             Probe.withBody(HttpMethod.PUT, "/api/finance/exchange-rates",
                     "{\"fromCurrency\":\"USD\",\"periodId\":" + MISSING + ",\"rate\":80}",
                     Set.of("ADMIN", "FINANCE_MANAGER"), Set.of("OPERATOR", "ACCOUNTANT", "SALES")),
+            // R9-7.4 AR credit notes: raised with AR_MANAGE, approved only with CREDIT_NOTE_APPROVE
+            Probe.of(HttpMethod.GET, "/api/ar/credit-notes", Set.of("ADMIN", "ACCOUNTANT", "FINANCE_MANAGER"),
+                    Set.of("OPERATOR", "DISPATCH", "SALES")),
+            Probe.of(HttpMethod.GET, "/api/ar/credit-notes/" + MISSING, Set.of("ADMIN", "ACCOUNTANT", "FINANCE_MANAGER"),
+                    Set.of("OPERATOR", "DISPATCH", "SALES")),
+            Probe.withBody(HttpMethod.POST, "/api/ar/credit-notes",
+                    "{\"arInvoiceId\":" + MISSING + ",\"creditDate\":\"2012-01-15\",\"subtotal\":1,\"reason\":\"probe\"}",
+                    Set.of("ADMIN", "ACCOUNTANT", "FINANCE_MANAGER"), Set.of("OPERATOR", "SALES", "DISPATCH")),
+            Probe.of(HttpMethod.POST, "/api/ar/credit-notes/" + MISSING + "/approve", Set.of("ADMIN", "FINANCE_MANAGER"),
+                    Set.of("OPERATOR", "ACCOUNTANT", "SALES")),
+            Probe.of(HttpMethod.POST, "/api/ar/credit-notes/" + MISSING + "/cancel", Set.of("ADMIN", "ACCOUNTANT", "FINANCE_MANAGER"),
+                    Set.of("OPERATOR", "SALES", "DISPATCH")),
             Probe.of(HttpMethod.GET, "/api/lookups/warehouses", Set.of("ADMIN", "STORE_MANAGER"), Set.of("OPERATOR")),
             Probe.of(HttpMethod.GET, "/api/lookups/locations", Set.of("ADMIN", "STORE_MANAGER"), Set.of("OPERATOR")),
             Probe.of(HttpMethod.GET, "/api/lookups/products/" + MISSING + "/active-bom",
@@ -457,6 +469,10 @@ class RoleAccessIT extends AbstractIntegrationTest {
      * gets any other status, including an undeclared 404, fails the test.
      */
     private static final Map<String, Integer> DECLARED_STATUS = Map.ofEntries(
+            Map.entry("GET /api/ar/credit-notes/999999", 404),
+            Map.entry("POST /api/ar/credit-notes", 404),
+            Map.entry("POST /api/ar/credit-notes/999999/approve", 404),
+            Map.entry("POST /api/ar/credit-notes/999999/cancel", 404),
             Map.entry("PUT /api/finance/exchange-rates", 404),
             Map.entry("PUT /api/finance/tax/product-slabs/999999", 404),
             Map.entry("GET /api/traceability/fg-batch/999999", 404),

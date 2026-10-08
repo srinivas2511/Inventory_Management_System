@@ -1,6 +1,7 @@
 package com.springmfg.ims.finance;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -24,6 +25,11 @@ import com.springmfg.ims.auth.service.UserPermissionCache.CachedUser;
 import com.springmfg.ims.finance.ar.domain.ArInvoice;
 import com.springmfg.ims.finance.ar.dto.ArInvoiceDto;
 import com.springmfg.ims.finance.ar.dto.ArReceiptRequest;
+import com.springmfg.ims.finance.ar.dto.CreditNoteDtos.CreateCreditNoteRequest;
+import com.springmfg.ims.finance.ar.dto.CreditNoteDtos.CreditNoteDto;
+import com.springmfg.ims.finance.ar.service.CreditNoteService;
+import com.springmfg.ims.common.exception.BusinessRuleException;
+import com.springmfg.ims.common.exception.ErrorCode;
 import com.springmfg.ims.finance.ar.dto.ArReconcileResultDto;
 import com.springmfg.ims.finance.ar.dto.MissingArInvoiceDto;
 import com.springmfg.ims.finance.ar.service.ArReconciliationService;
@@ -82,6 +88,7 @@ class ArFromDispatchIT extends AbstractIntegrationTest {
     @Autowired GlAccountResolver glAccounts;
     @Autowired TestData td;
     @Autowired JdbcTemplate jdbc;
+    @Autowired CreditNoteService creditNotes;
     @Autowired com.springmfg.ims.integration.webhook.service.WebhookAdminService webhooks;
     @Autowired com.springmfg.ims.integration.webhook.repository.WebhookDeliveryRepository webhookDeliveries;
 
@@ -416,6 +423,191 @@ class ArFromDispatchIT extends AbstractIntegrationTest {
         assertThat(credit(j, glAccounts.idOf(REVENUE))).isEqualByComparingTo("20000");
         assertThat(credit(j, glAccounts.idOf("2311"))).isEqualByComparingTo("1800");
         assertThat(credit(j, glAccounts.idOf("2312"))).isEqualByComparingTo("1800");
+    }
+
+    // ── R9-7.4: AR credit notes ────────────────────────────────────────────────
+
+    private CreditNoteDto credit(ArInvoice inv, String subtotal, LocalDate date) {
+        return creditNotes.create(new CreateCreditNoteRequest(inv.getId(), date, new BigDecimal(subtotal),
+                "Price correction", null, null, null, null));
+    }
+
+    private CreditNoteDto approveAsSecondUser(Long id) {
+        return td.asSecondUser(() -> creditNotes.approve(id), "CREDIT_NOTE_APPROVE");
+    }
+
+    @Test
+    @DisplayName("CN-1: crediting 2,000 of a 6,000 invoice is approved by another user: Dr Revenue 2,000 / Cr AR 2,000, balance 4,000")
+    void partialCreditReducesTheBalance() {
+        DispatchDto d = dispatch(LocalDate.now(), line("100.000", "60.0000"));
+        ArInvoice inv = arInvoiceRepo.findByDispatchId(d.id()).orElseThrow();
+
+        CreditNoteDto draft = credit(inv, "2000", LocalDate.now());
+        assertThat(draft.status()).isEqualTo("DRAFT");
+        assertThat(draft.totalAmount()).isEqualByComparingTo("2000");
+        assertThatThrownBy(() -> creditNotes.approve(draft.id()))
+                .as("the user who raised it cannot approve it")
+                .isInstanceOf(BusinessRuleException.class)
+                .satisfies(e -> assertThat(((BusinessRuleException) e).getCode()).isEqualTo(ErrorCode.SEGREGATION_OF_DUTIES));
+
+        CreditNoteDto posted = approveAsSecondUser(draft.id());
+
+        assertThat(posted.status()).isEqualTo("POSTED");
+        JournalHeaderDto j = journalService.findById(posted.journalHeaderId());
+        assertBalanced(j);
+        assertThat(j.lines()).hasSize(2);
+        assertThat(debit(j, glAccounts.idOf(REVENUE))).isEqualByComparingTo("2000");
+        assertThat(credit(j, glAccounts.idOf(AR_CONTROL))).isEqualByComparingTo("2000");
+        ArInvoiceDto after = arService.findAll(org.springframework.data.domain.PageRequest.of(0, 50)).getContent().stream()
+                .filter(x -> x.id().equals(inv.getId())).findFirst().orElseThrow();
+        assertThat(after.creditedAmount()).isEqualByComparingTo("2000");
+        assertThat(after.balanceAmount()).isEqualByComparingTo("4000");
+        assertThat(after.status()).isEqualTo("PARTIALLY_PAID");
+    }
+
+    @Test
+    @DisplayName("CN-2: on a 20,000 + 3,600 GST invoice, 10,000 reverses 900 + 900 of tax; the final 10,000 reverses exactly the remaining 1,800")
+    void taxIsReversedInProportionAndTheFinalCreditTakesTheRemainder() {
+        sellUnderSlab("GST18", "27AAAAA0000A1Z5");
+        DispatchDto d = dispatch(LocalDate.now(), line("100.000", "200.0000"));
+        ArInvoice inv = arInvoiceRepo.findByDispatchId(d.id()).orElseThrow();
+
+        CreditNoteDto first = approveAsSecondUser(credit(inv, "10000", LocalDate.now()).id());
+
+        assertThat(first.taxTotal()).isEqualByComparingTo("1800");
+        assertThat(first.totalAmount()).isEqualByComparingTo("11800");
+        JournalHeaderDto j1 = journalService.findById(first.journalHeaderId());
+        assertBalanced(j1);
+        assertThat(debit(j1, glAccounts.idOf(REVENUE))).isEqualByComparingTo("10000");
+        assertThat(debit(j1, glAccounts.idOf("2311"))).isEqualByComparingTo("900");
+        assertThat(debit(j1, glAccounts.idOf("2312"))).isEqualByComparingTo("900");
+        assertThat(credit(j1, glAccounts.idOf(AR_CONTROL))).isEqualByComparingTo("11800");
+
+        CreditNoteDto last = approveAsSecondUser(credit(inv, "10000", LocalDate.now()).id());
+
+        assertThat(last.taxTotal()).as("3,600 less the 1,800 already reversed").isEqualByComparingTo("1800");
+        ArInvoice settled = arInvoiceRepo.findById(inv.getId()).orElseThrow();
+        assertThat(settled.getCreditedAmount()).isEqualByComparingTo("23600");
+        assertThat(settled.getStatus()).as("fully credited, nothing received").isEqualTo("CREDIT_NOTE");
+        assertThatThrownBy(() -> credit(settled, "1", LocalDate.now())).isInstanceOf(BusinessRuleException.class);
+    }
+
+    @Test
+    @DisplayName("CN-3: a credit above the part not yet credited, or above the open balance after a receipt, is refused")
+    void creditCannotExceedTheInvoiceOrItsOpenBalance() {
+        DispatchDto d = dispatch(LocalDate.now(), line("100.000", "60.0000"));
+        ArInvoice inv = arInvoiceRepo.findByDispatchId(d.id()).orElseThrow();
+
+        assertThatThrownBy(() -> credit(inv, "6000.01", LocalDate.now()))
+                .isInstanceOf(BusinessRuleException.class).hasMessageContaining("not yet credited");
+
+        arService.recordReceipt(inv.getId(), new ArReceiptRequest(LocalDate.now(), new BigDecimal("5000"), "BANK_TRANSFER", "R"));
+        assertThatThrownBy(() -> credit(inv, "2000", LocalDate.now()))
+                .isInstanceOf(BusinessRuleException.class).hasMessageContaining("open balance");
+        assertThat(approveAsSecondUser(credit(inv, "1000", LocalDate.now()).id()).status()).isEqualTo("POSTED");
+        assertThat(arInvoiceRepo.findById(inv.getId()).orElseThrow().getStatus())
+                .as("5,000 received + 1,000 credited settles the invoice").isEqualTo("PAID");
+    }
+
+    @Test
+    @DisplayName("CN-4: a cancelled draft frees its amount; a posted note cannot be cancelled")
+    void cancelFreesTheAmount() {
+        DispatchDto d = dispatch(LocalDate.now(), line("100.000", "60.0000"));
+        ArInvoice inv = arInvoiceRepo.findByDispatchId(d.id()).orElseThrow();
+        CreditNoteDto big = credit(inv, "6000", LocalDate.now());
+        assertThatThrownBy(() -> credit(inv, "1", LocalDate.now())).isInstanceOf(BusinessRuleException.class);
+
+        assertThat(creditNotes.cancel(big.id()).status()).isEqualTo("CANCELLED");
+        CreditNoteDto again = credit(inv, "6000", LocalDate.now());
+        CreditNoteDto posted = approveAsSecondUser(again.id());
+        assertThatThrownBy(() -> creditNotes.cancel(posted.id())).isInstanceOf(BusinessRuleException.class);
+    }
+
+    @Test
+    @DisplayName("CN-5: a return of 40 pieces at cost 50 is received into QUARANTINE and journals Dr FG stock 2,000 / Cr COGS 2,000")
+    void customerReturnIsReceivedAtTheBatchCost() {
+        DispatchDto d = dispatch(LocalDate.now(), line("100.000", "60.0000"));
+        ArInvoice inv = arInvoiceRepo.findByDispatchId(d.id()).orElseThrow();
+        BigDecimal fgStock = glBalance("1410");
+        BigDecimal cogs = glBalance("5001");
+
+        CreditNoteDto draft = creditNotes.create(new CreateCreditNoteRequest(inv.getId(), LocalDate.now(),
+                new BigDecimal("2400"), "40 pieces returned", fgBatchId, new BigDecimal("40"), warehouseId, locationId));
+        CreditNoteDto posted = approveAsSecondUser(draft.id());
+
+        assertThat(posted.returnTransactionNumber()).startsWith("TXN/");
+        assertThat(jdbc.queryForList("""
+                SELECT transaction_type, stock_status, quantity, unit_cost, total_cost
+                  FROM ims.inventory_transactions WHERE transaction_number = ?
+                """, posted.returnTransactionNumber()))
+                .singleElement().satisfies(r -> {
+                    assertThat(r.get("transaction_type")).isEqualTo("CUSTOMER_RETURN");
+                    assertThat(r.get("stock_status")).isEqualTo("QUARANTINE");
+                    assertThat((BigDecimal) r.get("quantity")).isEqualByComparingTo("40");
+                    assertThat((BigDecimal) r.get("unit_cost")).isEqualByComparingTo("50");
+                    assertThat((BigDecimal) r.get("total_cost")).isEqualByComparingTo("2000");
+                });
+        assertThat(glBalance("1410")).as("FG stock up by 40 x 50").isEqualByComparingTo(fgStock.add(new BigDecimal("2000")));
+        assertThat(glBalance("5001")).as("cost of goods sold reversed").isEqualByComparingTo(cogs.subtract(new BigDecimal("2000")));
+    }
+
+    @Test
+    @DisplayName("CN-6: a return is limited to what was dispatched on the invoice, and a half-specified return is refused")
+    void returnIsLimitedToTheDispatch() {
+        DispatchDto d = dispatch(LocalDate.now(), line("100.000", "60.0000"));
+        ArInvoice inv = arInvoiceRepo.findByDispatchId(d.id()).orElseThrow();
+
+        assertThatThrownBy(() -> creditNotes.create(new CreateCreditNoteRequest(inv.getId(), LocalDate.now(),
+                new BigDecimal("100"), "too many", fgBatchId, new BigDecimal("101"), warehouseId, locationId)))
+                .isInstanceOf(BusinessRuleException.class).hasMessageContaining("exceed");
+        assertThatThrownBy(() -> creditNotes.create(new CreateCreditNoteRequest(inv.getId(), LocalDate.now(),
+                new BigDecimal("100"), "wrong batch", 999999L, new BigDecimal("1"), warehouseId, locationId)))
+                .isInstanceOf(BusinessRuleException.class).hasMessageContaining("was not dispatched");
+        assertThatThrownBy(() -> creditNotes.create(new CreateCreditNoteRequest(inv.getId(), LocalDate.now(),
+                new BigDecimal("100"), "no place", fgBatchId, new BigDecimal("1"), null, null)))
+                .isInstanceOf(BusinessRuleException.class).hasMessageContaining("warehouse and location");
+        // two returns together may not exceed the dispatch either
+        creditNotes.create(new CreateCreditNoteRequest(inv.getId(), LocalDate.now(), new BigDecimal("60"), "first",
+                fgBatchId, new BigDecimal("60"), warehouseId, locationId));
+        assertThatThrownBy(() -> creditNotes.create(new CreateCreditNoteRequest(inv.getId(), LocalDate.now(),
+                new BigDecimal("60"), "second", fgBatchId, new BigDecimal("41"), warehouseId, locationId)))
+                .isInstanceOf(BusinessRuleException.class).hasMessageContaining("60");
+    }
+
+    @Test
+    @DisplayName("CN-7: USD 100 credited on a USD 250 invoice at 80 is Dr Revenue 8,000 / Cr AR 8,000; the last USD 150 received at 82 loses 300 and leaves no residue")
+    void creditOnAForeignInvoiceThenReceipt() {
+        td.foreignCurrencyPeriods("80.000000", "82.000000", "78.000000");
+        jdbc.update("UPDATE ims.customers SET currency_code = 'USD' WHERE id = ?", customerId);
+        DispatchDto d = dispatch(LocalDate.of(2012, 1, 20), line("100.000", "2.5000"));
+        ArInvoice inv = arInvoiceRepo.findByDispatchId(d.id()).orElseThrow();
+
+        CreditNoteDto note = approveAsSecondUser(credit(inv, "100", LocalDate.of(2012, 1, 25)).id());
+
+        JournalHeaderDto j = journalService.findById(note.journalHeaderId());
+        assertBalanced(j);
+        assertThat(debit(j, glAccounts.idOf(REVENUE))).isEqualByComparingTo("8000");
+        assertThat(credit(j, glAccounts.idOf(AR_CONTROL))).isEqualByComparingTo("8000");
+
+        ArInvoiceDto paid = arService.recordReceipt(inv.getId(),
+                new ArReceiptRequest(LocalDate.of(2012, 2, 10), new BigDecimal("150"), "BANK_TRANSFER", "FX-C"));
+
+        assertThat(paid.status()).isEqualTo("PAID");
+        assertThat(jdbc.queryForList("SELECT carrying_inr, fx_difference FROM ims.ar_receipts WHERE ar_invoice_id = ?", inv.getId()))
+                .singleElement().satisfies(r -> {
+                    assertThat((BigDecimal) r.get("carrying_inr")).as("20,000 less the 8,000 credited").isEqualByComparingTo("12000");
+                    assertThat((BigDecimal) r.get("fx_difference")).isEqualByComparingTo("300");
+                });
+    }
+
+    private BigDecimal glBalance(String accountCode) {
+        return jdbc.queryForObject("""
+                SELECT COALESCE(SUM(jl.debit_amount - jl.credit_amount), 0)
+                  FROM ims.journal_lines jl
+                  JOIN ims.journal_headers jh ON jh.id = jl.journal_header_id AND jh.status = 'POSTED'
+                  JOIN ims.gl_accounts a ON a.id = jl.gl_account_id
+                 WHERE a.account_code = ?
+                """, BigDecimal.class, accountCode);
     }
 
     private void sellUnderSlab(String slab, String customerGstin) {

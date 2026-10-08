@@ -72,6 +72,7 @@ public class ArService {
     private final InvoiceTaxService invoiceTax;
     private final ProductTaxSlabRepository productSlabs;
     private final ExchangeRateService fx;
+    private final com.springmfg.ims.finance.ar.repository.CreditNoteRepository creditNotes;
 
     public ArService(ArInvoiceRepository arInvoiceRepo,
                      ArReceiptRepository arReceiptRepo,
@@ -87,7 +88,8 @@ public class ArService {
                      TaxDeterminationService taxDetermination,
                      InvoiceTaxService invoiceTax,
                      ProductTaxSlabRepository productSlabs,
-                     ExchangeRateService fx) {
+                     ExchangeRateService fx,
+                     com.springmfg.ims.finance.ar.repository.CreditNoteRepository creditNotes) {
         this.arInvoiceRepo = arInvoiceRepo;
         this.arReceiptRepo = arReceiptRepo;
         this.dispatchRepo = dispatchRepo;
@@ -103,6 +105,7 @@ public class ArService {
         this.invoiceTax = invoiceTax;
         this.productSlabs = productSlabs;
         this.fx = fx;
+        this.creditNotes = creditNotes;
     }
 
     /**
@@ -196,7 +199,7 @@ public class ArService {
             throw new BusinessRuleException(ErrorCode.ILLEGAL_STATE_TRANSITION,
                     "Invoice " + inv.getInvoiceNumber() + " is not receivable");
         }
-        BigDecimal balance = inv.getTotalAmount().subtract(inv.getReceivedAmount());
+        BigDecimal balance = inv.getTotalAmount().subtract(inv.getReceivedAmount()).subtract(inv.getCreditedAmount());
         if (req.amount().compareTo(balance) > 0) {
             throw new BusinessRuleException(ErrorCode.VALIDATION_FAILED,
                     "Receipt amount exceeds outstanding balance of " + balance);
@@ -209,6 +212,7 @@ public class ArService {
         boolean settles = req.amount().compareTo(balance) == 0;
         BigDecimal carrying = settles
                 ? inv.getTotalInr().subtract(arReceiptRepo.sumCarryingInr(invoiceId))
+                        .subtract(creditNotes.sumPostedCarryingInr(invoiceId))
                 : ExchangeRateService.toInr(req.amount(), inv.getExchangeRate());
         BigDecimal receivedInr = ExchangeRateService.toInr(req.amount(), receiptRate);
         BigDecimal difference = receivedInr.subtract(carrying);
@@ -248,7 +252,7 @@ public class ArService {
 
         BigDecimal newReceived = inv.getReceivedAmount().add(req.amount());
         inv.setReceivedAmount(newReceived);
-        boolean settled = newReceived.compareTo(inv.getTotalAmount()) >= 0;
+        boolean settled = newReceived.add(inv.getCreditedAmount()).compareTo(inv.getTotalAmount()) >= 0;
         inv.setStatus(settled ? "PAID" : "PARTIALLY_PAID");
         ArInvoice saved = arInvoiceRepo.save(inv);
         if (settled) {
@@ -288,7 +292,8 @@ public class ArService {
                        d60 = BigDecimal.ZERO, d90 = BigDecimal.ZERO, d90p = BigDecimal.ZERO;
 
             for (ArInvoice inv : entry.getValue()) {
-                BigDecimal bal = ExchangeRateService.toInr(inv.getTotalAmount().subtract(inv.getReceivedAmount()), inv.getExchangeRate());
+                BigDecimal bal = ExchangeRateService.toInr(inv.getTotalAmount().subtract(inv.getReceivedAmount()).subtract(inv.getCreditedAmount()),
+                        inv.getExchangeRate());
                 long days = ChronoUnit.DAYS.between(inv.getDueDate(), today);
                 if (days <= 0) current = current.add(bal);
                 else if (days <= 30) d30 = d30.add(bal);
@@ -341,11 +346,11 @@ public class ArService {
     }
 
     private ArInvoiceDto toDto(ArInvoice inv) {
-        BigDecimal balance = inv.getTotalAmount().subtract(inv.getReceivedAmount());
+        BigDecimal balance = inv.getTotalAmount().subtract(inv.getReceivedAmount()).subtract(inv.getCreditedAmount());
         return new ArInvoiceDto(inv.getId(), inv.getInvoiceNumber(), inv.getCustomerId(),
                 inv.getDispatchId(), inv.getInvoiceDate(), inv.getDueDate(),
                 inv.getSubtotal(), inv.getTaxTotal(), inv.getTotalAmount(),
-                inv.getReceivedAmount(), balance, inv.getStatus(),
+                inv.getReceivedAmount(), inv.getCreditedAmount(), balance, inv.getStatus(),
                 inv.getPeriodId(), inv.getJournalHeaderId(),
                 inv.getSupplyType(), invoiceTax.lines("AR_INVOICE", inv.getId()),
                 inv.getCurrencyCode(), inv.getExchangeRate(), inv.getTotalInr());
