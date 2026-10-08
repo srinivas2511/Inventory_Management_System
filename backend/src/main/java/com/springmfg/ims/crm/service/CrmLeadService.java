@@ -158,7 +158,7 @@ public class CrmLeadService {
                     contact == null ? null : contact.fullName(),
                     contact == null ? null : contact.getPhone(),
                     contact == null ? null : contact.getEmail(),
-                    null, null, null, null));
+                    null, null, null, null, null));
             customerId = created.id();
             customerCode = created.customerCode();
         }

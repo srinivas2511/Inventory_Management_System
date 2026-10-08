@@ -21,5 +21,8 @@ public record ArInvoiceDto(
         Long periodId,
         Long journalHeaderId,
         String supplyType,
-        List<TaxLineDto> taxLines
+        List<TaxLineDto> taxLines,
+        String currencyCode,
+        BigDecimal exchangeRate,
+        BigDecimal totalInr
 ) {}

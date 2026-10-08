@@ -83,6 +83,7 @@ public class SupplierService {
         s.setEmail(req.email());
         s.setAddress(req.address());
         s.setGstNumber(req.gstNumber() == null || req.gstNumber().isBlank() ? null : req.gstNumber().trim());
+        s.setCurrencyCode(req.currencyCode() == null || req.currencyCode().isBlank() ? "INR" : req.currencyCode());
         s.setPaymentTerms(req.paymentTerms());
         s.setLeadTimeDays(req.leadTimeDays());
     }

@@ -63,12 +63,20 @@ public class InvoiceTaxService {
      */
     @Transactional(readOnly = true)
     public List<JournalLineRequest> journalLines(String documentType, Long documentId, boolean debit, String label) {
+        return journalLines(documentType, documentId, debit, label, BigDecimal.ONE);
+    }
+
+    /** As above for a foreign-currency document: each GL account's tax is converted to INR at {@code rate} once. */
+    @Transactional(readOnly = true)
+    public List<JournalLineRequest> journalLines(String documentType, Long documentId, boolean debit, String label,
+                                                 BigDecimal rate) {
         Map<Long, BigDecimal> byAccount = new LinkedHashMap<>();
         for (InvoiceTaxLine l : entities(documentType, documentId)) {
             if (l.getTaxAmount().signum() > 0) {
                 byAccount.merge(l.getGlAccountId(), l.getTaxAmount(), BigDecimal::add);
             }
         }
+        byAccount.replaceAll((account, amount) -> amount.multiply(rate).setScale(4, java.math.RoundingMode.HALF_UP));
         List<JournalLineRequest> out = new ArrayList<>();
         byAccount.forEach((account, amount) -> out.add(debit
                 ? new JournalLineRequest(account, amount, BigDecimal.ZERO, label)

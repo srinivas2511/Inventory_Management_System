@@ -75,6 +75,17 @@ public class ApInvoice extends BaseEntity {
     @Column(name = "match_override_reason", length = 500)
     private String matchOverrideReason;
 
+    @Column(name = "exchange_rate", nullable = false, precision = 12, scale = 6)
+    private BigDecimal exchangeRate = BigDecimal.ONE;
+
+    @Column(name = "total_inr", nullable = false, precision = 18, scale = 4)
+    private BigDecimal totalInr = BigDecimal.ZERO;
+
+    public BigDecimal getExchangeRate() { return exchangeRate; }
+    public BigDecimal getTotalInr() { return totalInr; }
+    public void setExchangeRate(BigDecimal exchangeRate) { this.exchangeRate = exchangeRate; }
+    public void setTotalInr(BigDecimal totalInr) { this.totalInr = totalInr; }
+
     @Column(name = "tax_slab_code", length = 15)
     private String taxSlabCode;
 

@@ -200,6 +200,12 @@ class RoleAccessIT extends AbstractIntegrationTest {
                     Set.of("OPERATOR", "DISPATCH")),
             Probe.withBody(HttpMethod.PUT, "/api/finance/tax/product-slabs/" + MISSING, "{}",
                     Set.of("ADMIN", "FINANCE_MANAGER"), Set.of("OPERATOR", "ACCOUNTANT", "SALES")),
+            // R9-7.6 exchange rates: readable with the ledger view, changed only by those who maintain them
+            Probe.of(HttpMethod.GET, "/api/finance/exchange-rates", Set.of("ADMIN", "ACCOUNTANT", "FINANCE_MANAGER"),
+                    Set.of("OPERATOR", "DISPATCH")),
+            Probe.withBody(HttpMethod.PUT, "/api/finance/exchange-rates",
+                    "{\"fromCurrency\":\"USD\",\"periodId\":" + MISSING + ",\"rate\":80}",
+                    Set.of("ADMIN", "FINANCE_MANAGER"), Set.of("OPERATOR", "ACCOUNTANT", "SALES")),
             Probe.of(HttpMethod.GET, "/api/lookups/warehouses", Set.of("ADMIN", "STORE_MANAGER"), Set.of("OPERATOR")),
             Probe.of(HttpMethod.GET, "/api/lookups/locations", Set.of("ADMIN", "STORE_MANAGER"), Set.of("OPERATOR")),
             Probe.of(HttpMethod.GET, "/api/lookups/products/" + MISSING + "/active-bom",
@@ -451,6 +457,7 @@ class RoleAccessIT extends AbstractIntegrationTest {
      * gets any other status, including an undeclared 404, fails the test.
      */
     private static final Map<String, Integer> DECLARED_STATUS = Map.ofEntries(
+            Map.entry("PUT /api/finance/exchange-rates", 404),
             Map.entry("PUT /api/finance/tax/product-slabs/999999", 404),
             Map.entry("GET /api/traceability/fg-batch/999999", 404),
             Map.entry("GET /api/traceability/material-batch/999999", 404),

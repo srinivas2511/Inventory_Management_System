@@ -11,6 +11,7 @@ public record CustomerDto(
         String email,
         String address,
         String gstNumber,
+        String currencyCode,
         String paymentTerms,
         String status,
         Long version) {
@@ -18,6 +19,6 @@ public record CustomerDto(
     public static CustomerDto from(Customer c) {
         return new CustomerDto(c.getId(), c.getCustomerCode(), c.getName(),
             c.getContactPerson(), c.getPhone(), c.getEmail(), c.getAddress(),
-            c.getGstNumber(), c.getPaymentTerms(), c.getStatus(), c.getVersion());
+            c.getGstNumber(), c.getCurrencyCode(), c.getPaymentTerms(), c.getStatus(), c.getVersion());
     }
 }

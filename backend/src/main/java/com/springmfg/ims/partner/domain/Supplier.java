@@ -28,6 +28,9 @@ public class Supplier extends BaseEntity {
     @Column(length = 400)
     private String address;
 
+    @Column(name = "currency_code", nullable = false, length = 3)
+    private String currencyCode = "INR";
+
     @Column(name = "gst_number", length = 15)
     private String gstNumber;
 
@@ -49,6 +52,7 @@ public class Supplier extends BaseEntity {
     public String getPhone() { return phone; }
     public String getEmail() { return email; }
     public String getAddress() { return address; }
+    public String getCurrencyCode() { return currencyCode; }
     public String getGstNumber() { return gstNumber; }
     public String getPaymentTerms() { return paymentTerms; }
     public Integer getLeadTimeDays() { return leadTimeDays; }
@@ -61,6 +65,7 @@ public class Supplier extends BaseEntity {
     public void setPhone(String phone) { this.phone = phone; }
     public void setEmail(String email) { this.email = email; }
     public void setAddress(String address) { this.address = address; }
+    public void setCurrencyCode(String currencyCode) { this.currencyCode = currencyCode; }
     public void setGstNumber(String gstNumber) { this.gstNumber = gstNumber; }
     public void setPaymentTerms(String paymentTerms) { this.paymentTerms = paymentTerms; }
     public void setLeadTimeDays(Integer leadTimeDays) { this.leadTimeDays = leadTimeDays; }

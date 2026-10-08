@@ -27,5 +27,8 @@ public record ApInvoiceDto(
         String matchMessage,
         String taxSlabCode,
         String supplyType,
-        List<TaxLineDto> taxLines
+        List<TaxLineDto> taxLines,
+        String currencyCode,
+        BigDecimal exchangeRate,
+        BigDecimal totalInr
 ) {}

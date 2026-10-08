@@ -83,6 +83,7 @@ public class CustomerService {
         c.setEmail(req.email());
         c.setAddress(req.address());
         c.setGstNumber(req.gstNumber() == null || req.gstNumber().isBlank() ? null : req.gstNumber().trim());
+        c.setCurrencyCode(req.currencyCode() == null || req.currencyCode().isBlank() ? "INR" : req.currencyCode());
         c.setPaymentTerms(req.paymentTerms());
     }
 

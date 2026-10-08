@@ -30,6 +30,22 @@ public class ArReceipt extends BaseEntity {
     @Column(name = "journal_header_id")
     private Long journalHeaderId;
 
+    @Column(name = "exchange_rate", nullable = false, precision = 12, scale = 6)
+    private BigDecimal exchangeRate = BigDecimal.ONE;
+
+    @Column(name = "carrying_inr", nullable = false, precision = 18, scale = 4)
+    private BigDecimal carryingInr = BigDecimal.ZERO;
+
+    @Column(name = "fx_difference", nullable = false, precision = 18, scale = 4)
+    private BigDecimal fxDifference = BigDecimal.ZERO;
+
+    public BigDecimal getExchangeRate() { return exchangeRate; }
+    public BigDecimal getCarryingInr() { return carryingInr; }
+    public BigDecimal getFxDifference() { return fxDifference; }
+    public void setExchangeRate(BigDecimal exchangeRate) { this.exchangeRate = exchangeRate; }
+    public void setCarryingInr(BigDecimal carryingInr) { this.carryingInr = carryingInr; }
+    public void setFxDifference(BigDecimal fxDifference) { this.fxDifference = fxDifference; }
+
     public String getReceiptNumber() { return receiptNumber; }
     public Long getArInvoiceId() { return arInvoiceId; }
     public LocalDate getReceiptDate() { return receiptDate; }

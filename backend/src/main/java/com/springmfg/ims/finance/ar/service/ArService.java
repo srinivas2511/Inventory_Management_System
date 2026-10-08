@@ -13,6 +13,7 @@ import com.springmfg.ims.finance.ar.dto.ArInvoiceDto;
 import com.springmfg.ims.finance.ar.dto.ArReceiptRequest;
 import com.springmfg.ims.finance.ar.repository.ArInvoiceRepository;
 import com.springmfg.ims.finance.ar.repository.ArReceiptRepository;
+import com.springmfg.ims.finance.config.service.ExchangeRateService;
 import com.springmfg.ims.finance.gl.dto.AutoJournalRequest;
 import com.springmfg.ims.finance.gl.dto.JournalLineRequest;
 import com.springmfg.ims.finance.gl.repository.FiscalPeriodRepository;
@@ -53,6 +54,8 @@ public class ArService {
     private static final String AR_CONTROL = "1101";
     private static final String REVENUE = "4001";
     private static final String BANK = "1201";
+    private static final String FX_GAIN = "4901";
+    private static final String FX_LOSS = "5208";
 
     private final ApplicationEventPublisher events;
     private final ArInvoiceRepository arInvoiceRepo;
@@ -68,6 +71,7 @@ public class ArService {
     private final TaxDeterminationService taxDetermination;
     private final InvoiceTaxService invoiceTax;
     private final ProductTaxSlabRepository productSlabs;
+    private final ExchangeRateService fx;
 
     public ArService(ArInvoiceRepository arInvoiceRepo,
                      ArReceiptRepository arReceiptRepo,
@@ -82,7 +86,8 @@ public class ArService {
                      ApplicationEventPublisher events,
                      TaxDeterminationService taxDetermination,
                      InvoiceTaxService invoiceTax,
-                     ProductTaxSlabRepository productSlabs) {
+                     ProductTaxSlabRepository productSlabs,
+                     ExchangeRateService fx) {
         this.arInvoiceRepo = arInvoiceRepo;
         this.arReceiptRepo = arReceiptRepo;
         this.dispatchRepo = dispatchRepo;
@@ -97,6 +102,7 @@ public class ArService {
         this.taxDetermination = taxDetermination;
         this.invoiceTax = invoiceTax;
         this.productSlabs = productSlabs;
+        this.fx = fx;
     }
 
     /**
@@ -122,6 +128,10 @@ public class ArService {
 
         BigDecimal invoiceValue = computeDispatchValue(dispatchId);
         boolean worthNothing = invoiceValue.signum() == 0;
+        Customer customer = customerRepo.findById(dispatch.getCustomerId())
+                .orElseThrow(() -> new NotFoundException("Customer", dispatch.getCustomerId()));
+        String currency = customer.getCurrencyCode();
+        BigDecimal rate = worthNothing ? BigDecimal.ONE : fx.rateFor(currency, invoiceDate);
         var determination = worthNothing ? null : determineTax(dispatchId, dispatch.getCustomerId());
         BigDecimal tax = determination != null ? determination.taxTotal() : BigDecimal.ZERO;
 
@@ -138,6 +148,8 @@ public class ArService {
             inv.setSupplyType(determination.supplyType());
         }
         inv.setReceivedAmount(BigDecimal.ZERO);
+        inv.setCurrencyCode(currency);
+        inv.setExchangeRate(rate);
         inv.setStatus(worthNothing ? "PAID" : "OPEN");
         inv.setPeriodId(period.getId());
         inv = arInvoiceRepo.save(inv);
@@ -146,16 +158,26 @@ public class ArService {
         }
 
         if (!worthNothing) {
-            List<JournalLineRequest> journalLines = new java.util.ArrayList<>();
-            journalLines.add(new JournalLineRequest(glAccounts.idOf(AR_CONTROL), inv.getTotalAmount(), BigDecimal.ZERO, "AR Dr"));
-            journalLines.add(new JournalLineRequest(glAccounts.idOf(REVENUE), BigDecimal.ZERO, invoiceValue, "Revenue Cr"));
+            List<JournalLineRequest> credits = new java.util.ArrayList<>();
+            credits.add(new JournalLineRequest(glAccounts.idOf(REVENUE), BigDecimal.ZERO,
+                    ExchangeRateService.toInr(invoiceValue, rate), "Revenue Cr"));
             if (determination != null) {
-                journalLines.addAll(invoiceTax.journalLines("AR_INVOICE", inv.getId(), false, "Output tax"));
+                credits.addAll(invoiceTax.journalLines("AR_INVOICE", inv.getId(), false, "Output tax", rate));
             }
+            // An INR invoice debits its total; a foreign one debits the sum of its converted credits, so the journal
+            // balances whatever the rounding of the individual conversions.
+            BigDecimal receivable = rate.compareTo(BigDecimal.ONE) == 0
+                    ? inv.getTotalAmount()
+                    : credits.stream().map(JournalLineRequest::creditAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+            List<JournalLineRequest> journalLines = new java.util.ArrayList<>();
+            journalLines.add(new JournalLineRequest(glAccounts.idOf(AR_CONTROL), receivable, BigDecimal.ZERO, "AR Dr"));
+            journalLines.addAll(credits);
+            inv.setTotalInr(receivable);
             var jnlReq = new AutoJournalRequest(
                     "AR_INVOICE", "SALES", "DISPATCH", dispatchId,
                     invoiceDate,
-                    "AR Invoice " + inv.getInvoiceNumber() + " for dispatch " + dispatch.getDispatchNumber(),
+                    "AR Invoice " + inv.getInvoiceNumber() + " for dispatch " + dispatch.getDispatchNumber()
+                            + foreignNote(inv.getCurrencyCode(), inv.getTotalAmount(), rate),
                     currentUserId(),
                     journalLines
             );
@@ -180,15 +202,34 @@ public class ArService {
                     "Receipt amount exceeds outstanding balance of " + balance);
         }
 
+        // Settlement: the receivable leaves at the rate the invoice was booked at, the bank receives at the rate of the
+        // receipt date, and the difference is the realised exchange gain or loss. The last receipt clears whatever INR
+        // is still carried, so rounding never leaves a residue on the receivable.
+        BigDecimal receiptRate = fx.rateFor(inv.getCurrencyCode(), req.receiptDate());
+        boolean settles = req.amount().compareTo(balance) == 0;
+        BigDecimal carrying = settles
+                ? inv.getTotalInr().subtract(arReceiptRepo.sumCarryingInr(invoiceId))
+                : ExchangeRateService.toInr(req.amount(), inv.getExchangeRate());
+        BigDecimal receivedInr = ExchangeRateService.toInr(req.amount(), receiptRate);
+        BigDecimal difference = receivedInr.subtract(carrying);
+
+        List<JournalLineRequest> receiptLines = new java.util.ArrayList<>();
+        receiptLines.add(new JournalLineRequest(glAccounts.idOf(BANK), receivedInr, BigDecimal.ZERO, "Receipt Dr"));
+        if (difference.signum() < 0) {
+            receiptLines.add(new JournalLineRequest(glAccounts.idOf(FX_LOSS), difference.negate(), BigDecimal.ZERO,
+                    "Realised exchange loss"));
+        }
+        receiptLines.add(new JournalLineRequest(glAccounts.idOf(AR_CONTROL), BigDecimal.ZERO, carrying, "Receipt Cr"));
+        if (difference.signum() > 0) {
+            receiptLines.add(new JournalLineRequest(glAccounts.idOf(FX_GAIN), BigDecimal.ZERO, difference,
+                    "Realised exchange gain"));
+        }
         var jnlReq = new AutoJournalRequest(
                 "AR_RECEIPT", "AR", "CUSTOMER_RECEIPT", invoiceId,
                 req.receiptDate(),
-                "AR Receipt for " + inv.getInvoiceNumber(),
+                "AR Receipt for " + inv.getInvoiceNumber() + foreignNote(inv.getCurrencyCode(), req.amount(), receiptRate),
                 currentUserId(),
-                List.of(
-                        new JournalLineRequest(glAccounts.idOf(BANK), req.amount(), BigDecimal.ZERO, "Receipt Dr"),
-                        new JournalLineRequest(glAccounts.idOf(AR_CONTROL), BigDecimal.ZERO, req.amount(), "Receipt Cr")
-                )
+                receiptLines
         );
         var jnl = journalService.postSourceJournal(jnlReq);
 
@@ -200,6 +241,9 @@ public class ArService {
         receipt.setPaymentMode(req.paymentMode() != null ? req.paymentMode() : "BANK_TRANSFER");
         receipt.setReferenceNumber(req.referenceNumber());
         receipt.setJournalHeaderId(jnl.id());
+        receipt.setExchangeRate(receiptRate);
+        receipt.setCarryingInr(carrying);
+        receipt.setFxDifference(difference);
         arReceiptRepo.save(receipt);
 
         BigDecimal newReceived = inv.getReceivedAmount().add(req.amount());
@@ -212,6 +256,15 @@ public class ArService {
                     saved.getTotalAmount(), saved.getCurrencyCode()));
         }
         return toDto(saved);
+    }
+
+    /** " (USD 1,000.00 at 83.250000)" for a foreign document, nothing for INR. */
+    private static String foreignNote(String currency, BigDecimal amount, BigDecimal rate) {
+        if (currency == null || "INR".equals(currency)) {
+            return "";
+        }
+        return " (" + currency + " " + amount.setScale(2, RoundingMode.HALF_UP).toPlainString() + " at "
+                + rate.toPlainString() + ")";
     }
 
     @Transactional(readOnly = true)
@@ -235,7 +288,7 @@ public class ArService {
                        d60 = BigDecimal.ZERO, d90 = BigDecimal.ZERO, d90p = BigDecimal.ZERO;
 
             for (ArInvoice inv : entry.getValue()) {
-                BigDecimal bal = inv.getTotalAmount().subtract(inv.getReceivedAmount());
+                BigDecimal bal = ExchangeRateService.toInr(inv.getTotalAmount().subtract(inv.getReceivedAmount()), inv.getExchangeRate());
                 long days = ChronoUnit.DAYS.between(inv.getDueDate(), today);
                 if (days <= 0) current = current.add(bal);
                 else if (days <= 30) d30 = d30.add(bal);
@@ -294,7 +347,8 @@ public class ArService {
                 inv.getSubtotal(), inv.getTaxTotal(), inv.getTotalAmount(),
                 inv.getReceivedAmount(), balance, inv.getStatus(),
                 inv.getPeriodId(), inv.getJournalHeaderId(),
-                inv.getSupplyType(), invoiceTax.lines("AR_INVOICE", inv.getId()));
+                inv.getSupplyType(), invoiceTax.lines("AR_INVOICE", inv.getId()),
+                inv.getCurrencyCode(), inv.getExchangeRate(), inv.getTotalInr());
     }
 
     private Long currentUserId() {

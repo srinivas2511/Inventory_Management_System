@@ -41,6 +41,7 @@ public class TestData {
     @Autowired ProductRepository productRepo;
     @Autowired CustomerRepository customerRepo;
     @Autowired BomRepository bomRepo;
+    @Autowired org.springframework.jdbc.core.JdbcTemplate jdbc;
 
     /** A second real user id for steps that segregation of duties requires a different person to perform. */
     public static final long SECOND_USER_ID = 7_900_001L;
@@ -73,6 +74,30 @@ public class TestData {
             step.run();
             return null;
         }, authorities);
+    }
+
+    /**
+     * Three open periods in 2012 (JAN, FEB, MAR) with a USD rate each, so currency tests do not depend on the date they
+     * run on. Idempotent: the rows are created once per database and the rates are set every call. Dates: invoice in
+     * 2012-01-15, settle in 2012-02-10 (rate janRate to febRate) or 2012-03-05.
+     */
+    public void foreignCurrencyPeriods(String janRate, String febRate, String marRate) {
+        String[][] months = {{"FX-JAN-2012", "1", "2012-01-01", "2012-01-31"},
+                {"FX-FEB-2012", "2", "2012-02-01", "2012-02-29"},
+                {"FX-MAR-2012", "3", "2012-03-01", "2012-03-31"}};
+        String[] rates = {janRate, febRate, marRate};
+        for (int i = 0; i < months.length; i++) {
+            jdbc.update("""
+                    INSERT INTO ims.fiscal_periods (period_name, fiscal_year, period_number, start_date, end_date, status, company_id)
+                    VALUES (?, 2011, ?, ?::date, ?::date, 'OPEN', 1)
+                    ON CONFLICT DO NOTHING
+                    """, months[i][0], Short.parseShort(months[i][1]) + 20, months[i][2], months[i][3]);
+            jdbc.update("""
+                    INSERT INTO ims.exchange_rates (from_currency, to_currency, period_id, rate, company_id)
+                    SELECT 'USD', 'INR', id, ?::numeric, 1 FROM ims.fiscal_periods WHERE period_name = ?
+                    ON CONFLICT (company_id, from_currency, to_currency, period_id) DO UPDATE SET rate = EXCLUDED.rate
+                    """, rates[i], months[i][0]);
+        }
     }
 
     public String code(String prefix) {

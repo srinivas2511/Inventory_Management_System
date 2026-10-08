@@ -338,6 +338,86 @@ class ArFromDispatchIT extends AbstractIntegrationTest {
         assertThat(journalService.findById(inv.getJournalHeaderId()).lines()).hasSize(2);
     }
 
+    @Test
+    @DisplayName("AR-FX-1: a USD customer's 100 x USD 2.50 at 80 is USD 250, booked as Dr AR 20,000 / Cr Revenue 20,000")
+    void foreignCustomerInvoiceIsConvertedToInr() {
+        td.foreignCurrencyPeriods("80.000000", "82.000000", "78.000000");
+        jdbc.update("UPDATE ims.customers SET currency_code = 'USD' WHERE id = ?", customerId);
+
+        DispatchDto d = dispatch(LocalDate.of(2012, 1, 20), line("100.000", "2.5000"));
+
+        ArInvoice inv = arInvoiceRepo.findByDispatchId(d.id()).orElseThrow();
+        assertThat(inv.getCurrencyCode()).isEqualTo("USD");
+        assertThat(inv.getExchangeRate()).isEqualByComparingTo("80");
+        assertThat(inv.getTotalAmount()).as("the invoice stays in USD").isEqualByComparingTo("250");
+        assertThat(inv.getTotalInr()).isEqualByComparingTo("20000");
+        JournalHeaderDto j = journalService.findById(inv.getJournalHeaderId());
+        assertBalanced(j);
+        assertThat(debit(j, glAccounts.idOf(AR_CONTROL))).isEqualByComparingTo("20000");
+        assertThat(credit(j, glAccounts.idOf(REVENUE))).isEqualByComparingTo("20000");
+    }
+
+    @Test
+    @DisplayName("AR-FX-2: receiving USD 250 at 78 against a receivable carried at 80 books a realised loss of 500")
+    void receiptAtALowerRateBooksALoss() {
+        td.foreignCurrencyPeriods("80.000000", "82.000000", "78.000000");
+        jdbc.update("UPDATE ims.customers SET currency_code = 'USD' WHERE id = ?", customerId);
+        DispatchDto d = dispatch(LocalDate.of(2012, 1, 20), line("100.000", "2.5000"));
+        ArInvoice inv = arInvoiceRepo.findByDispatchId(d.id()).orElseThrow();
+
+        ArInvoiceDto paid = arService.recordReceipt(inv.getId(),
+                new ArReceiptRequest(LocalDate.of(2012, 3, 5), new BigDecimal("250"), "BANK_TRANSFER", "FX-R1"));
+
+        assertThat(paid.status()).isEqualTo("PAID");
+        Long journal = jdbc.queryForObject("SELECT journal_header_id FROM ims.ar_receipts WHERE ar_invoice_id = ?",
+                Long.class, inv.getId());
+        JournalHeaderDto j = journalService.findById(journal);
+        assertBalanced(j);
+        assertThat(debit(j, glAccounts.idOf("1201"))).isEqualByComparingTo("19500");
+        assertThat(debit(j, glAccounts.idOf("5208"))).isEqualByComparingTo("500");
+        assertThat(credit(j, glAccounts.idOf(AR_CONTROL))).isEqualByComparingTo("20000");
+    }
+
+    @Test
+    @DisplayName("AR-FX-3: receiving at 82 books a realised gain of 500, and two part receipts clear the receivable exactly")
+    void receiptAtAHigherRateBooksAGain() {
+        td.foreignCurrencyPeriods("80.000000", "82.000000", "78.000000");
+        jdbc.update("UPDATE ims.customers SET currency_code = 'USD' WHERE id = ?", customerId);
+        DispatchDto d = dispatch(LocalDate.of(2012, 1, 20), line("100.000", "2.5000"));
+        ArInvoice inv = arInvoiceRepo.findByDispatchId(d.id()).orElseThrow();
+
+        arService.recordReceipt(inv.getId(), new ArReceiptRequest(LocalDate.of(2012, 2, 10), new BigDecimal("100"), "UPI", "R1"));
+        ArInvoiceDto paid = arService.recordReceipt(inv.getId(),
+                new ArReceiptRequest(LocalDate.of(2012, 2, 10), new BigDecimal("150"), "UPI", "R2"));
+
+        assertThat(paid.status()).isEqualTo("PAID");
+        assertThat(jdbc.queryForList("SELECT carrying_inr, fx_difference FROM ims.ar_receipts WHERE ar_invoice_id = ? ORDER BY id",
+                inv.getId())).extracting(r -> ((BigDecimal) r.get("carrying_inr")).toPlainString() + "/"
+                + ((BigDecimal) r.get("fx_difference")).toPlainString())
+                .containsExactly("8000.0000/200.0000", "12000.0000/300.0000");
+    }
+
+    @Test
+    @DisplayName("AR-FX-4: a USD sale with 18% GST: tax USD 45 -> output tax of 1,800 CGST and 1,800 SGST at rate 80")
+    void foreignInvoiceWithGst() {
+        td.foreignCurrencyPeriods("80.000000", "82.000000", "78.000000");
+        jdbc.update("UPDATE ims.customers SET currency_code = 'USD' WHERE id = ?", customerId);
+        sellUnderSlab("GST18", "27AAAAA0000A1Z5");
+        jdbc.update("UPDATE ims.customers SET currency_code = 'USD' WHERE id = ?", customerId);
+
+        DispatchDto d = dispatch(LocalDate.of(2012, 1, 20), line("100.000", "2.5000"));
+
+        ArInvoice inv = arInvoiceRepo.findByDispatchId(d.id()).orElseThrow();
+        assertThat(inv.getTaxTotal()).isEqualByComparingTo("45");
+        assertThat(inv.getTotalAmount()).isEqualByComparingTo("295");
+        JournalHeaderDto j = journalService.findById(inv.getJournalHeaderId());
+        assertBalanced(j);
+        assertThat(debit(j, glAccounts.idOf(AR_CONTROL))).isEqualByComparingTo("23600");
+        assertThat(credit(j, glAccounts.idOf(REVENUE))).isEqualByComparingTo("20000");
+        assertThat(credit(j, glAccounts.idOf("2311"))).isEqualByComparingTo("1800");
+        assertThat(credit(j, glAccounts.idOf("2312"))).isEqualByComparingTo("1800");
+    }
+
     private void sellUnderSlab(String slab, String customerGstin) {
         jdbc.update("UPDATE ims.customers SET gst_number = ? WHERE id = ?", customerGstin, customerId);
         jdbc.update("INSERT INTO ims.product_tax_slabs (product_id, slab_code) VALUES (?, ?)", productId, slab);

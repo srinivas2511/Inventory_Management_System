@@ -11,6 +11,7 @@ public record SupplierDto(
         String email,
         String address,
         String gstNumber,
+        String currencyCode,
         String paymentTerms,
         Integer leadTimeDays,
         String status,
@@ -19,7 +20,7 @@ public record SupplierDto(
     public static SupplierDto from(Supplier s) {
         return new SupplierDto(s.getId(), s.getSupplierCode(), s.getName(),
             s.getContactPerson(), s.getPhone(), s.getEmail(), s.getAddress(),
-            s.getGstNumber(), s.getPaymentTerms(), s.getLeadTimeDays(),
+            s.getGstNumber(), s.getCurrencyCode(), s.getPaymentTerms(), s.getLeadTimeDays(),
             s.getStatus(), s.getVersion());
     }
 }

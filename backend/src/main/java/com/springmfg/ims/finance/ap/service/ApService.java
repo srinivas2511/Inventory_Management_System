@@ -14,6 +14,7 @@ import com.springmfg.ims.finance.ap.dto.ApInvoiceDto;
 import com.springmfg.ims.finance.ap.dto.ApPaymentRequest;
 import com.springmfg.ims.finance.ap.repository.ApInvoiceRepository;
 import com.springmfg.ims.finance.ap.repository.ApPaymentRepository;
+import com.springmfg.ims.finance.config.service.ExchangeRateService;
 import com.springmfg.ims.finance.gl.dto.AutoJournalRequest;
 import com.springmfg.ims.finance.gl.dto.JournalLineRequest;
 import com.springmfg.ims.finance.gl.repository.FiscalPeriodRepository;
@@ -46,6 +47,8 @@ public class ApService {
     private static final String BANK = "1201";
     private static final String INPUT_TAX = "1301";
     private static final String PURCHASE_PRICE_VARIANCE = "5207";
+    private static final String FX_GAIN = "4901";
+    private static final String FX_LOSS = "5208";
 
     private final ApInvoiceRepository apInvoiceRepo;
     private final ApPaymentRepository apPaymentRepo;
@@ -58,6 +61,8 @@ public class ApService {
     private final ThreeWayMatchService matchService;
     private final TaxDeterminationService taxDetermination;
     private final InvoiceTaxService invoiceTax;
+    private final ExchangeRateService fx;
+    private final com.springmfg.ims.finance.ap.repository.ApPaymentRepository paymentRepo;
 
     public ApService(ApInvoiceRepository apInvoiceRepo,
                      ApPaymentRepository apPaymentRepo,
@@ -69,7 +74,8 @@ public class ApService {
                      GlAccountResolver glAccounts,
                      ThreeWayMatchService matchService,
                      TaxDeterminationService taxDetermination,
-                     InvoiceTaxService invoiceTax) {
+                     InvoiceTaxService invoiceTax,
+                     ExchangeRateService fx) {
         this.apInvoiceRepo = apInvoiceRepo;
         this.apPaymentRepo = apPaymentRepo;
         this.periodRepo = periodRepo;
@@ -81,6 +87,8 @@ public class ApService {
         this.matchService = matchService;
         this.taxDetermination = taxDetermination;
         this.invoiceTax = invoiceTax;
+        this.fx = fx;
+        this.paymentRepo = apPaymentRepo;
     }
 
     public ApInvoiceDto createInvoice(ApInvoiceCreateRequest req) {
@@ -93,21 +101,26 @@ public class ApService {
                     "A supplier invoice must reference the goods receipt it bills: the three-way match is required (rule 18)");
         }
         BigDecimal tax = req.taxTotal() != null ? req.taxTotal() : BigDecimal.ZERO;
+        Supplier supplier = supplierRepo.findById(req.supplierId())
+                .orElseThrow(() -> new NotFoundException("Supplier", req.supplierId()));
+        String currency = req.currencyCode() != null && !req.currencyCode().isBlank()
+                ? req.currencyCode() : supplier.getCurrencyCode();
+        BigDecimal rate = fx.rateFor(currency, req.invoiceDate());
         TaxDeterminationService.Determination determination = null;
         if (req.taxSlabCode() != null && !req.taxSlabCode().isBlank()) {
             if (tax.signum() != 0) {
                 throw new BusinessRuleException(ErrorCode.VALIDATION_FAILED,
                         "Give either a tax slab or a tax amount, not both");
             }
-            Supplier supplier = supplierRepo.findById(req.supplierId())
-                    .orElseThrow(() -> new NotFoundException("Supplier", req.supplierId()));
             determination = taxDetermination.determine(Direction.PURCHASE, req.taxSlabCode(),
                     supplier.getGstNumber(), req.subtotal());
             tax = determination.taxTotal();
         }
         BigDecimal total = req.subtotal().add(tax);
+        // the goods receipt is valued in INR, so the match compares the invoice converted at the rate of its date
         var position = matchService.lockAndRead(req.goodsReceiptId(), req.supplierId(), null);
-        var outcome = matchService.evaluate(position, req.subtotal(), tax);
+        var outcome = matchService.evaluate(position, ExchangeRateService.toInr(req.subtotal(), rate),
+                ExchangeRateService.toInr(tax, rate));
 
         ApInvoice inv = new ApInvoice();
         inv.setInvoiceNumber(numberService.next("APINV"));
@@ -122,6 +135,9 @@ public class ApService {
         inv.setPaidAmount(BigDecimal.ZERO);
         inv.setStatus("DRAFT");
         inv.setPeriodId(period.getId());
+        inv.setCurrencyCode(currency);
+        inv.setExchangeRate(rate);
+        inv.setTotalInr(ExchangeRateService.toInr(req.subtotal(), rate).add(ExchangeRateService.toInr(tax, rate)));
         inv.setMatchStatus(outcome.status());
         inv.setMatchExpectedAmount(outcome.open());
         inv.setMatchClearedAmount(outcome.cleared());
@@ -152,15 +168,18 @@ public class ApService {
                     "Invoice " + inv.getInvoiceNumber() + " does not match its goods receipt and cannot be opened. "
                             + inv.getMatchMessage());
         }
+        List<JournalLineRequest> journalLines = invoiceJournalLines(inv);
         var jnlReq = new AutoJournalRequest(
                 "AP_INVOICE", "AP", "SUPPLIER_INVOICE", inv.getId(),
                 inv.getInvoiceDate(),
-                "AP Invoice " + inv.getInvoiceNumber(),
+                "AP Invoice " + inv.getInvoiceNumber() + foreignNote(inv),
                 currentUserId(),
-                invoiceJournalLines(inv)
+                journalLines
         );
         var jnl = journalService.postSourceJournal(jnlReq);
 
+        inv.setTotalInr(journalLines.stream().map(JournalLineRequest::creditAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add));
         inv.setStatus("OPEN");
         inv.setJournalHeaderId(jnl.id());
         auditService.record("AP_INVOICE_OPENED", "AP_INVOICE", String.valueOf(id),
@@ -180,15 +199,34 @@ public class ApService {
                     "Payment amount exceeds outstanding balance of " + balance);
         }
 
+        // Settlement: the payable leaves at the rate the invoice was booked at, the bank is paid at the rate of the
+        // payment date, and the difference is the realised exchange gain or loss. The last payment clears whatever INR
+        // is still carried, so rounding never leaves a residue on the payable.
+        BigDecimal payRate = fx.rateFor(inv.getCurrencyCode(), req.paymentDate());
+        boolean settles = req.amount().compareTo(balance) == 0;
+        BigDecimal carrying = settles
+                ? inv.getTotalInr().subtract(paymentRepo.sumCarryingInr(invoiceId))
+                : ExchangeRateService.toInr(req.amount(), inv.getExchangeRate());
+        BigDecimal paidInr = ExchangeRateService.toInr(req.amount(), payRate);
+        BigDecimal difference = paidInr.subtract(carrying);
+
+        List<JournalLineRequest> paymentLines = new java.util.ArrayList<>();
+        paymentLines.add(new JournalLineRequest(glAccounts.idOf(AP_CONTROL), carrying, BigDecimal.ZERO, "Payment Dr"));
+        if (difference.signum() > 0) {
+            paymentLines.add(new JournalLineRequest(glAccounts.idOf(FX_LOSS), difference, BigDecimal.ZERO,
+                    "Realised exchange loss"));
+        }
+        paymentLines.add(new JournalLineRequest(glAccounts.idOf(BANK), BigDecimal.ZERO, paidInr, "Payment Cr"));
+        if (difference.signum() < 0) {
+            paymentLines.add(new JournalLineRequest(glAccounts.idOf(FX_GAIN), BigDecimal.ZERO, difference.negate(),
+                    "Realised exchange gain"));
+        }
         var jnlReq = new AutoJournalRequest(
                 "AP_PAYMENT", "AP", "SUPPLIER_PAYMENT", invoiceId,
                 req.paymentDate(),
-                "AP Payment for " + inv.getInvoiceNumber(),
+                "AP Payment for " + inv.getInvoiceNumber() + foreignNote(inv, req.amount(), payRate),
                 currentUserId(),
-                List.of(
-                        new JournalLineRequest(glAccounts.idOf(AP_CONTROL), req.amount(), BigDecimal.ZERO, "Payment Dr"),
-                        new JournalLineRequest(glAccounts.idOf(BANK), BigDecimal.ZERO, req.amount(), "Payment Cr")
-                )
+                paymentLines
         );
         var jnl = journalService.postSourceJournal(jnlReq);
 
@@ -200,6 +238,9 @@ public class ApService {
         payment.setPaymentMode(req.paymentMode() != null ? req.paymentMode() : "BANK_TRANSFER");
         payment.setReferenceNumber(req.referenceNumber());
         payment.setJournalHeaderId(jnl.id());
+        payment.setExchangeRate(payRate);
+        payment.setCarryingInr(carrying);
+        payment.setFxDifference(difference);
         apPaymentRepo.save(payment);
 
         BigDecimal newPaid = inv.getPaidAmount().add(req.amount());
@@ -267,13 +308,33 @@ public class ApService {
             lines.add(new JournalLineRequest(glAccounts.idOf(PURCHASE_PRICE_VARIANCE), variance, BigDecimal.ZERO,
                     "Purchase price variance"));
         }
+        boolean foreign = inv.getExchangeRate().compareTo(BigDecimal.ONE) != 0;
         if (inv.getTaxSlabCode() != null) {
-            lines.addAll(invoiceTax.journalLines("AP_INVOICE", inv.getId(), true, "Input tax"));
+            lines.addAll(invoiceTax.journalLines("AP_INVOICE", inv.getId(), true, "Input tax", inv.getExchangeRate()));
         } else if (inv.getTaxTotal().signum() > 0) {
-            lines.add(new JournalLineRequest(glAccounts.idOf(INPUT_TAX), inv.getTaxTotal(), BigDecimal.ZERO, "Input tax"));
+            lines.add(new JournalLineRequest(glAccounts.idOf(INPUT_TAX),
+                    ExchangeRateService.toInr(inv.getTaxTotal(), inv.getExchangeRate()), BigDecimal.ZERO, "Input tax"));
         }
-        lines.add(new JournalLineRequest(glAccounts.idOf(AP_CONTROL), BigDecimal.ZERO, inv.getTotalAmount(), "AP Invoice Cr"));
+        // An INR invoice credits its total. A foreign invoice credits the sum of its converted debits, so the journal
+        // balances exactly whatever the rounding of the individual conversions.
+        BigDecimal control = foreign
+                ? lines.stream().map(JournalLineRequest::debitAmount).reduce(BigDecimal.ZERO, BigDecimal::add)
+                : inv.getTotalAmount();
+        lines.add(new JournalLineRequest(glAccounts.idOf(AP_CONTROL), BigDecimal.ZERO, control, "AP Invoice Cr"));
         return lines;
+    }
+
+    /** " (USD 1,000.00 at 83.250000)" for a foreign invoice, nothing for INR. */
+    private static String foreignNote(ApInvoice inv) {
+        return foreignNote(inv, inv.getTotalAmount(), inv.getExchangeRate());
+    }
+
+    private static String foreignNote(ApInvoice inv, BigDecimal amount, BigDecimal rate) {
+        if ("INR".equals(inv.getCurrencyCode())) {
+            return "";
+        }
+        return " (" + inv.getCurrencyCode() + " " + amount.setScale(2, java.math.RoundingMode.HALF_UP).toPlainString()
+                + " at " + rate.toPlainString() + ")";
     }
 
     @Transactional(readOnly = true)
@@ -297,7 +358,7 @@ public class ApService {
                        d60 = BigDecimal.ZERO, d90 = BigDecimal.ZERO, d90p = BigDecimal.ZERO;
 
             for (ApInvoice inv : entry.getValue()) {
-                BigDecimal bal = inv.getTotalAmount().subtract(inv.getPaidAmount());
+                BigDecimal bal = ExchangeRateService.toInr(inv.getTotalAmount().subtract(inv.getPaidAmount()), inv.getExchangeRate());
                 long days = ChronoUnit.DAYS.between(inv.getDueDate(), today);
                 if (days <= 0) current = current.add(bal);
                 else if (days <= 30) d30 = d30.add(bal);
@@ -322,7 +383,8 @@ public class ApService {
                 inv.getTotalAmount(), inv.getPaidAmount(), balance, inv.getStatus(),
                 inv.getPeriodId(), inv.getJournalHeaderId(),
                 inv.getMatchStatus(), inv.getMatchExpectedAmount(), inv.getMatchVariance(), inv.getMatchMessage(),
-                inv.getTaxSlabCode(), inv.getSupplyType(), invoiceTax.lines("AP_INVOICE", inv.getId()));
+                inv.getTaxSlabCode(), inv.getSupplyType(), invoiceTax.lines("AP_INVOICE", inv.getId()),
+                inv.getCurrencyCode(), inv.getExchangeRate(), inv.getTotalInr());
     }
 
     private Long currentUserId() {

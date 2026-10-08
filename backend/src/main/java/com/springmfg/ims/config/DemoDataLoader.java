@@ -317,7 +317,7 @@ public class DemoDataLoader {
                             "Ravi Krishna", "+91-9876540001",
                             "procurement@krishnawires.example",
                             "Plot 42, MIDC Industrial Area, Pune 411026",
-                            null, "Net 30", 7, null));
+                            null, null, "Net 30", 7, null));
                     log.info("step1: supplier created id={}", dto.id());
                     return dto.id();
                 });
@@ -335,7 +335,7 @@ public class DemoDataLoader {
                             "Priya Sharma", "+91-9876540002",
                             "purchase@autoincorp.example",
                             "Survey 18, Peenya Industrial Estate, Bengaluru 560058",
-                            null, "Net 45", null));
+                            null, null, "Net 45", null));
                     log.info("step2: customer created id={}", dto.id());
                     return dto.id();
                 });

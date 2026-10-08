@@ -14,6 +14,8 @@ public record SaveCustomerRequest(
         @Pattern(regexp = "^(|[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1})$",
                  message = "Invalid GST number format")
         @Size(max = 15) String gstNumber,
+        @Pattern(regexp = "^([A-Z]{3})?$", message = "Use a three-letter currency code such as USD")
+        @Size(max = 3) String currencyCode,
         @Size(max = 60) String paymentTerms,
         Long version) {
 }
