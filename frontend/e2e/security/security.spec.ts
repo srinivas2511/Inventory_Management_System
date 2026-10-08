@@ -101,6 +101,7 @@ test.describe('Security (SEC-01 .. SEC-09)', () => {
     const logPath = process.env['E2E_BACKEND_LOG'];
     expect(logPath, 'set E2E_BACKEND_LOG to the backend log file so SEC-09 can scan it').toBeTruthy();
     const log = readFileSync(logPath!, 'utf-8');
+    expect(/generated security password/i.test(log), "Spring Boot's generated default-user password is in the backend log (D-40)").toBe(false);
     for (const secret of [ADMIN_PASSWORD, ROLE_PASSWORD, TEMP_PASSWORD, 'Fresh#Passw0rd-77', devSecret()]) {
       expect(log.includes(secret), 'a secret value is present in the backend log').toBe(false);
     }

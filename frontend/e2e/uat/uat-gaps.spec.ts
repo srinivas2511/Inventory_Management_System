@@ -8,7 +8,7 @@
 import { admin, apiFor } from '../support/api';
 import { expect, openAs, test } from '../support/fixtures';
 import { approvedSalesOrder, balances, demoIds, produceViaApi } from '../support/flow';
-import { dialog, expectToast, fill, iconButton, orderPanel, pick, row } from '../support/ui';
+import { dialog, fill, iconButton, orderPanel, pick, row } from '../support/ui';
 import { U } from '../support/users';
 
 const num = (v: unknown): number => Number(String(v ?? '').replace(/[^0-9.\-]/g, ''));
@@ -65,13 +65,21 @@ test.describe('UAT QCF-05: HOLD finished goods cannot be reserved', () => {
     let order = await admin().must('GET', `/api/sales/orders/${so.id}`);
     expect(Number(order.items[0].reservedQty), 'nothing was reserved').toBe(0);
 
-    // the Quality Manager approves the hold (4 approved, none rejected): the batch is approved, all 10 are available
-    const released = await apiFor(U.quality).call('POST', `/api/quality/fg-batches/${made.fgBatchId}/approve-hold`, {
-      approvedQty: 4,
-      rejectedQty: 0,
-      reason: 'E2E QCF-05: re-inspected and accepted',
-    });
-    expect(released.ok, JSON.stringify(released.body).slice(0, 300)).toBe(true);
+    // the Quality Manager approves the hold through the screen's dialog (4 approved, none rejected): the batch is approved, all 10 are available
+    const qm = await openAs(browser, guard, U.quality, '/quality/fg-batches');
+    const hp = qm.page;
+    await iconButton(row(hp, made.fgBatchNumber), 'lock_open').click();
+    const hd = dialog(hp);
+    await expect(hd.getByText(/4\.000 on hold/)).toBeVisible();
+    await fill(hd, /^Quantity to approve/, 4);
+    await expect(hd.getByTestId('rejected-preview')).toContainText('0.000');
+    await fill(hd, /^Reason for the decision/, 'E2E QCF-05: re-inspected and accepted');
+    const resolved = hp.waitForResponse((r) => /approve-hold$/.test(r.url()) && r.request().method() === 'POST');
+    await hd.getByRole('button', { name: 'Resolve hold' }).click();
+    const rr = await resolved;
+    expect(rr.status(), (await rr.text()).slice(0, 300)).toBeLessThan(300);
+    await expect(hd).toBeHidden();
+    await qm.close();
     rows = (await balances()).filter((b) => b.fgBatchId === made.fgBatchId);
     expect(rows.filter((b) => b.stockStatus === 'HOLD').reduce((n, b) => n + Number(b.qtyOnHand), 0), 'no units remain on HOLD').toBe(0);
     expect(rows.filter((b) => b.stockStatus === 'AVAILABLE').reduce((n, b) => n + Number(b.qtyOnHand), 0), 'all 10 are available').toBe(10);
@@ -166,8 +174,11 @@ test.describe('UAT PRC-04: segregation of duties on purchase order approval', ()
     const a = await openAs(browser, guard, U.admin, '/procurement/purchase-orders');
     const p = a.page;
     await pick(p.locator('body'), 'Status', 'Submitted');
-    await iconButton(row(p, full.poNumber), 'check_circle').click();
-    await expectToast(p, /cannot approve own purchase order/i);
+    // D-37: the submitter is not offered a working Approve (disabled, with the reason); the server stays the authority
+    const approveButton = iconButton(row(p, full.poNumber), 'check_circle');
+    await expect(approveButton, 'Approve is disabled for the user who submitted the PO').toBeDisabled();
+    await approveButton.locator('xpath=ancestor::span[contains(@class,"approve-wrap")]').hover();
+    await expect(p.locator('.mat-mdc-tooltip')).toContainText(/another approver must approve/i);
     expect((await admin().must('GET', `/api/procurement/purchase-orders/${po.id}`)).status, 'the PO stays SUBMITTED').toBe('SUBMITTED');
     const direct = await admin().call('POST', `/api/procurement/purchase-orders/${po.id}/approve`);
     expect(direct.ok, 'the API refuses too').toBe(false);
