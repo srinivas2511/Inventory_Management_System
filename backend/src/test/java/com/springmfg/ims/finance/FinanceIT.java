@@ -37,6 +37,7 @@ import static org.assertj.core.api.Assertions.*;
 class FinanceIT extends AbstractIntegrationTest {
 
     @Autowired JournalService journalService;
+    @Autowired org.springframework.jdbc.core.JdbcTemplate jdbc;
     @Autowired FiscalPeriodService periodService;
     @Autowired FiscalPeriodRepository periodRepo;
     @Autowired JournalHeaderRepository journalHeaderRepo;
@@ -72,7 +73,7 @@ class FinanceIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @DisplayName("Business Rule 17: Balanced journal creates DRAFT with lines summing to zero net")
+    @DisplayName("Journal: a balanced journal is created as a DRAFT whose lines sum to zero net")
     @Transactional
     void balancedJournalCreatesDraft() {
         BigDecimal amount = new BigDecimal("5000.0000");
@@ -97,7 +98,7 @@ class FinanceIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @DisplayName("Business Rule 18: Closed period blocks posting")
+    @DisplayName("Business Rule 17 (blocked): a closed period refuses a posting")
     @Transactional
     void closedPeriodBlocksPosting() {
         // Find and close a period
@@ -124,6 +125,36 @@ class FinanceIT extends AbstractIntegrationTest {
                 .isInstanceOf(BusinessRuleException.class)
                 .satisfies(e -> assertThat(((BusinessRuleException) e).getCode())
                         .isEqualTo(ErrorCode.PERIOD_CLOSED));
+    }
+
+    @Test
+    @DisplayName("Business Rule 17 (override): only a Finance Manager can reopen a closed period, the reopening is audited, and posting then works")
+    @Transactional
+    void reopeningAClosedPeriodIsTheAuditedFinanceManagerOverride() {
+        FiscalPeriod period = periodRepo.findOpenPeriodForDate(LocalDate.of(2026, 5, 15))
+                .orElseThrow(() -> new AssertionError("Seeded period MAY-2026 must be OPEN"));
+        Long periodId = period.getId();
+        periodService.initiatePeriodClose(periodId);
+        periodService.finalizePeriodClose(periodId);
+        var req = new JournalCreateRequest("MANUAL", LocalDate.of(2026, 5, 15), "Post after reopening", "INR",
+                List.of(new JournalLineRequest(acct("1401"), new BigDecimal("100.0000"), BigDecimal.ZERO, "Dr"),
+                        new JournalLineRequest(acct("2401"), BigDecimal.ZERO, new BigDecimal("100.0000"), "Cr")));
+        assertThatThrownBy(() -> journalService.createDraft(req)).isInstanceOf(BusinessRuleException.class);
+
+        periodService.reopenPeriod(periodId);
+
+        assertThat(journalService.createDraft(req).status()).isEqualTo("DRAFT");
+        assertThat(jdbc.queryForObject("""
+                SELECT count(*) FROM ims.audit_logs
+                 WHERE action = 'PERIOD_REOPENED' AND entity_id = ? AND old_value::text LIKE '%CLOSED%'
+                   AND new_value::text LIKE '%OPEN%'
+                """, Integer.class, String.valueOf(periodId))).isEqualTo(1);
+        assertThat(jdbc.queryForList("""
+                SELECT DISTINCT r.code FROM ims.roles r
+                  JOIN ims.role_permissions rp ON rp.role_id = r.id
+                  JOIN ims.permissions p ON p.id = rp.permission_id
+                 WHERE p.code = 'PERIOD_CLOSE'
+                """, String.class)).as("who can close or reopen a period").containsExactlyInAnyOrder("ADMIN", "FINANCE_MANAGER");
     }
 
     private static BigDecimal bd(String v) {

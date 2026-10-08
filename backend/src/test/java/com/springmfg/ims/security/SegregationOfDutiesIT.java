@@ -85,7 +85,7 @@ class SegregationOfDutiesIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @DisplayName("SOD-JRN-1: no role that can approve journals can approve a journal its own user prepared")
+    @DisplayName("Business Rule 19 / SOD-JRN-1: no role that can approve journals can approve a journal its own user prepared")
     void noJournalApproverRoleCanApproveItsOwnJournal() {
         List<String> roles = rolesHolding("JOURNAL_APPROVE");
         assertThat(roles).as("roles holding JOURNAL_APPROVE").contains("ADMIN");

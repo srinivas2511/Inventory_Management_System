@@ -106,7 +106,7 @@ class ThreeWayMatchIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @DisplayName("TWM-2: 25,000 against a 20,000 receipt is an exception that cannot be opened or paid")
+    @DisplayName("Business Rule 18 / TWM-2: 25,000 against a 20,000 receipt is an exception that cannot be opened or paid")
     void overInvoicedIsAnExceptionAndIsBlocked() {
         Receipt gr = receipt("100", "200.0000", null, "100");
 
