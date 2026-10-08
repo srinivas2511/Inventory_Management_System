@@ -88,7 +88,7 @@ class UserAttributionIT extends AbstractIntegrationTest {
 
         as(APPROVER, "PERIOD_CLOSE");
         periodService.initiatePeriodClose(periodId);
-        periodService.finalizePeriodClose(periodId);
+        periodService.finalizePeriodClose(periodId, "test close");
 
         assertThat(periodRepo.findById(periodId).orElseThrow().getClosedBy()).isEqualTo(APPROVER);
     }

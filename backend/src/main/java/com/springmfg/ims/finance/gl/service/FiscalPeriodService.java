@@ -51,7 +51,8 @@ public class FiscalPeriodService {
         return toDto(periodRepo.save(period));
     }
 
-    public FiscalPeriodDto finalizePeriodClose(Long id) {
+    public FiscalPeriodDto finalizePeriodClose(Long id, String reason) {
+        String why = requireReason(reason);
         FiscalPeriod period = findPeriod(id);
         if (!"CLOSING".equals(period.getStatus())) {
             throw new BusinessRuleException(ErrorCode.ILLEGAL_STATE_TRANSITION,
@@ -61,11 +62,12 @@ public class FiscalPeriodService {
         period.setClosedBy(currentUserId());
         period.setClosedAt(Instant.now());
         auditService.record("PERIOD_CLOSED", "FISCAL_PERIOD", String.valueOf(id),
-                "CLOSING", "CLOSED", "Period close finalized");
+                "CLOSING", "CLOSED", why);
         return toDto(periodRepo.save(period));
     }
 
-    public FiscalPeriodDto reopenPeriod(Long id) {
+    public FiscalPeriodDto reopenPeriod(Long id, String reason) {
+        String why = requireReason(reason);
         FiscalPeriod period = findPeriod(id);
         if (!"CLOSED".equals(period.getStatus())) {
             throw new BusinessRuleException(ErrorCode.ILLEGAL_STATE_TRANSITION,
@@ -75,8 +77,15 @@ public class FiscalPeriodService {
         period.setClosedBy(null);
         period.setClosedAt(null);
         auditService.record("PERIOD_REOPENED", "FISCAL_PERIOD", String.valueOf(id),
-                "CLOSED", "OPEN", "Period reopened by Finance Manager");
+                "CLOSED", "OPEN", why);
         return toDto(periodRepo.save(period));
+    }
+
+    private static String requireReason(String reason) {
+        if (reason == null || reason.isBlank()) {
+            throw new BusinessRuleException(ErrorCode.VALIDATION_FAILED, "A reason is required to close or reopen a period");
+        }
+        return reason.trim();
     }
 
     private FiscalPeriod findPeriod(Long id) {

@@ -124,7 +124,7 @@ class HrmIT extends AbstractIntegrationTest {
     private void closePeriodContaining(LocalDate date) {
         FiscalPeriod p = periodRepo.findOpenPeriodForDate(date).orElseThrow();
         periodService.initiatePeriodClose(p.getId());
-        periodService.finalizePeriodClose(p.getId());
+        periodService.finalizePeriodClose(p.getId(), "test close");
     }
 
     /** Pins the legacy PRESENT policy so tests about other payroll rules need no attendance for every workday. */

@@ -107,7 +107,7 @@ class FinanceIT extends AbstractIntegrationTest {
 
         Long periodId = period.getId();
         periodService.initiatePeriodClose(periodId);
-        periodService.finalizePeriodClose(periodId);
+        periodService.finalizePeriodClose(periodId, "test close");
 
         // Attempt to create a draft journal for this date should fail with PERIOD_CLOSED
         var req = new JournalCreateRequest(
@@ -135,13 +135,13 @@ class FinanceIT extends AbstractIntegrationTest {
                 .orElseThrow(() -> new AssertionError("Seeded period MAY-2026 must be OPEN"));
         Long periodId = period.getId();
         periodService.initiatePeriodClose(periodId);
-        periodService.finalizePeriodClose(periodId);
+        periodService.finalizePeriodClose(periodId, "test close");
         var req = new JournalCreateRequest("MANUAL", LocalDate.of(2026, 5, 15), "Post after reopening", "INR",
                 List.of(new JournalLineRequest(acct("1401"), new BigDecimal("100.0000"), BigDecimal.ZERO, "Dr"),
                         new JournalLineRequest(acct("2401"), BigDecimal.ZERO, new BigDecimal("100.0000"), "Cr")));
         assertThatThrownBy(() -> journalService.createDraft(req)).isInstanceOf(BusinessRuleException.class);
 
-        periodService.reopenPeriod(periodId);
+        periodService.reopenPeriod(periodId, "test reopen");
 
         assertThat(journalService.createDraft(req).status()).isEqualTo("DRAFT");
         assertThat(jdbc.queryForObject("""
