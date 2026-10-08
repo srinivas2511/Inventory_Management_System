@@ -11,7 +11,8 @@ import { problemMessage } from '../../core/models/problem.model';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import { InvoiceableReceipt, LookupApi, LookupOption } from '../../shared/lookup.api';
 import { inDaysIso, todayIso } from './finance-dates';
-import { ApInvoiceCreateRequest, ApInvoiceDto, FinanceApi } from './finance.api';
+import { debounceTime, merge } from 'rxjs';
+import { ApInvoiceCreateRequest, ApInvoiceDto, DeterminationDto, FinanceApi, SlabDto } from './finance.api';
 
 /**
  * Enters a supplier invoice against the goods receipt it bills. The server matches it to the receipt straight away,
@@ -50,6 +51,14 @@ import { ApInvoiceCreateRequest, ApInvoiceDto, FinanceApi } from './finance.api'
           <dd>{{ inv.subtotal ?? 0 | number: '1.2-4' }}</dd>
           <dt>Difference</dt>
           <dd>{{ (inv.subtotal ?? 0) - (inv.matchExpectedAmount ?? 0) | number: '1.2-4' }}</dd>
+          @for (l of inv.taxLines ?? []; track l.taxCode) {
+            <dt>{{ l.taxType }} {{ l.ratePct | number: '1.0-2' }}%</dt>
+            <dd>{{ l.taxAmount | number: '1.2-4' }}</dd>
+          }
+          @if (inv.currencyCode && inv.currencyCode !== 'INR') {
+            <dt>In INR at {{ inv.exchangeRate | number: '1.2-6' }}</dt>
+            <dd data-testid="result-inr">{{ inv.totalInr | number: '1.2-4' }}</dd>
+          }
         </dl>
         @if (inv.matchStatus === 'EXCEPTION') {
           <p class="exception" role="alert">
@@ -146,6 +155,24 @@ import { ApInvoiceCreateRequest, ApInvoiceDto, FinanceApi } from './finance.api'
               }
             </mat-form-field>
             <mat-form-field appearance="outline">
+              <mat-label>GST slab</mat-label>
+              <mat-select formControlName="taxSlabCode">
+                <mat-option value="">I will enter the tax amount</mat-option>
+                @for (s of slabs(); track s.slabCode) {
+                  <mat-option [value]="s.slabCode">{{ s.slabCode }} · {{ s.description }}</mat-option>
+                }
+              </mat-select>
+              <mat-hint>Taxed by place of supply, from the supplier's GSTIN</mat-hint>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Currency</mat-label>
+              <input matInput formControlName="currencyCode" maxlength="3" placeholder="Supplier's currency" />
+              @if (form.controls.currencyCode.hasError('pattern')) {
+                <mat-error>Use a three-letter code such as USD</mat-error>
+              }
+              <mat-hint>Leave empty for the supplier's own currency</mat-hint>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
               <mat-label>Tax</mat-label>
               <input matInput type="number" step="0.01" formControlName="taxTotal" />
               @if (form.controls.taxTotal.hasError('min')) {
@@ -155,6 +182,21 @@ import { ApInvoiceCreateRequest, ApInvoiceDto, FinanceApi } from './finance.api'
             </mat-form-field>
           </div>
         </form>
+        @if (preview(); as p) {
+          <div class="preview" data-testid="tax-preview" role="status">
+            <strong>{{ supplyLabel(p.supplyType) }}</strong>
+            @if (p.partnerStateAssumed) {
+              <span> · the supplier has no GSTIN, so its state is assumed to be the company state</span>
+            }
+            @for (l of p.lines; track l.taxCode) {
+              <div>
+                {{ l.taxType }} {{ l.ratePct | number: '1.0-2' }}% on {{ l.taxableAmount | number: '1.2-4' }} =
+                {{ l.taxAmount | number: '1.2-4' }}
+              </div>
+            }
+            <div>Tax {{ p.taxTotal | number: '1.2-4' }}</div>
+          </div>
+        }
         @if (errorMessage()) {
           <p class="exception" role="alert">{{ errorMessage() }}</p>
         }
@@ -202,6 +244,11 @@ import { ApInvoiceCreateRequest, ApInvoiceDto, FinanceApi } from './finance.api'
       .exception {
         color: var(--mat-sys-error, #b3261e);
       }
+      .preview {
+        margin-top: 8px;
+        padding: 8px 12px;
+        border-left: 3px solid var(--mat-sys-primary, #6750a4);
+      }
     `,
   ],
 })
@@ -213,6 +260,8 @@ export class ApInvoiceFormComponent implements OnInit {
   protected readonly errorMessage = signal('');
   protected readonly created = signal<ApInvoiceDto | null>(null);
   protected readonly selected = signal<InvoiceableReceipt | null>(null);
+  protected readonly slabs = signal<SlabDto[]>([]);
+  protected readonly preview = signal<DeterminationDto | null>(null);
 
   private readonly fb = inject(FormBuilder);
   private readonly api = inject(FinanceApi);
@@ -228,17 +277,57 @@ export class ApInvoiceFormComponent implements OnInit {
     dueDate: [inDaysIso(30), Validators.required],
     subtotal: this.fb.control<number | null>(null, [Validators.required, Validators.min(0.0001)]),
     taxTotal: this.fb.control<number | null>(null, Validators.min(0)),
+    taxSlabCode: [''],
+    currencyCode: ['', Validators.pattern(/^([A-Za-z]{3})?$/)],
   });
 
   ngOnInit(): void {
     this.lookups.suppliers().subscribe((s) => this.suppliers.set(s));
     this.form.controls.supplierId.valueChanges.subscribe((supplierId) => this.loadReceipts(supplierId));
     this.form.controls.goodsReceiptId.valueChanges.subscribe((id) => this.pickReceipt(id));
+    this.api.getTaxSlabs().subscribe({ next: (list) => this.slabs.set(list), error: () => this.slabs.set([]) });
+    this.form.controls.taxSlabCode.valueChanges.subscribe((slab) => {
+      if (slab) {
+        this.form.controls.taxTotal.reset(null, { emitEvent: false });
+        this.form.controls.taxTotal.disable({ emitEvent: false });
+      } else {
+        this.form.controls.taxTotal.enable({ emitEvent: false });
+      }
+    });
+    merge(
+      this.form.controls.taxSlabCode.valueChanges,
+      this.form.controls.subtotal.valueChanges,
+      this.form.controls.supplierId.valueChanges,
+    )
+      .pipe(debounceTime(300))
+      .subscribe(() => this.refreshPreview());
+  }
+
+  protected supplyLabel(type: string): string {
+    return type === 'INTER'
+      ? 'Another state: IGST'
+      : type === 'UT'
+        ? 'Union territory: CGST + UTGST'
+        : 'Within the company state: CGST + SGST';
+  }
+
+  private refreshPreview(): void {
+    const raw = this.form.getRawValue();
+    const subtotal = Number(raw.subtotal ?? 0);
+    if (!raw.taxSlabCode || !(subtotal > 0)) {
+      this.preview.set(null);
+      return;
+    }
+    this.api.determineTax('PURCHASE', raw.taxSlabCode, raw.supplierId, subtotal).subscribe({
+      next: (d) => this.preview.set(d),
+      error: () => this.preview.set(null),
+    });
   }
 
   protected total(): number {
     const raw = this.form.getRawValue();
-    return Number(raw.subtotal ?? 0) + Number(raw.taxTotal ?? 0);
+    const tax = raw.taxSlabCode ? (this.preview()?.taxTotal ?? 0) : Number(raw.taxTotal ?? 0);
+    return Number(raw.subtotal ?? 0) + tax;
   }
 
   protected save(): void {
@@ -254,8 +343,15 @@ export class ApInvoiceFormComponent implements OnInit {
       dueDate: raw.dueDate as string,
       goodsReceiptId: raw.goodsReceiptId as number,
       subtotal: Number(raw.subtotal),
-      taxTotal: raw.taxTotal === null || (raw.taxTotal as unknown) === '' ? null : Number(raw.taxTotal),
+      taxTotal:
+        raw.taxSlabCode || raw.taxTotal === null || (raw.taxTotal as unknown) === '' ? null : Number(raw.taxTotal),
     };
+    if (raw.taxSlabCode) {
+      request.taxSlabCode = raw.taxSlabCode;
+    }
+    if (raw.currencyCode && raw.currencyCode.trim()) {
+      request.currencyCode = raw.currencyCode.trim().toUpperCase();
+    }
     this.saving.set(true);
     this.errorMessage.set('');
     this.api.createApInvoice(request).subscribe({

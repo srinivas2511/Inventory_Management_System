@@ -271,6 +271,28 @@ export const NAV_GROUPS: NavGroup[] = [
         enabled: true,
       },
       {
+        label: 'Credit Notes',
+        icon: 'receipt_long',
+        route: '/finance/credit-notes',
+        permission: 'AR_MANAGE',
+        enabled: true,
+      },
+      { label: 'GST Tax', icon: 'percent', route: '/finance/tax', permission: 'GL_VIEW', enabled: true },
+      {
+        label: 'Exchange Rates',
+        icon: 'currency_exchange',
+        route: '/finance/exchange-rates',
+        permission: 'GL_VIEW',
+        enabled: true,
+      },
+      {
+        label: 'Budget vs Actual',
+        icon: 'balance',
+        route: '/finance/budget',
+        permission: 'GL_VIEW',
+        enabled: true,
+      },
+      {
         label: 'Bank Reconciliation',
         icon: 'account_balance_wallet',
         route: '/finance/bank',

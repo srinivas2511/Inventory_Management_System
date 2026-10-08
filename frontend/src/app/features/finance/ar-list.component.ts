@@ -10,8 +10,10 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
 import { LookupApi } from '../../shared/lookup.api';
-import { FinanceApi, ArInvoiceDto, ArAgeingRow } from './finance.api';
+import { FinanceApi, ArInvoiceDto, ArAgeingRow, CreditNoteDto } from './finance.api';
+import { CreditNoteDialogComponent } from './credit-note-dialog.component';
 import { SettlementDialogComponent } from './settlement-dialog.component';
+import { SettlementHistoryDialogComponent } from './settlement-history-dialog.component';
 import { PagedList } from '../../shared/paged-list';
 import { ListPaginatorComponent } from '../../shared/components/list-paginator.component';
 
@@ -61,7 +63,18 @@ import { ListPaginatorComponent } from '../../shared/components/list-paginator.c
             </ng-container>
             <ng-container matColumnDef="totalAmount">
               <th mat-header-cell *matHeaderCellDef>Total</th>
-              <td mat-cell *matCellDef="let r">{{ r.totalAmount | number: '1.2-4' }}</td>
+              <td mat-cell *matCellDef="let r">
+                {{ r.totalAmount | number: '1.2-4' }}
+                @if (r.currencyCode && r.currencyCode !== 'INR') {
+                  {{ r.currencyCode }}
+                  <div class="sub" data-testid="inr-equivalent">
+                    = {{ r.totalInr | number: '1.2-4' }} INR at {{ r.exchangeRate | number: '1.2-6' }}
+                  </div>
+                }
+                @for (l of r.taxLines ?? []; track l.taxCode) {
+                  <div class="sub">{{ l.taxType }} {{ l.taxAmount | number: '1.2-4' }}</div>
+                }
+              </td>
             </ng-container>
             <ng-container matColumnDef="balanceAmount">
               <th mat-header-cell *matHeaderCellDef>Balance</th>
@@ -86,6 +99,10 @@ import { ListPaginatorComponent } from '../../shared/components/list-paginator.c
                   <button mat-stroked-button *appHasPermission="'AR_MANAGE'" (click)="recordReceipt(r)">
                     Record receipt
                   </button>
+                }
+                @if (r.status === 'OPEN' || r.status === 'PARTIALLY_PAID' || r.status === 'PAID') {
+                  <button mat-button *appHasPermission="'AR_MANAGE'" (click)="history(r)">History</button>
+                  <button mat-button *appHasPermission="'AR_MANAGE'" (click)="creditNote(r)">Credit note</button>
                 }
               </td>
             </ng-container>
@@ -127,6 +144,14 @@ import { ListPaginatorComponent } from '../../shared/components/list-paginator.c
       </mat-tab>
     </mat-tab-group>
   `,
+  styles: [
+    `
+      .sub {
+        color: var(--mat-sys-on-surface-variant, #49454f);
+        font-size: 0.85em;
+      }
+    `,
+  ],
 })
 export class ArListComponent implements OnInit {
   private api = inject(FinanceApi);
@@ -187,6 +212,44 @@ export class ArListComponent implements OnInit {
             'OK',
             { duration: 5000 },
           );
+          this.load();
+        }
+      });
+  }
+
+  history(invoice: ArInvoiceDto) {
+    this.dialog.open(SettlementHistoryDialogComponent, {
+      width: '900px',
+      maxWidth: '96vw',
+      data: {
+        kind: 'AR',
+        invoice: { id: invoice.id, invoiceNumber: invoice.invoiceNumber, currencyCode: invoice.currencyCode ?? 'INR' },
+      },
+    });
+  }
+
+  creditNote(invoice: ArInvoiceDto) {
+    this.dialog
+      .open(CreditNoteDialogComponent, {
+        width: '620px',
+        maxWidth: '96vw',
+        data: {
+          invoice: {
+            id: invoice.id,
+            invoiceNumber: invoice.invoiceNumber,
+            subtotal: invoice.subtotal ?? 0,
+            taxTotal: invoice.taxTotal ?? 0,
+            currencyCode: invoice.currencyCode ?? 'INR',
+            counterparty: this.customerName(invoice.customerId),
+          },
+        },
+      })
+      .afterClosed()
+      .subscribe((note?: CreditNoteDto) => {
+        if (note) {
+          this.snack.open(note.creditNoteNumber + ' created: it needs approval by another user', 'OK', {
+            duration: 6000,
+          });
           this.load();
         }
       });

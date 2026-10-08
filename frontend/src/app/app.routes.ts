@@ -360,6 +360,32 @@ export const routes: Routes = [
           import('./features/finance/ar-reconciliation.component').then((m) => m.ArReconciliationComponent),
       },
       {
+        path: 'finance/credit-notes',
+        title: 'Credit Notes',
+        canActivate: [permissionGuard('AR_MANAGE')],
+        loadComponent: () => import('./features/finance/credit-notes.component').then((m) => m.CreditNotesComponent),
+      },
+      {
+        path: 'finance/tax',
+        title: 'GST Tax',
+        canActivate: [permissionGuard('GL_VIEW')],
+        loadComponent: () => import('./features/finance/tax-admin.component').then((m) => m.TaxAdminComponent),
+      },
+      {
+        path: 'finance/exchange-rates',
+        title: 'Exchange Rates',
+        canActivate: [permissionGuard('GL_VIEW')],
+        loadComponent: () =>
+          import('./features/finance/exchange-rates.component').then((m) => m.ExchangeRatesComponent),
+      },
+      {
+        path: 'finance/budget',
+        title: 'Budget against Actual',
+        canActivate: [permissionGuard('GL_VIEW')],
+        loadComponent: () =>
+          import('./features/finance/budget-vs-actual.component').then((m) => m.BudgetVsActualComponent),
+      },
+      {
         path: 'finance/bank',
         title: 'Bank Reconciliation',
         canActivate: [permissionGuard('BANK_RECONCILE')],

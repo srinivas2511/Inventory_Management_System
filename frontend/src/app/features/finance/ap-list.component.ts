@@ -18,6 +18,7 @@ import { LookupApi } from '../../shared/lookup.api';
 import { ApInvoiceFormComponent } from './ap-invoice-form.component';
 import { FinanceApi, ApInvoiceDto, ApAgeingRow } from './finance.api';
 import { SettlementDialogComponent } from './settlement-dialog.component';
+import { SettlementHistoryDialogComponent } from './settlement-history-dialog.component';
 import { PagedList } from '../../shared/paged-list';
 import { ListPaginatorComponent } from '../../shared/components/list-paginator.component';
 
@@ -100,7 +101,18 @@ import { ListPaginatorComponent } from '../../shared/components/list-paginator.c
             </ng-container>
             <ng-container matColumnDef="totalAmount">
               <th mat-header-cell *matHeaderCellDef>Total</th>
-              <td mat-cell *matCellDef="let r">{{ r.totalAmount | number: '1.2-4' }}</td>
+              <td mat-cell *matCellDef="let r">
+                {{ r.totalAmount | number: '1.2-4' }}
+                @if (r.currencyCode && r.currencyCode !== 'INR') {
+                  {{ r.currencyCode }}
+                  <div class="sub" data-testid="inr-equivalent">
+                    = {{ r.totalInr | number: '1.2-4' }} INR at {{ r.exchangeRate | number: '1.2-6' }}
+                  </div>
+                }
+                @for (l of r.taxLines ?? []; track l.taxCode) {
+                  <div class="sub">{{ l.taxType }} {{ l.taxAmount | number: '1.2-4' }}</div>
+                }
+              </td>
             </ng-container>
             <ng-container matColumnDef="balanceAmount">
               <th mat-header-cell *matHeaderCellDef>Balance</th>
@@ -116,6 +128,9 @@ import { ListPaginatorComponent } from '../../shared/components/list-paginator.c
                 <app-status-badge [status]="r.matchStatus" />
                 @if (r.matchStatus === 'EXCEPTION' && r.matchMessage) {
                   <div class="match-message">{{ r.matchMessage }}</div>
+                }
+                @if (r.priceVarianceInr > 0 && r.matchStatus !== 'OVERRIDDEN') {
+                  <div class="match-message">Price variance {{ r.priceVarianceInr | number: '1.2-4' }} INR</div>
                 }
                 @if (r.matchStatus === 'OVERRIDDEN' && r.matchVarianceAmount > 0) {
                   <div class="match-message">Price variance {{ r.matchVarianceAmount | number: '1.2-4' }}</div>
@@ -140,6 +155,9 @@ import { ListPaginatorComponent } from '../../shared/components/list-paginator.c
                 }
                 @if (r.status === 'OPEN' || r.status === 'PARTIALLY_PAID') {
                   <button mat-stroked-button *appHasPermission="'AP_MANAGE'" (click)="pay(r)">Pay</button>
+                }
+                @if (r.status === 'OPEN' || r.status === 'PARTIALLY_PAID' || r.status === 'PAID') {
+                  <button mat-button *appHasPermission="'AP_MANAGE'" (click)="history(r)">History</button>
                 }
                 @if (r.matchStatus === 'EXCEPTION' && r.status === 'DRAFT') {
                   <button mat-stroked-button *appHasPermission="'AP_MATCH_OVERRIDE'" (click)="openOverride(r)">
@@ -213,6 +231,10 @@ import { ListPaginatorComponent } from '../../shared/components/list-paginator.c
       }
       .row-actions {
         white-space: nowrap;
+      }
+      .sub {
+        color: var(--mat-sys-on-surface-variant, #49454f);
+        font-size: 0.85em;
       }
       .match-message {
         max-width: 360px;
@@ -344,6 +366,17 @@ export class ApListComponent implements OnInit {
           },
         });
       });
+  }
+
+  history(invoice: ApInvoiceDto) {
+    this.dialog.open(SettlementHistoryDialogComponent, {
+      width: '900px',
+      maxWidth: '96vw',
+      data: {
+        kind: 'AP',
+        invoice: { id: invoice.id, invoiceNumber: invoice.invoiceNumber, currencyCode: invoice.currencyCode ?? 'INR' },
+      },
+    });
   }
 
   load() {

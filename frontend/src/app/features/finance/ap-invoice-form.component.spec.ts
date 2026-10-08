@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { MatDialogRef } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ApInvoiceFormComponent } from './ap-invoice-form.component';
@@ -77,6 +77,17 @@ describe('ApInvoiceFormComponent', () => {
     instance = fixture.componentInstance as unknown as Record<string, any>;
     fixture.detectChanges();
     backend.expectOne('/api/lookups/suppliers').flush([{ id: 7, code: 'S7', name: 'Wire Co' }]);
+    backend.expectOne('/api/finance/tax/slabs').flush([
+      {
+        slabCode: 'GST18',
+        description: '18% goods',
+        components: [
+          { supplyType: 'INTRA', taxCode: 'CGST9', taxType: 'CGST', ratePct: 9 },
+          { supplyType: 'INTRA', taxCode: 'SGST9', taxType: 'SGST', ratePct: 9 },
+          { supplyType: 'INTER', taxCode: 'IGST18', taxType: 'IGST', ratePct: 18 },
+        ],
+      },
+    ]);
   });
 
   afterEach(() => backend.verify());
@@ -247,4 +258,85 @@ describe('ApInvoiceFormComponent', () => {
     instance['close']();
     expect(close).toHaveBeenCalledWith(true);
   });
+
+  it('previews the tax of a GST slab by place of supply and takes the tax box out of play', fakeAsync(() => {
+    instance['form'].controls.supplierId.setValue(7);
+    receiptsRequest().flush([receipt]);
+    instance['form'].controls.taxSlabCode.setValue('GST18');
+    instance['form'].controls.subtotal.setValue(20000);
+    tick(300);
+
+    const call = backend.expectOne((r) => r.url === '/api/finance/tax/determine');
+    expect(call.request.params.get('direction')).toBe('PURCHASE');
+    expect(call.request.params.get('slab')).toBe('GST18');
+    expect(call.request.params.get('partnerId')).toBe('7');
+    expect(call.request.params.get('amount')).toBe('20000');
+    call.flush({
+      slabCode: 'GST18',
+      supplyType: 'INTRA',
+      companyStateCode: '27',
+      partnerStateCode: '27',
+      partnerStateAssumed: false,
+      taxableAmount: 20000,
+      taxTotal: 3600,
+      lines: [
+        { taxCode: 'CGST9', taxType: 'CGST', ratePct: 9, taxableAmount: 20000, taxAmount: 1800 },
+        { taxCode: 'SGST9', taxType: 'SGST', ratePct: 9, taxableAmount: 20000, taxAmount: 1800 },
+      ],
+    });
+    fixture.detectChanges();
+
+    const preview = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="tax-preview"]');
+    expect(preview?.textContent).toContain('Within the company state: CGST + SGST');
+    expect(preview?.textContent).toContain('CGST 9% on 20,000.00 = 1,800.00');
+    expect(preview?.textContent).toContain('Tax 3,600.00');
+    expect(instance['form'].controls.taxTotal.disabled).toBe(true);
+    expect(instance['total']()).toBe(23600);
+    flush();
+  }));
+
+  it('sends the slab and an upper-case currency, and no typed tax amount, when a slab is chosen', fakeAsync(() => {
+    chooseReceipt();
+    instance['form'].controls.taxSlabCode.setValue('GST18');
+    instance['form'].controls.currencyCode.setValue('usd');
+    instance['form'].controls.subtotal.setValue(250);
+    tick(300);
+    backend
+      .expectOne((r) => r.url === '/api/finance/tax/determine')
+      .flush({
+        slabCode: 'GST18',
+        supplyType: 'INTER',
+        companyStateCode: '27',
+        partnerStateCode: '29',
+        partnerStateAssumed: false,
+        taxableAmount: 250,
+        taxTotal: 45,
+        lines: [{ taxCode: 'IGST18', taxType: 'IGST', ratePct: 18, taxableAmount: 250, taxAmount: 45 }],
+      });
+
+    instance['save']();
+
+    const post = backend.expectOne('/api/ap/invoices');
+    expect(post.request.body.taxSlabCode).toBe('GST18');
+    expect(post.request.body.currencyCode).toBe('USD');
+    expect(post.request.body.taxTotal).toBeNull();
+    expect(post.request.body.subtotal).toBe(250);
+    post.flush(
+      invoice({
+        subtotal: 250,
+        taxTotal: 45,
+        totalAmount: 295,
+        currencyCode: 'USD',
+        exchangeRate: 80,
+        totalInr: 23600,
+        taxLines: [{ taxCode: 'IGST18', taxType: 'IGST', ratePct: 18, taxableAmount: 250, taxAmount: 45 }],
+      }),
+    );
+    fixture.detectChanges();
+
+    expect(text()).toContain('IGST 18%');
+    expect((fixture.nativeElement as HTMLElement).querySelector('[data-testid="result-inr"]')?.textContent).toContain(
+      '23,600.00',
+    );
+  }));
 });
