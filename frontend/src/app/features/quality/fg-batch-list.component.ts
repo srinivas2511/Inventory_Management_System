@@ -3,6 +3,7 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { DecimalPipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
+import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -10,6 +11,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { FgHoldDecision, FgHoldDecisionDialogComponent } from './fg-hold-decision-dialog.component';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
 import { PagedList } from '../../shared/paged-list';
@@ -136,6 +138,7 @@ export interface FgBatchDto {
 export class FgBatchListComponent implements OnInit {
   private http = inject(HttpClient);
   private snack = inject(MatSnackBar);
+  private dialog = inject(MatDialog);
 
   columns = ['batchNumber', 'product', 'producedOn', 'producedQty', 'approvedQty', 'qualityStatus', 'actions'];
   rows = signal<FgBatchDto[]>([]);
@@ -188,21 +191,28 @@ export class FgBatchListComponent implements OnInit {
   }
 
   resolveHold(batch: FgBatchDto): void {
-    const approvedStr = prompt(`Batch ${batch.batchNumber} on HOLD\nEnter qty to APPROVE:`);
-    if (approvedStr == null) return;
-    const reason = prompt('Reason for decision:');
-    if (!reason) return;
-
-    const approved = parseFloat(approvedStr) || 0;
-    const rejected = Math.max(0, batch.producedQty - approved);
-
-    const body = { approvedQty: approved, rejectedQty: rejected, rejectionReasons: [], reason };
-    this.http.post(`/api/quality/fg-batches/${batch.id}/approve-hold`, body).subscribe({
-      next: () => {
-        this.snack.open('Hold resolved', 'OK', { duration: 3000 });
-        this.load();
-      },
-      error: (e) => this.snack.open(e.error?.detail ?? 'Error resolving hold', 'OK', { duration: 5000 }),
-    });
+    const heldQty = Math.max(0, Math.round((batch.producedQty - batch.approvedQty - batch.rejectedQty) * 1000) / 1000);
+    this.dialog
+      .open<FgHoldDecisionDialogComponent, { batchNumber: string; heldQty: number }, FgHoldDecision>(
+        FgHoldDecisionDialogComponent,
+        { data: { batchNumber: batch.batchNumber, heldQty } },
+      )
+      .afterClosed()
+      .subscribe((decision) => {
+        if (!decision) return;
+        const body = {
+          approvedQty: decision.approvedQty,
+          rejectedQty: decision.rejectedQty,
+          rejectionReasons: [],
+          reason: decision.reason,
+        };
+        this.http.post(`/api/quality/fg-batches/${batch.id}/approve-hold`, body).subscribe({
+          next: () => {
+            this.snack.open('Hold resolved', 'OK', { duration: 3000 });
+            this.load();
+          },
+          error: (e) => this.snack.open(e.error?.detail ?? 'Error resolving hold', 'OK', { duration: 5000 }),
+        });
+      });
   }
 }
