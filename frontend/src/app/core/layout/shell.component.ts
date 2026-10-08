@@ -1,5 +1,5 @@
 import { BreakpointObserver } from '@angular/cdk/layout';
-import { Component, inject } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -14,6 +14,7 @@ import { AuthService } from '../auth/auth.service';
 import { SessionStore } from '../auth/session.store';
 import { AppConfigService } from '../config/app-config.service';
 import { LoadingService } from '../http/loading.service';
+import { ModuleStore } from '../modules/module.store';
 import { NotificationBellComponent } from '../../features/notifications/notification-bell.component';
 import { visibleGroups } from './nav.config';
 
@@ -40,9 +41,14 @@ export class ShellComponent {
   protected readonly appName = inject(AppConfigService).appName;
   protected readonly loading = inject(LoadingService).isLoading;
   protected readonly session = inject(SessionStore);
-  protected readonly groups = visibleGroups(undefined, this.session);
+  private readonly modules = inject(ModuleStore);
+  protected readonly groups = computed(() => visibleGroups(undefined, this.session, this.modules.inactive()));
 
   private readonly authService = inject(AuthService);
+
+  constructor() {
+    this.modules.load();
+  }
 
   protected readonly isCompact = toSignal(
     inject(BreakpointObserver)

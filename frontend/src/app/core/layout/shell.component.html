@@ -26,7 +26,7 @@
 }
 <mat-sidenav-container class="container">
   <mat-sidenav #nav [mode]="isCompact() ? 'over' : 'side'" [opened]="!isCompact()" class="sidenav">
-    @for (group of groups; track group.label) {
+    @for (group of groups(); track group.label) {
       <div mat-subheader>{{ group.label }}</div>
       <mat-nav-list>
         @for (item of group.items; track item.route) {

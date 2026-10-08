@@ -744,6 +744,12 @@ export const routes: Routes = [
           import('./features/admin/settings/system-settings.component').then((m) => m.SystemSettingsComponent),
       },
       {
+        path: 'admin/modules',
+        title: 'Modules',
+        canActivate: [permissionGuard('MODULE_MANAGE')],
+        loadComponent: () => import('./features/admin/modules/modules.component').then((m) => m.ModulesComponent),
+      },
+      {
         path: 'admin/attribute-definitions',
         title: 'Attribute Definitions',
         canActivate: [permissionGuard('ATTRIBUTE_MANAGE')],

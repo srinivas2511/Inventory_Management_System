@@ -32,6 +32,10 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
             const returnUrl = safeReturnUrl(router.url);
             void router.navigate(['/change-password'], returnUrl ? { queryParams: { returnUrl } } : {});
           }
+        } else if (error.status === 403 && problem?.code === 'STEP_UP_REQUIRED') {
+          // the user cancelled the password prompt: the action simply did not happen, so no permission toast
+        } else if (error.status === 403 && problem?.code === 'MODULE_INACTIVE') {
+          toast.error(problem.detail ?? 'This module is not active.');
         } else if (error.status === 0) {
           toast.error('Cannot reach the server. Check your connection and try again.');
         } else if (error.status === 403) {

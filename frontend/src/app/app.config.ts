@@ -12,13 +12,15 @@ import { correlationInterceptor } from './core/http/correlation.interceptor';
 import { errorInterceptor } from './core/http/error.interceptor';
 import { idempotencyInterceptor } from './core/http/idempotency.interceptor';
 import { loadingInterceptor } from './core/http/loading.interceptor';
+import { stepUpInterceptor } from './core/http/step-up.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes, withComponentInputBinding()),
     provideAnimationsAsync(),
-    // Order matters: loading wraps everything, errors are mapped last on the way back.
+    // Order matters: loading wraps everything, errors are mapped last on the way back. Step-up sits innermost so it
+    // sees a STEP_UP_REQUIRED refusal first and can ask for the password and retry before anything shows a toast.
     provideHttpClient(
       withInterceptors([
         loadingInterceptor,
@@ -26,6 +28,7 @@ export const appConfig: ApplicationConfig = {
         authInterceptor,
         idempotencyInterceptor,
         errorInterceptor,
+        stepUpInterceptor,
       ]),
     ),
     {

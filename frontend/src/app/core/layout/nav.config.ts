@@ -432,6 +432,7 @@ export const NAV_GROUPS: NavGroup[] = [
         enabled: true,
       },
       { label: 'Audit Logs', icon: 'history', route: '/admin/audit-logs', permission: 'AUDIT_VIEW', enabled: true },
+      { label: 'Modules', icon: 'extension', route: '/admin/modules', permission: 'MODULE_MANAGE', enabled: true },
       {
         label: 'Notification Admin',
         icon: 'mark_email_read',
@@ -471,12 +472,40 @@ export const NAV_GROUPS: NavGroup[] = [
   },
 ];
 
-export function visibleGroups(groups: NavGroup[] = NAV_GROUPS, session?: SessionStore): NavGroup[] {
+/** The optional module a screen belongs to, by route; the always-active core belongs to none. */
+const MODULE_ROUTES: [string, string][] = [
+  ['/finance', 'FINANCE'],
+  ['/controlling', 'CONTROLLING'],
+  ['/mrp', 'MRP'],
+  ['/crm', 'CRM'],
+  ['/hrm', 'HRM'],
+  ['/wms', 'WMS'],
+  ['/plm', 'PLM'],
+  ['/quality/spc', 'QUALITY_PLUS'],
+  ['/quality/capa', 'QUALITY_PLUS'],
+  ['/quality/complaints', 'QUALITY_PLUS'],
+  ['/quality/fai', 'QUALITY_PLUS'],
+  ['/documents', 'DOCUMENTS'],
+  ['/analytics', 'ANALYTICS'],
+];
+
+export function moduleOfRoute(route: string): string | null {
+  const match = MODULE_ROUTES.find(([prefix]) => route === prefix || route.startsWith(prefix + '/'));
+  return match ? match[1] : null;
+}
+
+export function visibleGroups(
+  groups: NavGroup[] = NAV_GROUPS,
+  session?: SessionStore,
+  inactiveModules: ReadonlySet<string> = new Set(),
+): NavGroup[] {
   return groups
     .map((g) => ({
       ...g,
       items: g.items.filter((i) => {
         if (!i.enabled) return false;
+        const module = moduleOfRoute(i.route);
+        if (module && inactiveModules.has(module)) return false;
         if (!i.permission) return true;
         return session ? session.hasPermission(i.permission) : false;
       }),
