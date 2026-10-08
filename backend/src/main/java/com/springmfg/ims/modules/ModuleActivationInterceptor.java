@@ -2,11 +2,12 @@ package com.springmfg.ims.modules;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
-/** Refuses a request to an optional module an administrator has switched off, before the controller runs. */
-@Component
+/**
+ * Refuses a request to an optional module an administrator has switched off, before the controller runs. Not a scanned
+ * bean: {@link ModuleWebConfig} registers it when the module service exists, so controller-only test slices are unaffected.
+ */
 public class ModuleActivationInterceptor implements HandlerInterceptor {
 
     private final ModuleService modules;

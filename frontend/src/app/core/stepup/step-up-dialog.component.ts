@@ -1,11 +1,10 @@
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { ApiService } from '../api/api.service';
 
 /** Asks for the password again before a sensitive action (SEC-010). The password is sent once and never kept. */
 @Component({
@@ -49,7 +48,7 @@ import { ApiService } from '../api/api.service';
 })
 export class StepUpDialogComponent {
   protected readonly ref = inject<MatDialogRef<StepUpDialogComponent, boolean>>(MatDialogRef);
-  private readonly api = inject(ApiService);
+  private readonly http = inject(HttpClient);
 
   protected readonly password = new FormControl('', { nonNullable: true, validators: [Validators.required] });
   protected readonly error = signal<string | null>(null);
@@ -59,7 +58,7 @@ export class StepUpDialogComponent {
     if (this.password.invalid || this.busy()) return;
     this.busy.set(true);
     this.error.set(null);
-    this.api.post('/auth/step-up', { credential: this.password.value }).subscribe({
+    this.http.post('/api/auth/step-up', { credential: this.password.value }).subscribe({
       next: () => this.ref.close(true),
       error: (e: HttpErrorResponse) => {
         this.busy.set(false);
