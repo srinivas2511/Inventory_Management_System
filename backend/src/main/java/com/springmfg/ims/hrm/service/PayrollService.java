@@ -24,6 +24,7 @@ import com.springmfg.ims.common.exception.ConflictException;
 import com.springmfg.ims.common.exception.ErrorCode;
 import com.springmfg.ims.common.exception.NotFoundException;
 import com.springmfg.ims.common.numbering.DocumentNumberService;
+import com.springmfg.ims.common.security.SegregationOfDuties;
 import com.springmfg.ims.common.settings.SystemSettingService;
 import com.springmfg.ims.finance.gl.dto.AutoJournalRequest;
 import com.springmfg.ims.finance.gl.dto.JournalHeaderDto;
@@ -222,6 +223,11 @@ public class PayrollService {
         }
         YearMonth ym = YearMonth.of(run.getPeriodYear(), run.getPeriodMonth());
         Long uid = HrmSecurity.currentUserId();
+        // Segregation of duties (ARCHITECTURE section 10, requester != approver): the person who initiated the run
+        // cannot approve it; approval is what posts the payroll journal, so it needs a second person.
+        SegregationOfDuties.requireDifferentUser(uid, run.getInitiatedBy(),
+                "You initiated payroll run " + run.getRunNumber()
+                        + "; a different user with payroll rights must approve it");
 
         JournalHeaderDto journal = journalService.postSourceJournal(new AutoJournalRequest("PAYROLL", "hrm",
                 "PAYROLL_RUN", run.getId(), ym.atEndOfMonth(), "Payroll " + run.getRunNumber() + " " + ym, uid,

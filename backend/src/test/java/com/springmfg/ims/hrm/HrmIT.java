@@ -178,7 +178,7 @@ class HrmIT extends AbstractIntegrationTest {
         assertThat(lowSlip.getWorkingDays()).isEqualByComparingTo("26.0");
         assertThat(slipOf(calculated.id(), high.id()).getPfEmployee()).isEqualByComparingTo("1800.00");
 
-        PayrollRunDto approved = payrollService.approve(calculated.id());
+        PayrollRunDto approved = td.asSecondUser(() -> payrollService.approve(calculated.id()), "PAYROLL_RUN");
         assertThat(approved.status()).isEqualTo("COMPLETED");
         assertThat(approved.journalHeaderId()).isNotNull();
 
@@ -228,7 +228,7 @@ class HrmIT extends AbstractIntegrationTest {
 
         PayrollRunDto calculated = run(7, 2026);
         closePeriodContaining(LocalDate.of(2026, 7, 15));
-        assertThatThrownBy(() -> payrollService.approve(calculated.id()))
+        assertThatThrownBy(() -> td.asSecondUser(() -> payrollService.approve(calculated.id()), "PAYROLL_RUN"))
                 .isInstanceOf(BusinessRuleException.class)
                 .extracting("code").isEqualTo(ErrorCode.PERIOD_CLOSED);
         assertThat(payrollService.get(calculated.id()).status()).isEqualTo("DRAFT");
@@ -247,6 +247,26 @@ class HrmIT extends AbstractIntegrationTest {
 
     @Test
     @Transactional
+    @DisplayName("SOD-PAY-1: the user who initiated a payroll run cannot approve it; a different user can")
+    void initiatorCannotApproveTheirOwnPayrollRun() {
+        employee("12000", null, null);
+        PayrollRunDto draft = td.asUser(7_920_001L, () -> run(9, 2026), "PAYROLL_RUN");
+        assertThat(draft.initiatedBy()).isEqualTo(7_920_001L);
+
+        assertThatThrownBy(() -> td.asUser(7_920_001L, () -> payrollService.approve(draft.id()), "PAYROLL_RUN"))
+                .isInstanceOf(BusinessRuleException.class)
+                .extracting("code").isEqualTo(ErrorCode.SEGREGATION_OF_DUTIES);
+        assertThat(payrollService.get(draft.id()).status()).isEqualTo("DRAFT");
+
+        PayrollRunDto approved = td.asUser(7_920_002L, () -> payrollService.approve(draft.id()), "PAYROLL_RUN");
+        assertThat(approved.status()).isEqualTo("COMPLETED");
+        assertThat(approved.approvedBy()).isEqualTo(7_920_002L);
+        assertThat(approved.initiatedBy()).isEqualTo(7_920_001L);
+        assertThat(approved.journalHeaderId()).isNotNull();
+    }
+
+    @Test
+    @Transactional
     @DisplayName("Approved payroll freezes the month's attendance and leave; draft runs do not")
     void approvedPayrollFreezesAttendanceAndLeave() {
         EmployeeDto e = employee("12000", user(), null);
@@ -255,7 +275,7 @@ class HrmIT extends AbstractIntegrationTest {
                 AttendanceStatus.ABSENT, "before approval"));
 
         payrollService.calculate(draft.id());
-        payrollService.approve(draft.id());
+        td.runAsSecondUser(() -> payrollService.approve(draft.id()), "PAYROLL_RUN");
 
         assertThatThrownBy(() -> attendanceService.record(new RecordAttendanceRequest(e.id(),
                 LocalDate.of(2026, 8, 5), null, null, null, AttendanceStatus.ABSENT, "late")))
