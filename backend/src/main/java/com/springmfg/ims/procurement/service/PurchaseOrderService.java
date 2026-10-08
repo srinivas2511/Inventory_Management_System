@@ -19,6 +19,7 @@ import com.springmfg.ims.common.exception.ErrorCode;
 import com.springmfg.ims.common.exception.NotFoundException;
 import com.springmfg.ims.common.event.PurchaseOrderApprovedEvent;
 import com.springmfg.ims.common.numbering.DocumentNumberService;
+import com.springmfg.ims.common.security.SegregationOfDuties;
 import com.springmfg.ims.procurement.domain.PurchaseOrder;
 import com.springmfg.ims.procurement.domain.PurchaseOrderItem;
 import com.springmfg.ims.procurement.domain.PurchaseRequisition;
@@ -130,10 +131,8 @@ public class PurchaseOrderService {
         requireState(po, "SUBMITTED", "APPROVED");
         Long userId = currentUserId();
         // Segregation of duties: approver != submitter
-        if (userId.equals(po.getSubmittedBy())) {
-            throw new BusinessRuleException(ErrorCode.SEGREGATION_OF_DUTIES,
-                    "Requester cannot approve own purchase order");
-        }
+        SegregationOfDuties.requireDifferentUser(userId, po.getSubmittedBy(),
+                "Requester cannot approve own purchase order");
         po.setStatus("APPROVED");
         po.setApprovedBy(userId);
         po.setApprovedAt(Instant.now());

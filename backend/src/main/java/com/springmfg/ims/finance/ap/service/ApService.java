@@ -5,6 +5,7 @@ import com.springmfg.ims.common.exception.BusinessRuleException;
 import com.springmfg.ims.common.exception.ErrorCode;
 import com.springmfg.ims.common.exception.NotFoundException;
 import com.springmfg.ims.common.numbering.DocumentNumberService;
+import com.springmfg.ims.common.security.SegregationOfDuties;
 import com.springmfg.ims.finance.ap.domain.ApInvoice;
 import com.springmfg.ims.finance.ap.domain.ApPayment;
 import com.springmfg.ims.finance.ap.dto.ApAgeingRow;
@@ -193,10 +194,8 @@ public class ApService {
             throw new BusinessRuleException(ErrorCode.VALIDATION_FAILED, "A reason is required to approve a match exception");
         }
         Long actor = currentUserId();
-        if (inv.getCreatedBy() != null && inv.getCreatedBy().equals(actor)) {
-            throw new BusinessRuleException(ErrorCode.SEGREGATION_OF_DUTIES,
-                    "You entered invoice " + inv.getInvoiceNumber() + "; a different finance manager must approve its variance");
-        }
+        SegregationOfDuties.requireDifferentUser(actor, inv.getCreatedBy(),
+                "You entered invoice " + inv.getInvoiceNumber() + "; a different finance manager must approve its variance");
         var position = matchService.lockAndRead(inv.getGoodsReceiptId(), inv.getSupplierId(), inv.getId());
         var settled = ThreeWayMatchCalculator.settle(inv.getSubtotal(), position.value(), position.invoiced());
         inv.setMatchStatus("OVERRIDDEN");

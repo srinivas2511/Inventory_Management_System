@@ -28,6 +28,7 @@ import com.springmfg.ims.common.exception.BusinessRuleException;
 import com.springmfg.ims.common.exception.ErrorCode;
 import com.springmfg.ims.common.exception.NotFoundException;
 import com.springmfg.ims.common.numbering.DocumentNumberService;
+import com.springmfg.ims.common.security.SegregationOfDuties;
 import com.springmfg.ims.document.domain.Document;
 import com.springmfg.ims.document.domain.DocumentCategory;
 import com.springmfg.ims.document.domain.DocumentLink;
@@ -251,10 +252,8 @@ public class DocumentService {
         Document d = documents.findByIdForUpdate(id).orElseThrow(() -> new NotFoundException("Document", id));
         DocumentVersion current = versions.findByDocumentIdAndVersionNo(id, d.getCurrentVersionNo())
                 .orElseThrow(() -> new NotFoundException("Document version", d.getCurrentVersionNo()));
-        if (currentUserId().equals(current.getUploadedBy())) {
-            throw new BusinessRuleException(ErrorCode.SEGREGATION_OF_DUTIES,
-                    "The person who uploaded the current version cannot approve it");
-        }
+        SegregationOfDuties.requireDifferentUser(currentUserId(), current.getUploadedBy(),
+                "The person who uploaded the current version cannot approve it");
         return transition(d, DocumentStatus.APPROVED, "DOCUMENT_APPROVED", null);
     }
 

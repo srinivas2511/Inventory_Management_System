@@ -15,6 +15,7 @@ import com.springmfg.ims.approval.repository.ApprovalRequestRepository;
 import com.springmfg.ims.common.exception.BusinessRuleException;
 import com.springmfg.ims.common.exception.ErrorCode;
 import com.springmfg.ims.common.exception.NotFoundException;
+import com.springmfg.ims.common.security.SegregationOfDuties;
 
 /**
  * Generic multi-step approval engine (DESIGN.md §4.5).
@@ -67,10 +68,8 @@ public class ApprovalService {
         }
 
         Long currentUserId = currentUserId();
-        if (ar.getRequestedBy().equals(currentUserId)) {
-            throw new BusinessRuleException(ErrorCode.SEGREGATION_OF_DUTIES,
-                    "Requester cannot approve their own request");
-        }
+        SegregationOfDuties.requireDifferentUser(currentUserId, ar.getRequestedBy(),
+                "Requester cannot approve their own request");
 
         ar.setStatus("APPROVED");
         ar.setDecidedBy(currentUserId);
