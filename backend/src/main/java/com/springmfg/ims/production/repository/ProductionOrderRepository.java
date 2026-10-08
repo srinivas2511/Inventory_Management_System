@@ -30,6 +30,15 @@ public interface ProductionOrderRepository extends JpaRepository<ProductionOrder
            "WHERE po.id = :orderId AND (po.supervisorId = :userId OR op.assignedOperatorId = :userId)")
     boolean isAccessibleByUser(@Param("orderId") Long orderId, @Param("userId") Long userId);
 
+    @Query("SELECT po FROM ProductionOrder po WHERE " +
+           "(:status IS NULL OR po.status = :status) AND (:productId IS NULL OR po.productId = :productId) AND " +
+           "(:scoped = FALSE OR po.plantId IN :plantIds)")
+    Page<ProductionOrder> searchInPlants(@Param("status") String status,
+                                         @Param("productId") Long productId,
+                                         @Param("scoped") boolean scoped,
+                                         @Param("plantIds") java.util.Collection<Long> plantIds,
+                                         Pageable pageable);
+
     @Query("SELECT po FROM ProductionOrder po WHERE po.status = 'IN_PROGRESS' AND po.expectedCompletionDate < :today")
     List<ProductionOrder> findDelayed(@Param("today") LocalDate today);
 

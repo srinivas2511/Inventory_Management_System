@@ -157,7 +157,7 @@ public class AuthService {
         return new LoginResponse(
             accessToken, jwtService.getAccessMinutes() * 60L, user.isMustChangePassword(),
             new UserInfo(user.getId(), user.getUsername(), user.getFullName(),
-                user.getRoleCodes(), user.getPermissionCodes())
+                user.getRoleCodes(), user.getPermissionCodes(), plantScoped(user.getId()))
         );
     }
 
@@ -223,8 +223,13 @@ public class AuthService {
         return new LoginResponse(
             accessToken, jwtService.getAccessMinutes() * 60L, user.isMustChangePassword(),
             new UserInfo(user.getId(), user.getUsername(), user.getFullName(),
-                user.getRoleCodes(), user.getPermissionCodes())
+                user.getRoleCodes(), user.getPermissionCodes(), plantScoped(user.getId()))
         );
+    }
+
+    /** Whether the user is limited to some plants: the screens that cover all plants are hidden from them. */
+    private boolean plantScoped(Long userId) {
+        return !permissionCache.load(userId).plantIds().isEmpty();
     }
 
     @Transactional

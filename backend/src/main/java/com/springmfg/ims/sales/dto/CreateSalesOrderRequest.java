@@ -13,4 +13,12 @@ public record CreateSalesOrderRequest(
         String deliveryAddress,
         String paymentTerms,
         String notes,
-        @Valid List<AddSalesOrderItemRequest> items) {}
+        @Valid List<AddSalesOrderItemRequest> items,
+        Long plantId) {
+
+    /** Without a plant: the creating user's only plant, or the default plant. */
+    public CreateSalesOrderRequest(Long customerId, LocalDate orderDate, LocalDate requiredDate, String deliveryAddress,
+                                   String paymentTerms, String notes, List<AddSalesOrderItemRequest> items) {
+        this(customerId, orderDate, requiredDate, deliveryAddress, paymentTerms, notes, items, null);
+    }
+}

@@ -31,9 +31,16 @@ public class WarehouseService {
     private final WarehouseLocationRepository locationRepo;
     private final AuditService auditService;
 
+    private final com.springmfg.ims.enterprise.scope.PlantScope plantScope;
+
+
     public WarehouseService(WarehouseRepository warehouseRepo,
                             WarehouseLocationRepository locationRepo,
-                            AuditService auditService) {
+                            AuditService auditService,
+
+            com.springmfg.ims.enterprise.scope.PlantScope plantScope) {
+
+        this.plantScope = plantScope;
         this.warehouseRepo = warehouseRepo;
         this.locationRepo = locationRepo;
         this.auditService = auditService;
@@ -41,7 +48,9 @@ public class WarehouseService {
 
     @Transactional(readOnly = true)
     public List<WarehouseDto> search(String q, Boolean active) {
-        return warehouseRepo.search(q, active).stream().map(WarehouseDto::from).toList();
+        return warehouseRepo.search(q, active).stream()
+                .filter(w -> plantScope.canSee(w.getPlantId()))
+                .map(WarehouseDto::from).toList();
     }
 
     @Transactional(readOnly = true)
@@ -56,6 +65,7 @@ public class WarehouseService {
         }
         Warehouse w = new Warehouse();
         apply(w, req);
+        w.setPlantId(plantScope.resolveForCreate(null));
         warehouseRepo.save(w);
         auditService.record("CREATE", "WAREHOUSE", String.valueOf(w.getId()), null, w.getWarehouseCode(), null);
         return WarehouseDto.from(w);
@@ -82,6 +92,7 @@ public class WarehouseService {
 
     @Transactional(readOnly = true)
     public List<WarehouseLocationDto> listLocations(Long warehouseId, Boolean active) {
+        require(warehouseId);
         List<WarehouseLocation> locations = (active != null && active)
                 ? locationRepo.findByWarehouseIdAndActiveTrue(warehouseId)
                 : locationRepo.findByWarehouseId(warehouseId);
@@ -137,8 +148,10 @@ public class WarehouseService {
     }
 
     private Warehouse require(Long id) {
-        return warehouseRepo.findById(id)
+        Warehouse w = warehouseRepo.findById(id)
                 .orElseThrow(() -> new NotFoundException("Warehouse not found: " + id));
+        plantScope.assertVisible(w.getPlantId(), "Warehouse", id);
+        return w;
     }
 
     private WarehouseLocation requireLocation(Long warehouseId, Long locationId) {

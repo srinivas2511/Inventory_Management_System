@@ -48,6 +48,9 @@ public class Dispatch extends BaseEntity {
     @Column(length = 300)
     private String notes;
 
+    @jakarta.persistence.Column(name = "plant_id")
+    private Long plantId;
+
     public Dispatch() {}
 
     public String getDispatchNumber() { return dispatchNumber; }
@@ -59,6 +62,8 @@ public class Dispatch extends BaseEntity {
     public String getLrNumber() { return lrNumber; }
     public String getDeliveryAddress() { return deliveryAddress; }
     public String getInvoiceReference() { return invoiceReference; }
+        public Long getPlantId() { return plantId; }
+    public void setPlantId(Long plantId) { this.plantId = plantId; }
     public String getStatus() { return status; }
     public Long getDispatchedBy() { return dispatchedBy; }
     public String getNotes() { return notes; }

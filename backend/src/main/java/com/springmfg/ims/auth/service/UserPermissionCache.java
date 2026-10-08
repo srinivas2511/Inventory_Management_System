@@ -27,9 +27,13 @@ public class UserPermissionCache {
     private final UserRepository userRepository;
     private final CacheManager cacheManager;
 
-    public UserPermissionCache(UserRepository userRepository, CacheManager cacheManager) {
+    private final com.springmfg.ims.enterprise.scope.PlantAccessService plantAccess;
+
+    public UserPermissionCache(UserRepository userRepository, CacheManager cacheManager,
+                               com.springmfg.ims.enterprise.scope.PlantAccessService plantAccess) {
         this.userRepository = userRepository;
         this.cacheManager = cacheManager;
+        this.plantAccess = plantAccess;
     }
 
     /**
@@ -38,11 +42,17 @@ public class UserPermissionCache {
      * entry after the commit, so the longest a stale value can live is the cache TTL.
      */
     public record CachedUser(Long id, String username, boolean active, int permissionVersion,
-                             Set<String> roles, Set<String> permissions, boolean mustChangePassword) {
+                             Set<String> roles, Set<String> permissions, boolean mustChangePassword,
+                             Set<Long> plantIds) {
+
+        public CachedUser(Long id, String username, boolean active, int permissionVersion,
+                          Set<String> roles, Set<String> permissions, boolean mustChangePassword) {
+            this(id, username, active, permissionVersion, roles, permissions, mustChangePassword, Set.of());
+        }
 
         public CachedUser(Long id, String username, boolean active, int permissionVersion,
                           Set<String> roles, Set<String> permissions) {
-            this(id, username, active, permissionVersion, roles, permissions, false);
+            this(id, username, active, permissionVersion, roles, permissions, false, Set.of());
         }
     }
 
@@ -52,9 +62,13 @@ public class UserPermissionCache {
         User u = userRepository.findById(userId)
             .orElseThrow(() -> new NotFoundException("User", userId));
         // fetch roles + permissions eagerly so they are available after transaction
+        Set<String> permissions = u.getPermissionCodes();
+        // A user is plant-scoped only when assigned to plants AND not holding PLANT_ALL_ACCESS. An empty set means
+        // "every plant", which is what a default single-plant install and every pre-existing user keep.
+        Set<Long> plantIds = permissions.contains("PLANT_ALL_ACCESS") ? Set.of() : plantAccess.plantIdsOf(userId);
         return new CachedUser(
             u.getId(), u.getUsername(), u.isActive(), u.getPermissionVersion(),
-            u.getRoleCodes(), u.getPermissionCodes(), u.isMustChangePassword()
+            u.getRoleCodes(), permissions, u.isMustChangePassword(), plantIds
         );
     }
 

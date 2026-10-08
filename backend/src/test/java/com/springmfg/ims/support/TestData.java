@@ -68,6 +68,25 @@ public class TestData {
         }
     }
 
+    /**
+     * Runs one step as a user limited to the given plants (an empty set is unrestricted, like every user without an
+     * assignment), holding the given authorities, then restores. The plants travel in the principal, as they do for a
+     * user loaded from the database.
+     */
+    public <T> T asPlantUser(long userId, Set<Long> plantIds, java.util.function.Supplier<T> step,
+                             String... authorities) {
+        Authentication before = SecurityContextHolder.getContext().getAuthentication();
+        try {
+            Set<String> codes = Set.copyOf(Arrays.asList(authorities));
+            CachedUser user = new CachedUser(userId, "user." + userId, true, 0, Set.of(), codes, false, plantIds);
+            SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(user, null,
+                    codes.stream().map(SimpleGrantedAuthority::new).toList()));
+            return step.get();
+        } finally {
+            SecurityContextHolder.getContext().setAuthentication(before);
+        }
+    }
+
     /** Same as {@link #asSecondUser(java.util.function.Supplier, String...)} for a step that returns nothing. */
     public void runAsSecondUser(Runnable step, String... authorities) {
         asSecondUser(() -> {

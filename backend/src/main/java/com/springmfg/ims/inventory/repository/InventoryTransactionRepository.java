@@ -26,7 +26,8 @@ public interface InventoryTransactionRepository extends JpaRepository<InventoryT
            "(:wh IS NULL OR t.warehouseId = :wh) AND " +
            "(:type IS NULL OR t.transactionType = :type) AND " +
            "t.transactionDate >= :from AND " +
-           "t.transactionDate <= :to " +
+           "t.transactionDate <= :to AND " +
+           "(:scoped = FALSE OR t.warehouseId IN :whIds) " +
            "ORDER BY t.transactionDate DESC")
     Page<InventoryTransaction> searchBounded(
             @Param("matId") Long materialId,
@@ -35,12 +36,21 @@ public interface InventoryTransactionRepository extends JpaRepository<InventoryT
             @Param("type") String transactionType,
             @Param("from") Instant from,
             @Param("to") Instant to,
+            @Param("scoped") boolean scoped,
+            @Param("whIds") java.util.Collection<Long> warehouseIds,
             Pageable pageable);
+
+    default Page<InventoryTransaction> searchInWarehouses(Long materialId, Long productId, Long warehouseId,
+            String transactionType, Instant from, Instant to, boolean scoped,
+            java.util.Collection<Long> warehouseIds, Pageable pageable) {
+        return searchBounded(materialId, productId, warehouseId, transactionType,
+                QueryBounds.from(from), QueryBounds.to(to), scoped, warehouseIds, pageable);
+    }
 
     default Page<InventoryTransaction> search(Long materialId, Long productId, Long warehouseId,
             String transactionType, Instant from, Instant to, Pageable pageable) {
-        return searchBounded(materialId, productId, warehouseId, transactionType,
-                QueryBounds.from(from), QueryBounds.to(to), pageable);
+        return searchInWarehouses(materialId, productId, warehouseId, transactionType, from, to, false,
+                List.of(-1L), pageable);
     }
 
     @Query("SELECT COALESCE(SUM(t.quantity), 0) FROM InventoryTransaction t WHERE " +

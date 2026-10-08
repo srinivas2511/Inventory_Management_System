@@ -55,6 +55,9 @@ public class SalesOrder extends BaseEntity {
     @Column(name = "cancel_reason", length = 300)
     private String cancelReason;
 
+    @jakarta.persistence.Column(name = "plant_id")
+    private Long plantId;
+
     public SalesOrder() {}
 
     public String getOrderNumber() { return orderNumber; }
@@ -64,6 +67,8 @@ public class SalesOrder extends BaseEntity {
     public String getDeliveryAddress() { return deliveryAddress; }
     public String getPaymentTerms() { return paymentTerms; }
     public String getNotes() { return notes; }
+        public Long getPlantId() { return plantId; }
+    public void setPlantId(Long plantId) { this.plantId = plantId; }
     public String getStatus() { return status; }
     public Long getSubmittedBy() { return submittedBy; }
     public Long getApprovedBy() { return approvedBy; }

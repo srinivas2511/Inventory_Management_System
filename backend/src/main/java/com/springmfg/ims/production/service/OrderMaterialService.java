@@ -54,6 +54,9 @@ public class OrderMaterialService {
     private final InventoryPostingService postingService;
     private final AuditService auditService;
 
+    private final com.springmfg.ims.enterprise.scope.PlantScope plantScope;
+
+
     public OrderMaterialService(ProductionOrderRepository orderRepo,
                                 ProductionOrderMaterialRepository pomRepo,
                                 ProductionOperationRepository operationRepo,
@@ -61,7 +64,11 @@ public class OrderMaterialService {
                                 WarehouseLocationRepository locationRepo,
                                 MaterialRepository materialRepo,
                                 InventoryPostingService postingService,
-                                AuditService auditService) {
+                                AuditService auditService,
+
+            com.springmfg.ims.enterprise.scope.PlantScope plantScope) {
+
+        this.plantScope = plantScope;
         this.orderRepo = orderRepo;
         this.pomRepo = pomRepo;
         this.operationRepo = operationRepo;
@@ -252,6 +259,9 @@ public class OrderMaterialService {
     }
 
     private ProductionOrder findOrder(Long orderId) {
-        return orderRepo.findById(orderId).orElseThrow(() -> new NotFoundException("Order not found: " + orderId));
+        ProductionOrder order = orderRepo.findById(orderId)
+                .orElseThrow(() -> new NotFoundException("Order not found: " + orderId));
+        plantScope.assertVisible(order.getPlantId(), "Production order", orderId);
+        return order;
     }
 }

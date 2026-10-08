@@ -23,17 +23,25 @@ public interface SalesOrderRepository extends JpaRepository<SalesOrder, Long> {
            "(:customerId IS NULL OR o.customerId = :customerId) AND " +
            "(:status IS NULL OR o.status = :status) AND " +
            "o.orderDate >= :from AND " +
-           "o.orderDate <= :to")
+           "o.orderDate <= :to AND " +
+           "(:scoped = FALSE OR o.plantId IN :plantIds)")
     Page<SalesOrder> searchBounded(
             @Param("customerId") Long customerId,
             @Param("status") String status,
             @Param("from") LocalDate from,
             @Param("to") LocalDate to,
+            @Param("scoped") boolean scoped,
+            @Param("plantIds") java.util.Collection<Long> plantIds,
             Pageable pageable);
+
+    default Page<SalesOrder> searchInPlants(Long customerId, String status, LocalDate from, LocalDate to,
+            boolean scoped, java.util.Collection<Long> plantIds, Pageable pageable) {
+        return searchBounded(customerId, status, QueryBounds.from(from), QueryBounds.to(to), scoped, plantIds, pageable);
+    }
 
     default Page<SalesOrder> search(Long customerId, String status, LocalDate from, LocalDate to,
             Pageable pageable) {
-        return searchBounded(customerId, status, QueryBounds.from(from), QueryBounds.to(to), pageable);
+        return searchInPlants(customerId, status, from, to, false, java.util.List.of(-1L), pageable);
     }
 
     @Query("SELECT COUNT(o) FROM SalesOrder o WHERE o.status NOT IN ('CLOSED','CANCELLED')")

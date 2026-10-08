@@ -16,8 +16,15 @@ public record CreatePoRequest(
         String paymentTerms,
         String remarks,
         Long requisitionId,
-        @NotEmpty @Valid List<PoLineRequest> items
+        @NotEmpty @Valid List<PoLineRequest> items,
+        Long plantId
 ) {
+    /** Without a plant: the creating user's only plant, or the default plant. */
+    public CreatePoRequest(Long supplierId, LocalDate poDate, LocalDate expectedDeliveryDate, String paymentTerms,
+                           String remarks, Long requisitionId, List<PoLineRequest> items) {
+        this(supplierId, poDate, expectedDeliveryDate, paymentTerms, remarks, requisitionId, items, null);
+    }
+
     public record PoLineRequest(
             @NotNull Long materialId,
             @NotNull @Positive BigDecimal orderedQty,

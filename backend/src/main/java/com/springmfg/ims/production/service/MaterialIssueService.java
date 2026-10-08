@@ -48,6 +48,9 @@ public class MaterialIssueService {
     private final AuditService auditService;
     private final ProductionOrderService orderService;
 
+    private final com.springmfg.ims.enterprise.scope.PlantScope plantScope;
+
+
     public MaterialIssueService(
             MaterialIssueRepository issueRepo,
             ProductionOrderRepository orderRepo,
@@ -59,7 +62,11 @@ public class MaterialIssueService {
             DocumentNumberService numberService,
             SystemSettingService settingService,
             AuditService auditService,
-            ProductionOrderService orderService) {
+            ProductionOrderService orderService,
+
+            com.springmfg.ims.enterprise.scope.PlantScope plantScope) {
+
+        this.plantScope = plantScope;
         this.issueRepo = issueRepo;
         this.orderRepo = orderRepo;
         this.pomRepo = pomRepo;
@@ -77,6 +84,7 @@ public class MaterialIssueService {
     public IssueDto issue(CreateIssueRequest req) {
         ProductionOrder order = orderRepo.findById(req.productionOrderId())
                 .orElseThrow(() -> new NotFoundException("Production order not found: " + req.productionOrderId()));
+        plantScope.assertVisible(order.getPlantId(), "Production order", req.productionOrderId());
 
         if (!List.of("RELEASED", "IN_PROGRESS").contains(order.getStatus())) {
             throw new BusinessRuleException(ErrorCode.ILLEGAL_STATE_TRANSITION,

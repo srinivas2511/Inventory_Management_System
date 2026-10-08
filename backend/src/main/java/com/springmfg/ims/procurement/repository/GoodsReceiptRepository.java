@@ -24,14 +24,22 @@ public interface GoodsReceiptRepository extends JpaRepository<GoodsReceipt, Long
            "(:poId IS NULL OR g.purchaseOrderId = :poId) AND " +
            "(:po = '' OR g.purchaseOrderId IN (SELECT p.id FROM PurchaseOrder p " +
            "   WHERE LOWER(p.poNumber) LIKE LOWER(CONCAT('%', :po, '%')))) AND " +
-           "g.receiptDate >= :from AND g.receiptDate <= :to")
+           "g.receiptDate >= :from AND g.receiptDate <= :to AND " +
+           "(:scoped = FALSE OR g.plantId IN :plantIds)")
     Page<GoodsReceipt> searchBounded(@Param("status") String status, @Param("poId") Long purchaseOrderId,
                                      @Param("po") String poNumber, @Param("from") LocalDate from,
-                                     @Param("to") LocalDate to, Pageable pageable);
+                                     @Param("to") LocalDate to, @Param("scoped") boolean scoped,
+                                     @Param("plantIds") java.util.Collection<Long> plantIds, Pageable pageable);
+
+    default Page<GoodsReceipt> searchInPlants(String status, Long purchaseOrderId, String poNumber,
+                                              LocalDate from, LocalDate to, boolean scoped,
+                                              java.util.Collection<Long> plantIds, Pageable pageable) {
+        return searchBounded(SearchText.normalise(status), purchaseOrderId, SearchText.normalise(poNumber),
+                QueryBounds.from(from), QueryBounds.to(to), scoped, plantIds, pageable);
+    }
 
     default Page<GoodsReceipt> search(String status, Long purchaseOrderId, String poNumber,
                                       LocalDate from, LocalDate to, Pageable pageable) {
-        return searchBounded(SearchText.normalise(status), purchaseOrderId, SearchText.normalise(poNumber),
-                QueryBounds.from(from), QueryBounds.to(to), pageable);
+        return searchInPlants(status, purchaseOrderId, poNumber, from, to, false, java.util.List.of(-1L), pageable);
     }
 }

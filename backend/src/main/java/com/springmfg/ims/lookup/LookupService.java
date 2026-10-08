@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.springmfg.ims.common.search.SearchText;
+import com.springmfg.ims.enterprise.scope.PlantScope;
 import com.springmfg.ims.lookup.LookupDtos.ActiveBom;
 import com.springmfg.ims.lookup.LookupDtos.DispatchableItem;
 import com.springmfg.ims.lookup.LookupDtos.DispatchableOrder;
@@ -39,7 +40,12 @@ public class LookupService {
 
     private final NamedParameterJdbcTemplate jdbc;
 
-    public LookupService(NamedParameterJdbcTemplate jdbc) {
+    private final com.springmfg.ims.enterprise.scope.PlantScope plantScope;
+
+
+    public LookupService(NamedParameterJdbcTemplate jdbc, com.springmfg.ims.enterprise.scope.PlantScope plantScope) {
+
+        this.plantScope = plantScope;
         this.jdbc = jdbc;
     }
 
@@ -54,8 +60,19 @@ public class LookupService {
     }
 
     public List<Option> warehouses(String q) {
-        return options("SELECT id, warehouse_code AS code, name FROM warehouses WHERE active = TRUE",
+        return options("SELECT id, warehouse_code AS code, name FROM warehouses WHERE active = TRUE"
+                        + " AND (:scoped = FALSE OR plant_id IN (:plantIds))",
                 "warehouse_code", q);
+    }
+
+    /** The plants the current user may create documents in. */
+    public List<Option> plants() {
+        return jdbc.query("""
+                SELECT id, plant_code AS code, name FROM plants
+                 WHERE active = TRUE AND (:scoped = FALSE OR id IN (:plantIds))
+                 ORDER BY id
+                """, scopeParams(),
+                (rs, i) -> new Option(rs.getLong("id"), rs.getString("code"), rs.getString("name")));
     }
 
     public List<ItemOption> materials(String q) {
@@ -72,8 +89,9 @@ public class LookupService {
         return jdbc.query("""
                 SELECT id, warehouse_id, location_code, name, location_type FROM warehouse_locations
                  WHERE active = TRUE AND (:wh = 0 OR warehouse_id = :wh)
+                   AND (:whScoped = FALSE OR warehouse_id IN (:whIds))
                  ORDER BY warehouse_id, location_code LIMIT 1000
-                """, new MapSqlParameterSource("wh", warehouseId == null ? 0L : warehouseId),
+                """, scopeParams().addValue("wh", warehouseId == null ? 0L : warehouseId),
                 (rs, i) -> new LocationOption(rs.getLong("id"), rs.getLong("warehouse_id"),
                         rs.getString("location_code"), rs.getString("name"), rs.getString("location_type")));
     }
@@ -98,8 +116,9 @@ public class LookupService {
                   JOIN purchase_order_items i ON i.purchase_order_id = po.id
                   JOIN materials m ON m.id = i.material_id
                  WHERE po.status IN ('SENT_TO_SUPPLIER', 'PARTIALLY_RECEIVED') AND i.ordered_qty > i.received_qty
+                   AND (:scoped = FALSE OR po.plant_id IN (:plantIds))
                  ORDER BY po.id DESC, i.line_no LIMIT 2000
-                """, new MapSqlParameterSource());
+                """, scopeParams());
         Map<Long, List<Map<String, Object>>> byPo = rows.stream().collect(
                 Collectors.groupingBy(r -> ((Number) r.get("po_id")).longValue(), LinkedHashMap::new,
                         Collectors.toList()));
@@ -143,10 +162,11 @@ public class LookupService {
                   JOIN purchase_order_items pi ON pi.id = gi.po_item_id
                  WHERE gr.status = 'POSTED'
                    AND (:s = 0 OR po.supplier_id = :s)
+                   AND (:scoped = FALSE OR gr.plant_id IN (:plantIds))
                  GROUP BY gr.id, gr.gr_number, gr.receipt_date, po.po_number, po.supplier_id
                  ORDER BY gr.receipt_date DESC, gr.id DESC
                  LIMIT 1000
-                """, new MapSqlParameterSource("s", supplierId == null ? 0L : supplierId),
+                """, scopeParams().addValue("s", supplierId == null ? 0L : supplierId),
                 (rs, i) -> {
                     BigDecimal value = rs.getBigDecimal("received_value");
                     BigDecimal invoiced = rs.getBigDecimal("invoiced_value");
@@ -168,8 +188,9 @@ public class LookupService {
                  WHERE b.item_type = 'PRODUCT' AND b.stock_status = 'AVAILABLE' AND b.qty_on_hand > 0
                    AND f.quality_status IN ('APPROVED', 'PARTIALLY_APPROVED')
                    AND (:p = 0 OR b.product_id = :p)
+                   AND (:whScoped = FALSE OR b.warehouse_id IN (:whIds))
                  ORDER BY f.produced_on, b.fg_batch_id, b.location_id LIMIT 1000
-                """, new MapSqlParameterSource("p", productId == null ? 0L : productId),
+                """, scopeParams().addValue("p", productId == null ? 0L : productId),
                 (rs, i) -> new FgStock(rs.getLong("fg_batch_id"), rs.getString("batch_number"),
                         rs.getLong("product_id"), rs.getLong("warehouse_id"), rs.getLong("location_id"),
                         rs.getString("location_code"), rs.getBigDecimal("qty_on_hand"),
@@ -187,8 +208,9 @@ public class LookupService {
                   JOIN warehouse_locations l ON l.id = b.location_id
                  WHERE b.item_type = 'MATERIAL' AND b.stock_status = 'AVAILABLE' AND mb.status = 'AVAILABLE'
                    AND b.material_id = :m AND b.warehouse_id = :w AND b.qty_on_hand - b.qty_reserved > 0
+                   AND (:whScoped = FALSE OR b.warehouse_id IN (:whIds))
                  ORDER BY mb.expiry_date NULLS LAST, mb.received_date, mb.id, b.location_id LIMIT 500
-                """, new MapSqlParameterSource("m", materialId).addValue("w", warehouseId),
+                """, scopeParams().addValue("m", materialId).addValue("w", warehouseId),
                 (rs, i) -> new MaterialStock(rs.getLong("material_batch_id"), rs.getString("batch_number"),
                         rs.getObject("expiry_date", java.time.LocalDate.class),
                         rs.getObject("received_date", java.time.LocalDate.class),
@@ -209,8 +231,9 @@ public class LookupService {
                   JOIN products p ON p.id = i.product_id
                  WHERE so.status IN ('APPROVED', 'ALLOCATED', 'PARTIALLY_DISPATCHED')
                    AND i.ordered_qty > i.dispatched_qty
+                   AND (:scoped = FALSE OR so.plant_id IN (:plantIds))
                  ORDER BY so.id DESC, i.line_no LIMIT 2000
-                """, new MapSqlParameterSource());
+                """, scopeParams());
         Map<Long, List<Map<String, Object>>> byOrder = rows.stream().collect(
                 Collectors.groupingBy(r -> ((Number) r.get("order_id")).longValue(), LinkedHashMap::new,
                         Collectors.toList()));
@@ -239,23 +262,35 @@ public class LookupService {
                   FROM sales_orders so
                   JOIN customers c ON c.id = so.customer_id
                  WHERE so.status = 'APPROVED'
+                   AND (:scoped = FALSE OR so.plant_id IN (:plantIds))
                  ORDER BY so.id DESC
                  LIMIT\s""" + LIMIT,
-                new MapSqlParameterSource(),
+                scopeParams(),
                 (rs, i) -> new PickableOrder(rs.getLong("id"), rs.getString("order_number"), rs.getString("customer_name")));
     }
 
     private List<Option> options(String select, String codeColumn, String q) {
         return jdbc.query(select + filter(codeColumn) + " ORDER BY " + codeColumn + " LIMIT " + LIMIT,
-                new MapSqlParameterSource("q", SearchText.normalise(q)),
+                scopeParams().addValue("q", SearchText.normalise(q)),
                 (rs, i) -> new Option(rs.getLong("id"), rs.getString("code"), rs.getString("name")));
     }
 
     private List<ItemOption> items(String select, String codeColumn, String q) {
         return jdbc.query(select + filter(codeColumn) + " ORDER BY " + codeColumn + " LIMIT " + LIMIT,
-                new MapSqlParameterSource("q", SearchText.normalise(q)),
+                scopeParams().addValue("q", SearchText.normalise(q)),
                 (rs, i) -> new ItemOption(rs.getLong("id"), rs.getString("code"), rs.getString("name"),
                         rs.getString("uom")));
+    }
+
+    /** Plant parameters every query may use: documents by plant, stock by the warehouses of the user's plants. */
+    private MapSqlParameterSource scopeParams() {
+        PlantScope.Filter plants = plantScope.filter();
+        PlantScope.Filter warehouses = plantScope.warehouseFilter();
+        return new MapSqlParameterSource()
+                .addValue("scoped", plants.scoped())
+                .addValue("plantIds", plants.plantIds())
+                .addValue("whScoped", warehouses.scoped())
+                .addValue("whIds", warehouses.plantIds());
     }
 
     private static String filter(String codeColumn) {

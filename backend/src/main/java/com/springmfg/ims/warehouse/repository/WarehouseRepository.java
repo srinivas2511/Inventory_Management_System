@@ -13,6 +13,9 @@ public interface WarehouseRepository extends JpaRepository<Warehouse, Long> {
 
     boolean existsByWarehouseCode(String code);
 
+    @Query("SELECT w.id FROM Warehouse w WHERE w.plantId IN :plantIds")
+    List<Long> findIdsByPlantIdIn(@Param("plantIds") java.util.Collection<Long> plantIds);
+
     List<Warehouse> findByActiveTrue();
 
     @Query("SELECT w FROM Warehouse w WHERE (:q = '' OR LOWER(w.name) LIKE LOWER(CONCAT('%', :q, '%')) OR LOWER(w.warehouseCode) LIKE LOWER(CONCAT('%', :q, '%'))) AND (:active IS NULL OR w.active = :active)")

@@ -68,6 +68,9 @@ public class PurchaseOrder extends BaseEntity {
     @OrderBy("lineNo")
     private List<PurchaseOrderItem> items = new ArrayList<>();
 
+    @jakarta.persistence.Column(name = "plant_id")
+    private Long plantId;
+
     public String getPoNumber() { return poNumber; }
     public void setPoNumber(String v) { this.poNumber = v; }
 
@@ -80,6 +83,8 @@ public class PurchaseOrder extends BaseEntity {
     public LocalDate getExpectedDeliveryDate() { return expectedDeliveryDate; }
     public void setExpectedDeliveryDate(LocalDate v) { this.expectedDeliveryDate = v; }
 
+        public Long getPlantId() { return plantId; }
+    public void setPlantId(Long plantId) { this.plantId = plantId; }
     public String getStatus() { return status; }
     public void setStatus(String v) { this.status = v; }
 

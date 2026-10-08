@@ -18,6 +18,7 @@ public enum ErrorCode {
     INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "Invalid credentials"),
     ACCESS_DENIED(HttpStatus.FORBIDDEN, "Access denied"),
     OUT_OF_SCOPE(HttpStatus.FORBIDDEN, "Outside your data scope"),
+    PLANT_SCOPE_COMPANY_LEVEL(HttpStatus.FORBIDDEN, "Company-level function not available to a plant-scoped user"),
     NOT_FOUND(HttpStatus.NOT_FOUND, "Not found"),
     ACCOUNT_LOCKED(HttpStatus.LOCKED, "Account locked"),
     ACCOUNT_DISABLED(HttpStatus.FORBIDDEN, "Account is disabled"),

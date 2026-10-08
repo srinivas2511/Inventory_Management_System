@@ -53,6 +53,9 @@ public class InventoryPostingService {
     private final AuditService auditService;
     private final ApplicationEventPublisher eventPublisher;
 
+    private final com.springmfg.ims.enterprise.scope.PlantScope plantScope;
+
+
     public InventoryPostingService(
             InventoryBalanceRepository balanceRepo,
             InventoryTransactionRepository txRepo,
@@ -63,7 +66,11 @@ public class InventoryPostingService {
             DocumentNumberService numberService,
             SystemSettingService settingService,
             AuditService auditService,
-            ApplicationEventPublisher eventPublisher) {
+            ApplicationEventPublisher eventPublisher,
+
+            com.springmfg.ims.enterprise.scope.PlantScope plantScope) {
+
+        this.plantScope = plantScope;
         this.balanceRepo = balanceRepo;
         this.txRepo = txRepo;
         this.batchRepo = batchRepo;
@@ -82,6 +89,7 @@ public class InventoryPostingService {
      */
     @Transactional(isolation = Isolation.READ_COMMITTED)
     public PostingResult post(PostingCommand cmd) {
+        plantScope.assertWarehouseVisible(cmd.warehouseId());
         validateCommand(cmd);
 
         InventoryBalance bal = lockOrCreate(cmd);
@@ -128,6 +136,8 @@ public class InventoryPostingService {
      */
     @Transactional(isolation = Isolation.READ_COMMITTED)
     public List<PostingResult> transfer(TransferCommand cmd) {
+        plantScope.assertWarehouseVisible(cmd.fromWarehouseId());
+        plantScope.assertWarehouseVisible(cmd.toWarehouseId());
         // Build both legs as posting commands
         PostingCommand outCmd = new PostingCommand(
                 "STOCK_TRANSFER", cmd.itemType(), cmd.materialId(), cmd.productId(),

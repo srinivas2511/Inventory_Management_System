@@ -46,6 +46,12 @@ public class LookupController {
         return service.customers(q);
     }
 
+    @GetMapping("/plants")
+    @PreAuthorize("hasAnyAuthority('PURCHASE_CREATE','PRODUCTION_CREATE','SALES_CREATE','PLANT_MANAGE')")
+    public List<Option> plants() {
+        return service.plants();
+    }
+
     @GetMapping("/warehouses")
     @PreAuthorize("hasAnyAuthority('INVENTORY_RECEIVE','INVENTORY_VIEW','INVENTORY_ISSUE','INVENTORY_ADJUST','DISPATCH_CREATE','RESERVE_FG','WAREHOUSE_MANAGE')")
     public List<Option> warehouses(@RequestParam(required = false) String q) {

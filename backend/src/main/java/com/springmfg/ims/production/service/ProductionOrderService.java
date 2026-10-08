@@ -33,6 +33,7 @@ import com.springmfg.ims.material.repository.MaterialRepository;
 import com.springmfg.ims.product.domain.Product;
 import com.springmfg.ims.product.repository.ProductRepository;
 import com.springmfg.ims.production.domain.ProductionOperation;
+import com.springmfg.ims.enterprise.scope.PlantScope;
 import com.springmfg.ims.production.domain.ProductionOrder;
 import com.springmfg.ims.production.domain.ProductionOrderMaterial;
 import com.springmfg.ims.production.dto.CreateProductionOrderRequest;
@@ -63,6 +64,9 @@ public class ProductionOrderService {
     private final OrderMaterialService orderMaterialService;
     private final OperatorDirectory operatorDirectory;
 
+    private final com.springmfg.ims.enterprise.scope.PlantScope plantScope;
+
+
     public ProductionOrderService(
             ProductionOrderRepository orderRepo,
             ProductionOrderMaterialRepository materialRepo,
@@ -77,7 +81,11 @@ public class ProductionOrderService {
             AuditService auditService,
             ApplicationEventPublisher eventPublisher,
             OrderMaterialService orderMaterialService,
-            OperatorDirectory operatorDirectory) {
+            OperatorDirectory operatorDirectory,
+
+            com.springmfg.ims.enterprise.scope.PlantScope plantScope) {
+
+        this.plantScope = plantScope;
         this.orderRepo = orderRepo;
         this.materialRepo = materialRepo;
         this.operationRepo = operationRepo;
@@ -113,6 +121,7 @@ public class ProductionOrderService {
         if (req.priority() != null) order.setPriority(req.priority());
         order.setRemarks(req.remarks());
         order.setStatus("DRAFT");
+        order.setPlantId(plantScope.resolveForCreate(req.plantId()));
         order = orderRepo.save(order);
 
         auditService.record("PROD_ORDER_CREATE", "ProductionOrder", String.valueOf(order.getId()),
@@ -265,11 +274,13 @@ public class ProductionOrderService {
 
     @Transactional(readOnly = true)
     public Page<ProductionOrderDto> search(String status, Long productId, Pageable pageable) {
-        return orderRepo.search(status, productId, pageable).map(this::toDto);
+        PlantScope.Filter scope = plantScope.filter();
+        return orderRepo.searchInPlants(status, productId, scope.scoped(), scope.plantIds(), pageable).map(this::toDto);
     }
 
     @Transactional(readOnly = true)
     public List<ProductionOrderMaterialDto> getMaterials(Long orderId) {
+        findOrder(orderId);
         return materialRepo.findByProductionOrderId(orderId).stream()
                 .map(pom -> {
                     Material mat = matRepo.findById(pom.getMaterialId()).orElse(null);
@@ -286,8 +297,7 @@ public class ProductionOrderService {
 
     @Transactional(readOnly = true)
     public List<ProductionOperationDto> getOperations(Long orderId) {
-        ProductionOrder order = orderRepo.findById(orderId)
-                .orElseThrow(() -> new NotFoundException("Production order not found: " + orderId));
+        ProductionOrder order = findOrder(orderId);
         List<ProductionOperation> operations = operationRepo.findByProductionOrderIdOrderBySequenceNo(orderId);
         Map<Long, String> operatorNames = operatorDirectory.names(operations.stream()
                 .map(ProductionOperation::getAssignedOperatorId).filter(Objects::nonNull).distinct().toList());
@@ -296,6 +306,7 @@ public class ProductionOrderService {
 
     @Transactional(readOnly = true)
     public List<WipDto> getWip(Long orderId) {
+        findOrder(orderId);
         List<ProductionOperation> ops = operationRepo.findByProductionOrderIdOrderBySequenceNo(orderId);
         List<WipDto> wip = new ArrayList<>();
         for (int i = 1; i < ops.size(); i++) {
@@ -334,8 +345,10 @@ public class ProductionOrderService {
     // ── helpers ───────────────────────────────────────────────────────────────
 
     private ProductionOrder findOrder(Long orderId) {
-        return orderRepo.findById(orderId)
+        ProductionOrder order = orderRepo.findById(orderId)
                 .orElseThrow(() -> new NotFoundException("Production order not found: " + orderId));
+        plantScope.assertVisible(order.getPlantId(), "Production order", orderId);
+        return order;
     }
 
     private void assertTransition(ProductionOrder order, String expected, String target) {

@@ -22,14 +22,22 @@ public interface DispatchRepository extends JpaRepository<Dispatch, Long> {
     @Query("SELECT d FROM Dispatch d WHERE " +
            "(:customerId IS NULL OR d.customerId = :customerId) AND " +
            "d.dispatchDate >= :from AND " +
-           "d.dispatchDate <= :to")
+           "d.dispatchDate <= :to AND " +
+           "(:scoped = FALSE OR d.plantId IN :plantIds)")
     Page<Dispatch> searchBounded(
             @Param("customerId") Long customerId,
             @Param("from") LocalDate from,
             @Param("to") LocalDate to,
+            @Param("scoped") boolean scoped,
+            @Param("plantIds") java.util.Collection<Long> plantIds,
             Pageable pageable);
 
+    default Page<Dispatch> searchInPlants(Long customerId, LocalDate from, LocalDate to, boolean scoped,
+            java.util.Collection<Long> plantIds, Pageable pageable) {
+        return searchBounded(customerId, QueryBounds.from(from), QueryBounds.to(to), scoped, plantIds, pageable);
+    }
+
     default Page<Dispatch> search(Long customerId, LocalDate from, LocalDate to, Pageable pageable) {
-        return searchBounded(customerId, QueryBounds.from(from), QueryBounds.to(to), pageable);
+        return searchInPlants(customerId, from, to, false, java.util.List.of(-1L), pageable);
     }
 }

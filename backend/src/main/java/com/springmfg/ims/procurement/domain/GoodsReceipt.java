@@ -43,6 +43,9 @@ public class GoodsReceipt extends BaseEntity {
     @OneToMany(mappedBy = "goodsReceipt", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<GoodsReceiptItem> items = new ArrayList<>();
 
+    @jakarta.persistence.Column(name = "plant_id")
+    private Long plantId;
+
     public String getGrNumber() { return grNumber; }
     public void setGrNumber(String v) { this.grNumber = v; }
 
@@ -61,6 +64,8 @@ public class GoodsReceipt extends BaseEntity {
     public Long getWarehouseId() { return warehouseId; }
     public void setWarehouseId(Long v) { this.warehouseId = v; }
 
+        public Long getPlantId() { return plantId; }
+    public void setPlantId(Long plantId) { this.plantId = plantId; }
     public String getStatus() { return status; }
     public void setStatus(String v) { this.status = v; }
 

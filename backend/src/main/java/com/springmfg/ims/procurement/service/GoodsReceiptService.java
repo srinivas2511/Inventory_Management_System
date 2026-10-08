@@ -24,6 +24,7 @@ import com.springmfg.ims.inventory.service.BatchService;
 import com.springmfg.ims.inventory.service.InventoryPostingService;
 import com.springmfg.ims.procurement.domain.GoodsReceipt;
 import com.springmfg.ims.procurement.domain.GoodsReceiptItem;
+import com.springmfg.ims.enterprise.scope.PlantScope;
 import com.springmfg.ims.procurement.domain.PurchaseOrder;
 import com.springmfg.ims.procurement.domain.PurchaseOrderItem;
 import com.springmfg.ims.procurement.dto.CreateGrRequest;
@@ -51,6 +52,9 @@ public class GoodsReceiptService {
     private final AuditService auditService;
     private final ApplicationEventPublisher eventPublisher;
 
+    private final com.springmfg.ims.enterprise.scope.PlantScope plantScope;
+
+
     public GoodsReceiptService(
             GoodsReceiptRepository grRepo,
             GoodsReceiptItemRepository grItemRepo,
@@ -62,7 +66,11 @@ public class GoodsReceiptService {
             DocumentNumberService numberService,
             SystemSettingService settingService,
             AuditService auditService,
-            ApplicationEventPublisher eventPublisher) {
+            ApplicationEventPublisher eventPublisher,
+
+            com.springmfg.ims.enterprise.scope.PlantScope plantScope) {
+
+        this.plantScope = plantScope;
         this.grRepo = grRepo;
         this.grItemRepo = grItemRepo;
         this.poRepo = poRepo;
@@ -80,6 +88,12 @@ public class GoodsReceiptService {
     public GoodsReceiptDto receive(CreateGrRequest req) {
         PurchaseOrder po = poRepo.findById(req.purchaseOrderId())
                 .orElseThrow(() -> new NotFoundException("Purchase order not found: " + req.purchaseOrderId()));
+        plantScope.assertVisible(po.getPlantId(), "Purchase order", req.purchaseOrderId());
+        Long warehousePlant = plantScope.warehousePlantId(req.warehouseId());
+        if (po.getPlantId() != null && warehousePlant != null && !po.getPlantId().equals(warehousePlant)) {
+            throw new BusinessRuleException(ErrorCode.VALIDATION_FAILED,
+                    "The warehouse belongs to a different plant than the purchase order");
+        }
 
         if (!List.of("APPROVED", "SENT_TO_SUPPLIER", "PARTIALLY_RECEIVED").contains(po.getStatus())) {
             throw new BusinessRuleException(ErrorCode.ILLEGAL_PO_TRANSITION,
@@ -95,6 +109,7 @@ public class GoodsReceiptService {
         gr.setSupplierChallanNo(req.supplierChallanNo());
         gr.setVehicleNo(req.vehicleNo());
         gr.setWarehouseId(req.warehouseId());
+        gr.setPlantId(po.getPlantId());
         gr.setStatus("POSTED");
         gr.setReceivedBy(currentUserId());
         gr = grRepo.save(gr);
@@ -178,18 +193,23 @@ public class GoodsReceiptService {
     public GoodsReceiptDto findById(Long id) {
         GoodsReceipt gr = grRepo.findById(id)
                 .orElseThrow(() -> new NotFoundException("Goods receipt not found: " + id));
+        plantScope.assertVisible(gr.getPlantId(), "Goods receipt", id);
         return toDto(gr, grItemRepo.findByGoodsReceiptId(id));
     }
 
     @Transactional(readOnly = true)
     public Page<GoodsReceiptDto> search(String status, Long purchaseOrderId, String poNumber,
                                         java.time.LocalDate from, java.time.LocalDate to, Pageable pageable) {
-        return grRepo.search(status, purchaseOrderId, poNumber, from, to, pageable)
+        PlantScope.Filter scope = plantScope.filter();
+        return grRepo.searchInPlants(status, purchaseOrderId, poNumber, from, to, scope.scoped(), scope.plantIds(), pageable)
                 .map(gr -> toDto(gr, grItemRepo.findByGoodsReceiptId(gr.getId())));
     }
 
     @Transactional(readOnly = true)
     public Page<GoodsReceiptDto> findByPurchaseOrder(Long poId, Pageable pageable) {
+        PurchaseOrder po = poRepo.findById(poId)
+                .orElseThrow(() -> new NotFoundException("Purchase order not found: " + poId));
+        plantScope.assertVisible(po.getPlantId(), "Purchase order", poId);
         return grRepo.findByPurchaseOrderId(poId, pageable)
                 .map(gr -> toDto(gr, grItemRepo.findByGoodsReceiptId(gr.getId())));
     }

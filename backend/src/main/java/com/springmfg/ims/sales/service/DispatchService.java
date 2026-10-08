@@ -24,6 +24,7 @@ import com.springmfg.ims.partner.domain.Customer;
 import com.springmfg.ims.partner.repository.CustomerRepository;
 import com.springmfg.ims.product.domain.Product;
 import com.springmfg.ims.product.repository.ProductRepository;
+import com.springmfg.ims.enterprise.scope.PlantScope;
 import com.springmfg.ims.sales.domain.Dispatch;
 import com.springmfg.ims.sales.domain.DispatchItem;
 import com.springmfg.ims.sales.domain.SalesOrder;
@@ -59,6 +60,9 @@ public class DispatchService {
     private final AuditService auditService;
     private final org.springframework.context.ApplicationEventPublisher eventPublisher;
 
+    private final com.springmfg.ims.enterprise.scope.PlantScope plantScope;
+
+
     public DispatchService(DispatchRepository dispatchRepo,
                            DispatchItemRepository dispatchItemRepo,
                            SalesOrderRepository orderRepo,
@@ -71,7 +75,11 @@ public class DispatchService {
                            InventoryPostingService postingService,
                            DocumentNumberService numberService,
                            AuditService auditService,
-                           org.springframework.context.ApplicationEventPublisher eventPublisher) {
+                           org.springframework.context.ApplicationEventPublisher eventPublisher,
+
+            com.springmfg.ims.enterprise.scope.PlantScope plantScope) {
+
+        this.plantScope = plantScope;
         this.dispatchRepo = dispatchRepo;
         this.dispatchItemRepo = dispatchItemRepo;
         this.orderRepo = orderRepo;
@@ -90,6 +98,7 @@ public class DispatchService {
     public DispatchDto create(CreateDispatchRequest req) {
         SalesOrder order = orderRepo.findById(req.salesOrderId())
                 .orElseThrow(() -> new NotFoundException("SalesOrder", req.salesOrderId()));
+        plantScope.assertVisible(order.getPlantId(), "SalesOrder", req.salesOrderId());
 
         if ("CANCELLED".equals(order.getStatus()) || "DISPATCHED".equals(order.getStatus())) {
             throw new BusinessRuleException(ErrorCode.ILLEGAL_STATE_TRANSITION,
@@ -100,6 +109,7 @@ public class DispatchService {
         dispatch.setDispatchNumber(numberService.next("DN"));
         dispatch.setSalesOrderId(req.salesOrderId());
         dispatch.setCustomerId(order.getCustomerId());
+        dispatch.setPlantId(order.getPlantId());
         dispatch.setDispatchDate(req.dispatchDate() != null ? req.dispatchDate() : LocalDate.now());
         dispatch.setTransporter(req.transporter());
         dispatch.setVehicleNo(req.vehicleNo());
@@ -202,13 +212,15 @@ public class DispatchService {
     public DispatchDto findById(Long dispatchId) {
         Dispatch dispatch = dispatchRepo.findById(dispatchId)
                 .orElseThrow(() -> new NotFoundException("Dispatch", dispatchId));
+        plantScope.assertVisible(dispatch.getPlantId(), "Dispatch", dispatchId);
         List<DispatchItem> items = dispatchItemRepo.findByDispatchId(dispatchId);
         return toDto(dispatch, items);
     }
 
     @Transactional(readOnly = true)
     public Page<DispatchDto> search(Long customerId, LocalDate from, LocalDate to, Pageable pageable) {
-        return dispatchRepo.search(customerId, from, to, pageable)
+        PlantScope.Filter scope = plantScope.filter();
+        return dispatchRepo.searchInPlants(customerId, from, to, scope.scoped(), scope.plantIds(), pageable)
                 .map(d -> toDto(d, dispatchItemRepo.findByDispatchId(d.getId())));
     }
 
@@ -216,6 +228,7 @@ public class DispatchService {
     public DispatchNoteDto generateDispatchNote(Long dispatchId) {
         Dispatch dispatch = dispatchRepo.findById(dispatchId)
                 .orElseThrow(() -> new NotFoundException("Dispatch", dispatchId));
+        plantScope.assertVisible(dispatch.getPlantId(), "Dispatch", dispatchId);
         List<DispatchItem> items = dispatchItemRepo.findByDispatchId(dispatchId);
 
         SalesOrder order = orderRepo.findById(dispatch.getSalesOrderId())

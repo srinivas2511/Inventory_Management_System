@@ -20,6 +20,7 @@ import com.springmfg.ims.common.numbering.DocumentNumberService;
 import com.springmfg.ims.common.security.SegregationOfDuties;
 import com.springmfg.ims.partner.repository.CustomerRepository;
 import com.springmfg.ims.product.repository.ProductRepository;
+import com.springmfg.ims.enterprise.scope.PlantScope;
 import com.springmfg.ims.sales.domain.SalesOrder;
 import com.springmfg.ims.sales.domain.SalesOrderItem;
 import com.springmfg.ims.sales.dto.AddSalesOrderItemRequest;
@@ -41,6 +42,9 @@ public class SalesOrderService {
     private final org.springframework.context.ApplicationEventPublisher eventPublisher;
     private final ReservationService reservationService;
 
+    private final com.springmfg.ims.enterprise.scope.PlantScope plantScope;
+
+
     public SalesOrderService(SalesOrderRepository orderRepo,
                              SalesOrderItemRepository itemRepo,
                              CustomerRepository customerRepo,
@@ -48,7 +52,11 @@ public class SalesOrderService {
                              DocumentNumberService numberService,
                              AuditService auditService,
                              org.springframework.context.ApplicationEventPublisher eventPublisher,
-                             ReservationService reservationService) {
+                             ReservationService reservationService,
+
+            com.springmfg.ims.enterprise.scope.PlantScope plantScope) {
+
+        this.plantScope = plantScope;
         this.orderRepo = orderRepo;
         this.itemRepo = itemRepo;
         this.customerRepo = customerRepo;
@@ -72,6 +80,7 @@ public class SalesOrderService {
         order.setPaymentTerms(req.paymentTerms());
         order.setNotes(req.notes());
         order.setStatus("DRAFT");
+        order.setPlantId(plantScope.resolveForCreate(req.plantId()));
         order = orderRepo.save(order);
 
         if (req.items() != null) {
@@ -167,7 +176,8 @@ public class SalesOrderService {
 
     @Transactional(readOnly = true)
     public Page<SalesOrderDto> search(Long customerId, String status, LocalDate from, LocalDate to, Pageable pageable) {
-        return orderRepo.search(customerId, status, from, to, pageable)
+        PlantScope.Filter scope = plantScope.filter();
+        return orderRepo.searchInPlants(customerId, status, from, to, scope.scoped(), scope.plantIds(), pageable)
                 .map(o -> toDto(o, itemRepo.findBySalesOrderId(o.getId())));
     }
 
@@ -243,7 +253,9 @@ public class SalesOrderService {
     }
 
     private SalesOrder requireOrder(Long id) {
-        return orderRepo.findById(id).orElseThrow(() -> new NotFoundException("SalesOrder", id));
+        SalesOrder order = orderRepo.findById(id).orElseThrow(() -> new NotFoundException("SalesOrder", id));
+        plantScope.assertVisible(order.getPlantId(), "SalesOrder", id);
+        return order;
     }
 
     private Long currentUserId() {

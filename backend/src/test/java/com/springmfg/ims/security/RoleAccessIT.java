@@ -227,6 +227,26 @@ class RoleAccessIT extends AbstractIntegrationTest {
             Probe.of(HttpMethod.GET, "/api/auth/step-up", Set.of("ADMIN", "OPERATOR", "SALES", "FINANCE_MANAGER"), Set.of()),
             Probe.withBody(HttpMethod.POST, "/api/auth/step-up", "{\"credential\":\"not-the-password\"}",
                     Set.of("ADMIN", "OPERATOR", "SALES", "FINANCE_MANAGER"), Set.of()),
+            // R9-7.1 / R9-7.2 plants: PLANT_MANAGE maintains plants, plant settings and user assignments
+            Probe.of(HttpMethod.GET, "/api/plants", Set.of("ADMIN"), Set.of("OPERATOR", "SALES", "FINANCE_MANAGER")),
+            Probe.withBody(HttpMethod.POST, "/api/plants", "{\"plantCode\":\"P001\",\"name\":\"Probe\"}", Set.of("ADMIN"),
+                    Set.of("OPERATOR", "SALES", "FINANCE_MANAGER")),
+            Probe.withBody(HttpMethod.PUT, "/api/plants/" + MISSING, "{\"plantCode\":\"X1\",\"name\":\"X\"}",
+                    Set.of("ADMIN"), Set.of("OPERATOR", "SALES", "FINANCE_MANAGER")),
+            Probe.of(HttpMethod.GET, "/api/plants/" + MISSING + "/settings", Set.of("ADMIN"),
+                    Set.of("OPERATOR", "SALES", "FINANCE_MANAGER")),
+            Probe.of(HttpMethod.GET, "/api/plants/company-settings", Set.of("ADMIN"),
+                    Set.of("OPERATOR", "SALES", "FINANCE_MANAGER")),
+            Probe.withBody(HttpMethod.PUT, "/api/plants/settings", "{\"key\":\"bogus\",\"value\":\"x\"}",
+                    Set.of("ADMIN"), Set.of("OPERATOR", "SALES", "FINANCE_MANAGER")),
+            Probe.of(HttpMethod.DELETE, "/api/plants/settings?key=bogus", Set.of("ADMIN"),
+                    Set.of("OPERATOR", "SALES", "FINANCE_MANAGER")),
+            Probe.of(HttpMethod.GET, "/api/plants/users/" + MISSING, Set.of("ADMIN"),
+                    Set.of("OPERATOR", "SALES", "FINANCE_MANAGER")),
+            Probe.withBody(HttpMethod.PUT, "/api/plants/users/" + MISSING, "{\"plantIds\":[]}", Set.of("ADMIN"),
+                    Set.of("OPERATOR", "SALES", "FINANCE_MANAGER")),
+            Probe.of(HttpMethod.GET, "/api/lookups/plants", Set.of("ADMIN", "SALES", "PURCHASE_MANAGER"),
+                    Set.of("OPERATOR")),
             Probe.of(HttpMethod.GET, "/api/lookups/warehouses", Set.of("ADMIN", "STORE_MANAGER"), Set.of("OPERATOR")),
             Probe.of(HttpMethod.GET, "/api/lookups/locations", Set.of("ADMIN", "STORE_MANAGER"), Set.of("OPERATOR")),
             Probe.of(HttpMethod.GET, "/api/lookups/products/" + MISSING + "/active-bom",
@@ -490,6 +510,13 @@ class RoleAccessIT extends AbstractIntegrationTest {
      */
     private static final Map<String, Integer> DECLARED_STATUS = Map.ofEntries(
             Map.entry("POST /api/auth/step-up", 400), // the probe users hold no real password, so the credential is wrong
+            Map.entry("POST /api/plants", 409), // a valid body reaches method security; the seeded code P001 makes it a duplicate, so nothing is created
+            Map.entry("PUT /api/plants/999999", 404),
+            Map.entry("GET /api/plants/999999/settings", 404),
+            Map.entry("PUT /api/plants/settings", 400), // an unknown setting key is refused, so no override is written
+            Map.entry("DELETE /api/plants/settings?key=bogus", 400),
+            Map.entry("GET /api/plants/users/999999", 404),
+            Map.entry("PUT /api/plants/users/999999", 404),
             Map.entry("GET /api/ar/credit-notes/999999", 404),
             Map.entry("POST /api/ar/credit-notes", 404),
             Map.entry("POST /api/ar/credit-notes/999999/approve", 404),

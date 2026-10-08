@@ -22,12 +22,17 @@ public class Warehouse extends BaseEntity {
     @Column(nullable = false)
     private boolean active = true;
 
+    @Column(name = "plant_id")
+    private Long plantId;
+
     public Warehouse() {}
 
     public String getWarehouseCode() { return warehouseCode; }
     public String getName() { return name; }
     public String getAddress() { return address; }
     public boolean isActive() { return active; }
+    public Long getPlantId() { return plantId; }
+    public void setPlantId(Long plantId) { this.plantId = plantId; }
 
     public void setWarehouseCode(String warehouseCode) { this.warehouseCode = warehouseCode; }
     public void setName(String name) { this.name = name; }

@@ -21,6 +21,7 @@ import com.springmfg.ims.common.event.PurchaseOrderApprovedEvent;
 import com.springmfg.ims.common.numbering.DocumentNumberService;
 import com.springmfg.ims.common.security.SegregationOfDuties;
 import com.springmfg.ims.procurement.domain.PurchaseOrder;
+import com.springmfg.ims.enterprise.scope.PlantScope;
 import com.springmfg.ims.procurement.domain.PurchaseOrderItem;
 import com.springmfg.ims.procurement.domain.PurchaseRequisition;
 import com.springmfg.ims.procurement.dto.CreatePoRequest;
@@ -39,13 +40,20 @@ public class PurchaseOrderService {
     private final AuditService auditService;
     private final ApplicationEventPublisher eventPublisher;
 
+    private final com.springmfg.ims.enterprise.scope.PlantScope plantScope;
+
+
     public PurchaseOrderService(
             PurchaseOrderRepository poRepo,
             PurchaseOrderItemRepository poItemRepo,
             PurchaseRequisitionRepository prRepo,
             DocumentNumberService numberService,
             AuditService auditService,
-            ApplicationEventPublisher eventPublisher) {
+            ApplicationEventPublisher eventPublisher,
+
+            com.springmfg.ims.enterprise.scope.PlantScope plantScope) {
+
+        this.plantScope = plantScope;
         this.poRepo = poRepo;
         this.poItemRepo = poItemRepo;
         this.prRepo = prRepo;
@@ -66,6 +74,7 @@ public class PurchaseOrderService {
         po.setRequisitionId(req.requisitionId());
         po.setStatus("DRAFT");
         po.setCurrency("INR");
+        po.setPlantId(plantScope.resolveForCreate(req.plantId()));
         po = poRepo.save(po);
 
         AtomicInteger lineNo = new AtomicInteger(1);
@@ -176,7 +185,8 @@ public class PurchaseOrderService {
 
     @Transactional(readOnly = true)
     public Page<PurchaseOrderDto> search(String status, Long supplierId, Pageable pageable) {
-        return poRepo.search(status, supplierId, pageable).map(this::toDto);
+        PlantScope.Filter scope = plantScope.filter();
+        return poRepo.searchInPlants(status, supplierId, scope.scoped(), scope.plantIds(), pageable).map(this::toDto);
     }
 
     // Called by GoodsReceiptService after posting receipts
@@ -199,8 +209,10 @@ public class PurchaseOrderService {
     // ── private helpers ───────────────────────────────────────────────────────
 
     private PurchaseOrder requirePo(Long id) {
-        return poRepo.findById(id)
+        PurchaseOrder po = poRepo.findById(id)
                 .orElseThrow(() -> new NotFoundException("Purchase order not found: " + id));
+        plantScope.assertVisible(po.getPlantId(), "Purchase order", id);
+        return po;
     }
 
     private void requireState(PurchaseOrder po, String from, String to) {

@@ -11,7 +11,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.springmfg.ims.common.exception.NotFoundException;
+import com.springmfg.ims.enterprise.scope.PlantScope;
 import com.springmfg.ims.inventory.domain.InventoryBalance;
+import com.springmfg.ims.inventory.domain.InventoryTransaction;
 import com.springmfg.ims.inventory.dto.InventoryBalanceDto;
 import com.springmfg.ims.inventory.dto.InventoryTransactionDto;
 import com.springmfg.ims.inventory.dto.PostingResult;
@@ -27,9 +29,16 @@ public class InventoryQueryService {
     private final InventoryTransactionRepository txRepo;
     private final InventoryPostingService postingService;
 
+    private final com.springmfg.ims.enterprise.scope.PlantScope plantScope;
+
+
     public InventoryQueryService(InventoryBalanceRepository balanceRepo,
                                   InventoryTransactionRepository txRepo,
-                                  InventoryPostingService postingService) {
+                                  InventoryPostingService postingService,
+
+            com.springmfg.ims.enterprise.scope.PlantScope plantScope) {
+
+        this.plantScope = plantScope;
         this.balanceRepo = balanceRepo;
         this.txRepo = txRepo;
         this.postingService = postingService;
@@ -48,7 +57,9 @@ public class InventoryQueryService {
             results = balanceRepo.findAll();
         }
 
+        PlantScope.Filter wh = plantScope.warehouseFilter();
         return results.stream()
+                .filter(b -> !wh.scoped() || wh.plantIds().contains(b.getWarehouseId()))
                 .filter(b -> stockStatus == null || stockStatus.equals(b.getStockStatus()))
                 .filter(b -> warehouseId == null || warehouseId.equals(b.getWarehouseId()))
                 .map(InventoryBalanceDto::from)
@@ -68,9 +79,12 @@ public class InventoryQueryService {
 
     @Transactional(readOnly = true)
     public Map<String, BigDecimal> valuation(Long warehouseId) {
-        List<InventoryBalance> balances = warehouseId != null
+        PlantScope.Filter wh = plantScope.warehouseFilter();
+        List<InventoryBalance> balances = (warehouseId != null
                 ? balanceRepo.findByWarehouseId(warehouseId)
-                : balanceRepo.findAll();
+                : balanceRepo.findAll()).stream()
+                .filter(b -> !wh.scoped() || wh.plantIds().contains(b.getWarehouseId()))
+                .toList();
 
         BigDecimal totalValue = balances.stream()
                 .filter(b -> b.getQtyOnHand().compareTo(BigDecimal.ZERO) > 0)
@@ -94,14 +108,20 @@ public class InventoryQueryService {
     public Page<InventoryTransactionDto> ledger(Long materialId, Long productId, Long warehouseId,
                                                  String transactionType, Instant from, Instant to,
                                                  Pageable pageable) {
-        return txRepo.search(materialId, productId, warehouseId, transactionType, from, to, pageable)
+        PlantScope.Filter wh = plantScope.warehouseFilter();
+        return txRepo.searchInWarehouses(materialId, productId, warehouseId, transactionType, from, to,
+                        wh.scoped(), wh.plantIds(), pageable)
                 .map(InventoryTransactionDto::from);
     }
 
     @Transactional(readOnly = true)
     public InventoryTransactionDto getTransaction(Long id) {
-        return InventoryTransactionDto.from(txRepo.findById(id)
-                .orElseThrow(() -> new NotFoundException("Transaction not found: " + id)));
+        InventoryTransaction tx = txRepo.findById(id)
+                .orElseThrow(() -> new NotFoundException("Transaction not found: " + id));
+        if (plantScope.isScoped() && !plantScope.canSee(plantScope.warehousePlantId(tx.getWarehouseId()))) {
+            throw new NotFoundException("Transaction not found: " + id);
+        }
+        return InventoryTransactionDto.from(tx);
     }
 
     @Transactional

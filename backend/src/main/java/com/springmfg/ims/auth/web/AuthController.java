@@ -79,6 +79,6 @@ public class AuthController {
     @PreAuthorize("isAuthenticated()")
     public LoginResponse.UserInfo me(@AuthenticationPrincipal CachedUser principal) {
         return new LoginResponse.UserInfo(principal.id(), principal.username(), null,
-            principal.roles(), principal.permissions());
+            principal.roles(), principal.permissions(), !principal.plantIds().isEmpty());
     }
 }

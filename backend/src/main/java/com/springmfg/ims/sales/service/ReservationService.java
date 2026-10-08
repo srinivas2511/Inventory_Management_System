@@ -44,13 +44,20 @@ public class ReservationService {
     private static final java.util.Set<String> RESERVABLE_STATUSES =
             java.util.Set.of("ORDERED", "APPROVED", "ALLOCATED", "PARTIALLY_DISPATCHED");
 
+    private final com.springmfg.ims.enterprise.scope.PlantScope plantScope;
+
+
     public ReservationService(SalesReservationRepository reservationRepo,
                               SalesOrderItemRepository itemRepo,
                               SalesOrderRepository orderRepo,
                               FgBatchRepository fgBatchRepo,
                               InventoryPostingService postingService,
                               SystemSettingService settingService,
-                              AuditService auditService) {
+                              AuditService auditService,
+
+            com.springmfg.ims.enterprise.scope.PlantScope plantScope) {
+
+        this.plantScope = plantScope;
         this.reservationRepo = reservationRepo;
         this.itemRepo = itemRepo;
         this.orderRepo = orderRepo;
@@ -65,6 +72,7 @@ public class ReservationService {
                 .orElseThrow(() -> new NotFoundException("SalesOrderItem", req.salesOrderItemId()));
         SalesOrder order = orderRepo.findById(item.getSalesOrderId())
                 .orElseThrow(() -> new NotFoundException("SalesOrder", item.getSalesOrderId()));
+        plantScope.assertVisible(order.getPlantId(), "SalesOrder", item.getSalesOrderId());
 
         if (!RESERVABLE_STATUSES.contains(order.getStatus())) {
             throw new BusinessRuleException(ErrorCode.ILLEGAL_STATE_TRANSITION,

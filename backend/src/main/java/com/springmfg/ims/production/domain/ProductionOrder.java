@@ -80,6 +80,9 @@ public class ProductionOrder extends BaseEntity {
     @Column(name = "remarks", length = 500)
     private String remarks;
 
+    @jakarta.persistence.Column(name = "plant_id")
+    private Long plantId;
+
     public ProductionOrder() {}
 
     public String getOrderNumber() { return orderNumber; }
@@ -130,6 +133,8 @@ public class ProductionOrder extends BaseEntity {
     public short getPriority() { return priority; }
     public void setPriority(short v) { this.priority = v; }
 
+        public Long getPlantId() { return plantId; }
+    public void setPlantId(Long plantId) { this.plantId = plantId; }
     public String getStatus() { return status; }
     public void setStatus(String v) { this.status = v; }
 

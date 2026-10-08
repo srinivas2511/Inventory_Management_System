@@ -17,4 +17,14 @@ public record CreateProductionOrderRequest(
         Long supervisorId,
         Long salesOrderId,
         Short priority,
-        String remarks) {}
+        String remarks,
+        Long plantId) {
+
+    /** Without a plant: the creating user's only plant, or the default plant. */
+    public CreateProductionOrderRequest(Long productId, Long bomId, BigDecimal plannedQty, LocalDate startDate,
+                                        LocalDate expectedCompletionDate, String productionLine, Long primaryMachineId,
+                                        Long supervisorId, Long salesOrderId, Short priority, String remarks) {
+        this(productId, bomId, plannedQty, startDate, expectedCompletionDate, productionLine, primaryMachineId,
+                supervisorId, salesOrderId, priority, remarks, null);
+    }
+}

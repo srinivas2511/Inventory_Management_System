@@ -26,6 +26,15 @@ public interface PurchaseOrderRepository extends JpaRepository<PurchaseOrder, Lo
                                @Param("supplierId") Long supplierId,
                                Pageable pageable);
 
+    @Query("SELECT p FROM PurchaseOrder p WHERE (:status IS NULL OR p.status = :status) " +
+           "AND (:supplierId IS NULL OR p.supplierId = :supplierId) " +
+           "AND (:scoped = FALSE OR p.plantId IN :plantIds)")
+    Page<PurchaseOrder> searchInPlants(@Param("status") String status,
+                                       @Param("supplierId") Long supplierId,
+                                       @Param("scoped") boolean scoped,
+                                       @Param("plantIds") java.util.Collection<Long> plantIds,
+                                       Pageable pageable);
+
     @Query("SELECT p FROM PurchaseOrder p WHERE p.status NOT IN ('RECEIVED','CANCELLED') AND p.expectedDeliveryDate < :today")
     List<PurchaseOrder> findOverdue(@Param("today") LocalDate today);
 

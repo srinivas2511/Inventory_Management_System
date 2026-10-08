@@ -34,11 +34,18 @@ public class OperationAssignmentService {
     private final OperationExecutionService executionService;
     private final AuditService auditService;
 
+    private final com.springmfg.ims.enterprise.scope.PlantScope plantScope;
+
+
     public OperationAssignmentService(ProductionOperationRepository opRepo,
                                       ProductionOrderRepository orderRepo,
                                       OperatorDirectory operatorDirectory,
                                       OperationExecutionService executionService,
-                                      AuditService auditService) {
+                                      AuditService auditService,
+
+            com.springmfg.ims.enterprise.scope.PlantScope plantScope) {
+
+        this.plantScope = plantScope;
         this.opRepo = opRepo;
         this.orderRepo = orderRepo;
         this.operatorDirectory = operatorDirectory;
@@ -93,6 +100,7 @@ public class OperationAssignmentService {
     private ProductionOrder requireAssignableOrder(Long orderId) {
         ProductionOrder order = orderRepo.findById(orderId)
                 .orElseThrow(() -> new NotFoundException("Production order not found: " + orderId));
+        plantScope.assertVisible(order.getPlantId(), "Production order", orderId);
         if (!ASSIGNABLE_ORDER_STATUSES.contains(order.getStatus())) {
             throw new BusinessRuleException(ErrorCode.ILLEGAL_STATE_TRANSITION,
                     "Operators can only be assigned while the order is released or in progress; "
