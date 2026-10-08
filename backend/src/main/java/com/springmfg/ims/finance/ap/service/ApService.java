@@ -19,6 +19,9 @@ import com.springmfg.ims.finance.gl.dto.JournalLineRequest;
 import com.springmfg.ims.finance.gl.repository.FiscalPeriodRepository;
 import com.springmfg.ims.finance.gl.service.GlAccountResolver;
 import com.springmfg.ims.finance.gl.service.JournalService;
+import com.springmfg.ims.finance.tax.service.InvoiceTaxService;
+import com.springmfg.ims.finance.tax.service.TaxDeterminationService;
+import com.springmfg.ims.finance.tax.service.TaxDeterminationService.Direction;
 import com.springmfg.ims.partner.domain.Supplier;
 import com.springmfg.ims.partner.repository.SupplierRepository;
 import org.springframework.data.domain.Page;
@@ -53,6 +56,8 @@ public class ApService {
     private final SupplierRepository supplierRepo;
     private final GlAccountResolver glAccounts;
     private final ThreeWayMatchService matchService;
+    private final TaxDeterminationService taxDetermination;
+    private final InvoiceTaxService invoiceTax;
 
     public ApService(ApInvoiceRepository apInvoiceRepo,
                      ApPaymentRepository apPaymentRepo,
@@ -62,7 +67,9 @@ public class ApService {
                      AuditService auditService,
                      SupplierRepository supplierRepo,
                      GlAccountResolver glAccounts,
-                     ThreeWayMatchService matchService) {
+                     ThreeWayMatchService matchService,
+                     TaxDeterminationService taxDetermination,
+                     InvoiceTaxService invoiceTax) {
         this.apInvoiceRepo = apInvoiceRepo;
         this.apPaymentRepo = apPaymentRepo;
         this.periodRepo = periodRepo;
@@ -72,6 +79,8 @@ public class ApService {
         this.supplierRepo = supplierRepo;
         this.glAccounts = glAccounts;
         this.matchService = matchService;
+        this.taxDetermination = taxDetermination;
+        this.invoiceTax = invoiceTax;
     }
 
     public ApInvoiceDto createInvoice(ApInvoiceCreateRequest req) {
@@ -84,6 +93,18 @@ public class ApService {
                     "A supplier invoice must reference the goods receipt it bills: the three-way match is required (rule 18)");
         }
         BigDecimal tax = req.taxTotal() != null ? req.taxTotal() : BigDecimal.ZERO;
+        TaxDeterminationService.Determination determination = null;
+        if (req.taxSlabCode() != null && !req.taxSlabCode().isBlank()) {
+            if (tax.signum() != 0) {
+                throw new BusinessRuleException(ErrorCode.VALIDATION_FAILED,
+                        "Give either a tax slab or a tax amount, not both");
+            }
+            Supplier supplier = supplierRepo.findById(req.supplierId())
+                    .orElseThrow(() -> new NotFoundException("Supplier", req.supplierId()));
+            determination = taxDetermination.determine(Direction.PURCHASE, req.taxSlabCode(),
+                    supplier.getGstNumber(), req.subtotal());
+            tax = determination.taxTotal();
+        }
         BigDecimal total = req.subtotal().add(tax);
         var position = matchService.lockAndRead(req.goodsReceiptId(), req.supplierId(), null);
         var outcome = matchService.evaluate(position, req.subtotal(), tax);
@@ -106,7 +127,14 @@ public class ApService {
         inv.setMatchClearedAmount(outcome.cleared());
         inv.setMatchVariance(outcome.variance());
         inv.setMatchMessage(outcome.message());
+        if (determination != null) {
+            inv.setTaxSlabCode(determination.slabCode());
+            inv.setSupplyType(determination.supplyType());
+        }
         inv = apInvoiceRepo.save(inv);
+        if (determination != null) {
+            invoiceTax.record("AP_INVOICE", inv.getId(), Direction.PURCHASE, determination);
+        }
         auditService.record("AP_INVOICE_CREATED", "AP_INVOICE", String.valueOf(inv.getId()),
                 null, "DRAFT/" + outcome.status(), outcome.message());
         return toDto(inv);
@@ -239,7 +267,9 @@ public class ApService {
             lines.add(new JournalLineRequest(glAccounts.idOf(PURCHASE_PRICE_VARIANCE), variance, BigDecimal.ZERO,
                     "Purchase price variance"));
         }
-        if (inv.getTaxTotal().signum() > 0) {
+        if (inv.getTaxSlabCode() != null) {
+            lines.addAll(invoiceTax.journalLines("AP_INVOICE", inv.getId(), true, "Input tax"));
+        } else if (inv.getTaxTotal().signum() > 0) {
             lines.add(new JournalLineRequest(glAccounts.idOf(INPUT_TAX), inv.getTaxTotal(), BigDecimal.ZERO, "Input tax"));
         }
         lines.add(new JournalLineRequest(glAccounts.idOf(AP_CONTROL), BigDecimal.ZERO, inv.getTotalAmount(), "AP Invoice Cr"));
@@ -291,7 +321,8 @@ public class ApService {
                 inv.getGoodsReceiptId(), inv.getSubtotal(), inv.getTaxTotal(),
                 inv.getTotalAmount(), inv.getPaidAmount(), balance, inv.getStatus(),
                 inv.getPeriodId(), inv.getJournalHeaderId(),
-                inv.getMatchStatus(), inv.getMatchExpectedAmount(), inv.getMatchVariance(), inv.getMatchMessage());
+                inv.getMatchStatus(), inv.getMatchExpectedAmount(), inv.getMatchVariance(), inv.getMatchMessage(),
+                inv.getTaxSlabCode(), inv.getSupplyType(), invoiceTax.lines("AP_INVOICE", inv.getId()));
     }
 
     private Long currentUserId() {

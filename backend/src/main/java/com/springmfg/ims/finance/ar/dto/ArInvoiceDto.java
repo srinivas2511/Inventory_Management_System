@@ -1,7 +1,9 @@
 package com.springmfg.ims.finance.ar.dto;
 
+import com.springmfg.ims.finance.tax.dto.TaxDtos.TaxLineDto;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 public record ArInvoiceDto(
         Long id,
@@ -17,5 +19,7 @@ public record ArInvoiceDto(
         BigDecimal balanceAmount,
         String status,
         Long periodId,
-        Long journalHeaderId
+        Long journalHeaderId,
+        String supplyType,
+        List<TaxLineDto> taxLines
 ) {}

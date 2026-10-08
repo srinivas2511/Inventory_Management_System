@@ -75,6 +75,17 @@ public class ApInvoice extends BaseEntity {
     @Column(name = "match_override_reason", length = 500)
     private String matchOverrideReason;
 
+    @Column(name = "tax_slab_code", length = 15)
+    private String taxSlabCode;
+
+    @Column(name = "supply_type", length = 5)
+    private String supplyType;
+
+    public String getTaxSlabCode() { return taxSlabCode; }
+    public String getSupplyType() { return supplyType; }
+    public void setTaxSlabCode(String taxSlabCode) { this.taxSlabCode = taxSlabCode; }
+    public void setSupplyType(String supplyType) { this.supplyType = supplyType; }
+
     public String getInvoiceNumber() { return invoiceNumber; }
     public String getSupplierInvoiceNo() { return supplierInvoiceNo; }
     public Long getSupplierId() { return supplierId; }

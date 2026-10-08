@@ -12,6 +12,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 
@@ -80,6 +81,7 @@ class ArFromDispatchIT extends AbstractIntegrationTest {
     @Autowired WarehouseLocationRepository locationRepo;
     @Autowired GlAccountResolver glAccounts;
     @Autowired TestData td;
+    @Autowired JdbcTemplate jdbc;
     @Autowired com.springmfg.ims.integration.webhook.service.WebhookAdminService webhooks;
     @Autowired com.springmfg.ims.integration.webhook.repository.WebhookDeliveryRepository webhookDeliveries;
 
@@ -282,6 +284,64 @@ class ArFromDispatchIT extends AbstractIntegrationTest {
     }
 
     // ── helpers ────────────────────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("AR-TAX-1: a product under GST18 sold within the company state adds CGST 1,800 and SGST 1,800 to a 20,000 invoice")
+    void intraStateSaleAddsOutputCgstSgst() {
+        sellUnderSlab("GST18", "27AAAAA0000A1Z5");
+
+        DispatchDto d = dispatch(LocalDate.now(), line("100.000", "200.0000"));
+
+        ArInvoice inv = arInvoiceRepo.findByDispatchId(d.id()).orElseThrow();
+        assertThat(inv.getSubtotal()).isEqualByComparingTo("20000");
+        assertThat(inv.getTaxTotal()).isEqualByComparingTo("3600");
+        assertThat(inv.getTotalAmount()).isEqualByComparingTo("23600");
+        assertThat(inv.getSupplyType()).isEqualTo("INTRA");
+        JournalHeaderDto j = journalService.findById(inv.getJournalHeaderId());
+        assertBalanced(j);
+        assertThat(debit(j, glAccounts.idOf(AR_CONTROL))).isEqualByComparingTo("23600");
+        assertThat(credit(j, glAccounts.idOf(REVENUE))).isEqualByComparingTo("20000");
+        assertThat(credit(j, glAccounts.idOf("2311"))).isEqualByComparingTo("1800");
+        assertThat(credit(j, glAccounts.idOf("2312"))).isEqualByComparingTo("1800");
+        assertThat(arService.findAll(org.springframework.data.domain.PageRequest.of(0, 50)).getContent())
+                .filteredOn(x -> x.id().equals(inv.getId())).singleElement()
+                .satisfies(x -> assertThat(x.taxLines()).extracting(l -> l.taxCode()).containsExactlyInAnyOrder("CGST9", "SGST9"));
+    }
+
+    @Test
+    @DisplayName("AR-TAX-2: the same sale to another state is IGST 3,600 on the output IGST account")
+    void interStateSaleAddsOutputIgst() {
+        sellUnderSlab("GST18", "29AAAAA0000A1Z5");
+
+        DispatchDto d = dispatch(LocalDate.now(), line("100.000", "200.0000"));
+
+        ArInvoice inv = arInvoiceRepo.findByDispatchId(d.id()).orElseThrow();
+        assertThat(inv.getTotalAmount()).isEqualByComparingTo("23600");
+        assertThat(inv.getSupplyType()).isEqualTo("INTER");
+        JournalHeaderDto j = journalService.findById(inv.getJournalHeaderId());
+        assertBalanced(j);
+        assertThat(credit(j, glAccounts.idOf("2313"))).isEqualByComparingTo("3600");
+        assertThat(j.lines()).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("AR-TAX-3: a product without a slab is invoiced without tax, exactly as before the tax engine")
+    void productWithoutSlabHasNoTax() {
+        jdbc.update("UPDATE ims.customers SET gst_number = ? WHERE id = ?", "27AAAAA0000A1Z5", customerId);
+
+        DispatchDto d = dispatch(LocalDate.now(), line("10.000", "100.0000"));
+
+        ArInvoice inv = arInvoiceRepo.findByDispatchId(d.id()).orElseThrow();
+        assertThat(inv.getTaxTotal()).isEqualByComparingTo("0");
+        assertThat(inv.getTotalAmount()).isEqualByComparingTo("1000");
+        assertThat(inv.getSupplyType()).isNull();
+        assertThat(journalService.findById(inv.getJournalHeaderId()).lines()).hasSize(2);
+    }
+
+    private void sellUnderSlab(String slab, String customerGstin) {
+        jdbc.update("UPDATE ims.customers SET gst_number = ? WHERE id = ?", customerGstin, customerId);
+        jdbc.update("INSERT INTO ims.product_tax_slabs (product_id, slab_code) VALUES (?, ?)", productId, slab);
+    }
 
     private record Line(String qty, String price) {}
 

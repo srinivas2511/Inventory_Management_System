@@ -18,6 +18,10 @@ import com.springmfg.ims.finance.gl.dto.JournalLineRequest;
 import com.springmfg.ims.finance.gl.repository.FiscalPeriodRepository;
 import com.springmfg.ims.finance.gl.service.GlAccountResolver;
 import com.springmfg.ims.finance.gl.service.JournalService;
+import com.springmfg.ims.finance.tax.repository.ProductTaxSlabRepository;
+import com.springmfg.ims.finance.tax.service.InvoiceTaxService;
+import com.springmfg.ims.finance.tax.service.TaxDeterminationService;
+import com.springmfg.ims.finance.tax.service.TaxDeterminationService.Direction;
 import com.springmfg.ims.partner.domain.Customer;
 import com.springmfg.ims.partner.repository.CustomerRepository;
 import com.springmfg.ims.sales.domain.Dispatch;
@@ -36,6 +40,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -60,6 +65,9 @@ public class ArService {
     private final AuditService auditService;
     private final CustomerRepository customerRepo;
     private final GlAccountResolver glAccounts;
+    private final TaxDeterminationService taxDetermination;
+    private final InvoiceTaxService invoiceTax;
+    private final ProductTaxSlabRepository productSlabs;
 
     public ArService(ArInvoiceRepository arInvoiceRepo,
                      ArReceiptRepository arReceiptRepo,
@@ -71,7 +79,10 @@ public class ArService {
                      AuditService auditService,
                      CustomerRepository customerRepo,
                      GlAccountResolver glAccounts,
-                     ApplicationEventPublisher events) {
+                     ApplicationEventPublisher events,
+                     TaxDeterminationService taxDetermination,
+                     InvoiceTaxService invoiceTax,
+                     ProductTaxSlabRepository productSlabs) {
         this.arInvoiceRepo = arInvoiceRepo;
         this.arReceiptRepo = arReceiptRepo;
         this.dispatchRepo = dispatchRepo;
@@ -83,6 +94,9 @@ public class ArService {
         this.customerRepo = customerRepo;
         this.glAccounts = glAccounts;
         this.events = events;
+        this.taxDetermination = taxDetermination;
+        this.invoiceTax = invoiceTax;
+        this.productSlabs = productSlabs;
     }
 
     /**
@@ -108,6 +122,8 @@ public class ArService {
 
         BigDecimal invoiceValue = computeDispatchValue(dispatchId);
         boolean worthNothing = invoiceValue.signum() == 0;
+        var determination = worthNothing ? null : determineTax(dispatchId, dispatch.getCustomerId());
+        BigDecimal tax = determination != null ? determination.taxTotal() : BigDecimal.ZERO;
 
         ArInvoice inv = new ArInvoice();
         inv.setInvoiceNumber(numberService.next("ARINV"));
@@ -116,24 +132,32 @@ public class ArService {
         inv.setInvoiceDate(invoiceDate);
         inv.setDueDate(invoiceDate.plusDays(30));
         inv.setSubtotal(invoiceValue);
-        // Dispatch lines carry no tax data; GST is added when the tax engine (R9-7.2) lands.
-        inv.setTaxTotal(BigDecimal.ZERO);
-        inv.setTotalAmount(invoiceValue);
+        inv.setTaxTotal(tax);
+        inv.setTotalAmount(invoiceValue.add(tax));
+        if (determination != null) {
+            inv.setSupplyType(determination.supplyType());
+        }
         inv.setReceivedAmount(BigDecimal.ZERO);
         inv.setStatus(worthNothing ? "PAID" : "OPEN");
         inv.setPeriodId(period.getId());
         inv = arInvoiceRepo.save(inv);
+        if (determination != null) {
+            invoiceTax.record("AR_INVOICE", inv.getId(), Direction.SALES, determination);
+        }
 
         if (!worthNothing) {
+            List<JournalLineRequest> journalLines = new java.util.ArrayList<>();
+            journalLines.add(new JournalLineRequest(glAccounts.idOf(AR_CONTROL), inv.getTotalAmount(), BigDecimal.ZERO, "AR Dr"));
+            journalLines.add(new JournalLineRequest(glAccounts.idOf(REVENUE), BigDecimal.ZERO, invoiceValue, "Revenue Cr"));
+            if (determination != null) {
+                journalLines.addAll(invoiceTax.journalLines("AR_INVOICE", inv.getId(), false, "Output tax"));
+            }
             var jnlReq = new AutoJournalRequest(
                     "AR_INVOICE", "SALES", "DISPATCH", dispatchId,
                     invoiceDate,
                     "AR Invoice " + inv.getInvoiceNumber() + " for dispatch " + dispatch.getDispatchNumber(),
                     currentUserId(),
-                    List.of(
-                            new JournalLineRequest(glAccounts.idOf(AR_CONTROL), invoiceValue, BigDecimal.ZERO, "AR Dr"),
-                            new JournalLineRequest(glAccounts.idOf(REVENUE), BigDecimal.ZERO, invoiceValue, "Revenue Cr")
-                    )
+                    journalLines
             );
             // Same transaction as the invoice: an invoice without its journal (or the reverse) must never be committed.
             inv.setJournalHeaderId(journalService.postSourceJournal(jnlReq).id());
@@ -224,6 +248,29 @@ public class ArService {
         }).toList();
     }
 
+    /**
+     * The GST of a dispatch: each priced line is taxed under the slab of its product, the lines of one slab together.
+     * A dispatch whose products have no slab is invoiced without tax, as before the tax engine.
+     */
+    private TaxDeterminationService.Determination determineTax(Long dispatchId, Long customerId) {
+        Map<String, BigDecimal> bySlab = new LinkedHashMap<>();
+        for (DispatchItem item : dispatchItemRepo.findByDispatchId(dispatchId)) {
+            if (item.getUnitPrice() == null) {
+                continue;
+            }
+            BigDecimal value = item.getQuantity().multiply(item.getUnitPrice()).setScale(4, RoundingMode.HALF_UP);
+            productSlabs.findByProductId(item.getProductId())
+                    .ifPresent(p -> bySlab.merge(p.getSlabCode(), value, BigDecimal::add));
+        }
+        if (bySlab.isEmpty()) {
+            return null;
+        }
+        String gst = customerRepo.findById(customerId).map(Customer::getGstNumber).orElse(null);
+        var parts = bySlab.entrySet().stream()
+                .map(e -> taxDetermination.determine(Direction.SALES, e.getKey(), gst, e.getValue())).toList();
+        return parts.size() == 1 ? parts.get(0) : taxDetermination.combine(parts);
+    }
+
     /** Sum of quantity x unit price per dispatched line, each line rounded to 4 dp half-up (money scale). */
     private BigDecimal computeDispatchValue(Long dispatchId) {
         BigDecimal total = BigDecimal.ZERO;
@@ -246,7 +293,8 @@ public class ArService {
                 inv.getDispatchId(), inv.getInvoiceDate(), inv.getDueDate(),
                 inv.getSubtotal(), inv.getTaxTotal(), inv.getTotalAmount(),
                 inv.getReceivedAmount(), balance, inv.getStatus(),
-                inv.getPeriodId(), inv.getJournalHeaderId());
+                inv.getPeriodId(), inv.getJournalHeaderId(),
+                inv.getSupplyType(), invoiceTax.lines("AR_INVOICE", inv.getId()));
     }
 
     private Long currentUserId() {

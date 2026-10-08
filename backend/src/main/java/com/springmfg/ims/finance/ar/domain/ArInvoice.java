@@ -48,6 +48,12 @@ public class ArInvoice extends BaseEntity {
     @Column(name = "journal_header_id")
     private Long journalHeaderId;
 
+    @Column(name = "supply_type", length = 5)
+    private String supplyType;
+
+    public String getSupplyType() { return supplyType; }
+    public void setSupplyType(String supplyType) { this.supplyType = supplyType; }
+
     public String getInvoiceNumber() { return invoiceNumber; }
     public Long getCustomerId() { return customerId; }
     public Long getDispatchId() { return dispatchId; }

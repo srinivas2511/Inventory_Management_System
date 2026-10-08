@@ -191,6 +191,15 @@ class RoleAccessIT extends AbstractIntegrationTest {
                     Set.of("OPERATOR")),
             Probe.of(HttpMethod.GET, "/api/lookups/products", Set.of("ADMIN", "SALES", "PRODUCTION_MANAGER"),
                     Set.of("OPERATOR")),
+            // R9-7.5 GST tax engine: reading slabs and previewing a determination needs a finance permission
+            Probe.of(HttpMethod.GET, "/api/finance/tax/slabs", Set.of("ADMIN", "ACCOUNTANT", "FINANCE_MANAGER"),
+                    Set.of("OPERATOR", "DISPATCH")),
+            Probe.of(HttpMethod.GET, "/api/finance/tax/determine?direction=SALES&slab=GST18&amount=1000",
+                    Set.of("ADMIN", "ACCOUNTANT", "FINANCE_MANAGER"), Set.of("OPERATOR", "DISPATCH")),
+            Probe.of(HttpMethod.GET, "/api/finance/tax/product-slabs/" + MISSING, Set.of("ADMIN", "FINANCE_MANAGER"),
+                    Set.of("OPERATOR", "DISPATCH")),
+            Probe.withBody(HttpMethod.PUT, "/api/finance/tax/product-slabs/" + MISSING, "{}",
+                    Set.of("ADMIN", "FINANCE_MANAGER"), Set.of("OPERATOR", "ACCOUNTANT", "SALES")),
             Probe.of(HttpMethod.GET, "/api/lookups/warehouses", Set.of("ADMIN", "STORE_MANAGER"), Set.of("OPERATOR")),
             Probe.of(HttpMethod.GET, "/api/lookups/locations", Set.of("ADMIN", "STORE_MANAGER"), Set.of("OPERATOR")),
             Probe.of(HttpMethod.GET, "/api/lookups/products/" + MISSING + "/active-bom",
@@ -442,6 +451,7 @@ class RoleAccessIT extends AbstractIntegrationTest {
      * gets any other status, including an undeclared 404, fails the test.
      */
     private static final Map<String, Integer> DECLARED_STATUS = Map.ofEntries(
+            Map.entry("PUT /api/finance/tax/product-slabs/999999", 404),
             Map.entry("GET /api/traceability/fg-batch/999999", 404),
             Map.entry("GET /api/traceability/material-batch/999999", 404),
             Map.entry("POST /api/production/issues", 404),

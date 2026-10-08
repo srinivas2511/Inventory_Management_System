@@ -23,7 +23,18 @@ public class TaxCode extends BaseEntity {
     @Column(name = "gl_account_id")
     private Long glAccountId;
 
+    @Column(name = "input_gl_account_id")
+    private Long inputGlAccountId;
+
+    @Column(name = "output_gl_account_id")
+    private Long outputGlAccountId;
+
     private boolean active = true;
+
+    public Long getInputGlAccountId() { return inputGlAccountId; }
+    public Long getOutputGlAccountId() { return outputGlAccountId; }
+    public void setInputGlAccountId(Long inputGlAccountId) { this.inputGlAccountId = inputGlAccountId; }
+    public void setOutputGlAccountId(Long outputGlAccountId) { this.outputGlAccountId = outputGlAccountId; }
 
     public String getTaxCode() { return taxCode; }
     public String getDescription() { return description; }
