@@ -13,6 +13,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { PurchaseOrderFormComponent } from './purchase-order-form.component';
+import { SessionStore } from '../../core/auth/session.store';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
 import { PagedList } from '../../shared/paged-list';
@@ -38,6 +39,7 @@ export interface PurchaseOrderDto {
   status: string;
   grandTotal: number;
   currency: string;
+  submittedBy?: number | null;
   items: PurchaseOrderItemDto[];
   allowedActions: string[];
 }
@@ -126,15 +128,22 @@ export interface PurchaseOrderDto {
               </button>
             }
             @if (r.allowedActions?.includes('approve')) {
-              <button
-                mat-icon-button
-                matTooltip="Approve"
-                aria-label="Approve"
+              <span
+                class="approve-wrap"
                 *appHasPermission="'PURCHASE_APPROVE'"
-                (click)="doAction(r.id, 'approve')"
+                [matTooltip]="
+                  ownSubmission(r) ? 'You submitted this order, so another approver must approve it' : 'Approve'
+                "
               >
-                <mat-icon>check_circle</mat-icon>
-              </button>
+                <button
+                  mat-icon-button
+                  aria-label="Approve"
+                  [disabled]="ownSubmission(r)"
+                  (click)="doAction(r.id, 'approve')"
+                >
+                  <mat-icon>check_circle</mat-icon>
+                </button>
+              </span>
             }
             @if (r.allowedActions?.includes('send_to_supplier')) {
               <button
@@ -161,6 +170,7 @@ export class PurchaseOrderListComponent implements OnInit {
   private http = inject(HttpClient);
   private snack = inject(MatSnackBar);
   private dialog = inject(MatDialog);
+  private session = inject(SessionStore);
 
   columns = ['poNumber', 'supplierId', 'poDate', 'grandTotal', 'status', 'actions'];
   rows = signal<PurchaseOrderDto[]>([]);
@@ -174,6 +184,11 @@ export class PurchaseOrderListComponent implements OnInit {
       this.load();
     });
     this.load();
+  }
+
+  ownSubmission(po: PurchaseOrderDto): boolean {
+    const userId = this.session.user()?.id;
+    return userId != null && po.submittedBy != null && po.submittedBy === userId;
   }
 
   createPo(): void {
