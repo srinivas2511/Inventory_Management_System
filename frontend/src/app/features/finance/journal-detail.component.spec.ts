@@ -164,6 +164,23 @@ describe('JournalDetailComponent', () => {
       expect(labels()).toEqual(['Approve']);
     });
 
+    it('disables Approve for the user who prepared the journal (business rule 19)', () => {
+      setup(['JOURNAL_APPROVE'], journal({ status: 'SUBMITTED', preparedBy: 1 }));
+      const approve = Array.from(
+        (fixture.nativeElement as HTMLElement).querySelectorAll('mat-card-actions button'),
+      ).find((b) => (b.textContent ?? '').trim() === 'Approve') as HTMLButtonElement;
+      expect(approve).toBeTruthy();
+      expect(approve.disabled).toBeTrue();
+    });
+
+    it('enables Approve for a different user than the preparer', () => {
+      setup(['JOURNAL_APPROVE'], journal({ status: 'SUBMITTED', preparedBy: 11 }));
+      const approve = Array.from(
+        (fixture.nativeElement as HTMLElement).querySelectorAll('mat-card-actions button'),
+      ).find((b) => (b.textContent ?? '').trim() === 'Approve') as HTMLButtonElement;
+      expect(approve.disabled).toBeFalse();
+    });
+
     it('an approved journal offers Post to the ledger to a GL_POST holder', () => {
       setup(['GL_POST'], journal({ status: 'APPROVED' }));
       expect(labels()).toEqual(['Post to ledger']);

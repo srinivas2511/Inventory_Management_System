@@ -32,6 +32,8 @@ export interface SalesOrderDto {
   status: string;
   totalValue: number;
   items: SalesOrderItemDto[];
+  createdBy: number | null;
+  submittedBy: number | null;
   allowedActions: string[];
 }
 

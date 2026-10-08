@@ -6,8 +6,10 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Observable } from 'rxjs';
+import { SessionStore } from '../../core/auth/session.store';
 import { problemMessage } from '../../core/models/problem.model';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
@@ -27,6 +29,7 @@ import { ReasonDialogComponent } from './reason-dialog.component';
     MatProgressSpinnerModule,
     MatSnackBarModule,
     MatTableModule,
+    MatTooltipModule,
     RouterLink,
     StatusBadgeComponent,
   ],
@@ -95,15 +98,14 @@ import { ReasonDialogComponent } from './reason-dialog.component';
               </button>
             }
             @if (j.status === 'SUBMITTED') {
-              <button
-                mat-stroked-button
-                color="accent"
+              <span
                 *appHasPermission="'JOURNAL_APPROVE'"
-                [disabled]="working()"
-                (click)="approve()"
+                [matTooltip]="ownJournal() ? 'You prepared this journal, so another approver must approve it' : ''"
               >
-                Approve
-              </button>
+                <button mat-stroked-button color="accent" [disabled]="working() || ownJournal()" (click)="approve()">
+                  Approve
+                </button>
+              </span>
             }
             @if (j.status === 'APPROVED') {
               <button
@@ -184,6 +186,7 @@ import { ReasonDialogComponent } from './reason-dialog.component';
 })
 export class JournalDetailComponent implements OnInit {
   private api = inject(FinanceApi);
+  private session = inject(SessionStore);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private dialog = inject(MatDialog);
@@ -196,6 +199,11 @@ export class JournalDetailComponent implements OnInit {
   working = signal(false);
   errorMessage = signal('');
 
+  /** Business rule 19: the preparer cannot approve the journal (the server enforces this too). */
+  ownJournal = computed(() => {
+    const userId = this.session.user()?.id;
+    return userId != null && this.journal()?.preparedBy === userId;
+  });
   period = computed(() => this.periods().find((p) => p.id === this.journal()?.periodId) ?? null);
   totalDebit = computed(() => (this.journal()?.lines ?? []).reduce((sum, l) => sum + Number(l.debitAmount), 0));
   totalCredit = computed(() => (this.journal()?.lines ?? []).reduce((sum, l) => sum + Number(l.creditAmount), 0));

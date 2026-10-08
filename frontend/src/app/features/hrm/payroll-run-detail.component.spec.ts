@@ -3,6 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
+import { SessionStore } from '../../core/auth/session.store';
 import { PayrollRunDto, PayrollSlipDto } from './hrm.api';
 import { PayrollRunDetailComponent } from './payroll-run-detail.component';
 
@@ -102,6 +103,35 @@ describe('PayrollRunDetailComponent', () => {
     expect(text).toContain('JNL/26/00042');
     expect(text).not.toContain('Approve and post journal');
     expect(text).not.toContain('Recalculate');
+  });
+
+  function signIn(id: number): void {
+    TestBed.inject(SessionStore).setUser({
+      id,
+      username: 'u' + id,
+      fullName: 'User ' + id,
+      email: 'u@example.com',
+      roles: [],
+      permissions: ['PAYROLL_RUN'],
+      mustChangePassword: false,
+    });
+  }
+  const approveButton = (): HTMLButtonElement =>
+    Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('button')).find((b) =>
+      (b.textContent ?? '').includes('Approve and post journal'),
+    ) as HTMLButtonElement;
+
+  it('disables Approve for the user who initiated the run', () => {
+    signIn(1);
+    setup(draft);
+    expect(approveButton()).toBeTruthy();
+    expect(approveButton().disabled).toBeTrue();
+  });
+
+  it('enables Approve for a different user than the initiator', () => {
+    signIn(2);
+    setup(draft);
+    expect(approveButton().disabled).toBeFalse();
   });
 
   it('approves the run and reloads it', () => {

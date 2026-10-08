@@ -18,6 +18,7 @@ import { SalesOrderFormComponent } from './sales-order-form.component';
 import { SalesApi, SalesOrderDto } from './sales.api';
 import { PagedList } from '../../shared/paged-list';
 import { ListPaginatorComponent } from '../../shared/components/list-paginator.component';
+import { SessionStore } from '../../core/auth/session.store';
 
 @Component({
   selector: 'app-sales-order-list',
@@ -121,15 +122,16 @@ import { ListPaginatorComponent } from '../../shared/components/list-paginator.c
               </button>
             }
             @if (o.allowedActions.includes('approve')) {
-              <button
-                mat-icon-button
-                matTooltip="Approve"
-                aria-label="Approve"
+              <span
                 *appHasPermission="'SALES_APPROVE'"
-                (click)="approve(o)"
+                [matTooltip]="
+                  ownWork(o) ? 'You created or submitted this order, so another approver must approve it' : 'Approve'
+                "
               >
-                <mat-icon>thumb_up</mat-icon>
-              </button>
+                <button mat-icon-button aria-label="Approve" [disabled]="ownWork(o)" (click)="approve(o)">
+                  <mat-icon>thumb_up</mat-icon>
+                </button>
+              </span>
             }
             @if (o.allowedActions.includes('cancel')) {
               <button
@@ -160,6 +162,7 @@ import { ListPaginatorComponent } from '../../shared/components/list-paginator.c
 })
 export class SalesOrderListComponent implements OnInit {
   private api = inject(SalesApi);
+  private session = inject(SessionStore);
   private snack = inject(MatSnackBar);
   private dialog = inject(MatDialog);
 
@@ -221,6 +224,12 @@ export class SalesOrderListComponent implements OnInit {
           this.load();
         }
       });
+  }
+
+  /** Segregation of duties: whoever created or submitted the order cannot approve it (the server enforces this too). */
+  ownWork(order: SalesOrderDto): boolean {
+    const userId = this.session.user()?.id;
+    return userId != null && (order.createdBy === userId || order.submittedBy === userId);
   }
 
   confirm(order: SalesOrderDto): void {

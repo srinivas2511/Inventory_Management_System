@@ -6,6 +6,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { SessionStore } from '../../core/auth/session.store';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import { HrmApi, MONTH_NAMES, PayrollRunDto, PayrollSlipDto } from './hrm.api';
 
@@ -21,6 +23,7 @@ import { HrmApi, MONTH_NAMES, PayrollRunDto, PayrollSlipDto } from './hrm.api';
     MatProgressSpinnerModule,
     MatSnackBarModule,
     MatTableModule,
+    MatTooltipModule,
     StatusBadgeComponent,
   ],
   template: `
@@ -55,9 +58,15 @@ import { HrmApi, MONTH_NAMES, PayrollRunDto, PayrollSlipDto } from './hrm.api';
           </button>
         }
         @if (r.allowedActions.includes('APPROVE') && r.totalEmployees) {
-          <button mat-flat-button color="primary" [disabled]="busy()" (click)="act('approve')">
-            <mat-icon>verified</mat-icon> Approve and post journal
-          </button>
+          <span
+            [matTooltip]="
+              ownRun(r) ? 'You initiated this run, so another user must approve it and post the journal' : ''
+            "
+          >
+            <button mat-flat-button color="primary" [disabled]="busy() || ownRun(r)" (click)="act('approve')">
+              <mat-icon>verified</mat-icon> Approve and post journal
+            </button>
+          </span>
         }
         @if (r.allowedActions.includes('MARK_PAID')) {
           <button mat-flat-button color="primary" [disabled]="busy()" (click)="act('pay')">
@@ -135,6 +144,7 @@ import { HrmApi, MONTH_NAMES, PayrollRunDto, PayrollSlipDto } from './hrm.api';
 })
 export class PayrollRunDetailComponent implements OnInit {
   private api = inject(HrmApi);
+  private session = inject(SessionStore);
   private route = inject(ActivatedRoute);
   private snack = inject(MatSnackBar);
 
@@ -158,6 +168,12 @@ export class PayrollRunDetailComponent implements OnInit {
       error: () => this.snack.open('Failed to load the payroll run', 'Dismiss', { duration: 3000 }),
     });
     this.api.getPayrollSlips(this.id).subscribe({ next: (s) => this.slips.set(s) });
+  }
+
+  /** The person who initiated the run cannot approve it (the server enforces this too). */
+  ownRun(run: PayrollRunDto): boolean {
+    const userId = this.session.user()?.id;
+    return userId != null && run.initiatedBy === userId;
   }
 
   act(action: 'calculate' | 'approve' | 'pay'): void {

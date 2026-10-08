@@ -37,6 +37,8 @@ const mockOrders: SalesOrderDto[] = [
         fulfillmentStatus: 'PENDING',
       },
     ],
+    createdBy: 2,
+    submittedBy: null,
     allowedActions: ['confirm', 'cancel'],
   },
 ];
@@ -120,5 +122,41 @@ describe('SalesOrderListComponent', () => {
       expect(req.request.method).toBe('POST');
       req.flush({ ...mockOrders[0], status: 'ORDERED', allowedActions: ['approve', 'cancel'] });
     }
+  });
+
+  describe('segregation of duties on Approve', () => {
+    const ordered = (over: Partial<SalesOrderDto>): SalesOrderDto => ({
+      ...mockOrders[0],
+      id: 2,
+      orderNumber: 'SO/26/00002',
+      status: 'ORDERED',
+      allowedActions: ['approve', 'cancel'],
+      ...over,
+    });
+    const approveButton = (): HTMLButtonElement | null =>
+      fixture.nativeElement.querySelector('button[aria-label="Approve"]');
+
+    function load(order: SalesOrderDto): void {
+      backend
+        .expectOne((r) => r.url.includes('/api/sales/orders'))
+        .flush({ ...pageResponse, content: [order], totalElements: 1 });
+      fixture.detectChanges();
+    }
+
+    it('disables Approve for the user who submitted the order', () => {
+      load(ordered({ createdBy: 9, submittedBy: 1 }));
+      expect(approveButton()).toBeTruthy();
+      expect(approveButton()!.disabled).toBeTrue();
+    });
+
+    it('disables Approve for the user who created the order', () => {
+      load(ordered({ createdBy: 1, submittedBy: 9 }));
+      expect(approveButton()!.disabled).toBeTrue();
+    });
+
+    it('enables Approve for a different user', () => {
+      load(ordered({ createdBy: 7, submittedBy: 8 }));
+      expect(approveButton()!.disabled).toBeFalse();
+    });
   });
 });
