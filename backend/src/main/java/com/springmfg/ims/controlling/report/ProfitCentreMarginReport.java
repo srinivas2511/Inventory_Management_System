@@ -47,7 +47,7 @@ public class ProfitCentreMarginReport implements ReportDefinition {
                     JOIN ims.journal_headers jh ON jh.id = jl.journal_header_id
                     JOIN ims.gl_accounts ga ON ga.id = jl.gl_account_id
                     JOIN ims.profit_centres pc ON pc.id = jl.profit_centre_id
-                    WHERE jh.status = 'POSTED'
+                    WHERE jh.status IN ('POSTED', 'REVERSED')
                       AND jh.posting_date BETWEEN :from AND :to
                       AND (:entityId = 0 OR pc.id = :entityId)
                     GROUP BY pc.id, pc.profit_centre_code, pc.name

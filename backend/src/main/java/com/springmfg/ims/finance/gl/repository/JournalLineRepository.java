@@ -17,7 +17,7 @@ public interface JournalLineRepository extends JpaRepository<JournalLine, Long> 
            "SUM(l.creditAmount) as totalCredit " +
            "FROM JournalLine l " +
            "JOIN l.journalHeader h " +
-           "WHERE h.status = 'POSTED' AND h.periodId = :periodId " +
+           "WHERE h.status IN ('POSTED', 'REVERSED') AND h.periodId = :periodId " +
            "GROUP BY l.glAccountId")
     List<Object[]> trialBalanceByPeriod(@Param("periodId") Long periodId);
 }

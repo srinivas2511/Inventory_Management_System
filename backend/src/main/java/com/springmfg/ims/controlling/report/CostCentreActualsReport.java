@@ -38,7 +38,7 @@ public class CostCentreActualsReport implements ReportDefinition {
                     FROM ims.journal_lines jl
                     JOIN ims.journal_headers jh ON jh.id = jl.journal_header_id
                     JOIN ims.gl_accounts ga ON ga.id = jl.gl_account_id
-                    WHERE jh.status = 'POSTED'
+                    WHERE jh.status IN ('POSTED', 'REVERSED')
                       AND jl.cost_centre_id IS NOT NULL
                       AND ga.account_type IN ('EXPENSE', 'COGS')
                       AND (:entityId = 0 OR jl.cost_centre_id = :entityId)
