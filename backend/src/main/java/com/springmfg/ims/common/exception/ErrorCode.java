@@ -22,6 +22,7 @@ public enum ErrorCode {
     ACCOUNT_LOCKED(HttpStatus.LOCKED, "Account locked"),
     ACCOUNT_DISABLED(HttpStatus.FORBIDDEN, "Account is disabled"),
     PASSWORD_CHANGE_REQUIRED(HttpStatus.FORBIDDEN, "Password change required"),
+    MODULE_INACTIVE(HttpStatus.FORBIDDEN, "Module not active"),
     RATE_LIMITED(HttpStatus.TOO_MANY_REQUESTS, "Too many requests"),
 
     // 400 - business rule

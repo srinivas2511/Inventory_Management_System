@@ -218,6 +218,10 @@ class RoleAccessIT extends AbstractIntegrationTest {
                     Set.of("OPERATOR", "ACCOUNTANT", "SALES")),
             Probe.of(HttpMethod.POST, "/api/ar/credit-notes/" + MISSING + "/cancel", Set.of("ADMIN", "ACCOUNTANT", "FINANCE_MANAGER"),
                     Set.of("OPERATOR", "SALES", "DISPATCH")),
+            // R9-7.10 module activation: any signed-in user reads the list (the navigation needs it); only MODULE_MANAGE switches
+            Probe.of(HttpMethod.GET, "/api/modules", Set.of("ADMIN", "OPERATOR", "SALES", "DISPATCH"), Set.of()),
+            Probe.withBody(HttpMethod.PUT, "/api/modules/CRM", "{\"active\":true}", Set.of("ADMIN"),
+                    Set.of("OPERATOR", "SALES", "FINANCE_MANAGER")),
             Probe.of(HttpMethod.GET, "/api/lookups/warehouses", Set.of("ADMIN", "STORE_MANAGER"), Set.of("OPERATOR")),
             Probe.of(HttpMethod.GET, "/api/lookups/locations", Set.of("ADMIN", "STORE_MANAGER"), Set.of("OPERATOR")),
             Probe.of(HttpMethod.GET, "/api/lookups/products/" + MISSING + "/active-bom",
