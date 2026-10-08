@@ -94,8 +94,16 @@ class FinishedGoodsCostingIT extends AbstractIntegrationTest {
     @Autowired JdbcTemplate jdbc;
     @Autowired TestData td;
 
+    /** The seeded cost-centre rates, restored after each test: the numbers below are hand-worked without conversion cost. */
+    private List<Map<String, Object>> seededRates = List.of();
+
     @BeforeEach
-    void login() {
+    void zeroConversionRatesAndLogin() {
+        // Operations are timed by the real clock, so with the seeded non-zero rates a slow run (a cold JVM, a loaded
+        // machine) would absorb a few cents of conversion cost and move the unit cost in the fourth decimal.
+        seededRates = jdbc.queryForList(
+                "SELECT id, labour_rate_per_hour, machine_rate_per_hour, overhead_pct FROM ims.cost_centres");
+        jdbc.update("UPDATE ims.cost_centres SET labour_rate_per_hour = 0, machine_rate_per_hour = 0, overhead_pct = 0");
         Long userId = jdbc.queryForObject("""
                 INSERT INTO ims.users (username, full_name, email, password_hash)
                 VALUES (?, 'Costing IT', ?, 'x') RETURNING id
@@ -111,6 +119,12 @@ class FinishedGoodsCostingIT extends AbstractIntegrationTest {
     @AfterEach
     void clear() {
         SecurityContextHolder.clearContext();
+        for (Map<String, Object> r : seededRates) {
+            jdbc.update("""
+                    UPDATE ims.cost_centres SET labour_rate_per_hour = ?, machine_rate_per_hour = ?, overhead_pct = ?
+                     WHERE id = ?
+                    """, r.get("labour_rate_per_hour"), r.get("machine_rate_per_hour"), r.get("overhead_pct"), r.get("id"));
+        }
     }
 
     // ---- helpers --------------------------------------------------------------------------------------------------
