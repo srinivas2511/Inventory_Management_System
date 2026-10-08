@@ -5,6 +5,7 @@ import com.springmfg.ims.common.exception.BusinessRuleException;
 import com.springmfg.ims.common.exception.ErrorCode;
 import com.springmfg.ims.common.exception.NotFoundException;
 import com.springmfg.ims.common.numbering.DocumentNumberService;
+import com.springmfg.ims.common.security.SegregationOfDuties;
 import com.springmfg.ims.finance.gl.domain.FiscalPeriod;
 import com.springmfg.ims.finance.gl.domain.GlAccount;
 import com.springmfg.ims.finance.gl.domain.JournalHeader;
@@ -128,6 +129,10 @@ public class JournalService {
     public JournalHeaderDto approve(Long id) {
         JournalHeader header = findHeader(id);
         requireStatus(header, "SUBMITTED");
+        // Business rule 19 / SEC-008: the preparer and the approver of a journal must be different users.
+        SegregationOfDuties.requireDifferentUser(currentUserId(), header.getPreparedBy(),
+                "You prepared journal " + header.getJournalNumber()
+                        + "; a different user with journal approval rights must approve it");
         header.setStatus("APPROVED");
         header.setApprovedBy(currentUserId());
         header.setApprovedAt(Instant.now());

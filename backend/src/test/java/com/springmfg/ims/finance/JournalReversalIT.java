@@ -30,6 +30,7 @@ import com.springmfg.ims.support.AbstractIntegrationTest;
 class JournalReversalIT extends AbstractIntegrationTest {
 
     @Autowired JournalService journals;
+    @Autowired com.springmfg.ims.support.TestData td;
     @Autowired GlAccountResolver glAccounts;
     @Autowired JdbcTemplate jdbc;
 
@@ -74,7 +75,7 @@ class JournalReversalIT extends AbstractIntegrationTest {
     private JournalHeaderDto postedManualJournal(String amount) {
         JournalHeaderDto draft = journals.createDraft(manual(amount));
         journals.submit(draft.id());
-        journals.approve(draft.id());
+        td.runAsSecondUser(() -> journals.approve(draft.id()), "JOURNAL_APPROVE");
         return journals.post(draft.id());
     }
 
