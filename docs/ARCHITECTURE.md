@@ -550,8 +550,27 @@ Three enforcement layers, all server-side:
 
 **The Administrator role holds every permission in the catalogue** (V37, kept complete by `AdminHoldsEveryPermissionIT`: a release that seeds new permission codes grants them to `ADMIN` in the same migration). Holding a permission does not bypass the code-level segregation-of-duties rules: an administrator still cannot approve their own purchase order or approval request (`AdminSegregationOfDutiesIT`).
 
+### 10.2a Segregation-of-duties matrix
+
+One rule everywhere: **the user who performed the earlier step cannot perform the approving step, whatever permissions or roles they hold (the Administrator included).** It is enforced in the service layer through `SegregationOfDuties` (refusal: HTTP 422, code `SEGREGATION_OF_DUTIES`, with the message naming the document and what to do) and mirrored in the UI by a disabled action with a tooltip; the server stays the authority.
+
+| Document | Approving step | Must differ from | Source | Enforced in |
+|---|---|---|---|---|
+| Purchase order | approve | submitter | SEC-008 | `PurchaseOrderService.approve` |
+| Approval request (stock adjustment and other workflow documents) | approve each step | requester | SEC-008, DESIGN 4.5 | `ApprovalService.approve` |
+| Manual journal | approve | preparer | SEC-008, business rule 19, R9-7.3 | `JournalService.approve` |
+| Sales order | approve | creator and submitter (confirmer) | RUNBOOK second-approver step, section 10 principle | `SalesOrderService.approve` (V47 records `submitted_by`) |
+| Payroll run | approve (posts the payroll journal) | initiator | section 10 principle (requester != approver) | `PayrollService.approve` |
+| AP invoice match exception | variance override | the user who entered the invoice | AP three-way match decision | `ApService.overrideMatch` |
+| Controlled document | approve | uploader of the current version | document management decision | `DocumentService.approve` |
+| User administration | reset password | the user themselves | RUNBOOK | `UserAdminService` |
+
+System postings are not human steps and are not subject to the rule: the accounting bridge, and the payroll or AP journals posted inside the approving transaction, record the acting user for every field (`SOD-SYS-1`).
+
+**Not required by the documents, so not enforced** (a deliberate non-decision, revisit if the organisation's policy asks for it): journal *posting* by its preparer once another user approved it; journal reversal (a single step that mirrors an already-approved posted journal); payroll payment (`markPaid`) by the approver; period close and re-open by the same person; AP payment by the user who entered or approved the invoice; purchase requisition, BOM, ECO and production order approvals (SEC-008 names only the PO, stock adjustment and journal); CAPA verifier against assignee. **Dispatch has no approval step** (a dispatch is created and posts stock in one action), so the RUNBOOK's earlier mention of dispatch self-approval described a control that does not exist.
+
 ### 10.3 Financial access controls (R9)
-- Journal entry preparer ≠ approver (hard-coded `AccessScopeService` check)
+- Journal entry preparer ≠ approver (business rule 19; `JournalService.approve`, see the matrix below)
 - Period close requires `PERIOD_CLOSE` permission (Finance Manager)
 - Posting to a closed period requires Finance Manager override (creates override audit entry)
 - Sensitive reports (`FINANCIAL_REPORT`) audit every export

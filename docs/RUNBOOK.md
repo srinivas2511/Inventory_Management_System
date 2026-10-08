@@ -82,8 +82,11 @@ deactivated or have the Administrator role removed; keep a second administrator 
 
 ### Second approver (first-run step)
 
-The system refuses self-approval: whoever submits a purchase order, sales order, dispatch, AP invoice exception or
-journal cannot approve it. A one-administrator installation therefore cannot complete its first purchase order.
+The system refuses self-approval: whoever submits a purchase order, creates or confirms a sales order, prepares a
+journal, initiates a payroll run or enters an AP invoice that needs a variance approval cannot approve it, and holding
+the permission (the Administrator role included) does not change that (see ARCHITECTURE section 10.2a for the full
+matrix; a dispatch has no approval step). A one-administrator installation therefore cannot complete its first purchase
+order, sales order, journal approval or payroll run.
 After the first sign-in, create at least one more user under **Admin > Users** and give it the role that holds the
 approval permission (for example `PURCHASE_MANAGER`, or a second `ADMIN`), then change roles as your organisation requires.
 Keep a second administrator as well: failed sign-ins can lock the only one, and only an administrator can unlock.
