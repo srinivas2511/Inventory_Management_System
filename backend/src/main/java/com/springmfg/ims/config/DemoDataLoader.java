@@ -89,6 +89,9 @@ public class DemoDataLoader {
 
     private static final Logger log = LoggerFactory.getLogger(DemoDataLoader.class);
 
+    /** The demo administrator, remembered so a step that needs a second person can switch back to them. */
+    private long adminUserId;
+
     // ── seed codes (idempotency guard) ────────────────────────────────────────
 
     // documented in README.md; this class only exists in the dev/demo profiles, never production
@@ -545,6 +548,10 @@ public class DemoDataLoader {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public long step12_salesOrder(long customerId, long productId) {
+        // Segregation of duties: the sales user creates and confirms the order, the administrator approves it.
+        long salesUserId = userRepo.findByUsername("sales1").map(u -> u.getId())
+                .orElseThrow(() -> new IllegalStateException("Demo user sales1 is missing"));
+        installUserContext(salesUserId, "sales1", Set.of("SALES", "SALES_VIEW", "SALES_CREATE", "SALES_UPDATE"));
         SalesOrderDto so = salesOrderService.create(new CreateSalesOrderRequest(
                 customerId,
                 LocalDate.now(),
@@ -558,6 +565,7 @@ public class DemoDataLoader {
         log.info("step12: SO created id={} number={}", so.id(), so.orderNumber());
 
         so = salesOrderService.confirm(so.id());
+        installAdminContext(adminUserId);
         so = salesOrderService.approve(so.id());
         log.info("step12: SO approved id={}", so.id());
         return so.id();
@@ -672,7 +680,13 @@ public class DemoDataLoader {
 
     // ── Security context helper ───────────────────────────────────────────────
 
+    private void installUserContext(long userId, String username, Set<String> authorities) {
+        CachedUser user = new CachedUser(userId, username, true, 0, Set.of(), authorities);
+        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(user, null, List.of()));
+    }
+
     private void installAdminContext(long adminId) {
+        this.adminUserId = adminId;
         CachedUser admin = new CachedUser(
                 adminId, DEMO_ADMIN_USERNAME, true, 0,
                 Set.of("ADMIN"),

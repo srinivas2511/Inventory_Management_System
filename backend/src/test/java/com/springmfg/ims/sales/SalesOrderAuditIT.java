@@ -79,7 +79,7 @@ class SalesOrderAuditIT extends AbstractIntegrationTest {
         assertThat((String) confirmed.get("old_value")).contains("DRAFT");
         assertThat((String) confirmed.get("new_value")).contains("ORDERED");
 
-        salesOrderService.approve(order.id());
+        td.runAsSecondUser(() -> salesOrderService.approve(order.id()), "SALES_APPROVE");
         Map<String, Object> approved = auditRow("SO_APPROVED", order.id());
         assertThat((String) approved.get("old_value")).contains("ORDERED");
         assertThat((String) approved.get("new_value")).contains("APPROVED");

@@ -37,6 +37,9 @@ public class SalesOrder extends BaseEntity {
     @Column(nullable = false, length = 20)
     private String status = "DRAFT";
 
+    @Column(name = "submitted_by")
+    private Long submittedBy;
+
     @Column(name = "approved_by")
     private Long approvedBy;
 
@@ -62,6 +65,7 @@ public class SalesOrder extends BaseEntity {
     public String getPaymentTerms() { return paymentTerms; }
     public String getNotes() { return notes; }
     public String getStatus() { return status; }
+    public Long getSubmittedBy() { return submittedBy; }
     public Long getApprovedBy() { return approvedBy; }
     public Instant getApprovedAt() { return approvedAt; }
     public Long getCancelledBy() { return cancelledBy; }
@@ -76,6 +80,7 @@ public class SalesOrder extends BaseEntity {
     public void setPaymentTerms(String paymentTerms) { this.paymentTerms = paymentTerms; }
     public void setNotes(String notes) { this.notes = notes; }
     public void setStatus(String status) { this.status = status; }
+    public void setSubmittedBy(Long submittedBy) { this.submittedBy = submittedBy; }
     public void setApprovedBy(Long approvedBy) { this.approvedBy = approvedBy; }
     public void setApprovedAt(Instant approvedAt) { this.approvedAt = approvedAt; }
     public void setCancelledBy(Long cancelledBy) { this.cancelledBy = cancelledBy; }

@@ -326,7 +326,8 @@ class ProductionFlowIT extends AbstractIntegrationTest {
                 List.of(new AddSalesOrderItemRequest(order.productId(), new BigDecimal("80"),
                         new BigDecimal("55.0000"), null, null))));
         salesOrderService.confirm(so.id());
-        so = salesOrderService.approve(so.id());
+        Long soId = so.id();
+        so = td.asSecondUser(() -> salesOrderService.approve(soId), "SALES_APPROVE");
         Long itemId = so.items().get(0).id();
 
         // the lookups behind the reserve and dispatch forms see the released stock and the open order

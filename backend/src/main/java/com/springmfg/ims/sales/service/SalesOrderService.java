@@ -17,6 +17,7 @@ import com.springmfg.ims.common.exception.BusinessRuleException;
 import com.springmfg.ims.common.exception.ErrorCode;
 import com.springmfg.ims.common.exception.NotFoundException;
 import com.springmfg.ims.common.numbering.DocumentNumberService;
+import com.springmfg.ims.common.security.SegregationOfDuties;
 import com.springmfg.ims.partner.repository.CustomerRepository;
 import com.springmfg.ims.product.repository.ProductRepository;
 import com.springmfg.ims.sales.domain.SalesOrder;
@@ -118,6 +119,7 @@ public class SalesOrderService {
             throw new BusinessRuleException(ErrorCode.VALIDATION_FAILED, "Order has no items");
         }
         order.setStatus("ORDERED");
+        order.setSubmittedBy(currentUserId());
         auditService.record("SO_CONFIRMED", "SALES_ORDER", String.valueOf(orderId), "DRAFT", "ORDERED", null);
         return toDto(order, items);
     }
@@ -125,6 +127,12 @@ public class SalesOrderService {
     public SalesOrderDto approve(Long orderId) {
         SalesOrder order = requireOrder(orderId);
         requireTransition(order, "ORDERED", "APPROVED");
+        // Segregation of duties (SEC-008 principle, RUNBOOK second-approver step): whoever created or submitted the
+        // order cannot approve it, and holding SALES_APPROVE (the Administrator included) does not change that.
+        SegregationOfDuties.requireDifferentFromAll(currentUserId(),
+                "You created or submitted sales order " + order.getOrderNumber()
+                        + "; a different user with SALES_APPROVE must approve it",
+                order.getCreatedBy(), order.getSubmittedBy());
         order.setStatus("APPROVED");
         order.setApprovedBy(currentUserId());
         order.setApprovedAt(Instant.now());
@@ -206,6 +214,7 @@ public class SalesOrderService {
                 order.getOrderDate(), order.getRequiredDate(),
                 order.getDeliveryAddress(), order.getPaymentTerms(), order.getNotes(),
                 order.getStatus(), total, itemDtos,
+                order.getCreatedBy(), order.getSubmittedBy(),
                 allowedActions(order.getStatus()));
     }
 

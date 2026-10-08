@@ -214,7 +214,7 @@ class WmsIT extends AbstractIntegrationTest {
                 LocalDate.now().plusDays(30), "1 Test St", "NET30", "wms it",
                 List.of(new AddSalesOrderItemRequest(productId, qty, new BigDecimal("60.0000"), null, null))));
         orderService.confirm(order.id());
-        orderService.approve(order.id());
+        td.runAsSecondUser(() -> orderService.approve(order.id()), "SALES_APPROVE");
         return order.id();
     }
 

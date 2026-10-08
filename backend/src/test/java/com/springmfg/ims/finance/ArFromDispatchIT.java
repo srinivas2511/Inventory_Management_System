@@ -303,7 +303,7 @@ class ArFromDispatchIT extends AbstractIntegrationTest {
                 customerId, LocalDate.now(), LocalDate.now().plusDays(30),
                 "123 Test St", "NET30", null, items));
         orderService.confirm(created.id());
-        SalesOrderDto order = orderService.approve(created.id());
+        SalesOrderDto order = td.asSecondUser(() -> orderService.approve(created.id()), "SALES_APPROVE");
 
         List<CreateDispatchRequest.DispatchLineRequest> reqLines = new java.util.ArrayList<>();
         for (int i = 0; i < lines.length; i++) {

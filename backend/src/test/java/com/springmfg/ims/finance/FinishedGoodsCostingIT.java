@@ -257,7 +257,8 @@ class FinishedGoodsCostingIT extends AbstractIntegrationTest {
                 List.of(new AddSalesOrderItemRequest(p.product().getId(), new BigDecimal(qty),
                         new BigDecimal("100.0000"), null, null))));
         salesOrderService.confirm(so.id());
-        so = salesOrderService.approve(so.id());
+        Long soId = so.id();
+        so = td.asSecondUser(() -> salesOrderService.approve(soId), "SALES_APPROVE");
         Long itemId = so.items().get(0).id();
         reservationService.reserve(new ReserveRequest(itemId, fgBatchId, warehouseId, fgLocation, new BigDecimal(qty)));
         return dispatchService.create(new CreateDispatchRequest(so.id(), LocalDate.now(), "Carrier", "MH12AB1234",

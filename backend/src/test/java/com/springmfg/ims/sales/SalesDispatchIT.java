@@ -133,7 +133,7 @@ class SalesDispatchIT extends AbstractIntegrationTest {
         SalesOrderDto confirmed = orderService.confirm(created.id());
         assertThat(confirmed.status()).isEqualTo("ORDERED");
 
-        SalesOrderDto approved = orderService.approve(created.id());
+        SalesOrderDto approved = td.asSecondUser(() -> orderService.approve(created.id()), "SALES_APPROVE");
         assertThat(approved.status()).isEqualTo("APPROVED");
     }
 
@@ -262,6 +262,6 @@ class SalesDispatchIT extends AbstractIntegrationTest {
                 List.of(new AddSalesOrderItemRequest(productId, qty,
                         new BigDecimal("60.0000"), null, null))));
         orderService.confirm(created.id());
-        return orderService.approve(created.id());
+        return td.asSecondUser(() -> orderService.approve(created.id()), "SALES_APPROVE");
     }
 }

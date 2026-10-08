@@ -254,7 +254,7 @@ class FgRejectionAndTraceIT extends AbstractIntegrationTest {
                 List.of(new AddSalesOrderItemRequest(product.getId(), new BigDecimal(qty),
                         new BigDecimal("100.0000"), null, null))));
         salesOrderService.confirm(so.id());
-        return salesOrderService.approve(so.id());
+        return td.asSecondUser(() -> salesOrderService.approve(so.id()), "SALES_APPROVE");
     }
 
     private Long availableLocation(Long fgBatchId) {

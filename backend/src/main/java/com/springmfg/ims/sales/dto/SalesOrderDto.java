@@ -17,6 +17,8 @@ public record SalesOrderDto(
         String status,
         BigDecimal totalValue,
         List<SalesOrderItemDto> items,
+        Long createdBy,
+        Long submittedBy,
         List<String> allowedActions) {
 
     public record SalesOrderItemDto(

@@ -203,7 +203,7 @@ class ReservationAllocationIT extends AbstractIntegrationTest {
         SalesOrderDto created = orderService.create(new CreateSalesOrderRequest(
                 customerId, LocalDate.now(), LocalDate.now().plusDays(30), "123 Test St", "NET30", null, items));
         orderService.confirm(created.id());
-        return orderService.approve(created.id());
+        return td.asSecondUser(() -> orderService.approve(created.id()), "SALES_APPROVE");
     }
 
     private ReservationDto reserve(SalesOrderDto order, int line, String qty) {
