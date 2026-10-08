@@ -9,6 +9,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { problemMessage } from '../../core/models/problem.model';
+import { PlantFieldComponent } from '../../shared/components/plant-field.component';
 import { LookupApi, LookupItem, LookupOption } from '../../shared/lookup.api';
 
 /** Mirrors CreatePoRequest on the backend. */
@@ -19,6 +20,7 @@ export interface CreatePoRequest {
   paymentTerms: string | null;
   remarks: string | null;
   requisitionId: number | null;
+  plantId?: number | null;
   items: { materialId: number; orderedQty: number; rate: number; taxPct: number | null }[];
 }
 
@@ -38,6 +40,7 @@ function isoDate(d: Date): string {
     MatButtonModule,
     MatIconModule,
     MatProgressSpinnerModule,
+    PlantFieldComponent,
   ],
   template: `
     <h2 mat-dialog-title>New purchase order</h2>
@@ -71,6 +74,7 @@ function isoDate(d: Date): string {
             <mat-label>Remarks</mat-label>
             <input matInput formControlName="remarks" />
           </mat-form-field>
+          <app-plant-field class="full-span" [control]="form.controls.plantId" />
         </div>
 
         <h3 class="mat-h3">Items</h3>
@@ -176,6 +180,7 @@ export class PurchaseOrderFormComponent implements OnInit {
     expectedDeliveryDate: [''],
     paymentTerms: [''],
     remarks: [''],
+    plantId: this.fb.control<number | null>(null),
     items: this.fb.array([this.newLine()] as FormGroup[]),
   });
 
@@ -219,6 +224,7 @@ export class PurchaseOrderFormComponent implements OnInit {
       paymentTerms: raw.paymentTerms || null,
       remarks: raw.remarks || null,
       requisitionId: null,
+      ...(raw.plantId ? { plantId: raw.plantId } : {}),
       items: raw.items.map((l: Record<string, unknown>) => ({
         materialId: l['materialId'] as number,
         orderedQty: Number(l['orderedQty']),

@@ -750,6 +750,12 @@ export const routes: Routes = [
         loadComponent: () => import('./features/admin/user/user-list.component').then((m) => m.UserListComponent),
       },
       {
+        path: 'admin/plants',
+        title: 'Plants',
+        canActivate: [permissionGuard('PLANT_MANAGE')],
+        loadComponent: () => import('./features/admin/plants/plants.component').then((m) => m.PlantsComponent),
+      },
+      {
         path: 'admin/roles',
         title: 'Roles',
         canActivate: [permissionGuard('ROLE_MANAGE')],

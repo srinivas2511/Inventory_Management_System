@@ -8,6 +8,8 @@ export interface SessionUser {
   roles: string[];
   permissions: string[];
   mustChangePassword: boolean;
+  /** Limited to some plants: the screens that cover all plants are not for them. */
+  plantScoped?: boolean;
 }
 
 @Injectable({ providedIn: 'root' })

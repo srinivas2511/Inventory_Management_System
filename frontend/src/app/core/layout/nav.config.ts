@@ -6,18 +6,29 @@ export interface NavItem {
   route: string;
   permission?: string;
   enabled: boolean;
+  /** Covers all plants (aggregates, finance, planning, audit, integration): hidden from a plant-scoped user. */
+  companyLevel?: boolean;
 }
 
 export interface NavGroup {
   label: string;
   items: NavItem[];
+  /** Every item covers all plants. */
+  companyLevel?: boolean;
 }
 
 export const NAV_GROUPS: NavGroup[] = [
   {
     label: 'Overview',
     items: [
-      { label: 'Dashboard', icon: 'dashboard', route: '/dashboard', permission: 'DASHBOARD_VIEW', enabled: true },
+      {
+        label: 'Dashboard',
+        icon: 'dashboard',
+        route: '/dashboard',
+        permission: 'DASHBOARD_VIEW',
+        enabled: true,
+        companyLevel: true,
+      },
       { label: 'Notifications', icon: 'notifications', route: '/notifications', enabled: true },
     ],
   },
@@ -199,6 +210,7 @@ export const NAV_GROUPS: NavGroup[] = [
   },
   {
     label: 'Insight',
+    companyLevel: true,
     items: [
       {
         label: 'Alerts',
@@ -233,6 +245,7 @@ export const NAV_GROUPS: NavGroup[] = [
   },
   {
     label: 'Finance',
+    companyLevel: true,
     items: [
       {
         label: 'Dashboard',
@@ -303,6 +316,7 @@ export const NAV_GROUPS: NavGroup[] = [
   },
   {
     label: 'Controlling',
+    companyLevel: true,
     items: [
       {
         label: 'Cost Centres',
@@ -336,6 +350,7 @@ export const NAV_GROUPS: NavGroup[] = [
   },
   {
     label: 'Planning (MRP)',
+    companyLevel: true,
     items: [
       { label: 'MRP Runs', icon: 'event_repeat', route: '/mrp/runs', permission: 'MRP_VIEW', enabled: true },
       {
@@ -453,8 +468,16 @@ export const NAV_GROUPS: NavGroup[] = [
         permission: 'ROLE_MANAGE',
         enabled: true,
       },
-      { label: 'Audit Logs', icon: 'history', route: '/admin/audit-logs', permission: 'AUDIT_VIEW', enabled: true },
+      {
+        label: 'Audit Logs',
+        icon: 'history',
+        route: '/admin/audit-logs',
+        permission: 'AUDIT_VIEW',
+        enabled: true,
+        companyLevel: true,
+      },
       { label: 'Modules', icon: 'extension', route: '/admin/modules', permission: 'MODULE_MANAGE', enabled: true },
+      { label: 'Plants', icon: 'factory', route: '/admin/plants', permission: 'PLANT_MANAGE', enabled: true },
       {
         label: 'Notification Admin',
         icon: 'mark_email_read',
@@ -466,6 +489,7 @@ export const NAV_GROUPS: NavGroup[] = [
         label: 'Webhooks',
         icon: 'webhook',
         route: '/admin/webhooks',
+        companyLevel: true,
         permission: 'WEBHOOK_VIEW',
         enabled: true,
       },
@@ -473,6 +497,7 @@ export const NAV_GROUPS: NavGroup[] = [
         label: 'Data Import / Export',
         icon: 'import_export',
         route: '/admin/data',
+        companyLevel: true,
         permission: 'DATA_EXPORT',
         enabled: true,
       },
@@ -526,6 +551,7 @@ export function visibleGroups(
       ...g,
       items: g.items.filter((i) => {
         if (!i.enabled) return false;
+        if (session?.user()?.plantScoped && (g.companyLevel || i.companyLevel)) return false;
         const module = moduleOfRoute(i.route);
         if (module && inactiveModules.has(module)) return false;
         if (!i.permission) return true;

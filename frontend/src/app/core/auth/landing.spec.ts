@@ -44,6 +44,34 @@ describe('landingRoute', () => {
     expect(landingRoute(session)).toBe('/finance/journals');
   });
 
+  it('keeps a plant-scoped user off the dashboard and the all-plant screens, which the server refuses them', () => {
+    session.setUser({
+      id: 1,
+      username: 'asha',
+      fullName: 'Asha Rao',
+      roles: ['PURCHASE_MANAGER'],
+      permissions: ['DASHBOARD_VIEW', 'REPORT_VIEW', 'PURCHASE_VIEW'],
+      mustChangePassword: false,
+      plantScoped: true,
+    });
+    const landing = landingRoute(session);
+    expect(landing).not.toBe('/dashboard');
+    expect(landing).not.toContain('/insight');
+  });
+
+  it('still sends a user without plant restrictions to the dashboard', () => {
+    session.setUser({
+      id: 1,
+      username: 'asha',
+      fullName: 'Asha Rao',
+      roles: ['PURCHASE_MANAGER'],
+      permissions: ['DASHBOARD_VIEW', 'PURCHASE_VIEW'],
+      mustChangePassword: false,
+      plantScoped: false,
+    });
+    expect(landingRoute(session)).toBe('/dashboard');
+  });
+
   it('uses the notifications page, which needs no permission, when nothing else is allowed', () => {
     signIn(['NOBODY'], []);
     expect(landingRoute(session)).toBe('/notifications');

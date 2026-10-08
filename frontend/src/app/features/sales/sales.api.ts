@@ -83,6 +83,7 @@ export interface CreateSalesOrderRequest {
   deliveryAddress: string | null;
   paymentTerms: string | null;
   notes: string | null;
+  plantId?: number | null;
   items: {
     productId: number;
     orderedQty: number;

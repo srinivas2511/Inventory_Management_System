@@ -137,6 +137,11 @@ export class LookupApi {
     return this.http.get<LookupOption[]>('/api/lookups/warehouses');
   }
 
+  /** The plants the signed-in user may create documents in. */
+  plants(): Observable<LookupOption[]> {
+    return this.http.get<LookupOption[]>('/api/lookups/plants');
+  }
+
   locations(warehouseId?: number): Observable<LookupLocation[]> {
     let params = new HttpParams();
     if (warehouseId) params = params.set('warehouseId', warehouseId);

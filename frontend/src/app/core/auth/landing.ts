@@ -21,7 +21,8 @@ export function landingRoute(session: SessionStore): string {
   if (!user) {
     return '/login';
   }
-  if (session.hasPermission('DASHBOARD_VIEW')) {
+  // The dashboard aggregates all plants, so a plant-scoped user is never sent to it (the server refuses it).
+  if (session.hasPermission('DASHBOARD_VIEW') && !user.plantScoped) {
     return '/dashboard';
   }
   for (const landing of ROLE_LANDING) {
@@ -31,6 +32,9 @@ export function landingRoute(session: SessionStore): string {
   }
   for (const group of NAV_GROUPS) {
     for (const item of group.items) {
+      if (user.plantScoped && (group.companyLevel || item.companyLevel)) {
+        continue;
+      }
       if (item.enabled && item.permission && session.hasPermission(item.permission)) {
         return item.route;
       }

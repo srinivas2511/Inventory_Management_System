@@ -8,6 +8,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { problemMessage } from '../../core/models/problem.model';
+import { PlantFieldComponent } from '../../shared/components/plant-field.component';
 import { ActiveBom, LookupApi, LookupItem } from '../../shared/lookup.api';
 
 /** Mirrors CreateProductionOrderRequest on the backend. */
@@ -23,6 +24,7 @@ export interface CreateProductionOrderRequest {
   salesOrderId: null;
   priority: number;
   remarks: string | null;
+  plantId?: number | null;
 }
 
 @Component({
@@ -36,11 +38,13 @@ export interface CreateProductionOrderRequest {
     MatSelectModule,
     MatButtonModule,
     MatProgressSpinnerModule,
+    PlantFieldComponent,
   ],
   template: `
     <h2 mat-dialog-title>New production order</h2>
     <mat-dialog-content>
       <form [formGroup]="form" id="po-prod-form" (ngSubmit)="save()" novalidate class="form-grid">
+        <app-plant-field class="full-span" [control]="form.controls.plantId" />
         <mat-form-field appearance="outline" class="full-span">
           <mat-label>Product</mat-label>
           <mat-select formControlName="productId" (selectionChange)="productChosen($event.value)">
@@ -149,6 +153,7 @@ export class ProductionOrderFormComponent implements OnInit {
     expectedCompletionDate: [''],
     productionLine: [''],
     remarks: [''],
+    plantId: this.fb.control<number | null>(null),
   });
 
   ngOnInit(): void {
@@ -182,6 +187,7 @@ export class ProductionOrderFormComponent implements OnInit {
       salesOrderId: null,
       priority: raw.priority,
       remarks: raw.remarks || null,
+      ...(raw.plantId ? { plantId: raw.plantId } : {}),
     };
     this.saving.set(true);
     this.errorMessage.set('');

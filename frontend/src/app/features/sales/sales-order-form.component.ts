@@ -8,6 +8,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { problemMessage } from '../../core/models/problem.model';
+import { PlantFieldComponent } from '../../shared/components/plant-field.component';
 import { LookupApi, LookupItem, LookupOption } from '../../shared/lookup.api';
 import { CreateSalesOrderRequest, SalesApi } from './sales.api';
 
@@ -23,11 +24,13 @@ import { CreateSalesOrderRequest, SalesApi } from './sales.api';
     MatButtonModule,
     MatIconModule,
     MatProgressSpinnerModule,
+    PlantFieldComponent,
   ],
   template: `
     <h2 mat-dialog-title>New sales order</h2>
     <mat-dialog-content>
       <form [formGroup]="form" id="so-form" (ngSubmit)="save()" novalidate>
+        <app-plant-field [control]="form.controls.plantId" />
         <div class="head-grid">
           <mat-form-field appearance="outline">
             <mat-label>Customer</mat-label>
@@ -158,6 +161,7 @@ export class SalesOrderFormComponent implements OnInit {
     requiredDate: [''],
     paymentTerms: [''],
     deliveryAddress: [''],
+    plantId: this.fb.control<number | null>(null),
     items: this.fb.array([this.newLine()] as FormGroup[]),
   });
 
@@ -201,6 +205,7 @@ export class SalesOrderFormComponent implements OnInit {
       deliveryAddress: raw.deliveryAddress || null,
       paymentTerms: raw.paymentTerms || null,
       notes: null,
+      ...(raw.plantId ? { plantId: raw.plantId } : {}),
       items: this.lines.controls.map((line) => {
         const v = line.value as Record<string, unknown>;
         return {

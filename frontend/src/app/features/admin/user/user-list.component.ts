@@ -20,6 +20,7 @@ import { StatusBadgeComponent } from '../../../shared/components/status-badge.co
 import { AdminApi, UserDto } from '../admin.api';
 import { UserFormDialogComponent } from './user-form-dialog.component';
 import { UserResetPasswordDialogComponent } from './user-reset-password-dialog.component';
+import { UserPlantsDialogComponent } from './user-plants-dialog.component';
 import { UserRolesDialogComponent } from './user-roles-dialog.component';
 
 @Component({
@@ -127,6 +128,17 @@ import { UserRolesDialogComponent } from './user-roles-dialog.component';
                 data-testid="roles-user"
               >
                 <mat-icon>admin_panel_settings</mat-icon>
+              </button>
+            }
+            @if (session.hasPermission('PLANT_MANAGE')) {
+              <button
+                mat-icon-button
+                matTooltip="Limit to plants"
+                [attr.aria-label]="'Limit ' + r.username + ' to plants'"
+                (click)="assignPlants(r)"
+                data-testid="plants-user"
+              >
+                <mat-icon>factory</mat-icon>
               </button>
             }
             @if (r.active && session.hasPermission('USER_DELETE')) {
@@ -310,6 +322,21 @@ export class UserListComponent implements OnInit {
         if (saved) {
           this.toast.success(`Roles saved for ${saved.username}`);
           this.load();
+        }
+      });
+  }
+
+  protected assignPlants(user: UserDto): void {
+    this.dialog
+      .open(UserPlantsDialogComponent, { data: { user }, width: '480px' })
+      .afterClosed()
+      .subscribe((saved?: { plantIds: number[] }) => {
+        if (saved) {
+          this.toast.success(
+            saved.plantIds.length
+              ? `${user.username} limited to the chosen plants`
+              : `${user.username} sees every plant`,
+          );
         }
       });
   }
