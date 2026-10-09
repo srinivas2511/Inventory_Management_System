@@ -50,6 +50,10 @@ test.describe('Security (SEC-01 .. SEC-09)', () => {
       expect(h['strict-transport-security'], `${path} HSTS`).toBeTruthy();
       expect(h['x-xss-protection'], `${path} X-XSS-Protection`).toMatch(/1;\s*mode=block/i);
       expect(h['x-content-type-options'], `${path} nosniff`).toBe('nosniff');
+      expect(h['x-frame-options'], `${path} X-Frame-Options`).toBe('DENY');
+      expect(h['referrer-policy'], `${path} Referrer-Policy`).toBe('no-referrer');
+      expect(h['permissions-policy'], `${path} Permissions-Policy`).toContain('camera=()');
+      expect(h['content-security-policy'], `${path} CSP (GC-6 / SEC-004)`).toContain("default-src 'none'");
     }
   });
 
