@@ -43,6 +43,7 @@ public record QualityInspectionDto(
             String deviationNote,
             boolean mandatory,
             Long deviationApprovedBy,
-            java.time.Instant deviationApprovedAt
+            java.time.Instant deviationApprovedAt,
+            String specSource
     ) {}
 }

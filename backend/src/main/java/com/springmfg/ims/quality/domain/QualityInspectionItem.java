@@ -58,6 +58,10 @@ public class QualityInspectionItem extends BaseEntity {
     @Column(name = "mandatory", nullable = false)
     private boolean mandatory = true;
 
+    /** STANDARD, or CUSTOMER_SPEC when the limits are the customer's own override (SAL-006 / GC-5). */
+    @Column(name = "spec_source", nullable = false, length = 20)
+    private String specSource = "STANDARD";
+
     /** Compute PASS/FAIL from limits. Client-supplied result is ignored. */
     public void computeResult() {
         if (actualValue == null && actualText == null) {
@@ -72,6 +76,9 @@ public class QualityInspectionItem extends BaseEntity {
             result = "PASS";
         }
     }
+
+    public String getSpecSource() { return specSource; }
+    public void setSpecSource(String v) { this.specSource = v; }
 
     public QualityInspection getInspection() { return inspection; }
     public void setInspection(QualityInspection v) { this.inspection = v; }

@@ -56,6 +56,7 @@ public class FinalInspectionService {
     private final ProductionOrderRepository orderRepo;
     private final DocumentNumberService numberService;
     private final AuditService auditService;
+    private final CustomerSpecLookup customerSpecLookup;
 
     private static final long DEFAULT_WAREHOUSE_ID = 1L;
 
@@ -70,7 +71,9 @@ public class FinalInspectionService {
             ProductionOperationRepository opRepo,
             ProductionOrderRepository orderRepo,
             DocumentNumberService numberService,
-            AuditService auditService) {
+            AuditService auditService,
+            CustomerSpecLookup customerSpecLookup) {
+        this.customerSpecLookup = customerSpecLookup;
         this.inspectionRepo = inspectionRepo;
         this.itemRepo = itemRepo;
         this.planRepo = planRepo;
@@ -454,7 +457,15 @@ public class FinalInspectionService {
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
+    /**
+     * Creates one item per plan parameter. SAL-006 / GC-5: when the order being inspected was made for a customer who
+     * has its own limits for the product, those limits replace the standard ones, so pass/fail is judged against what
+     * the customer agreed. Stock made without a customer order (no sales order on the production order) is judged
+     * against the standard plan.
+     */
     private void prefillItems(QualityInspection insp, List<InspectionPlanParameter> params) {
+        ProductionOrder order = insp.getProductionOrderId() == null ? null
+                : orderRepo.findById(insp.getProductionOrderId()).orElse(null);
         int seq = 1;
         for (InspectionPlanParameter param : params) {
             QualityInspectionItem item = new QualityInspectionItem();
@@ -466,6 +477,18 @@ public class FinalInspectionService {
             item.setUpperLimit(param.getUpperLimit());
             item.setUnit(param.getUnit());
             item.setMandatory(param.isMandatory());
+            if (order != null && order.getSalesOrderId() != null) {
+                customerSpecLookup.find(order.getSalesOrderId(), order.getProductId(), param.getParameterName())
+                        .ifPresent(l -> {
+                            auditService.record("CUSTOMER_SPEC_APPLIED", "QUALITY_INSPECTION",
+                                    String.valueOf(insp.getId()),
+                                    param.getLowerLimit() + " .. " + param.getUpperLimit(),
+                                    l.lower() + " .. " + l.upper(), param.getParameterName());
+                            item.setLowerLimit(l.lower());
+                            item.setUpperLimit(l.upper());
+                            item.setSpecSource("CUSTOMER_SPEC");
+                        });
+            }
             itemRepo.save(item);
         }
     }
@@ -492,7 +515,7 @@ public class FinalInspectionService {
                         i.getId(), i.getSeq(), i.getParameterName(), i.getSpecification(),
                         i.getLowerLimit(), i.getUpperLimit(), i.getActualValue(),
                         i.getActualText(), i.getUnit(), i.getResult(), i.getDeviationNote(),
-                        i.isMandatory(), i.getDeviationApprovedBy(), i.getDeviationApprovedAt()))
+                        i.isMandatory(), i.getDeviationApprovedBy(), i.getDeviationApprovedAt(), i.getSpecSource()))
                 .toList();
         return new QualityInspectionDto(
                 insp.getId(), insp.getInspectionNumber(), insp.getInspectionType(), insp.getStatus(),

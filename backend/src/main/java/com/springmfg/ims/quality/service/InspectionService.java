@@ -537,7 +537,7 @@ public class InspectionService {
                         i.getId(), i.getSeq(), i.getParameterName(), i.getSpecification(),
                         i.getLowerLimit(), i.getUpperLimit(), i.getActualValue(),
                         i.getActualText(), i.getUnit(), i.getResult(), i.getDeviationNote(),
-                        i.isMandatory(), i.getDeviationApprovedBy(), i.getDeviationApprovedAt()))
+                        i.isMandatory(), i.getDeviationApprovedBy(), i.getDeviationApprovedAt(), i.getSpecSource()))
                 .toList();
         return new QualityInspectionDto(
                 insp.getId(), insp.getInspectionNumber(), insp.getInspectionType(), insp.getStatus(),
