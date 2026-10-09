@@ -19,6 +19,8 @@ public interface MaterialRepository extends JpaRepository<Material, Long> {
 
     Optional<Material> findByMaterialCode(String materialCode);
 
+    java.util.List<Material> findByAllowNegativeStockTrueOrderByMaterialCode();
+
     List<Material> findAllByActiveTrue();
 
     @Query("SELECT m FROM Material m WHERE " +

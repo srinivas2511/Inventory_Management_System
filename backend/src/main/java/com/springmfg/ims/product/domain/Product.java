@@ -108,6 +108,9 @@ public class Product extends BaseEntity {
     @Column(nullable = false)
     private boolean active = true;
 
+    @Column(name = "allow_negative_stock", nullable = false)
+    private boolean allowNegativeStock = false;
+
     @OneToOne(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     private SpringSpecification specification;
 
@@ -143,6 +146,8 @@ public class Product extends BaseEntity {
     public BigDecimal getReorderLevel() { return reorderLevel; }
     public BigDecimal getStandardCost() { return standardCost; }
     public boolean isActive() { return active; }
+    public boolean isAllowNegativeStock() { return allowNegativeStock; }
+    public void setAllowNegativeStock(boolean v) { this.allowNegativeStock = v; }
     public SpringSpecification getSpecification() { return specification; }
 
     // ── setters ──────────────────────────────────────────────────────────────

@@ -295,8 +295,15 @@ public class InventoryPostingService {
         // Rule 1 & 2: No negative stock (unless explicitly allowed)
         BigDecimal available = bal.available();
         if (available.subtract(cmd.quantity()).compareTo(BigDecimal.ZERO) < 0) {
-            boolean allowNegative = settingService.getBoolean("inventory.allow_negative_stock", false);
-            if (!allowNegative) {
+            boolean allowNegative = settingService.getBoolean("inventory.allow_negative_stock", false)
+                    || itemAllowsNegativeStock(cmd);
+            if (allowNegative) {
+                // INV-02 / GC-3: going negative is a deliberate, administrator-enabled exception, so it leaves a trace
+                auditService.record("NEGATIVE_STOCK_ALLOWED", "INVENTORY_BALANCE",
+                        (cmd.materialId() != null ? "MATERIAL:" + cmd.materialId() : "PRODUCT:" + cmd.productId()),
+                        String.valueOf(available), String.valueOf(available.subtract(cmd.quantity())),
+                        cmd.transactionType());
+            } else {
                 // Check quarantine qty for a better error message
                 BigDecimal quarantineQty = balanceRepo.sumQtyByMaterialAndStatus(
                         cmd.materialId(), "QUARANTINE");
@@ -308,6 +315,17 @@ public class InventoryPostingService {
                 throw new BusinessRuleException(ErrorCode.INSUFFICIENT_STOCK, detail);
             }
         }
+    }
+
+    /** GC-3: an administrator may let a single material or product go negative, beside the global setting. */
+    private boolean itemAllowsNegativeStock(PostingCommand cmd) {
+        if (cmd.materialId() != null) {
+            return materialRepo.findById(cmd.materialId()).map(m -> m.isAllowNegativeStock()).orElse(false);
+        }
+        if (cmd.productId() != null) {
+            return productRepo.findById(cmd.productId()).map(p -> p.isAllowNegativeStock()).orElse(false);
+        }
+        return false;
     }
 
     private InventoryBalance lockOrCreate(PostingCommand cmd) {

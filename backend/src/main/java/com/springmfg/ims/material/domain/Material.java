@@ -59,6 +59,16 @@ public class Material extends BaseEntity {
     @Column(nullable = false)
     private boolean active = true;
 
+    @Column(name = "allow_negative_stock", nullable = false)
+    private boolean allowNegativeStock = false;
+
+    /** MDM-004: the unit this material is bought in, and the tax code purchases of it default to. */
+    @Column(name = "purchase_uom", length = 10)
+    private String purchaseUom;
+
+    @Column(name = "purchase_tax_code", length = 15)
+    private String purchaseTaxCode;
+
     public Material() {}
 
     // ── getters ──────────────────────────────────────────────────────────────
@@ -76,6 +86,12 @@ public class Material extends BaseEntity {
     public Integer getShelfLifeDays() { return shelfLifeDays; }
     public String getDescription() { return description; }
     public boolean isActive() { return active; }
+    public String getPurchaseUom() { return purchaseUom; }
+    public void setPurchaseUom(String v) { this.purchaseUom = v; }
+    public String getPurchaseTaxCode() { return purchaseTaxCode; }
+    public void setPurchaseTaxCode(String v) { this.purchaseTaxCode = v; }
+    public boolean isAllowNegativeStock() { return allowNegativeStock; }
+    public void setAllowNegativeStock(boolean v) { this.allowNegativeStock = v; }
 
     // ── setters ──────────────────────────────────────────────────────────────
     public void setMaterialCode(String materialCode) { this.materialCode = materialCode; }

@@ -17,6 +17,8 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     Optional<Product> findByProductCode(String productCode);
 
+    java.util.List<Product> findByAllowNegativeStockTrueOrderByProductCode();
+
     @Query("SELECT p FROM Product p WHERE " +
            "(:q = '' OR LOWER(p.name) LIKE LOWER(CONCAT('%', :q, '%')) " +
            "   OR LOWER(p.productCode) LIKE LOWER(CONCAT('%', :q, '%'))) " +
