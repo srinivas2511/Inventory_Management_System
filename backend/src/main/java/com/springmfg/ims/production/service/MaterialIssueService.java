@@ -44,6 +44,8 @@ public class MaterialIssueService {
     private final MaterialBatchRepository batchRepo;
     private final WarehouseLocationRepository locationRepo;
     private final DocumentNumberService numberService;
+
+    private final com.springmfg.ims.material.service.UomConversionService uomConversions;
     private final SystemSettingService settingService;
     private final AuditService auditService;
     private final ProductionOrderService orderService;
@@ -64,7 +66,9 @@ public class MaterialIssueService {
             AuditService auditService,
             ProductionOrderService orderService,
 
-            com.springmfg.ims.enterprise.scope.PlantScope plantScope) {
+            com.springmfg.ims.enterprise.scope.PlantScope plantScope,
+            com.springmfg.ims.material.service.UomConversionService uomConversions) {
+        this.uomConversions = uomConversions;
 
         this.plantScope = plantScope;
         this.issueRepo = issueRepo;
@@ -115,6 +119,9 @@ public class MaterialIssueService {
         boolean planned = pomRepo.existsByProductionOrderId(req.productionOrderId());
 
         for (CreateIssueRequest.IssueLineRequest lineReq : req.lines()) {
+            // MDM-003 / GC-1: a quantity entered in an alternative unit is converted to the material base unit
+            BigDecimal quantity = uomConversions.toBase(lineReq.materialId(), lineReq.quantity(), lineReq.uom());
+
             // Check tolerance
             ProductionOrderMaterial pom = pomRepo
                     .findByProductionOrderIdAndMaterialId(req.productionOrderId(), lineReq.materialId())
@@ -128,7 +135,7 @@ public class MaterialIssueService {
             if (pom != null) {
                 BigDecimal maxIssue = pom.getPlannedQty()
                         .multiply(BigDecimal.ONE.add(tolerancePct.divide(BigDecimal.valueOf(100), 6, RoundingMode.HALF_UP)));
-                BigDecimal totalAfter = pom.getIssuedQty().add(lineReq.quantity());
+                BigDecimal totalAfter = pom.getIssuedQty().add(quantity);
                 if (totalAfter.compareTo(maxIssue) > 0) {
                     throw new BusinessRuleException(ErrorCode.ISSUE_EXCEEDS_PLAN,
                             "Issue would exceed planned + tolerance for material " + lineReq.materialId());
@@ -137,7 +144,7 @@ public class MaterialIssueService {
 
             // Allocate batches (FEFO)
             List<Allocation> allocations = allocator.allocate(
-                    lineReq.materialId(), lineReq.quantity(), req.warehouseId(), lineReq.explicitBatchId());
+                    lineReq.materialId(), quantity, req.warehouseId(), lineReq.explicitBatchId());
 
             for (Allocation alloc : allocations) {
                 // Post MATERIAL_ISSUE: OUT from RM, IN to WIP
@@ -173,7 +180,7 @@ public class MaterialIssueService {
 
             // Update issued qty
             if (pom != null) {
-                pom.setIssuedQty(pom.getIssuedQty().add(lineReq.quantity()));
+                pom.setIssuedQty(pom.getIssuedQty().add(quantity));
                 pomRepo.save(pom);
             }
         }

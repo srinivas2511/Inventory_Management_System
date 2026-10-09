@@ -48,6 +48,8 @@ public class GoodsReceiptService {
     private final BatchService batchService;
     private final PurchaseOrderService poService;
     private final DocumentNumberService numberService;
+
+    private final com.springmfg.ims.material.service.UomConversionService uomConversions;
     private final SystemSettingService settingService;
     private final AuditService auditService;
     private final ApplicationEventPublisher eventPublisher;
@@ -68,7 +70,9 @@ public class GoodsReceiptService {
             AuditService auditService,
             ApplicationEventPublisher eventPublisher,
 
-            com.springmfg.ims.enterprise.scope.PlantScope plantScope) {
+            com.springmfg.ims.enterprise.scope.PlantScope plantScope,
+            com.springmfg.ims.material.service.UomConversionService uomConversions) {
+        this.uomConversions = uomConversions;
 
         this.plantScope = plantScope;
         this.grRepo = grRepo;
@@ -120,14 +124,17 @@ public class GoodsReceiptService {
             PurchaseOrderItem poItem = poItemRepo.lockById(line.poItemId())
                     .orElseThrow(() -> new NotFoundException("PO item not found: " + line.poItemId()));
 
+            // MDM-003 / GC-1: a quantity entered in an alternative unit is converted to the material base unit
+            BigDecimal receivedQty = uomConversions.toBase(poItem.getMaterialId(), line.receivedQty(), line.uom());
+
             // Over-receipt check (with tolerance)
             BigDecimal maxAllowed = poItem.getOrderedQty()
                     .multiply(BigDecimal.ONE.add(tolerancePct.divide(BigDecimal.valueOf(100))))
                     .subtract(poItem.getReceivedQty());
-            if (line.receivedQty().compareTo(maxAllowed) > 0) {
+            if (receivedQty.compareTo(maxAllowed) > 0) {
                 throw new BusinessRuleException(ErrorCode.OVER_RECEIPT,
                         String.format("Line %d: received %.3f exceeds remaining allowed %.3f",
-                                poItem.getLineNo(), line.receivedQty(), maxAllowed));
+                                poItem.getLineNo(), receivedQty, maxAllowed));
             }
 
             boolean inspectionRequired = line.inspectionRequired() == null || line.inspectionRequired();
@@ -137,7 +144,7 @@ public class GoodsReceiptService {
             grItem.setGoodsReceipt(gr);
             grItem.setPoItemId(line.poItemId());
             grItem.setMaterialId(poItem.getMaterialId());
-            grItem.setReceivedQty(line.receivedQty());
+            grItem.setReceivedQty(receivedQty);
             grItem.setLocationId(line.locationId());
             grItem.setHeatNumber(line.heatNumber());
             grItem.setCertificateNumber(line.certificateNumber());
@@ -150,7 +157,7 @@ public class GoodsReceiptService {
                     poItem.getMaterialId(), po.getSupplierId(),
                     po.getId(), grItem.getId(),
                     line.manufacturingDate(), LocalDate.now(),
-                    null, line.receivedQty(),
+                    null, receivedQty,
                     line.heatNumber(), line.certificateNumber(),
                     poItem.getRate(), "QUARANTINE");
 
@@ -164,13 +171,13 @@ public class GoodsReceiptService {
                     batch.getId(), null,
                     req.warehouseId(), line.locationId(),
                     "QUARANTINE",
-                    line.receivedQty(), null,
+                    receivedQty, null,
                     poItem.getRate(),
                     "GOODS_RECEIPT", gr.getId(), gr.getGrNumber(),
                     "GR: " + gr.getGrNumber()));
 
             // Update po_item received qty
-            poItem.setReceivedQty(poItem.getReceivedQty().add(line.receivedQty()));
+            poItem.setReceivedQty(poItem.getReceivedQty().add(receivedQty));
             poItemRepo.save(poItem);
 
             // Publish event — InspectionService listener creates the inspection

@@ -40,6 +40,8 @@ public class PurchaseOrderService {
     private final AuditService auditService;
     private final ApplicationEventPublisher eventPublisher;
 
+    private final com.springmfg.ims.material.service.SupplierApprovedMaterialService approvedMaterials;
+
     private final com.springmfg.ims.enterprise.scope.PlantScope plantScope;
 
 
@@ -51,7 +53,9 @@ public class PurchaseOrderService {
             AuditService auditService,
             ApplicationEventPublisher eventPublisher,
 
-            com.springmfg.ims.enterprise.scope.PlantScope plantScope) {
+            com.springmfg.ims.enterprise.scope.PlantScope plantScope,
+            com.springmfg.ims.material.service.SupplierApprovedMaterialService approvedMaterials) {
+        this.approvedMaterials = approvedMaterials;
 
         this.plantScope = plantScope;
         this.poRepo = poRepo;
@@ -82,6 +86,7 @@ public class PurchaseOrderService {
         BigDecimal taxTotal = BigDecimal.ZERO;
 
         for (CreatePoRequest.PoLineRequest line : req.items()) {
+            approvedMaterials.assertMaySupply(req.supplierId(), line.materialId()); // MDM-020 / GC-2 (setting-driven)
             PurchaseOrderItem item = new PurchaseOrderItem();
             item.setPurchaseOrder(po);
             item.setLineNo(lineNo.getAndIncrement());

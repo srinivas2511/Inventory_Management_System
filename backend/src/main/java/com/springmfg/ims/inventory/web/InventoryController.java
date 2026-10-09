@@ -40,9 +40,13 @@ public class InventoryController {
     private final OpeningBalanceService openingBalanceService;
     private final BatchService batchService;
 
+    private final com.springmfg.ims.material.service.UomConversionService uomConversions;
+
     public InventoryController(InventoryQueryService queryService,
                                 OpeningBalanceService openingBalanceService,
-                                BatchService batchService) {
+                                BatchService batchService,
+                                com.springmfg.ims.material.service.UomConversionService uomConversions) {
+        this.uomConversions = uomConversions;
         this.queryService = queryService;
         this.openingBalanceService = openingBalanceService;
         this.batchService = batchService;
@@ -58,6 +62,24 @@ public class InventoryController {
             @RequestParam(required = false) Long productId,
             @RequestParam(required = false) String stockStatus) {
         return queryService.queryBalances(warehouseId, materialId, productId, stockStatus);
+    }
+
+    /** MDM-003 / GC-1: the balances of one material in an alternative unit of measure. */
+    @GetMapping("/balances/in-uom")
+    @PreAuthorize("hasAnyAuthority('INVENTORY_VIEW','INVENTORY_VIEW_ALL')")
+    public List<com.springmfg.ims.inventory.dto.ConvertedBalanceDto> balancesInUom(
+            @RequestParam Long materialId,
+            @RequestParam String uom,
+            @RequestParam(required = false) Long warehouseId,
+            @RequestParam(required = false) String stockStatus) {
+        String base = uomConversions.baseUom(materialId);
+        return queryService.queryBalances(warehouseId, materialId, null, stockStatus).stream()
+                .map(b -> new com.springmfg.ims.inventory.dto.ConvertedBalanceDto(
+                        b.warehouseId(), b.locationId(), b.materialBatchId(), b.stockStatus(), base,
+                        b.qtyOnHand(), b.qtyAvailable(), uom.trim().toUpperCase(),
+                        uomConversions.fromBase(materialId, b.qtyOnHand(), uom),
+                        uomConversions.fromBase(materialId, b.qtyAvailable(), uom)))
+                .toList();
     }
 
     @GetMapping("/balances/valuation")

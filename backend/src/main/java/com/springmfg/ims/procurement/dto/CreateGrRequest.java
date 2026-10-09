@@ -24,6 +24,14 @@ public record CreateGrRequest(
             String heatNumber,
             String certificateNumber,
             LocalDate manufacturingDate,
-            Boolean inspectionRequired
-    ) {}
+            Boolean inspectionRequired,
+            String uom
+    ) {
+        /** Without a unit: the quantity is in the material's base unit, as before alternative units existed. */
+        public GrLineRequest(Long poItemId, BigDecimal receivedQty, Long locationId, String heatNumber,
+                             String certificateNumber, LocalDate manufacturingDate, Boolean inspectionRequired) {
+            this(poItemId, receivedQty, locationId, heatNumber, certificateNumber, manufacturingDate,
+                    inspectionRequired, null);
+        }
+    }
 }

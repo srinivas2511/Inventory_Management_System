@@ -16,5 +16,12 @@ public record CreateIssueRequest(
     public record IssueLineRequest(
             @NotNull Long materialId,
             @NotNull @Positive BigDecimal quantity,
-            Long explicitBatchId) {}
+            Long explicitBatchId,
+            String uom) {
+
+        /** Without a unit: the quantity is in the material's base unit, as before alternative units existed. */
+        public IssueLineRequest(Long materialId, BigDecimal quantity, Long explicitBatchId) {
+            this(materialId, quantity, explicitBatchId, null);
+        }
+    }
 }

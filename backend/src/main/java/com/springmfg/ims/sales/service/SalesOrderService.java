@@ -42,6 +42,8 @@ public class SalesOrderService {
     private final org.springframework.context.ApplicationEventPublisher eventPublisher;
     private final ReservationService reservationService;
 
+    private final CustomerApprovedProductService approvedProducts;
+
     private final com.springmfg.ims.enterprise.scope.PlantScope plantScope;
 
 
@@ -54,7 +56,9 @@ public class SalesOrderService {
                              org.springframework.context.ApplicationEventPublisher eventPublisher,
                              ReservationService reservationService,
 
-            com.springmfg.ims.enterprise.scope.PlantScope plantScope) {
+            com.springmfg.ims.enterprise.scope.PlantScope plantScope,
+            CustomerApprovedProductService approvedProducts) {
+        this.approvedProducts = approvedProducts;
 
         this.plantScope = plantScope;
         this.orderRepo = orderRepo;
@@ -86,6 +90,7 @@ public class SalesOrderService {
         if (req.items() != null) {
             int line = 1;
             for (var itemReq : req.items()) {
+                approvedProducts.assertMayBuy(req.customerId(), itemReq.productId()); // MDM-021 / GC-2 (setting-driven)
                 SalesOrderItem item = buildItem(order.getId(), line++, itemReq);
                 itemRepo.save(item);
             }
@@ -104,6 +109,7 @@ public class SalesOrderService {
         productRepo.findById(req.productId())
                 .orElseThrow(() -> new NotFoundException("Product", req.productId()));
 
+        approvedProducts.assertMayBuy(order.getCustomerId(), req.productId()); // MDM-021 / GC-2 (setting-driven)
         int nextLine = itemRepo.maxLineNo(orderId) + 1;
         SalesOrderItem item = buildItem(orderId, nextLine, req);
         itemRepo.save(item);
