@@ -664,7 +664,7 @@ cd frontend && npx playwright test e2e/demo-workflow.spec.ts
 
 ### R9 completion tasks (added by requirements traceability audit, 2026-10-02)
 
-These close REQUIREMENTS clauses that R9-1.1–6.3 did not cover. Status: **R9-7.1, 7.2, 7.3, 7.4, 7.5, 7.6, 7.7, 7.8, 7.9, 7.10 and 7.11 done; GC-1..6 not started** (see docs/decisions.md). Schedule in parallel with R10 where no dependency exists (R9-7.5 and R9-7.6 must land before R10's journal-line changes ship to avoid rework).
+These close REQUIREMENTS clauses that R9-1.1–6.3 did not cover. Status: **R9-7.1, 7.2, 7.3, 7.4, 7.5, 7.6, 7.7, 7.8, 7.9, 7.10 and 7.11 done; GC-1..6 done (backend and tests; GC-4 also has its screen buttons; GC-1/2/3/5 are API-only, no screens yet)** (see docs/decisions.md). Schedule in parallel with R10 where no dependency exists (R9-7.5 and R9-7.6 must land before R10's journal-line changes ship to avoid rework).
 
 | Task ID | Task | REQ | DESIGN ref | Effort |
 |---|---|---|---|---|
