@@ -19,6 +19,8 @@ import { SalesApi, SalesOrderDto } from './sales.api';
 import { PagedList } from '../../shared/paged-list';
 import { ListPaginatorComponent } from '../../shared/components/list-paginator.component';
 import { SessionStore } from '../../core/auth/session.store';
+import { problemMessage } from '../../core/models/problem.model';
+import { ReasonDialogComponent, ReasonDialogData } from '../finance/reason-dialog.component';
 
 @Component({
   selector: 'app-sales-order-list',
@@ -253,15 +255,28 @@ export class SalesOrderListComponent implements OnInit {
   }
 
   cancel(order: SalesOrderDto): void {
-    const reason = prompt('Cancellation reason:');
-    if (!reason) return;
-    this.api.cancelOrder(order.id, reason).subscribe({
-      next: (updated) => {
-        this.replaceOrder(updated);
-        this.snack.open('Order cancelled', '', { duration: 2000 });
-      },
-      error: () => this.snack.open('Failed to cancel order', 'Dismiss', { duration: 3000 }),
-    });
+    this.dialog
+      .open<ReasonDialogComponent, ReasonDialogData, string>(ReasonDialogComponent, {
+        width: '480px',
+        maxWidth: '96vw',
+        data: {
+          title: `Cancel order ${order.orderNumber}`,
+          message: 'Reservations on this order are released. The reason is kept in the audit trail.',
+          label: 'Cancellation reason',
+          confirmLabel: 'Cancel order',
+        },
+      })
+      .afterClosed()
+      .subscribe((reason) => {
+        if (!reason) return;
+        this.api.cancelOrder(order.id, reason).subscribe({
+          next: (updated) => {
+            this.replaceOrder(updated);
+            this.snack.open('Order cancelled', '', { duration: 2000 });
+          },
+          error: (err) => this.snack.open(problemMessage(err, 'Failed to cancel order'), 'Dismiss', { duration: 4000 }),
+        });
+      });
   }
 
   private replaceOrder(updated: SalesOrderDto): void {

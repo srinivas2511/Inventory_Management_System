@@ -1,6 +1,8 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { MatDialog } from '@angular/material/dialog';
+import { of } from 'rxjs';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { SessionStore } from '../../core/auth/session.store';
 import { SalesOrderListComponent } from './sales-order-list.component';
@@ -157,6 +159,31 @@ describe('SalesOrderListComponent', () => {
     it('enables Approve for a different user', () => {
       load(ordered({ createdBy: 7, submittedBy: 8 }));
       expect(approveButton()!.disabled).toBeFalse();
+    });
+  });
+  describe('cancelling an order asks for the reason in a dialog, not a native prompt()', () => {
+    function load(): void {
+      backend.expectOne((r) => r.url.includes('/api/sales/orders')).flush(pageResponse);
+      fixture.detectChanges();
+    }
+
+    it('posts the reason the dialog returns', () => {
+      load();
+      const dialog = TestBed.inject(MatDialog);
+      const open = spyOn(dialog, 'open').and.returnValue({ afterClosed: () => of('Customer withdrew') } as never);
+      fixture.componentInstance.cancel(mockOrders[0]);
+      expect(open).toHaveBeenCalled();
+      const req = backend.expectOne('/api/sales/orders/1/cancel');
+      expect(req.request.body).toEqual({ reason: 'Customer withdrew' });
+      req.flush({ ...mockOrders[0], status: 'CANCELLED', allowedActions: [] });
+    });
+
+    it('sends nothing when the dialog is dismissed', () => {
+      load();
+      const dialog = TestBed.inject(MatDialog);
+      spyOn(dialog, 'open').and.returnValue({ afterClosed: () => of(undefined) } as never);
+      fixture.componentInstance.cancel(mockOrders[0]);
+      backend.expectNone('/api/sales/orders/1/cancel');
     });
   });
 });

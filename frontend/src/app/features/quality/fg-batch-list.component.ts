@@ -11,7 +11,13 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import {
+  FgFinalDecision,
+  FgFinalDecisionData,
+  FgFinalDecisionDialogComponent,
+} from './fg-final-decision-dialog.component';
 import { FgHoldDecision, FgHoldDecisionDialogComponent } from './fg-hold-decision-dialog.component';
+import { problemMessage } from '../../core/models/problem.model';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
 import { PagedList } from '../../shared/paged-list';
@@ -171,23 +177,29 @@ export class FgBatchListComponent implements OnInit {
   }
 
   openFinalDecision(batch: FgBatchDto): void {
-    const approvedStr = prompt(`Batch ${batch.batchNumber} — Produced: ${batch.producedQty}\nEnter APPROVED qty:`);
-    if (approvedStr == null) return;
-    const rejectedStr = prompt('Enter REJECTED qty (remainder goes to hold):');
-    if (rejectedStr == null) return;
-
-    const approved = parseFloat(approvedStr) || 0;
-    const rejected = parseFloat(rejectedStr) || 0;
-    const hold = Math.max(0, batch.producedQty - approved - rejected);
-
-    const body = { approvedQty: approved, rejectedQty: rejected, holdQty: hold, itemResults: [], rejectionReasons: [] };
-    this.http.post(`/api/quality/inspections/${batch.pendingInspectionId}/final-decision`, body).subscribe({
-      next: () => {
-        this.snack.open('Final inspection recorded', 'OK', { duration: 3000 });
-        this.load();
-      },
-      error: (e) => this.snack.open(e.error?.detail ?? 'Error recording decision', 'OK', { duration: 5000 }),
-    });
+    this.dialog
+      .open<FgFinalDecisionDialogComponent, FgFinalDecisionData, FgFinalDecision>(FgFinalDecisionDialogComponent, {
+        data: { batchNumber: batch.batchNumber, producedQty: batch.producedQty },
+      })
+      .afterClosed()
+      .subscribe((decision) => {
+        if (!decision) return;
+        const body = {
+          approvedQty: decision.approvedQty,
+          rejectedQty: decision.rejectedQty,
+          holdQty: decision.holdQty,
+          itemResults: [],
+          rejectionReasons: [],
+          remarks: decision.remarks || null,
+        };
+        this.http.post(`/api/quality/inspections/${batch.pendingInspectionId}/final-decision`, body).subscribe({
+          next: () => {
+            this.snack.open('Final inspection recorded', 'OK', { duration: 3000 });
+            this.load();
+          },
+          error: (e) => this.snack.open(problemMessage(e, 'Error recording decision'), 'OK', { duration: 5000 }),
+        });
+      });
   }
 
   resolveHold(batch: FgBatchDto): void {
@@ -211,7 +223,7 @@ export class FgBatchListComponent implements OnInit {
             this.snack.open('Hold resolved', 'OK', { duration: 3000 });
             this.load();
           },
-          error: (e) => this.snack.open(e.error?.detail ?? 'Error resolving hold', 'OK', { duration: 5000 }),
+          error: (e) => this.snack.open(problemMessage(e, 'Error resolving hold'), 'OK', { duration: 5000 }),
         });
       });
   }
