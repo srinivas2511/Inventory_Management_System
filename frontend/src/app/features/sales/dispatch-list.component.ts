@@ -79,12 +79,21 @@ import { ListPaginatorComponent } from '../../shared/components/list-paginator.c
           <td mat-cell *matCellDef="let d">
             <button
               mat-icon-button
-              matTooltip="Dispatch Note"
-              aria-label="Dispatch Note"
+              matTooltip="Delivery note (PDF)"
+              aria-label="Delivery note"
               *appHasPermission="'DISPATCH_VIEW'"
-              (click)="viewNote(d)"
+              (click)="openDocument(d, 'delivery-note')"
             >
               <mat-icon>description</mat-icon>
+            </button>
+            <button
+              mat-icon-button
+              matTooltip="Packing list (PDF)"
+              aria-label="Packing list"
+              *appHasPermission="'DISPATCH_VIEW'"
+              (click)="openDocument(d, 'packing-list')"
+            >
+              <mat-icon>inventory_2</mat-icon>
             </button>
           </td>
         </ng-container>
@@ -150,7 +159,25 @@ export class DispatchListComponent implements OnInit {
       });
   }
 
-  viewNote(dispatch: DispatchDto): void {
-    this.snack.open(`Dispatch note for ${dispatch.dispatchNumber} — print/export coming soon`, '', { duration: 3000 });
+  /** SAL-005: opens the PDF delivery note or packing list of a dispatch in a new tab. */
+  openDocument(dispatch: DispatchDto, kind: 'delivery-note' | 'packing-list'): void {
+    const request =
+      kind === 'delivery-note' ? this.api.getDeliveryNotePdf(dispatch.id) : this.api.getPackingListPdf(dispatch.id);
+    request.subscribe({
+      next: (pdf) => {
+        const url = URL.createObjectURL(pdf);
+        window.open(url, '_blank');
+        // the new tab has loaded the blob by the time this fires; release the memory afterwards
+        setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      },
+      error: () =>
+        this.snack.open(
+          `Could not open the ${kind === 'delivery-note' ? 'delivery note' : 'packing list'}`,
+          'Dismiss',
+          {
+            duration: 4000,
+          },
+        ),
+    });
   }
 }

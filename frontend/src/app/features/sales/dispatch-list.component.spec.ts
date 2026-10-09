@@ -69,6 +69,50 @@ describe('DispatchListComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('FedEx');
   });
 
+  function button(label: string): HTMLButtonElement {
+    return fixture.nativeElement.querySelector(`button[aria-label="${label}"]`) as HTMLButtonElement;
+  }
+
+  it('SAL-005: the delivery note button fetches the PDF of that dispatch and opens it in a new tab', () => {
+    backend.expectOne((r) => r.url.includes('/api/sales/dispatches')).flush(pageResponse);
+    fixture.detectChanges();
+    const open = spyOn(window, 'open');
+    spyOn(URL, 'createObjectURL').and.returnValue('blob:delivery-note');
+
+    button('Delivery note').click();
+    const req = backend.expectOne('/api/sales/dispatches/1/delivery-note.pdf');
+    expect(req.request.method).toBe('GET');
+    expect(req.request.responseType).toBe('blob');
+    req.flush(new Blob(['%PDF-'], { type: 'application/pdf' }));
+
+    expect(open).toHaveBeenCalledWith('blob:delivery-note', '_blank');
+  });
+
+  it('SAL-005: the packing list button fetches its own PDF, not the delivery note', () => {
+    backend.expectOne((r) => r.url.includes('/api/sales/dispatches')).flush(pageResponse);
+    fixture.detectChanges();
+    const open = spyOn(window, 'open');
+    spyOn(URL, 'createObjectURL').and.returnValue('blob:packing-list');
+
+    button('Packing list').click();
+    backend.expectOne('/api/sales/dispatches/1/packing-list.pdf').flush(new Blob(['%PDF-']));
+
+    expect(open).toHaveBeenCalledWith('blob:packing-list', '_blank');
+  });
+
+  it('SAL-005: a failed download tells the user instead of failing silently', () => {
+    backend.expectOne((r) => r.url.includes('/api/sales/dispatches')).flush(pageResponse);
+    fixture.detectChanges();
+    const open = spyOn(window, 'open');
+
+    button('Delivery note').click();
+    backend
+      .expectOne('/api/sales/dispatches/1/delivery-note.pdf')
+      .flush(new Blob([]), { status: 404, statusText: 'Not Found' });
+
+    expect(open).not.toHaveBeenCalled();
+  });
+
   it('shows empty state when no dispatches', () => {
     backend
       .expectOne((r) => r.url.includes('/api/sales/dispatches'))

@@ -156,6 +156,13 @@
             <version>1.10.0</version>
         </dependency>
 
+        <!-- Printable dispatch documents (SAL-005 / GC-4): PDF delivery note and packing list -->
+        <dependency>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>pdfbox</artifactId>
+            <version>3.0.3</version>
+        </dependency>
+
         <!-- Test -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

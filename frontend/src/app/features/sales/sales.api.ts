@@ -168,6 +168,16 @@ export class SalesApi {
     return this.http.post<SalesOrderDto>(`/api/sales/orders/${id}/cancel`, { reason });
   }
 
+  /** SAL-005: the printable PDF delivery note of a dispatch (prices and values). */
+  getDeliveryNotePdf(id: number): Observable<Blob> {
+    return this.http.get(`/api/sales/dispatches/${id}/delivery-note.pdf`, { responseType: 'blob' });
+  }
+
+  /** SAL-005: the printable PDF packing list of a dispatch (batches and quantities, no prices). */
+  getPackingListPdf(id: number): Observable<Blob> {
+    return this.http.get(`/api/sales/dispatches/${id}/packing-list.pdf`, { responseType: 'blob' });
+  }
+
   getDispatches(customerId?: number, page = 0, size = 20, sort?: string): Observable<PageResponse<DispatchDto>> {
     let params = new HttpParams().set('page', page).set('size', size);
     if (sort) params = params.set('sort', sort);
