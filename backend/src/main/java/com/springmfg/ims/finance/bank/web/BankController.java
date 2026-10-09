@@ -5,6 +5,7 @@ import com.springmfg.ims.finance.bank.dto.BankStatementLineDto;
 import com.springmfg.ims.finance.bank.service.BankReconciliationService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -23,7 +24,7 @@ public class BankController {
 
     @GetMapping("/statements")
     @PreAuthorize("hasAuthority('BANK_RECONCILE')")
-    public Page<BankStatementDto> listStatements(Pageable pageable) {
+    public Page<BankStatementDto> listStatements(@PageableDefault(size = 20, sort = "id", direction = org.springframework.data.domain.Sort.Direction.DESC) Pageable pageable) {
         return bankService.findAll(pageable);
     }
 

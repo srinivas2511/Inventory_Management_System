@@ -34,7 +34,7 @@ public class PurchaseRequisitionController {
     @PreAuthorize("hasAnyAuthority('PURCHASE_VIEW','PURCHASE_CREATE')")
     public Page<PurchaseRequisitionDto> list(
             @RequestParam(required = false) String status,
-            @PageableDefault(size = 20) Pageable pageable) {
+            @PageableDefault(size = 20, sort = "id", direction = org.springframework.data.domain.Sort.Direction.DESC) Pageable pageable) {
         return service.findByStatus(status, pageable);
     }
 

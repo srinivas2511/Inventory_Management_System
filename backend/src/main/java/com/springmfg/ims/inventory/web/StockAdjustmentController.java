@@ -52,7 +52,7 @@ public class StockAdjustmentController {
     public Page<StockAdjustmentDto> list(
             @RequestParam(required = false) String status,
             @RequestParam(required = false) Long warehouseId,
-            @PageableDefault(size = 20) Pageable pageable) {
+            @PageableDefault(size = 20, sort = "id", direction = org.springframework.data.domain.Sort.Direction.DESC) Pageable pageable) {
         return service.search(status, warehouseId, pageable);
     }
 

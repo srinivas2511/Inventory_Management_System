@@ -7,6 +7,7 @@ import com.springmfg.ims.finance.ar.service.ArService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -25,7 +26,7 @@ public class ArController {
 
     @GetMapping("/invoices")
     @PreAuthorize("hasAuthority('AR_MANAGE')")
-    public Page<ArInvoiceDto> listInvoices(Pageable pageable) {
+    public Page<ArInvoiceDto> listInvoices(@PageableDefault(size = 20, sort = "id", direction = org.springframework.data.domain.Sort.Direction.DESC) Pageable pageable) {
         return arService.findAll(pageable);
     }
 

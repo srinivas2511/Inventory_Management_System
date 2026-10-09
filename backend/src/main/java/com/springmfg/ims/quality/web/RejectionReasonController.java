@@ -75,7 +75,7 @@ public class RejectionReasonController {
     public Page<RejectionDto> listRejections(
             @RequestParam(required = false) Long productId,
             @RequestParam(required = false) Long reasonId,
-            @PageableDefault(size = 20) Pageable pageable) {
+            @PageableDefault(size = 20, sort = "id", direction = org.springframework.data.domain.Sort.Direction.DESC) Pageable pageable) {
         return service.searchRejections(productId, reasonId, pageable);
     }
 

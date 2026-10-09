@@ -99,7 +99,7 @@ public class InventoryController {
             @RequestParam(required = false) String transactionType,
             @RequestParam(required = false) Instant from,
             @RequestParam(required = false) Instant to,
-            @PageableDefault(size = 50) Pageable pageable) {
+            @PageableDefault(size = 50, sort = "id", direction = org.springframework.data.domain.Sort.Direction.DESC) Pageable pageable) {
         return queryService.ledger(materialId, productId, warehouseId, transactionType, from, to, pageable);
     }
 
@@ -116,7 +116,7 @@ public class InventoryController {
     public Page<MaterialBatchDto> batches(
             @RequestParam(required = false) Long materialId,
             @RequestParam(required = false) String status,
-            @PageableDefault(size = 20) Pageable pageable) {
+            @PageableDefault(size = 20, sort = "id", direction = org.springframework.data.domain.Sort.Direction.DESC) Pageable pageable) {
         return batchService.searchMaterialBatches(materialId, status, pageable);
     }
 

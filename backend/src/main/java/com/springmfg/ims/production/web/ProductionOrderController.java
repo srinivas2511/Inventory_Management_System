@@ -51,7 +51,7 @@ public class ProductionOrderController {
     public Page<ProductionOrderDto> search(
             @RequestParam(required = false) String status,
             @RequestParam(required = false) Long productId,
-            @PageableDefault(size = 20) Pageable pageable) {
+            @PageableDefault(size = 20, sort = "id", direction = org.springframework.data.domain.Sort.Direction.DESC) Pageable pageable) {
         return service.search(status, productId, pageable);
     }
 

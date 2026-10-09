@@ -42,7 +42,7 @@ public class ProductController {
             @RequestParam(required = false) String springType,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) Boolean active,
-            @PageableDefault(size = 20) Pageable pageable) {
+            @PageableDefault(size = 20, sort = "productCode", direction = org.springframework.data.domain.Sort.Direction.ASC) Pageable pageable) {
         return service.search(q, springType, status, active, pageable);
     }
 

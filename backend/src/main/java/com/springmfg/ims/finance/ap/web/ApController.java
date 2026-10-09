@@ -10,6 +10,7 @@ import com.springmfg.ims.finance.ap.service.ApService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -37,7 +38,7 @@ public class ApController {
 
     @GetMapping("/invoices")
     @PreAuthorize("hasAuthority('AP_MANAGE')")
-    public Page<ApInvoiceDto> listInvoices(Pageable pageable) {
+    public Page<ApInvoiceDto> listInvoices(@PageableDefault(size = 20, sort = "id", direction = org.springframework.data.domain.Sort.Direction.DESC) Pageable pageable) {
         return apService.findAll(pageable);
     }
 

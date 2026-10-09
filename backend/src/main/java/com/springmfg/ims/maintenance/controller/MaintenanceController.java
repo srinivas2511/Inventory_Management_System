@@ -55,7 +55,7 @@ public class MaintenanceController {
     public Page<MaintenanceRequestDto> list(
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String requestType,
-            @PageableDefault(size = 50) Pageable pageable) {
+            @PageableDefault(size = 50, sort = "id", direction = org.springframework.data.domain.Sort.Direction.DESC) Pageable pageable) {
         return service.list(status, requestType, pageable);
     }
 

@@ -30,7 +30,7 @@ public class BomController {
     @PreAuthorize("hasAuthority('BOM_VIEW')")
     public Page<BomDto> search(@RequestParam(required = false) Long productId,
                                @RequestParam(required = false) String status,
-                               @PageableDefault(size = 20) Pageable pageable) {
+                               @PageableDefault(size = 20, sort = "id", direction = org.springframework.data.domain.Sort.Direction.DESC) Pageable pageable) {
         return service.search(productId, status, pageable);
     }
 

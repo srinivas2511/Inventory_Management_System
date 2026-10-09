@@ -60,7 +60,7 @@ public class GoodsReceiptController {
     @PreAuthorize("hasAnyAuthority('PURCHASE_VIEW','INVENTORY_RECEIVE')")
     public Page<GoodsReceiptDto> listByPo(
             @PathVariable Long poId,
-            @PageableDefault(size = 20) Pageable pageable) {
+            @PageableDefault(size = 20, sort = "id", direction = org.springframework.data.domain.Sort.Direction.DESC) Pageable pageable) {
         return service.findByPurchaseOrder(poId, pageable);
     }
 }

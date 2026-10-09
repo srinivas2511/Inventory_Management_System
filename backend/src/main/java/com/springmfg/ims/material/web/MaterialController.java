@@ -41,7 +41,7 @@ public class MaterialController {
             @RequestParam(required = false) String q,
             @RequestParam(required = false) String type,
             @RequestParam(required = false) Boolean active,
-            @PageableDefault(size = 20) Pageable pageable) {
+            @PageableDefault(size = 20, sort = "materialCode", direction = org.springframework.data.domain.Sort.Direction.ASC) Pageable pageable) {
         return service.search(q, type, active, pageable);
     }
 

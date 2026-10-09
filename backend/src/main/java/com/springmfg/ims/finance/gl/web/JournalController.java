@@ -6,6 +6,7 @@ import com.springmfg.ims.finance.gl.service.JournalService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -29,7 +30,7 @@ public class JournalController {
 
     @GetMapping
     @PreAuthorize("hasAuthority('GL_VIEW')")
-    public Page<JournalHeaderDto> list(Pageable pageable) {
+    public Page<JournalHeaderDto> list(@PageableDefault(size = 20, sort = "id", direction = org.springframework.data.domain.Sort.Direction.DESC) Pageable pageable) {
         return journalService.findAll(pageable);
     }
 

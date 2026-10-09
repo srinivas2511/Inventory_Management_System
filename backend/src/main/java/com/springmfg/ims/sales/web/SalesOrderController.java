@@ -57,7 +57,7 @@ public class SalesOrderController {
             @RequestParam(required = false) String status,
             @RequestParam(required = false) LocalDate from,
             @RequestParam(required = false) LocalDate to,
-            @PageableDefault(size = 20) Pageable pageable) {
+            @PageableDefault(size = 20, sort = "id", direction = org.springframework.data.domain.Sort.Direction.DESC) Pageable pageable) {
         return service.search(customerId, status, from, to, pageable);
     }
 

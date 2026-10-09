@@ -43,7 +43,7 @@ public class UserAdminController {
     public Page<UserDto> search(
             @RequestParam(required = false) String q,
             @RequestParam(required = false) Boolean active,
-            @PageableDefault(size = 20) Pageable pageable) {
+            @PageableDefault(size = 20, sort = "username", direction = org.springframework.data.domain.Sort.Direction.ASC) Pageable pageable) {
         return service.search(q, active, pageable);
     }
 

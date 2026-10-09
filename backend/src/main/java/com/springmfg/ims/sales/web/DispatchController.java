@@ -58,7 +58,7 @@ public class DispatchController {
             @RequestParam(required = false) Long customerId,
             @RequestParam(required = false) LocalDate from,
             @RequestParam(required = false) LocalDate to,
-            @PageableDefault(size = 20) Pageable pageable) {
+            @PageableDefault(size = 20, sort = "id", direction = org.springframework.data.domain.Sort.Direction.DESC) Pageable pageable) {
         return service.search(customerId, from, to, pageable);
     }
 

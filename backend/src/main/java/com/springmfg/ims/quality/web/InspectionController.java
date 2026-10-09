@@ -54,7 +54,7 @@ public class InspectionController {
     public Page<QualityInspectionDto> list(
             @RequestParam(required = false) String type,
             @RequestParam(required = false) String status,
-            @PageableDefault(size = 20) Pageable pageable) {
+            @PageableDefault(size = 20, sort = "id", direction = org.springframework.data.domain.Sort.Direction.DESC) Pageable pageable) {
         return service.search(type, status, pageable);
     }
 
@@ -144,7 +144,7 @@ public class InspectionController {
     public Page<FgBatchDto> listFgBatches(
             @RequestParam(required = false) String status,
             @RequestParam(required = false) Long productId,
-            @PageableDefault(size = 20) Pageable pageable) {
+            @PageableDefault(size = 20, sort = "id", direction = org.springframework.data.domain.Sort.Direction.DESC) Pageable pageable) {
         return finalService.searchFgBatches(status, productId, pageable);
     }
 

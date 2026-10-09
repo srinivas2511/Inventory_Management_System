@@ -37,7 +37,7 @@ public class CustomerController {
     public Page<CustomerDto> search(
             @RequestParam(required = false) String q,
             @RequestParam(required = false) String status,
-            @PageableDefault(size = 20) Pageable pageable) {
+            @PageableDefault(size = 20, sort = "customerCode", direction = org.springframework.data.domain.Sort.Direction.ASC) Pageable pageable) {
         return service.search(q, status, pageable);
     }
 
