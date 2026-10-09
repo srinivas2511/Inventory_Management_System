@@ -161,9 +161,15 @@ test.describe('Master data created through the UI', () => {
     const p = a.page;
     await p.getByTestId('add-customer').click();
     const d = dialog(p);
+    // Material moves focus to the first field when the dialog has finished opening. Typing before that moment let a late
+    // focus change send the GST number into the Code field once in a full run, so wait for it, then check the values
+    // really are in their own fields before saving.
+    await expect(d.getByLabel('Code', { exact: true }).first(), 'the dialog has finished opening').toBeFocused();
     await fill(d, 'Code', code);
     await fill(d, 'Name', 'Second');
     await fill(d, 'GST number', GST);
+    await expect(d.getByLabel('Code', { exact: true }).first()).toHaveValue(code);
+    await expect(d.getByLabel('GST number', { exact: true }).first()).toHaveValue(GST);
     await d.getByRole('button', { name: 'Save' }).click();
     await expect(dialog(p), 'the dialog stays open on a duplicate').toBeVisible();
     await expect(p.locator('mat-error, mat-snack-bar-container, .error, [role="alert"]').first()).toContainText(/exist|duplicate|already|unique/i);
