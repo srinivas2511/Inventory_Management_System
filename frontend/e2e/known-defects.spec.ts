@@ -7,7 +7,7 @@ import { admin, apiFor, login, passwordFor } from './support/api';
 import { balances, demoIds, receiveViaApi } from './support/flow';
 import { expect, openAs, test } from './support/fixtures';
 import { U } from './support/users';
-import { today } from './support/ui';
+import { today, typeInto } from './support/ui';
 
 test.describe('Known defects (documented behaviour not yet met)', () => {
   test('D-04 every role lands on its first screen without a failed API call (no dashboard 403)', async ({ browser, guard }) => {
@@ -23,8 +23,8 @@ test.describe('Known defects (documented behaviour not yet met)', () => {
       });
       guard.attach(page);
       await page.goto('/login');
-      await page.getByTestId('username').fill(who);
-      await page.getByTestId('password').fill(passwordFor(who));
+      await typeInto(page.getByTestId('username'), who);
+      await typeInto(page.getByTestId('password'), passwordFor(who));
       await page.getByTestId('login-submit').click();
       await expect(page).not.toHaveURL(/\/login/);
       await page.waitForLoadState('networkidle');

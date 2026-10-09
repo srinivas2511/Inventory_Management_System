@@ -1,7 +1,7 @@
 import { admin, apiFor, login, unique } from '../support/api';
 import { ADMIN_USER, TEMP_PASSWORD } from '../support/env';
 import { expect, openAs, test } from '../support/fixtures';
-import { dialog, fill, pick } from '../support/ui';
+import { dialog, fill, pick, typeInto } from '../support/ui';
 import { U } from '../support/users';
 
 test.describe.serial('Administration (UAT ADM-02 .. ADM-06)', () => {
@@ -12,10 +12,10 @@ test.describe.serial('Administration (UAT ADM-02 .. ADM-06)', () => {
     const a = await openAs(browser, guard, ADMIN_USER, '/admin/users');
     const p = a.page;
     await p.getByTestId('new-user').click();
-    await p.getByTestId('user-username').fill(username);
-    await p.getByTestId('user-full-name').fill('UAT Test User');
-    await p.getByTestId('user-email').fill(`${username}@e2e.local`);
-    await p.getByTestId('user-password').fill(TEMP_PASSWORD);
+    await typeInto(p.getByTestId('user-username'), username);
+    await typeInto(p.getByTestId('user-full-name'), 'UAT Test User');
+    await typeInto(p.getByTestId('user-email'), `${username}@e2e.local`);
+    await typeInto(p.getByTestId('user-password'), TEMP_PASSWORD);
     await pick(dialog(p), 'Roles', /store operator|STORE_OPERATOR/i);
     await p.keyboard.press('Escape');
     await p.getByTestId('user-save').click();
@@ -31,11 +31,11 @@ test.describe.serial('Administration (UAT ADM-02 .. ADM-06)', () => {
   test('ADM-03 admin resets the password through the UI and the user is forced to change it', async ({ browser, guard }) => {
     const a = await openAs(browser, guard, ADMIN_USER, '/admin/users');
     const p = a.page;
-    await p.getByTestId('user-search').fill(username);
+    await typeInto(p.getByTestId('user-search'), username);
     const row = p.getByRole('row').filter({ hasText: username });
     await expect(row).toBeVisible();
     await row.getByTestId('reset-password-user').click();
-    await p.getByTestId('reset-reason').fill('E2E UAT reset');
+    await typeInto(p.getByTestId('reset-reason'), 'E2E UAT reset');
     await p.getByTestId('reset-submit').click();
     const tempEl = p.getByTestId('temporary-password');
     await expect(tempEl).toBeVisible();
@@ -53,7 +53,7 @@ test.describe.serial('Administration (UAT ADM-02 .. ADM-06)', () => {
     guard.allow({ status: [401, 403], url: /\/api\/auth\/login$/ });
     const a = await openAs(browser, guard, ADMIN_USER, '/admin/users');
     const p = a.page;
-    await p.getByTestId('user-search').fill(username);
+    await typeInto(p.getByTestId('user-search'), username);
     const row = p.getByRole('row').filter({ hasText: username });
     await row.getByTestId('deactivate-user').click();
     const confirm = dialog(p);

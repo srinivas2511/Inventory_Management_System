@@ -8,7 +8,7 @@ import type { Page } from '@playwright/test';
 import { admin, apiFor } from '../support/api';
 import { expect, openAs, test } from '../support/fixtures';
 import { balances, demoIds } from '../support/flow';
-import { dialog, fill, pick, row } from '../support/ui';
+import { dialog, fill, pick, row, typeInto } from '../support/ui';
 import { U } from '../support/users';
 
 /** Short unique code (master-data codes have tight length limits). */
@@ -49,11 +49,11 @@ async function createBins(): Promise<{ a: any; b: any; warehouseId: number; mate
 async function fillTransferForm(p: Page, materialId: number, batchId: number, fromBin: number, toBin: number, qty: number): Promise<void> {
   await p.getByRole('combobox', { name: /warehouse/i }).click({ force: true });
   await p.getByRole('option').first().click();
-  await p.getByLabel(/^Item id/).fill(String(materialId));
-  await p.getByLabel(/^Batch id/).fill(String(batchId));
-  await p.getByLabel(/^From bin id/).fill(String(fromBin));
-  await p.getByLabel(/^To bin id/).fill(String(toBin));
-  await p.getByLabel(/^Quantity/).fill(String(qty));
+  await typeInto(p.getByLabel(/^Item id/), String(materialId));
+  await typeInto(p.getByLabel(/^Batch id/), String(batchId));
+  await typeInto(p.getByLabel(/^From bin id/), String(fromBin));
+  await typeInto(p.getByLabel(/^To bin id/), String(toBin));
+  await typeInto(p.getByLabel(/^Quantity/), String(qty));
 }
 
 const onHandAt = async (materialId: number, locationId: number, status = 'AVAILABLE'): Promise<number> =>
@@ -73,7 +73,7 @@ test.describe('Master data created through the UI', () => {
     await fill(d, 'Email', 'cust@e2e.local');
     await d.getByRole('button', { name: 'Save' }).click();
     await expect(d, 'D-27: leaving the GST number blank sends gstNumber "" and the API answers 400 Invalid GST number format').toBeHidden();
-    await p.getByTestId('search').fill(code);
+    await typeInto(p.getByTestId('search'), code);
     await expect(row(p, code)).toBeVisible();
     const found = (await admin().list<any>(`/api/customers?q=${code}&size=20`)).find((c) => c.customerCode === code);
     expect(found, 'the customer exists in the API').toBeTruthy();
@@ -92,7 +92,7 @@ test.describe('Master data created through the UI', () => {
     await fill(d, 'Email', 'sup@e2e.local');
     await d.getByRole('button', { name: 'Save' }).click();
     await expect(d, 'D-27: leaving the GST number blank sends gstNumber "" and the API answers 400 Invalid GST number format').toBeHidden();
-    await p.getByTestId('search').fill(code);
+    await typeInto(p.getByTestId('search'), code);
     await expect(row(p, code)).toBeVisible();
     const found = (await admin().list<any>(`/api/suppliers?q=${code}&size=20`)).find((s) => s.supplierCode === code);
     expect(found, 'the supplier exists in the API').toBeTruthy();
@@ -110,7 +110,7 @@ test.describe('Master data created through the UI', () => {
     await fill(d, 'GST number', GST);
     await d.getByRole('button', { name: 'Save' }).click();
     await expect(d).toBeHidden();
-    await p.getByTestId('search').fill(code);
+    await typeInto(p.getByTestId('search'), code);
     await expect(row(p, code)).toBeVisible();
     expect((await admin().list<any>(`/api/customers?q=${code}&size=20`)).some((c) => c.customerCode === code)).toBe(true);
     await a.close();
@@ -127,7 +127,7 @@ test.describe('Master data created through the UI', () => {
     await fill(d, 'GST number', GST);
     await d.getByRole('button', { name: 'Save' }).click();
     await expect(d).toBeHidden();
-    await p.getByTestId('search').fill(code);
+    await typeInto(p.getByTestId('search'), code);
     await expect(row(p, code)).toBeVisible();
     expect((await admin().list<any>(`/api/suppliers?q=${code}&size=20`)).some((s) => s.supplierCode === code)).toBe(true);
     await a.close();
@@ -139,9 +139,9 @@ test.describe('Master data created through the UI', () => {
     const p = a.page;
     await p.getByTestId('add-material').click();
     const d = dialog(p);
-    await p.getByTestId('code').fill(short('TEST-RM-'));
-    await p.getByTestId('name').fill('E2E incomplete material');
-    await p.getByTestId('materialType').fill('WIRE');
+    await typeInto(p.getByTestId('code'), short('TEST-RM-'));
+    await typeInto(p.getByTestId('name'), 'E2E incomplete material');
+    await typeInto(p.getByTestId('materialType'), 'WIRE');
     await p.getByTestId('uom').click();
     await p.getByRole('option').first().click();
     await d.getByRole('button', { name: 'Save' }).click();
@@ -184,9 +184,9 @@ test.describe('Opening balance and transfers (UAT STK-04, STK-05)', () => {
     const p = a.page;
     await p.getByTestId('add-material').click();
     const d = dialog(p);
-    await p.getByTestId('code').fill(code);
-    await p.getByTestId('name').fill('E2E opening balance wire');
-    await p.getByTestId('materialType').fill('WIRE');
+    await typeInto(p.getByTestId('code'), code);
+    await typeInto(p.getByTestId('name'), 'E2E opening balance wire');
+    await typeInto(p.getByTestId('materialType'), 'WIRE');
     await p.getByTestId('uom').click();
     await p.getByRole('option').first().click();
     await fill(d, 'Min stock', 10);
@@ -268,7 +268,7 @@ test.describe('Opening balance and transfers (UAT STK-04, STK-05)', () => {
     await p.getByRole('button', { name: /create transfer/i }).click();
     await expect(p.getByTestId('title').or(p.locator('[data-test="title"]'))).toContainText(/TO\//);
     await p.locator('[data-test="start"]').click();
-    await p.locator('[data-test="qty"]').first().fill('8');
+    await typeInto(p.locator('[data-test="qty"]').first(), '8');
     await p.locator('[data-test="confirm"]').click();
     await expect(p.locator('[data-test="lines"]')).toContainText(/confirmed/i);
 
@@ -296,7 +296,7 @@ test.describe('Opening balance and transfers (UAT STK-04, STK-05)', () => {
     // Either the order is refused at creation or its confirmation is refused; stock must not move in any case.
     if (await p.locator('[data-test="start"]').isVisible({ timeout: 4000 }).catch(() => false)) {
       await p.locator('[data-test="start"]').click();
-      await p.locator('[data-test="qty"]').first().fill('500');
+      await typeInto(p.locator('[data-test="qty"]').first(), '500');
       await p.locator('[data-test="confirm"]').click();
     }
     await expect(p.locator('mat-snack-bar-container, [data-test="warnings"], .line-warning').first()).toContainText(/insufficient|not enough|available|exceed|cannot|could not/i);

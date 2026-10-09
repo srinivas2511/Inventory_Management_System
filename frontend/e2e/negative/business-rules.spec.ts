@@ -1,7 +1,7 @@
 import { admin, apiFor } from '../support/api';
 import { expect, openAs, test } from '../support/fixtures';
 import { demoIds, receiveViaApi, releasedOrder } from '../support/flow';
-import { dialog, fill, pick, today } from '../support/ui';
+import { dialog, fill, pick, today, typeInto } from '../support/ui';
 import { U } from '../support/users';
 
 /** Expected 4xx responses are PASS here: the business rule requires the server to refuse. */
@@ -126,10 +126,10 @@ test.describe('Negative tests and business rules', () => {
     const a = await openAs(browser, guard, U.admin, '/admin/users');
     const p = a.page;
     await p.getByTestId('new-user').click();
-    await p.getByTestId('user-username').fill('operator1');
-    await p.getByTestId('user-full-name').fill('Duplicate Operator');
-    await p.getByTestId('user-email').fill('duplicate.operator@e2e.local');
-    await p.getByTestId('user-password').fill('Qa#Plant-2026x!');
+    await typeInto(p.getByTestId('user-username'), 'operator1');
+    await typeInto(p.getByTestId('user-full-name'), 'Duplicate Operator');
+    await typeInto(p.getByTestId('user-email'), 'duplicate.operator@e2e.local');
+    await typeInto(p.getByTestId('user-password'), 'Qa#Plant-2026x!');
     await pick(dialog(p), 'Roles', /operator/i);
     await p.keyboard.press('Escape');
     await p.getByTestId('user-save').click();

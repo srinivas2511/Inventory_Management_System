@@ -8,7 +8,7 @@ import type { Browser } from '@playwright/test';
 import { admin, apiFor } from '../support/api';
 import { expect, Guard, openAs, test } from '../support/fixtures';
 import { demoIds, onHand, releasedOrder } from '../support/flow';
-import { dialog, fill, orderPanel, pick, row, today } from '../support/ui';
+import { dialog, fill, orderPanel, pick, row, today, typeInto } from '../support/ui';
 import { U } from '../support/users';
 
 const num = (v: unknown): number => Number(v ?? 0);
@@ -178,7 +178,7 @@ test.describe('Material issue and close with a write-off (UI)', () => {
     await d.getByRole('button', { name: /close/i }).last().click();
     await expect(d, 'without a reason the order cannot be closed').toBeVisible();
     expect((await admin().must('GET', `/api/production-orders/${order.id}`)).status).toBe('COMPLETED');
-    await d.getByLabel(/Reason for writing the material off/i).fill('E2E leftover scrapped on the floor');
+    await typeInto(d.getByLabel(/Reason for writing the material off/i), 'E2E leftover scrapped on the floor');
     await d.getByRole('button', { name: /close/i }).last().click();
     await expect(d).toBeHidden();
     const closed = await admin().must('GET', `/api/production-orders/${order.id}`);
@@ -200,7 +200,7 @@ test.describe('Purchase requisition form', () => {
     const d = dialog(p);
     await pick(d, 'Material', /65Si2/i);
     await fill(d, 'Quantity', 20);
-    await d.getByLabel('Needed by').fill(today(14));
+    await typeInto(d.getByLabel('Needed by'), today(14));
     await fill(d, 'Reason', 'E2E replenishment');
     await d.getByRole('button', { name: 'Create requisition' }).click();
     await expect(d).toBeHidden();

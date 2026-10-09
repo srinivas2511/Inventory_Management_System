@@ -8,7 +8,7 @@
 import { admin, apiFor, passwordFor, unique } from '../support/api';
 import { expect, openAs, test } from '../support/fixtures';
 import { demoIds, dispatchOnePiece, receiveViaApi } from '../support/flow';
-import { dialog, expectToast, fill, pick, row, today } from '../support/ui';
+import { dialog, expectToast, fill, pick, row, today, typeInto } from '../support/ui';
 import { U } from '../support/users';
 
 const money = (n: unknown): number => Math.round(Number(n) * 10_000) / 10_000;
@@ -71,8 +71,8 @@ test.describe.serial('R9-7 finance features (UI)', () => {
     await pick(d, 'Supplier', new RegExp(supplier.name.split(' ')[0], 'i'));
     await pick(d, 'Goods receipt being billed', gr.grNumber);
     await fill(d, "Supplier's invoice number", no);
-    await d.getByLabel('Invoice date').fill(today());
-    await d.getByLabel('Due date').fill(today(30));
+    await typeInto(d.getByLabel('Invoice date'), today());
+    await typeInto(d.getByLabel('Due date'), today(30));
     await pick(d, 'GST slab', /GST18/);
     await fill(d, 'Subtotal', 20000);
 
@@ -146,8 +146,8 @@ test.describe.serial('R9-7 finance features (UI)', () => {
     await pick(d, 'Supplier', new RegExp(supplier.name.split(' ')[0], 'i'));
     await pick(d, 'Goods receipt being billed', gr.grNumber);
     await fill(d, "Supplier's invoice number", no);
-    await d.getByLabel('Invoice date').fill(today());
-    await d.getByLabel('Due date').fill(today(30));
+    await typeInto(d.getByLabel('Invoice date'), today());
+    await typeInto(d.getByLabel('Due date'), today(30));
     await fill(d, 'Currency', 'usd');
     await fill(d, 'Subtotal', 250);
     await d.getByRole('button', { name: 'Save invoice' }).click();
@@ -167,7 +167,7 @@ test.describe.serial('R9-7 finance features (UI)', () => {
     await r.getByRole('button', { name: 'Pay' }).click();
     const pay = dialog(p);
     await fill(pay, 'Amount', 250);
-    await pay.getByLabel('Payment date').fill(next.startDate);
+    await typeInto(pay.getByLabel('Payment date'), next.startDate);
     await pay.getByRole('button', { name: 'Record payment' }).click();
     await expect(pay).toBeHidden();
 
@@ -274,7 +274,7 @@ test.describe.serial('R9-7 finance features (UI)', () => {
       await pay.getByRole('button', { name: 'Record payment' }).click();
       const prompt = p.getByRole('dialog').filter({ hasText: 'Confirm it is you' });
       await expect(prompt).toBeVisible();
-      await prompt.getByLabel('Password').fill(passwordFor(U.finance));
+      await typeInto(prompt.getByLabel('Password'), passwordFor(U.finance));
       await prompt.getByTestId('step-up-confirm').click();
       await expect(prompt).toBeHidden();
       await expect(pay).toBeHidden();

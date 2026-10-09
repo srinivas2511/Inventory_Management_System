@@ -9,7 +9,7 @@ import type { Page } from '@playwright/test';
 import { admin, apiFor, unique } from '../support/api';
 import { expect, openAs, test } from '../support/fixtures';
 import { demoIds, dispatchOnePiece, receiveViaApi } from '../support/flow';
-import { dialog, fill, pick, row, today } from '../support/ui';
+import { dialog, fill, pick, row, today, typeInto } from '../support/ui';
 import { U } from '../support/users';
 
 const money = (n: unknown): number => Math.round(Number(n) * 10_000) / 10_000;
@@ -28,8 +28,8 @@ async function newInvoice(p: Page, supplierName: RegExp, grNumber: string, suppl
   await pick(d, 'Supplier', supplierName);
   await pick(d, 'Goods receipt being billed', grNumber);
   await fill(d, "Supplier's invoice number", supplierInvoiceNo);
-  await d.getByLabel('Invoice date').fill(today());
-  await d.getByLabel('Due date').fill(today(30));
+  await typeInto(d.getByLabel('Invoice date'), today());
+  await typeInto(d.getByLabel('Due date'), today(30));
   await fill(d, 'Subtotal', subtotal);
   await d.getByRole('button', { name: 'Save invoice' }).click();
 }
@@ -70,7 +70,7 @@ test.describe.serial('AP invoice entry and the three-way match (UI)', () => {
     const pay = dialog(p);
     await expect(pay.getByRole('heading', { name: 'Record payment' })).toBeVisible();
     await fill(pay, 'Amount', 1000);
-    await pay.getByLabel('Payment date').fill(today());
+    await typeInto(pay.getByLabel('Payment date'), today());
     await pick(pay, 'Method', 0);
     await fill(pay, 'Bank or cheque reference', 'E2E-NEFT-1');
     await pay.getByRole('button', { name: 'Record payment' }).click();
@@ -110,7 +110,7 @@ test.describe.serial('AP invoice entry and the three-way match (UI)', () => {
     await expect(r.getByRole('button', { name: 'Pay' })).toHaveCount(0);
     await r.getByRole('button', { name: 'Approve variance' }).click();
     const panel = p.locator('section.override-panel');
-    await panel.getByLabel('Reason for approving').fill('E2E self approval attempt');
+    await typeInto(panel.getByLabel('Reason for approving'), 'E2E self approval attempt');
     await panel.getByRole('button', { name: 'Approve variance' }).click();
     await expect.poll(async () => (await invoiceBySupplierNo(no)).matchStatus, { message: 'a self-override must not clear the exception' }).toBe('EXCEPTION');
     await a.close();
@@ -121,7 +121,7 @@ test.describe.serial('AP invoice entry and the three-way match (UI)', () => {
     const rr = row(q, inv.invoiceNumber);
     await rr.getByRole('button', { name: 'Approve variance' }).click();
     const panel2 = q.locator('section.override-panel');
-    await panel2.getByLabel('Reason for approving').fill('E2E: supplier price confirmed in writing');
+    await typeInto(panel2.getByLabel('Reason for approving'), 'E2E: supplier price confirmed in writing');
     await panel2.getByRole('button', { name: 'Approve variance' }).click();
     await expect.poll(async () => (await invoiceBySupplierNo(no)).matchStatus).toBe('OVERRIDDEN');
     await q.reload();
@@ -148,7 +148,7 @@ test.describe.serial('AR receipts (UI)', () => {
     await r.getByRole('button', { name: 'Record receipt' }).click();
     let d = dialog(p);
     await fill(d, 'Amount', balance + 1);
-    await d.getByLabel('Receipt date').fill(today());
+    await typeInto(d.getByLabel('Receipt date'), today());
     await pick(d, 'Method', 0);
     await d.getByRole('button', { name: 'Record receipt' }).click();
     await expect(d, 'a receipt above the balance is refused and the dialog stays open').toBeVisible();
@@ -164,7 +164,7 @@ test.describe.serial('AR receipts (UI)', () => {
     await row(p, inv.invoiceNumber).getByRole('button', { name: 'Record receipt' }).click();
     d = dialog(p);
     await fill(d, 'Amount', balance - 100);
-    await d.getByLabel('Receipt date').fill(today());
+    await typeInto(d.getByLabel('Receipt date'), today());
     await pick(d, 'Method', 0);
     await d.getByRole('button', { name: 'Record receipt' }).click();
     await expect(d).toBeHidden();
@@ -181,17 +181,17 @@ test.describe.serial('Manual journal entry (UI)', () => {
   test('FIN-JNL-1 the new-journal form shows a live balance and only saves a balanced journal', async ({ browser, guard }) => {
     const a = await openAs(browser, guard, U.finance, '/finance/journals/new');
     const p = a.page;
-    await p.getByLabel('Description', { exact: true }).fill('E2E manual accrual');
+    await typeInto(p.getByLabel('Description', { exact: true }), 'E2E manual accrual');
     const pickAccount = async (n: number, code: string) => {
-      await p.getByLabel(`Account ${n}`).fill(code);
+      await typeInto(p.getByLabel(`Account ${n}`), code);
       await p.getByRole('option').filter({ hasText: code }).first().click();
     };
     await pickAccount(1, '5201');
     await pickAccount(2, '1201');
-    await p.getByLabel('Debit').nth(0).fill('1000');
+    await typeInto(p.getByLabel('Debit').nth(0), '1000');
     await expect(p.getByText(/Out of balance by/)).toBeVisible();
     await expect(p.getByRole('button', { name: 'Save draft' }), 'an unbalanced journal cannot be saved').toBeDisabled();
-    await p.getByLabel('Credit').nth(1).fill('1000');
+    await typeInto(p.getByLabel('Credit').nth(1), '1000');
     await expect(p.getByText('Balanced', { exact: true })).toBeVisible();
     await p.getByRole('button', { name: 'Save draft' }).click();
     await expect(p).toHaveURL(/\/finance\/journals\/\d+/);
@@ -220,7 +220,7 @@ test.describe.serial('Manual journal entry (UI)', () => {
     await expect.poll(async () => (await admin().must('GET', `/api/journals/${journalId}`)).status).toBe('POSTED');
     await po.page.getByRole('button', { name: 'Reverse' }).click();
     const d = dialog(po.page);
-    await d.getByRole('textbox').first().fill('E2E reversal: accrual entered in error');
+    await typeInto(d.getByRole('textbox').first(), 'E2E reversal: accrual entered in error');
     await d.getByRole('button').filter({ hasText: /reverse|confirm|yes/i }).last().click();
     await expect.poll(async () => (await admin().must('GET', `/api/journals/${journalId}`)).status, { message: 'D-previously-fixed: the original journal is marked REVERSED' }).toBe('REVERSED');
     const all = await admin().list<any>('/api/journals?size=200');

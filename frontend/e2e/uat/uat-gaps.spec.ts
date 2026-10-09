@@ -8,7 +8,7 @@
 import { admin, apiFor } from '../support/api';
 import { expect, openAs, test } from '../support/fixtures';
 import { approvedSalesOrder, balances, demoIds, produceViaApi } from '../support/flow';
-import { dialog, fill, iconButton, orderPanel, pick, row } from '../support/ui';
+import { dialog, fill, iconButton, orderPanel, pick, row, typeInto } from '../support/ui';
 import { U } from '../support/users';
 
 const num = (v: unknown): number => Number(String(v ?? '').replace(/[^0-9.\-]/g, ''));
@@ -112,7 +112,7 @@ test.describe('UAT FIN-02: production cost summary of a closed order', () => {
     const cd = dialog(pm.page);
     const reason = cd.getByLabel(/Reason for writing the material off/i);
     if (await reason.isVisible().catch(() => false)) {
-      await reason.fill('E2E FIN-02 leftover scrapped');
+      await typeInto(reason, 'E2E FIN-02 leftover scrapped');
     }
     await cd.getByRole('button', { name: /close/i }).last().click();
     await expect(cd).toBeHidden();
@@ -215,7 +215,7 @@ test.describe('UAT PRD-06: production order history and operation audit trail', 
 
     const a = await openAs(browser, guard, U.admin, '/admin/audit-logs');
     const p = a.page;
-    await p.getByLabel('Filter by entity').fill('ProductionOperation');
+    await typeInto(p.getByLabel('Filter by entity'), 'ProductionOperation');
     const lastOp = [...ops].sort((x, y) => y.sequenceNo - x.sequenceNo)[0];
     const r = row(p, new RegExp(`OP_COMPLETE[\\s\\S]*${lastOp.id}|${lastOp.id}[\\s\\S]*OP_COMPLETE`));
     await expect(r.first(), `the audit screen lists the completion of operation ${lastOp.id}`).toBeVisible({ timeout: 15_000 });

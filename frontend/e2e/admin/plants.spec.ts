@@ -6,7 +6,7 @@
 import { Api, admin, login, rawApi } from '../support/api';
 import { ROLE_PASSWORD, TEMP_PASSWORD } from '../support/env';
 import { expect, openAs, test } from '../support/fixtures';
-import { dialog, row } from '../support/ui';
+import { dialog, row, typeInto } from '../support/ui';
 import { U } from '../support/users';
 
 const short = (prefix: string): string => `${prefix}${Math.random().toString(36).slice(2, 7)}`;
@@ -56,8 +56,8 @@ test.describe('Plants and plant scoping', () => {
     const p = a.page;
 
     await p.getByTestId('add-plant').click();
-    await p.getByTestId('plant-code').fill(code);
-    await p.getByTestId('plant-name').fill(`E2E plant ${code}`);
+    await typeInto(p.getByTestId('plant-code'), code);
+    await typeInto(p.getByTestId('plant-name'), `E2E plant ${code}`);
     await p.getByTestId('save-plant').click();
     await expect(row(p, code)).toBeVisible();
     const plants = await admin().list('/api/plants');
@@ -70,7 +70,7 @@ test.describe('Plants and plant scoping', () => {
     const calendar = p.getByTestId('setting-production_calendar');
     await expect(calendar).toContainText('system default');
 
-    await calendar.locator('input').fill('NIGHT_SHIFT');
+    await typeInto(calendar.locator('input'), 'NIGHT_SHIFT');
     await p.getByTestId('save-production_calendar').click();
     await expect(calendar).toContainText('this plant');
     const effective = await admin().list(`/api/plants/${created.id}/settings`);
@@ -89,7 +89,7 @@ test.describe('Plants and plant scoping', () => {
 
     // The administrator limits the user to plant B from the Users screen.
     const a = await openAs(browser, guard, U.admin, '/admin/users');
-    await a.page.getByTestId('user-search').fill(user.username);
+    await typeInto(a.page.getByTestId('user-search'), user.username);
     await row(a.page, user.username).getByTestId('plants-user').click();
     const d = dialog(a.page);
     await expect(d.getByTestId('plants-list')).toBeVisible();

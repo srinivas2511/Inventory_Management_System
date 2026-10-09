@@ -7,7 +7,7 @@
 import { admin, login, unique } from '../support/api';
 import { TEMP_PASSWORD } from '../support/env';
 import { expect, openAs, test, uiLogin, uiLogout } from '../support/fixtures';
-import { dialog, row } from '../support/ui';
+import { dialog, row, typeInto } from '../support/ui';
 import { U } from '../support/users';
 
 const short = (prefix: string): string => `${prefix}${Math.random().toString(36).slice(2, 7)}`;
@@ -25,7 +25,7 @@ async function createUser(roleCodes: string[]): Promise<{ id: number; username: 
 }
 
 const userRow = async (p: import('@playwright/test').Page, username: string) => {
-  await p.getByTestId('user-search').fill(username);
+  await typeInto(p.getByTestId('user-search'), username);
   const r = row(p, username);
   await expect(r).toBeVisible();
   return r;
@@ -76,7 +76,7 @@ test.describe('User and role administration through the UI', () => {
   test('ADM-10 an administrator cannot deactivate their own account from the list', async ({ browser, guard }) => {
     const a = await openAs(browser, guard, U.admin, '/admin/users');
     const p = a.page;
-    await p.getByTestId('user-search').fill('admin');
+    await typeInto(p.getByTestId('user-search'), 'admin');
     const r = p.getByRole('row').filter({ has: p.getByRole('cell', { name: 'admin', exact: true }) });
     await expect(r).toHaveCount(1);
     await expect(r.getByTestId('deactivate-user')).toBeDisabled();
@@ -90,16 +90,16 @@ test.describe('User and role administration through the UI', () => {
     await expect(page).toHaveURL(/change-password/);
     await expect(page.getByTestId('forced-note')).toBeVisible();
 
-    await page.getByTestId('current-password').fill(TEMP_PASSWORD);
-    await page.getByTestId('new-password').fill('weak');
-    await page.getByTestId('confirm-password').fill('weak');
+    await typeInto(page.getByTestId('current-password'), TEMP_PASSWORD);
+    await typeInto(page.getByTestId('new-password'), 'weak');
+    await typeInto(page.getByTestId('confirm-password'), 'weak');
     await page.getByTestId('change-submit').click();
     await expect(page, 'a password that breaks the policy is not accepted').toHaveURL(/change-password/);
     guard.allow({ status: 400, url: /\/api\/auth\/change-password/ });
     expect((await login(u.username, TEMP_PASSWORD)).status, 'the temporary password still works: nothing was changed').toBe(200);
 
-    await page.getByTestId('new-password').fill(next);
-    await page.getByTestId('confirm-password').fill(next);
+    await typeInto(page.getByTestId('new-password'), next);
+    await typeInto(page.getByTestId('confirm-password'), next);
     await page.getByTestId('change-submit').click();
     await expect(page).not.toHaveURL(/change-password/);
     await uiLogout(page);
@@ -118,9 +118,9 @@ test.describe('User and role administration through the UI', () => {
     const next = `Qa#Plant-${unique('m')}!`;
     await uiLogin(page, u.username, TEMP_PASSWORD);
     await expect(page).toHaveURL(/change-password/);
-    await page.getByTestId('current-password').fill('Not#My-Password-1');
-    await page.getByTestId('new-password').fill(next);
-    await page.getByTestId('confirm-password').fill(next);
+    await typeInto(page.getByTestId('current-password'), 'Not#My-Password-1');
+    await typeInto(page.getByTestId('new-password'), next);
+    await typeInto(page.getByTestId('confirm-password'), next);
     await page.getByTestId('change-submit').click();
     await expect(page.getByText(/not your current password/i)).toBeVisible();
     await expect(page, 'a wrong current password must not sign the user out').toHaveURL(/change-password/);
