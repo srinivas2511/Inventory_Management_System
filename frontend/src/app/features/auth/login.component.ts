@@ -29,7 +29,7 @@ import { SessionStore } from '../../core/auth/session.store';
     <div class="login-wrapper">
       <mat-card class="login-card">
         <mat-card-header>
-          <mat-card-title>Spring IMS</mat-card-title>
+          <mat-card-title>ERP</mat-card-title>
           <mat-card-subtitle>Sign in to continue</mat-card-subtitle>
         </mat-card-header>
         <mat-card-content>

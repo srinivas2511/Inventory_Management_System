@@ -13,8 +13,8 @@ import {
   ProductDto,
   ProductTypeDto,
   SaveProductRequest,
-  SpringAttributeDefinitionDto,
-  SpringType,
+  AttributeDefinitionDto,
+  ProductVariant,
 } from './product.api';
 
 @Component({
@@ -32,7 +32,7 @@ import {
     DynamicSpecFormComponent,
   ],
   template: `
-    <h2 mat-dialog-title>{{ product ? 'Edit Product' : 'New Spring Product' }}</h2>
+    <h2 mat-dialog-title>{{ product ? 'Edit Product' : 'New Product' }}</h2>
     <mat-dialog-content>
       <form [formGroup]="form" id="prod-form" (ngSubmit)="save()" novalidate>
         <div class="form-grid">
@@ -51,7 +51,7 @@ import {
             }
           </mat-form-field>
           <mat-form-field appearance="outline">
-            <mat-label>Spring type</mat-label>
+            <mat-label>Product type</mat-label>
             <mat-select formControlName="springType" data-testid="springType">
               @for (t of productTypes(); track t.code) {
                 <mat-option [value]="t.code">{{ t.name }}</mat-option>
@@ -173,14 +173,14 @@ import {
 export class ProductFormComponent implements OnInit {
   protected readonly productTypes = signal<ProductTypeDto[]>([]);
   protected readonly product = inject<ProductDto | undefined>(MAT_DIALOG_DATA);
-  protected readonly attrDefs = signal<SpringAttributeDefinitionDto[]>([]);
+  protected readonly attrDefs = signal<AttributeDefinitionDto[]>([]);
   protected readonly saving = signal(false);
   protected readonly errorMessage = signal('');
 
   protected readonly form = inject(FormBuilder).nonNullable.group({
     productCode: ['', Validators.required],
     name: ['', Validators.required],
-    springType: ['' as SpringType, Validators.required],
+    springType: ['' as ProductVariant, Validators.required],
     drawingNumber: [''],
     drawingRevision: [''],
     heatTreatment: [''],
@@ -213,7 +213,7 @@ export class ProductFormComponent implements OnInit {
     if (initType) this.loadAttrDefs(initType);
   }
 
-  private loadAttrDefs(type: SpringType): void {
+  private loadAttrDefs(type: ProductVariant): void {
     this.api.getAttributeDefinitions(type).subscribe((defs) => {
       this.attrDefs.set(defs);
       if (this.product?.attributes) {

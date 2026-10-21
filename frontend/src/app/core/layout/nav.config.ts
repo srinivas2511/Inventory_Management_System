@@ -37,7 +37,7 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { label: 'Materials', icon: 'category', route: '/master/materials', permission: 'MATERIAL_VIEW', enabled: true },
       {
-        label: 'Spring Products',
+        label: 'Products',
         icon: 'settings_input_component',
         route: '/master/products',
         permission: 'PRODUCT_VIEW',

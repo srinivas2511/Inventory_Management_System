@@ -34,7 +34,7 @@ describe('ShellComponent', () => {
 
   it('renders the top bar with the application name', () => {
     open([]);
-    expect(fixture.nativeElement.querySelector('mat-toolbar').textContent).toContain('Spring IMS');
+    expect(fixture.nativeElement.querySelector('mat-toolbar').textContent).toContain('ERP');
   });
 
   it('shows only enabled navigation items', () => {

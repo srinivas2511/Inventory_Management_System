@@ -11,7 +11,7 @@ describe('AppConfigService', () => {
 
   it('uses defaults before load', () => {
     expect(service.apiBaseUrl).toBe('');
-    expect(service.appName).toBe('Spring IMS');
+    expect(service.appName).toBe('ERP');
   });
 
   it('merges runtime config over defaults and trims trailing slashes', async () => {
@@ -20,7 +20,7 @@ describe('AppConfigService', () => {
     );
     await service.load();
     expect(service.apiBaseUrl).toBe('https://ims.example.com');
-    expect(service.appName).toBe('Spring IMS');
+    expect(service.appName).toBe('ERP');
   });
 
   it('falls back to defaults when the file cannot be loaded', async () => {

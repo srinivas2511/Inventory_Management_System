@@ -6,7 +6,7 @@ export interface AppConfig {
 }
 
 /** apiBaseUrl is the origin prefix put in front of paths that already start with /api; empty means same origin. */
-const DEFAULTS: AppConfig = { apiBaseUrl: '', appName: 'Spring IMS' };
+const DEFAULTS: AppConfig = { apiBaseUrl: '', appName: 'ERP' };
 
 /**
  * Runtime configuration loaded from /config.json before the app starts, so the same build can be deployed to

@@ -2,7 +2,7 @@ import { Component, Input, OnChanges } from '@angular/core';
 import { FormGroup, ReactiveFormsModule, FormControl, Validators } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { SpringAttributeDefinitionDto } from './product.api';
+import { AttributeDefinitionDto } from './product.api';
 
 @Component({
   selector: 'app-dynamic-spec-form',
@@ -48,7 +48,7 @@ import { SpringAttributeDefinitionDto } from './product.api';
 })
 export class DynamicSpecFormComponent implements OnChanges {
   @Input() group!: FormGroup;
-  @Input() attributes: SpringAttributeDefinitionDto[] = [];
+  @Input() attributes: AttributeDefinitionDto[] = [];
   @Input() title = 'Specifications';
 
   ngOnChanges(): void {

@@ -14,7 +14,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge.component';
 import { HasPermissionDirective } from '../../../shared/directives/has-permission.directive';
 import { openDocumentsDialog } from '../../documents/documents-dialog.component';
-import { ProductApi, ProductDto, ProductTypeDto, SpringType, ProductStatus } from './product.api';
+import { ProductApi, ProductDto, ProductTypeDto, ProductVariant, ProductStatus } from './product.api';
 import { ProductFormComponent } from './product-form.component';
 
 @Component({
@@ -37,7 +37,7 @@ import { ProductFormComponent } from './product-form.component';
   ],
   template: `
     <div class="page-header">
-      <h2 class="mat-h2">Spring Products</h2>
+      <h2 class="mat-h2">Products</h2>
       <button mat-flat-button color="primary" (click)="openForm()" data-testid="add-product">
         <mat-icon>add</mat-icon> New Product
       </button>
@@ -49,7 +49,7 @@ import { ProductFormComponent } from './product-form.component';
         <mat-icon matSuffix>search</mat-icon>
       </mat-form-field>
       <mat-form-field appearance="outline">
-        <mat-label>Spring type</mat-label>
+        <mat-label>Product type</mat-label>
         <mat-select [formControl]="typeCtrl">
           <mat-option [value]="null">All types</mat-option>
           @for (t of productTypes(); track t.code) {
@@ -167,7 +167,7 @@ export class ProductListComponent implements OnInit {
   protected readonly pageIndex = signal(0);
   protected readonly pageSize = 20;
   protected readonly searchCtrl = new FormControl('');
-  protected readonly typeCtrl = new FormControl<SpringType | null>(null);
+  protected readonly typeCtrl = new FormControl<ProductVariant | null>(null);
   protected readonly statusCtrl = new FormControl<ProductStatus | null>(null);
   private readonly api = inject(ProductApi);
   private readonly dialog = inject(MatDialog);

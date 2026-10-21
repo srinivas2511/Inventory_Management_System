@@ -63,7 +63,7 @@ export const routes: Routes = [
       },
       {
         path: 'master/products',
-        title: 'Spring Products',
+        title: 'Products',
         canActivate: [permissionGuard('PRODUCT_VIEW')],
         loadComponent: () =>
           import('./features/master/product/product-list.component').then((m) => m.ProductListComponent),

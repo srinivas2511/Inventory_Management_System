@@ -4,8 +4,8 @@ import { Observable, map } from 'rxjs';
 import { AppConfigService } from '../../../core/config/app-config.service';
 import { Page } from '../material/material.api';
 
-/** A product type code from the product_types lookup: the spring types plus any enabled industry vertical's types. */
-export type SpringType = string;
+/** A product type code from the product_types lookup. */
+export type ProductVariant = string;
 
 export interface ProductTypeDto {
   id: number;
@@ -27,7 +27,7 @@ export interface BackendAttributeDefinitionDto {
   displayOrder: number;
 }
 
-export function toAttributeDefinition(d: BackendAttributeDefinitionDto): SpringAttributeDefinitionDto {
+export function toAttributeDefinition(d: BackendAttributeDefinitionDto): AttributeDefinitionDto {
   return {
     id: d.id,
     springType: d.springType,
@@ -42,9 +42,9 @@ export function toAttributeDefinition(d: BackendAttributeDefinitionDto): SpringA
 
 export type ProductStatus = 'DRAFT' | 'ACTIVE' | 'OBSOLETE';
 
-export interface SpringAttributeDefinitionDto {
+export interface AttributeDefinitionDto {
   id: number;
-  springType: SpringType;
+  springType: ProductVariant;
   attributeKey: string;
   displayName: string;
   dataType: string;
@@ -58,7 +58,7 @@ export interface ProductDto {
   id: number;
   productCode: string;
   name: string;
-  springType: SpringType;
+  springType: ProductVariant;
   status: ProductStatus;
   primaryMaterialId?: number | null;
   wireDiameter?: number | null;
@@ -80,7 +80,7 @@ export interface ProductDto {
 export interface SaveProductRequest {
   productCode: string;
   name: string;
-  springType: SpringType;
+  springType: ProductVariant;
   wireDiameter?: number | null;
   outerDiameter?: number | null;
   freeLength?: number | null;
@@ -101,7 +101,7 @@ export class ProductApi {
 
   search(
     q: string,
-    springType: SpringType | null,
+    springType: ProductVariant | null,
     status: ProductStatus | null,
     page: number,
     size: number,
@@ -133,7 +133,7 @@ export class ProductApi {
     return this.http.get<ProductTypeDto[]>(`${this.base}/api/product-types`);
   }
 
-  getAttributeDefinitions(springType: SpringType): Observable<SpringAttributeDefinitionDto[]> {
+  getAttributeDefinitions(springType: ProductVariant): Observable<AttributeDefinitionDto[]> {
     return this.http
       .get<BackendAttributeDefinitionDto[]>(`${this.base}/api/products/attributes/${encodeURIComponent(springType)}`)
       .pipe(map((defs) => defs.map(toAttributeDefinition)));
