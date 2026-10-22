@@ -1,0 +1,81 @@
+package com.mfg.ims.procurement.web;
+
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.mfg.ims.procurement.dto.CreatePoRequest;
+import com.mfg.ims.procurement.dto.PurchaseOrderDto;
+import com.mfg.ims.procurement.service.PurchaseOrderService;
+
+@RestController
+@RequestMapping("/api/procurement/purchase-orders")
+public class PurchaseOrderController {
+
+    private final PurchaseOrderService service;
+
+    public PurchaseOrderController(PurchaseOrderService service) {
+        this.service = service;
+    }
+
+    public record CancelRequest(@NotBlank String reason) {}
+
+    @GetMapping
+    @PreAuthorize("hasAnyAuthority('PURCHASE_VIEW','PURCHASE_CREATE','PURCHASE_APPROVE')")
+    public Page<PurchaseOrderDto> list(
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) Long supplierId,
+            @PageableDefault(size = 20, sort = "id", direction = org.springframework.data.domain.Sort.Direction.DESC) Pageable pageable) {
+        return service.search(status, supplierId, pageable);
+    }
+
+    @GetMapping("/{id}")
+    @PreAuthorize("hasAnyAuthority('PURCHASE_VIEW','PURCHASE_CREATE','PURCHASE_APPROVE')")
+    public PurchaseOrderDto get(@PathVariable Long id) {
+        return service.findById(id);
+    }
+
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAuthority('PURCHASE_CREATE')")
+    public PurchaseOrderDto create(@Valid @RequestBody CreatePoRequest req) {
+        return service.create(req);
+    }
+
+    @PostMapping("/{id}/submit")
+    @PreAuthorize("hasAuthority('PURCHASE_CREATE')")
+    public PurchaseOrderDto submit(@PathVariable Long id) {
+        return service.submit(id);
+    }
+
+    @PostMapping("/{id}/approve")
+    @PreAuthorize("hasAuthority('PURCHASE_APPROVE')")
+    public PurchaseOrderDto approve(@PathVariable Long id) {
+        return service.approve(id);
+    }
+
+    @PostMapping("/{id}/send-to-supplier")
+    @PreAuthorize("hasAuthority('PURCHASE_APPROVE')")
+    public PurchaseOrderDto sendToSupplier(@PathVariable Long id) {
+        return service.sendToSupplier(id);
+    }
+
+    @PostMapping("/{id}/cancel")
+    @PreAuthorize("hasAnyAuthority('PURCHASE_CREATE','PURCHASE_APPROVE')")
+    public PurchaseOrderDto cancel(@PathVariable Long id, @Valid @RequestBody CancelRequest req) {
+        return service.cancel(id, req.reason());
+    }
+}

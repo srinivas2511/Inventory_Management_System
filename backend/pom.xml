@@ -10,7 +10,7 @@
         <relativePath/>
     </parent>
 
-    <groupId>com.springmfg</groupId>
+    <groupId>com.mfg</groupId>
     <artifactId>ims-backend</artifactId>
     <version>0.1.0-SNAPSHOT</version>
     <name>ims-backend</name>

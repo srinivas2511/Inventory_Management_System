@@ -1,4 +1,4 @@
 logging:
   level:
     root: WARN
-    com.springmfg.ims: INFO
+    com.mfg.ims: INFO

@@ -10,7 +10,7 @@ spring:
 
 logging:
   level:
-    com.springmfg.ims: DEBUG
+    com.mfg.ims: DEBUG
 
 springdoc:
   api-docs:

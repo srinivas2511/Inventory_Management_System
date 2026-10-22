@@ -1,0 +1,92 @@
+package com.mfg.ims.audit.service;
+
+import java.time.Instant;
+
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.MDC;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+
+import com.mfg.ims.audit.domain.AuditLog;
+import com.mfg.ims.audit.dto.AuditLogDto;
+import com.mfg.ims.audit.repository.AuditLogRepository;
+import com.mfg.ims.auth.service.UserPermissionCache.CachedUser;
+import com.mfg.ims.common.exception.Problems;
+
+import jakarta.servlet.http.HttpServletRequest;
+
+@Service
+public class AuditService {
+
+    private static final ObjectMapper JSON = new ObjectMapper().enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS);
+
+    private final AuditLogRepository repository;
+
+    public AuditService(AuditLogRepository repository) {
+        this.repository = repository;
+    }
+
+    @Transactional(readOnly = true)
+    public Page<AuditLogDto> search(Long userId, String entity, String action,
+                                    Instant from, Instant to, Pageable pageable) {
+        return repository.search(userId, entity, action, from, to, pageable).map(AuditLogDto::from);
+    }
+
+    public void record(String action, String entity, String entityId,
+                       String oldValue, String newValue, String reason) {
+        Long userId = null;
+        String username = null;
+        String roles = null;
+        String ip = null;
+        String correlationId = null;
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getPrincipal() instanceof CachedUser u) {
+            userId = u.id();
+            username = u.username();
+            roles = String.join(",", u.roles());
+        }
+
+        try {
+            ServletRequestAttributes attrs =
+                (ServletRequestAttributes) RequestContextHolder.currentRequestAttributes();
+            HttpServletRequest req = attrs.getRequest();
+            String xff = req.getHeader("X-Forwarded-For");
+            ip = xff != null ? xff.split(",")[0].trim() : req.getRemoteAddr();
+            correlationId = MDC.get(Problems.TRACE_ID_KEY);
+        } catch (IllegalStateException ignored) {
+            // outside a web request (e.g. scheduled job)
+        }
+
+        repository.save(new AuditLog(userId, username, roles, action, entity, entityId,
+            asJson(oldValue), asJson(newValue), reason, ip, correlationId));
+    }
+
+    /**
+     * old_value/new_value are JSONB: pass valid JSON through, wrap plain text (e.g. a status) as a JSON string.
+     * Trailing tokens must fail validation, otherwise text that merely starts with a number or literal (such as
+     * "2 slips; gross 10") is mistaken for JSON and rejected by PostgreSQL.
+     */
+    static String asJson(String value) {
+        if (value == null) {
+            return null;
+        }
+        try {
+            JSON.readTree(value);
+            return value;
+        } catch (Exception notJson) {
+            try {
+                return JSON.writeValueAsString(value);
+            } catch (Exception e) {
+                throw new IllegalStateException(e);
+            }
+        }
+    }
+}

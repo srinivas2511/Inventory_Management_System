@@ -1,0 +1,331 @@
+package com.mfg.ims.controlling.service;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.mfg.ims.audit.service.AuditService;
+import com.mfg.ims.auth.service.UserPermissionCache.CachedUser;
+import com.mfg.ims.common.exception.BusinessRuleException;
+import com.mfg.ims.common.exception.ErrorCode;
+import com.mfg.ims.common.exception.NotFoundException;
+import com.mfg.ims.common.settings.SystemSettingService;
+import com.mfg.ims.controlling.domain.CostCentre;
+import com.mfg.ims.controlling.domain.CostEstimateLine;
+import com.mfg.ims.controlling.domain.ProductCostEstimate;
+import com.mfg.ims.controlling.domain.ProductionOrderConversionCost;
+import com.mfg.ims.controlling.domain.ProductionOrderVariance;
+import com.mfg.ims.controlling.dto.VarianceDto;
+import com.mfg.ims.controlling.repository.CostCentreRepository;
+import com.mfg.ims.controlling.repository.ProductCostEstimateRepository;
+import com.mfg.ims.controlling.repository.ProductionOrderConversionCostRepository;
+import com.mfg.ims.controlling.repository.ProductionOrderVarianceRepository;
+import com.mfg.ims.finance.gl.dto.AutoJournalRequest;
+import com.mfg.ims.finance.gl.dto.JournalHeaderDto;
+import com.mfg.ims.finance.gl.dto.JournalLineRequest;
+import com.mfg.ims.finance.gl.repository.GlAccountRepository;
+import com.mfg.ims.finance.gl.service.JournalService;
+import com.mfg.ims.product.domain.Product;
+import com.mfg.ims.product.repository.ProductRepository;
+import com.mfg.ims.production.domain.MaterialIssue;
+import com.mfg.ims.production.domain.MaterialIssueLine;
+import com.mfg.ims.production.domain.ProductionOrder;
+import com.mfg.ims.production.domain.ProductionOrderMaterial;
+import com.mfg.ims.production.service.FinishedGoodsCostService;
+import com.mfg.ims.production.repository.MaterialIssueLineRepository;
+import com.mfg.ims.production.repository.MaterialIssueRepository;
+import com.mfg.ims.production.repository.ProductionOrderMaterialRepository;
+import com.mfg.ims.production.repository.ProductionOrderRepository;
+
+/**
+ * Compares actual production order cost with the released standard cost and posts the variance journal
+ * through {@link JournalService} (DESIGN section 16.3). It reads production data but never touches the
+ * inventory ledger.
+ */
+@Service
+public class ProductionOrderVarianceService {
+
+    static final String ACCOUNT_VARIANCE_EXPENSE = "5204";
+    static final String ACCOUNT_VARIANCE_INCOME = "4101";
+    static final String ACCOUNT_WIP = "1501";
+
+    private static final BigDecimal HUNDRED = BigDecimal.valueOf(100);
+    private static final BigDecimal MIN_POSTING_AMOUNT = new BigDecimal("0.0001");
+
+    private final ProductionOrderRepository orderRepo;
+    private final ProductionOrderMaterialRepository orderMaterialRepo;
+    private final MaterialIssueRepository issueRepo;
+    private final MaterialIssueLineRepository issueLineRepo;
+    private final ProductionOrderConversionCostRepository conversionRepo;
+    private final OrderConversionCostService conversionService;
+    private final ConversionAbsorptionPoster absorptionPoster;
+    private final ProductCostEstimateRepository estimateRepo;
+    private final ProductionOrderVarianceRepository varianceRepo;
+    private final CostCentreRepository costCentreRepo;
+    private final ProductRepository productRepo;
+    private final GlAccountRepository glAccountRepo;
+    private final JournalService journalService;
+    private final SystemSettingService settings;
+    private final AuditService auditService;
+    private final FinishedGoodsCostService fgCostService;
+
+    public ProductionOrderVarianceService(ProductionOrderRepository orderRepo,
+                                          ProductionOrderMaterialRepository orderMaterialRepo,
+                                          MaterialIssueRepository issueRepo,
+                                          MaterialIssueLineRepository issueLineRepo,
+                                          ProductionOrderConversionCostRepository conversionRepo,
+                                          OrderConversionCostService conversionService,
+                                          ConversionAbsorptionPoster absorptionPoster,
+                                          ProductCostEstimateRepository estimateRepo,
+                                          ProductionOrderVarianceRepository varianceRepo,
+                                          CostCentreRepository costCentreRepo,
+                                          ProductRepository productRepo,
+                                          GlAccountRepository glAccountRepo,
+                                          JournalService journalService,
+                                          SystemSettingService settings,
+                                          AuditService auditService,
+                                          FinishedGoodsCostService fgCostService) {
+        this.orderRepo = orderRepo;
+        this.orderMaterialRepo = orderMaterialRepo;
+        this.issueRepo = issueRepo;
+        this.issueLineRepo = issueLineRepo;
+        this.conversionRepo = conversionRepo;
+        this.conversionService = conversionService;
+        this.absorptionPoster = absorptionPoster;
+        this.estimateRepo = estimateRepo;
+        this.varianceRepo = varianceRepo;
+        this.costCentreRepo = costCentreRepo;
+        this.productRepo = productRepo;
+        this.glAccountRepo = glAccountRepo;
+        this.journalService = journalService;
+        this.settings = settings;
+        this.auditService = auditService;
+        this.fgCostService = fgCostService;
+    }
+
+    /**
+     * Calculates (or returns the already posted) variance for a COMPLETED/CLOSED order and posts the variance
+     * journal. Runs in its own transaction so it also works when invoked after the closing transaction committed.
+     * A variance that has already been journalled is returned unchanged, so a reopen-and-reclose does not repost.
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public VarianceDto calculate(Long productionOrderId) {
+        ProductionOrder order = orderRepo.findById(productionOrderId)
+                .orElseThrow(() -> new NotFoundException("ProductionOrder", productionOrderId));
+        if (!List.of("COMPLETED", "CLOSED").contains(order.getStatus())) {
+            throw new BusinessRuleException(ErrorCode.ILLEGAL_STATE_TRANSITION,
+                    "Variance can only be calculated for COMPLETED or CLOSED orders, current: " + order.getStatus());
+        }
+
+        ProductionOrderVariance existing = varianceRepo.findByProductionOrderId(productionOrderId).orElse(null);
+        if (existing != null && existing.getJournalHeaderId() != null) {
+            return toDto(existing);
+        }
+
+        // The conversion cost was fixed when the order completed and absorbed into WIP then; an order that completed
+        // before that existed is fixed and absorbed now. A failed absorption is retried here.
+        conversionService.ensureFrozen(productionOrderId);
+        ProductionOrderConversionCost conversion = conversionRepo.findByProductionOrderId(productionOrderId)
+                .orElseThrow(() -> new NotFoundException("ProductionOrderConversionCost", productionOrderId));
+        if (conversion.needsPosting()) {
+            absorptionPoster.postAndReport(productionOrderId);
+        }
+
+        CostCentre cc = productionCostCentre();
+        BigDecimal labourRate = cc != null ? cc.getLabourRatePerHour() : BigDecimal.ZERO;
+
+        ProductCostEstimate estimate = estimateRepo.findByProductIdAndStatus(order.getProductId(), "RELEASED").orElse(null);
+        BigDecimal goodQty = order.getGoodQty();
+        BigDecimal lot = estimate != null ? estimate.getCostLotSize() : BigDecimal.ONE;
+
+        Map<Long, CostEstimateLine> standardMaterials = new HashMap<>();
+        BigDecimal standardHoursPerLot = BigDecimal.ZERO;
+        if (estimate != null) {
+            for (CostEstimateLine l : estimate.getLines()) {
+                if ("MATERIAL".equals(l.getCostElement()) && l.getMaterialId() != null) {
+                    standardMaterials.put(l.getMaterialId(), l);
+                } else if ("LABOUR".equals(l.getCostElement()) && l.getQuantity() != null) {
+                    standardHoursPerLot = standardHoursPerLot.add(l.getQuantity());
+                }
+            }
+        }
+
+        // Actual material: issued value net of returns, per material at the average issue cost
+        Map<Long, BigDecimal[]> issued = new HashMap<>(); // [qty, value]
+        for (MaterialIssue issue : issueRepo.findByProductionOrderId(productionOrderId)) {
+            for (MaterialIssueLine line : issueLineRepo.findByMaterialIssueId(issue.getId())) {
+                BigDecimal[] acc = issued.computeIfAbsent(line.getMaterialId(),
+                        k -> new BigDecimal[] { BigDecimal.ZERO, BigDecimal.ZERO });
+                acc[0] = acc[0].add(line.getQuantity());
+                acc[1] = acc[1].add(line.getQuantity().multiply(line.getUnitCost()));
+            }
+        }
+        Map<Long, BigDecimal> returned = new HashMap<>();
+        for (ProductionOrderMaterial pom : orderMaterialRepo.findByProductionOrderId(productionOrderId)) {
+            // returned to stock or written off as scrap: neither is part of what the order's pieces cost
+            returned.put(pom.getMaterialId(), pom.getReturnedQty().add(pom.getScrapQty()));
+        }
+
+        BigDecimal actualMaterial = BigDecimal.ZERO;
+        BigDecimal priceVariance = BigDecimal.ZERO;
+        BigDecimal quantityVariance = BigDecimal.ZERO;
+        for (Map.Entry<Long, BigDecimal[]> e : issued.entrySet()) {
+            BigDecimal issuedQty = e.getValue()[0];
+            if (issuedQty.signum() == 0) continue;
+            BigDecimal avgCost = e.getValue()[1].divide(issuedQty, 8, RoundingMode.HALF_UP);
+            BigDecimal netQty = issuedQty.subtract(returned.getOrDefault(e.getKey(), BigDecimal.ZERO)).max(BigDecimal.ZERO);
+            actualMaterial = actualMaterial.add(netQty.multiply(avgCost));
+
+            CostEstimateLine std = standardMaterials.get(e.getKey());
+            BigDecimal stdRate = std != null ? std.getUnitRate() : avgCost;
+            BigDecimal stdQty = std != null
+                    ? std.getQuantity().multiply(goodQty).divide(lot, 6, RoundingMode.HALF_UP)
+                    : BigDecimal.ZERO;
+            priceVariance = priceVariance.add(avgCost.subtract(stdRate).multiply(netQty));
+            quantityVariance = quantityVariance.add(netQty.subtract(stdQty).multiply(stdRate));
+        }
+
+        // Actual labour, machine and overhead: the figures fixed when the order completed (elapsed operation time at
+        // the cost centre rates), which is also what was absorbed into WIP, so WIP is not relieved twice or short.
+        BigDecimal actualHours = conversion.getActualHours();
+        BigDecimal actualLabour = conversion.getLabourCost();
+        BigDecimal actualMachine = conversion.getMachineCost();
+        BigDecimal actualOverhead = conversion.getOverheadCost();
+
+        BigDecimal actualCost = scale(actualMaterial).add(conversion.getTotalCost());
+        BigDecimal standardCost = estimate != null
+                ? scale(estimate.getTotalStandardCost().multiply(goodQty).divide(lot, 8, RoundingMode.HALF_UP))
+                : BigDecimal.ZERO.setScale(4);
+        BigDecimal total = estimate != null ? actualCost.subtract(standardCost) : BigDecimal.ZERO.setScale(4);
+        // Scrap recorded on the operations was already charged (Dr 5202 / Cr 1501) when it was recorded, but its material
+        // is part of the actual cost, so it sits in the total variance. The journal posts only the rest.
+        BigDecimal scrapRelieved = estimate != null ? scale(fgCostService.scrapRelieved(productionOrderId)) : BigDecimal.ZERO.setScale(4);
+        BigDecimal journalAmount = total.subtract(scrapRelieved);
+
+        BigDecimal standardHours = standardHoursPerLot.multiply(goodQty).divide(lot, 6, RoundingMode.HALF_UP);
+        BigDecimal efficiencyVariance = actualHours.subtract(standardHours).multiply(labourRate);
+        if (estimate == null) {
+            priceVariance = BigDecimal.ZERO;
+            quantityVariance = BigDecimal.ZERO;
+            efficiencyVariance = BigDecimal.ZERO;
+        }
+        BigDecimal other = total.subtract(scale(priceVariance)).subtract(scale(quantityVariance)).subtract(scale(efficiencyVariance));
+
+        ProductionOrderVariance v = existing != null ? existing : new ProductionOrderVariance();
+        v.setProductionOrderId(productionOrderId);
+        v.setProductId(order.getProductId());
+        v.setEstimateId(estimate != null ? estimate.getId() : null);
+        v.setGoodQty(goodQty);
+        v.setStandardCost(standardCost);
+        v.setActualMaterialCost(scale(actualMaterial));
+        v.setActualLabourCost(scale(actualLabour));
+        v.setActualMachineCost(scale(actualMachine));
+        v.setActualOverheadCost(scale(actualOverhead));
+        v.setActualCost(actualCost);
+        v.setPriceVariance(scale(priceVariance));
+        v.setQuantityVariance(scale(quantityVariance));
+        v.setEfficiencyVariance(scale(efficiencyVariance));
+        v.setOtherVariance(scale(other));
+        v.setScrapRelieved(scrapRelieved);
+        v.setTotalVariance(total);
+        v.setCalculatedAt(Instant.now());
+        v.setCalculatedBy(currentUserId() != null ? currentUserId() : order.getClosedBy());
+
+        if (estimate == null) {
+            v.setStatus("NO_ESTIMATE");
+        } else if (journalAmount.abs().compareTo(MIN_POSTING_AMOUNT) < 0) {
+            v.setStatus("NO_VARIANCE");
+        } else {
+            JournalHeaderDto journal = postVarianceJournal(order, journalAmount, cc);
+            v.setStatus("POSTED");
+            v.setJournalHeaderId(journal.id());
+            auditService.record("PRODUCTION_VARIANCE_POST", "ProductionOrder", String.valueOf(productionOrderId),
+                    null, journalAmount.toPlainString(), "journal=" + journal.journalNumber());
+        }
+        return toDto(varianceRepo.save(v));
+    }
+
+    @Transactional(readOnly = true)
+    public VarianceDto findByOrder(Long productionOrderId) {
+        return toDto(varianceRepo.findByProductionOrderId(productionOrderId)
+                .orElseThrow(() -> new NotFoundException("ProductionOrderVariance", productionOrderId)));
+    }
+
+    @Transactional(readOnly = true)
+    public Page<VarianceDto> search(Pageable pageable) {
+        return varianceRepo.findAll(pageable).map(this::toDto);
+    }
+
+    private JournalHeaderDto postVarianceJournal(ProductionOrder order, BigDecimal total, CostCentre cc) {
+        Long wip = accountId(ACCOUNT_WIP);
+        Long debit;
+        Long credit;
+        if (total.signum() > 0) {
+            debit = accountId(ACCOUNT_VARIANCE_EXPENSE);
+            credit = wip;
+        } else {
+            debit = wip;
+            credit = accountId(ACCOUNT_VARIANCE_INCOME);
+        }
+        BigDecimal amount = total.abs();
+        Long costCentreId = cc != null ? cc.getId() : null;
+        int profitCentre = settings.getInt("controlling.default_profit_centre_id", 0);
+        Long profitCentreId = profitCentre > 0 ? (long) profitCentre : null;
+        String description = "Production variance " + order.getOrderNumber();
+
+        return journalService.postAutoJournal(new AutoJournalRequest(
+                "AUTO", "CONTROLLING", "PRODUCTION_VARIANCE", order.getId(),
+                LocalDate.now(), description, order.getClosedBy(),
+                List.of(new JournalLineRequest(debit, amount, BigDecimal.ZERO, description, costCentreId, profitCentreId),
+                        new JournalLineRequest(credit, BigDecimal.ZERO, amount, description, costCentreId, profitCentreId))));
+    }
+
+    private Long accountId(String code) {
+        return glAccountRepo.findByAccountCode(code)
+                .orElseThrow(() -> new NotFoundException("GlAccount", code)).getId();
+    }
+
+    private CostCentre productionCostCentre() {
+        int id = settings.getInt(ProductCostingService.SETTING_PRODUCTION_COST_CENTRE, 0);
+        return id > 0 ? costCentreRepo.findById((long) id).orElse(null) : null;
+    }
+
+    private BigDecimal scale(BigDecimal v) {
+        return v.setScale(4, RoundingMode.HALF_UP);
+    }
+
+    private VarianceDto toDto(ProductionOrderVariance v) {
+        ProductionOrder order = orderRepo.findById(v.getProductionOrderId()).orElse(null);
+        Product product = productRepo.findById(v.getProductId()).orElse(null);
+        BigDecimal pct = v.getStandardCost().signum() > 0
+                ? v.getTotalVariance().multiply(HUNDRED).divide(v.getStandardCost(), 2, RoundingMode.HALF_UP)
+                : null;
+        return new VarianceDto(v.getId(), v.getProductionOrderId(),
+                order != null ? order.getOrderNumber() : null,
+                v.getProductId(),
+                product != null ? product.getProductCode() : null,
+                product != null ? product.getName() : null,
+                v.getEstimateId(), v.getGoodQty(), v.getStandardCost(),
+                v.getActualMaterialCost(), v.getActualLabourCost(), v.getActualMachineCost(),
+                v.getActualOverheadCost(), v.getActualCost(), v.getPriceVariance(), v.getQuantityVariance(),
+                v.getEfficiencyVariance(), v.getOtherVariance(), v.getTotalVariance(), pct,
+                v.getStatus(), v.getJournalHeaderId(), v.getCalculatedAt());
+    }
+
+    private Long currentUserId() {
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getPrincipal() instanceof CachedUser u) return u.id();
+        return null;
+    }
+}
