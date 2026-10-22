@@ -55,7 +55,8 @@ test.describe('Known defects (documented behaviour not yet met)', () => {
   test('D-08 reserving stock moves the sales order to ALLOCATED (DESIGN §12 step 15)', async ({ guard }) => {
     guard.allow({ status: [400, 409, 422] });
     const { customer, product } = await demoIds();
-    const stock = (await balances()).find((b) => b.productId === product.id && b.stockStatus === 'AVAILABLE' && Number(b.qtyAvailable) >= 1 && b.fgBatchId);
+    const fgList = await admin().list<any>(`/api/lookups/fg-stock?productId=${product.id}`);
+    const stock = fgList.find((b) => Number(b.available) >= 1);
     expect(stock, 'available FG exists (run the workflow spec first)').toBeTruthy();
     const sales = apiFor(U.sales);
     const so = await sales.must('POST', '/api/sales/orders', {

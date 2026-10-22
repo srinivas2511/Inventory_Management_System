@@ -112,10 +112,9 @@ export async function releasedOrder(plannedQty: number) {
  */
 export async function dispatchOnePiece(unitPrice = 200): Promise<{ dispatchId: number; invoice: any }> {
   const { product, customer } = await demoIds();
-  const fg = (await balances()).find(
-    (b) => b.itemType === 'PRODUCT' && b.productId === product.id && b.stockStatus === 'AVAILABLE' && Number(b.qtyAvailable) >= 1,
-  );
-  if (!fg) throw new Error('dispatchOnePiece needs AVAILABLE finished goods: run demo-workflow.spec.ts first (or load the demo data)');
+  const fgList = await admin().list<any>(`/api/lookups/fg-stock?productId=${product.id}`);
+  const fg = fgList.find((b) => Number(b.available) >= 1);
+  if (!fg) throw new Error('dispatchOnePiece needs AVAILABLE APPROVED finished goods: run demo-workflow.spec.ts first (or load the demo data)');
   const sales = apiFor(U.sales);
   const so = await sales.must('POST', '/api/sales/orders', {
     customerId: customer.id,
