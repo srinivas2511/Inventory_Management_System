@@ -11,7 +11,8 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { DecimalPipe } from '@angular/common';
+import { IstDatePipe } from '../../shared/pipes/ist-date.pipe';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import { LookupApi, LookupItem, LookupLocation, LookupOption } from '../../shared/lookup.api';
 import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
@@ -34,7 +35,7 @@ import { Page } from '../master/material/material.api';
     MatProgressSpinnerModule,
     MatTooltipModule,
     MatDialogModule,
-    DatePipe,
+    IstDatePipe,
     DecimalPipe,
     StatusBadgeComponent,
     HasPermissionDirective,
@@ -75,7 +76,7 @@ import { Page } from '../master/material/material.api';
         </ng-container>
         <ng-container matColumnDef="date">
           <th mat-header-cell *matHeaderCellDef>Date</th>
-          <td mat-cell *matCellDef="let r">{{ r.createdAt | date: 'dd/MM/yy HH:mm' }}</td>
+          <td mat-cell *matCellDef="let r">{{ r.createdAt | istDate: 'dd/MM/yy HH:mm' }}</td>
         </ng-container>
         <ng-container matColumnDef="item">
           <th mat-header-cell *matHeaderCellDef>Item</th>

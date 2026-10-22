@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { DecimalPipe } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -10,6 +10,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
+import { IstDatePipe } from '../../shared/pipes/ist-date.pipe';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
 import { CrmApi, QuotationDto } from './crm.api';
@@ -22,7 +23,7 @@ const STATUSES = ['DRAFT', 'SENT', 'ACCEPTED', 'REJECTED', 'EXPIRED', 'CONVERTED
   imports: [
     ReactiveFormsModule,
     RouterLink,
-    DatePipe,
+    IstDatePipe,
     DecimalPipe,
     MatButtonModule,
     MatFormFieldModule,
@@ -82,7 +83,7 @@ const STATUSES = ['DRAFT', 'SENT', 'ACCEPTED', 'REJECTED', 'EXPIRED', 'CONVERTED
         </ng-container>
         <ng-container matColumnDef="validUntil">
           <th mat-header-cell *matHeaderCellDef>Valid until</th>
-          <td mat-cell *matCellDef="let r">{{ r.validUntil | date: 'dd MMM yyyy' }}</td>
+          <td mat-cell *matCellDef="let r">{{ r.validUntil | istDate: 'dd MMM yyyy' }}</td>
         </ng-container>
         <ng-container matColumnDef="total">
           <th mat-header-cell *matHeaderCellDef>Total</th>

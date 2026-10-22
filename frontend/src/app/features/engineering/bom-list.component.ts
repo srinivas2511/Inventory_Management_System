@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { DecimalPipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { BomFormComponent } from './bom-form.component';
@@ -13,6 +13,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { IstDatePipe } from '../../shared/pipes/ist-date.pipe';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
 import { openDocumentsDialog } from '../documents/documents-dialog.component';
@@ -46,7 +47,7 @@ export interface BomDto {
     MatProgressSpinnerModule,
     MatTooltipModule,
     MatSnackBarModule,
-    DatePipe,
+    IstDatePipe,
     DecimalPipe,
     StatusBadgeComponent,
     HasPermissionDirective,
@@ -97,7 +98,7 @@ export interface BomDto {
         </ng-container>
         <ng-container matColumnDef="effectiveFrom">
           <th mat-header-cell *matHeaderCellDef>Effective From</th>
-          <td mat-cell *matCellDef="let r">{{ r.effectiveFrom | date: 'dd/MM/yyyy' }}</td>
+          <td mat-cell *matCellDef="let r">{{ r.effectiveFrom | istDate: 'dd/MM/yyyy' }}</td>
         </ng-container>
         <ng-container matColumnDef="status">
           <th mat-header-cell *matHeaderCellDef>Status</th>

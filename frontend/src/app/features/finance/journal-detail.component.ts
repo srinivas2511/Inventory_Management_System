@@ -1,4 +1,4 @@
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { DecimalPipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -8,6 +8,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { IstDatePipe } from '../../shared/pipes/ist-date.pipe';
 import { Observable } from 'rxjs';
 import { SessionStore } from '../../core/auth/session.store';
 import { problemMessage } from '../../core/models/problem.model';
@@ -20,7 +21,7 @@ import { ReasonDialogComponent } from './reason-dialog.component';
   selector: 'app-journal-detail',
   standalone: true,
   imports: [
-    DatePipe,
+    IstDatePipe,
     DecimalPipe,
     HasPermissionDirective,
     MatButtonModule,
@@ -77,13 +78,13 @@ import { ReasonDialogComponent } from './reason-dialog.component';
               @if (j.approvedBy) {
                 · approved by user #{{ j.approvedBy }}
                 @if (j.approvedAt) {
-                  {{ j.approvedAt | date: 'medium' }}
+                  {{ j.approvedAt | istDate: 'medium' }}
                 }
               }
               @if (j.postedBy) {
                 · posted by user #{{ j.postedBy }}
                 @if (j.postedAt) {
-                  {{ j.postedAt | date: 'medium' }}
+                  {{ j.postedAt | istDate: 'medium' }}
                 }
               }
             </p>

@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { DecimalPipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -8,6 +8,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
+import { IstDatePipe } from '../../shared/pipes/ist-date.pipe';
 import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
 import { DemandForecastDto, MrpApi } from './mrp.api';
 
@@ -16,7 +17,7 @@ import { DemandForecastDto, MrpApi } from './mrp.api';
   standalone: true,
   imports: [
     ReactiveFormsModule,
-    DatePipe,
+    IstDatePipe,
     DecimalPipe,
     MatButtonModule,
     MatFormFieldModule,
@@ -68,7 +69,7 @@ import { DemandForecastDto, MrpApi } from './mrp.api';
         </ng-container>
         <ng-container matColumnDef="targetDate">
           <th mat-header-cell *matHeaderCellDef>Target date</th>
-          <td mat-cell *matCellDef="let r">{{ r.targetDate | date: 'dd MMM yyyy' }}</td>
+          <td mat-cell *matCellDef="let r">{{ r.targetDate | istDate: 'dd MMM yyyy' }}</td>
         </ng-container>
         <ng-container matColumnDef="quantity">
           <th mat-header-cell *matHeaderCellDef>Quantity</th>

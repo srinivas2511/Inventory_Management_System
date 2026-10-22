@@ -12,6 +12,7 @@ describe('AppConfigService', () => {
   it('uses defaults before load', () => {
     expect(service.apiBaseUrl).toBe('');
     expect(service.appName).toBe('ERP');
+    expect(service.timezone).toBe('Asia/Kolkata');
   });
 
   it('merges runtime config over defaults and trims trailing slashes', async () => {
@@ -21,6 +22,15 @@ describe('AppConfigService', () => {
     await service.load();
     expect(service.apiBaseUrl).toBe('https://ims.example.com');
     expect(service.appName).toBe('ERP');
+    expect(service.timezone).toBe('Asia/Kolkata');
+  });
+
+  it('reads timezone from config.json when provided', async () => {
+    spyOn(window, 'fetch').and.resolveTo(
+      new Response(JSON.stringify({ timezone: 'America/New_York' }), { status: 200 }),
+    );
+    await service.load();
+    expect(service.timezone).toBe('America/New_York');
   });
 
   it('falls back to defaults when the file cannot be loaded', async () => {

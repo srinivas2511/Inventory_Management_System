@@ -9,7 +9,8 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { DecimalPipe } from '@angular/common';
+import { IstDatePipe } from '../../shared/pipes/ist-date.pipe';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import { InventoryApi, MaterialBatchDto } from './inventory.api';
 import { Page } from '../master/material/material.api';
@@ -28,7 +29,7 @@ import { Page } from '../master/material/material.api';
     MatSelectModule,
     MatProgressSpinnerModule,
     MatTooltipModule,
-    DatePipe,
+    IstDatePipe,
     DecimalPipe,
     StatusBadgeComponent,
   ],
@@ -65,11 +66,11 @@ import { Page } from '../master/material/material.api';
         </ng-container>
         <ng-container matColumnDef="received">
           <th mat-header-cell *matHeaderCellDef>Received</th>
-          <td mat-cell *matCellDef="let r">{{ r.receivedDate | date: 'dd/MM/yy' }}</td>
+          <td mat-cell *matCellDef="let r">{{ r.receivedDate | istDate: 'dd/MM/yy' }}</td>
         </ng-container>
         <ng-container matColumnDef="expiry">
           <th mat-header-cell *matHeaderCellDef>Expiry</th>
-          <td mat-cell *matCellDef="let r">{{ r.expiryDate ? (r.expiryDate | date: 'dd/MM/yy') : '—' }}</td>
+          <td mat-cell *matCellDef="let r">{{ r.expiryDate ? (r.expiryDate | istDate: 'dd/MM/yy') : '—' }}</td>
         </ng-container>
         <ng-container matColumnDef="receivedQty">
           <th mat-header-cell *matHeaderCellDef>Received</th>

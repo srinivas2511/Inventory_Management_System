@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { DecimalPipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -9,6 +9,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
+import { IstDatePipe } from '../../shared/pipes/ist-date.pipe';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
 import { AttendanceDto, AttendanceStatus, AttendanceSummaryDto, HrmApi, MONTH_NAMES } from './hrm.api';
@@ -22,7 +23,7 @@ function today(): string {
   standalone: true,
   imports: [
     ReactiveFormsModule,
-    DatePipe,
+    IstDatePipe,
     DecimalPipe,
     MatButtonModule,
     MatFormFieldModule,
@@ -72,11 +73,11 @@ function today(): string {
         </ng-container>
         <ng-container matColumnDef="in">
           <th mat-header-cell *matHeaderCellDef>In</th>
-          <td mat-cell *matCellDef="let r">{{ r.checkIn | date: 'HH:mm' }}</td>
+          <td mat-cell *matCellDef="let r">{{ r.checkIn | istDate: 'HH:mm' }}</td>
         </ng-container>
         <ng-container matColumnDef="out">
           <th mat-header-cell *matHeaderCellDef>Out</th>
-          <td mat-cell *matCellDef="let r">{{ r.checkOut | date: 'HH:mm' }}</td>
+          <td mat-cell *matCellDef="let r">{{ r.checkOut | istDate: 'HH:mm' }}</td>
         </ng-container>
         <ng-container matColumnDef="hours">
           <th mat-header-cell *matHeaderCellDef>Hours</th>

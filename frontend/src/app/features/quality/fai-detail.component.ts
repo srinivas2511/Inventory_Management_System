@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { DatePipe } from '@angular/common';
+
 import { FormControl, FormRecord, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -8,6 +8,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { IstDatePipe } from '../../shared/pipes/ist-date.pipe';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
 import { Fai, FaiReport, QualityPlusApi } from './quality-plus.api';
@@ -18,7 +19,7 @@ import { Fai, FaiReport, QualityPlusApi } from './quality-plus.api';
   imports: [
     ReactiveFormsModule,
     RouterLink,
-    DatePipe,
+    IstDatePipe,
     MatButtonModule,
     MatFormFieldModule,
     MatIconModule,
@@ -55,7 +56,7 @@ import { Fai, FaiReport, QualityPlusApi } from './quality-plus.api';
         <dd>{{ f.inspectionNumber ?? '-' }}</dd>
         @if (f.completedAt) {
           <dt>Completed</dt>
-          <dd>{{ f.completedAt | date: 'dd MMM yyyy HH:mm' }}</dd>
+          <dd>{{ f.completedAt | istDate: 'dd MMM yyyy HH:mm' }}</dd>
           <dt>Outcome</dt>
           <dd>{{ f.resultSummary }}</dd>
         }
@@ -131,7 +132,7 @@ import { Fai, FaiReport, QualityPlusApi } from './quality-plus.api';
               }
             </tbody>
           </table>
-          <p class="generated">Generated {{ r.generatedAt | date: 'dd MMM yyyy HH:mm' }}</p>
+          <p class="generated">Generated {{ r.generatedAt | istDate: 'dd MMM yyyy HH:mm' }}</p>
         </section>
       }
     } @else {

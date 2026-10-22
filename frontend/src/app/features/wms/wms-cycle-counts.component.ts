@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { DatePipe } from '@angular/common';
+
 import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -9,6 +9,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
+import { IstDatePipe } from '../../shared/pipes/ist-date.pipe';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
 import { WarehouseApi, WarehouseDto } from '../warehouse/warehouse.api';
@@ -22,7 +23,7 @@ const TYPES: CycleCountType[] = ['ZONE', 'ABC', 'RANDOM'];
   standalone: true,
   imports: [
     ReactiveFormsModule,
-    DatePipe,
+    IstDatePipe,
     MatButtonModule,
     MatFormFieldModule,
     MatIconModule,
@@ -129,7 +130,7 @@ const TYPES: CycleCountType[] = ['ZONE', 'ABC', 'RANDOM'];
       </ng-container>
       <ng-container matColumnDef="postedAt">
         <th mat-header-cell *matHeaderCellDef>Posted</th>
-        <td mat-cell *matCellDef="let c">{{ c.postedAt | date: 'dd MMM yyyy' }}</td>
+        <td mat-cell *matCellDef="let c">{{ c.postedAt | istDate: 'dd MMM yyyy' }}</td>
       </ng-container>
       <ng-container matColumnDef="status">
         <th mat-header-cell *matHeaderCellDef>Status</th>

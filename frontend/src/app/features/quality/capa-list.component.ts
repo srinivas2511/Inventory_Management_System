@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { DatePipe } from '@angular/common';
+
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -10,6 +10,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
+import { IstDatePipe } from '../../shared/pipes/ist-date.pipe';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
 import {
@@ -27,7 +28,7 @@ import {
   imports: [
     ReactiveFormsModule,
     RouterLink,
-    DatePipe,
+    IstDatePipe,
     MatButtonModule,
     MatFormFieldModule,
     MatIconModule,
@@ -91,11 +92,11 @@ import {
         </ng-container>
         <ng-container matColumnDef="target">
           <th mat-header-cell *matHeaderCellDef>Target date</th>
-          <td mat-cell *matCellDef="let r">{{ r.targetCompletionDate | date: 'dd MMM yyyy' }}</td>
+          <td mat-cell *matCellDef="let r">{{ r.targetCompletionDate | istDate: 'dd MMM yyyy' }}</td>
         </ng-container>
         <ng-container matColumnDef="opened">
           <th mat-header-cell *matHeaderCellDef>Opened</th>
-          <td mat-cell *matCellDef="let r">{{ r.openedAt | date: 'dd MMM yyyy' }}</td>
+          <td mat-cell *matCellDef="let r">{{ r.openedAt | istDate: 'dd MMM yyyy' }}</td>
         </ng-container>
         <ng-container matColumnDef="status">
           <th mat-header-cell *matHeaderCellDef>Status</th>

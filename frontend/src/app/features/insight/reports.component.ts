@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { DatePipe } from '@angular/common';
+
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -8,6 +8,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
+import { IstDatePipe } from '../../shared/pipes/ist-date.pipe';
 import { InsightApi, ReportMeta, ReportResult } from './insight.api';
 
 @Component({
@@ -23,7 +24,7 @@ import { InsightApi, ReportMeta, ReportResult } from './insight.api';
     MatInputModule,
     MatSelectModule,
     MatProgressSpinnerModule,
-    DatePipe,
+    IstDatePipe,
   ],
   template: `
     <div class="page-header">

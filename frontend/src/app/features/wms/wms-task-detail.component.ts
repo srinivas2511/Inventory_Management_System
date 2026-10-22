@@ -1,5 +1,5 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { DecimalPipe } from '@angular/common';
 import { FormArray, FormBuilder, FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -9,6 +9,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { IstDatePipe } from '../../shared/pipes/ist-date.pipe';
 import { SessionStore } from '../../core/auth/session.store';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import { BinDto, MOVEMENT_LABELS, MovementType, TransferLineDto, TransferOrderDto, WmsApi } from './wms.api';
@@ -30,7 +31,7 @@ const PERMISSION_BY_MOVEMENT: Record<MovementType, string> = {
   standalone: true,
   imports: [
     ReactiveFormsModule,
-    DatePipe,
+    IstDatePipe,
     DecimalPipe,
     MatButtonModule,
     MatFormFieldModule,
@@ -60,7 +61,7 @@ const PERMISSION_BY_MOVEMENT: Record<MovementType, string> = {
           @if (o.waveId) {
             Wave #{{ o.waveId }}.
           }
-          Created {{ o.createdAt | date: 'dd MMM yyyy HH:mm' }}.
+          Created {{ o.createdAt | istDate: 'dd MMM yyyy HH:mm' }}.
           @if (o.assignedTo) {
             Assigned to user {{ o.assignedTo }}.
           }

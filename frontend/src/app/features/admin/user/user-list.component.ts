@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { DatePipe } from '@angular/common';
+
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
@@ -11,6 +11,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { IstDatePipe } from '../../../shared/pipes/ist-date.pipe';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { SessionStore } from '../../../core/auth/session.store';
 import { problemMessage } from '../../../core/models/problem.model';
@@ -28,7 +29,7 @@ import { UserRolesDialogComponent } from './user-roles-dialog.component';
   standalone: true,
   imports: [
     ReactiveFormsModule,
-    DatePipe,
+    IstDatePipe,
     MatTableModule,
     MatPaginatorModule,
     MatButtonModule,
@@ -94,7 +95,7 @@ import { UserRolesDialogComponent } from './user-roles-dialog.component';
             }
             @if (r.locked) {
               <div class="mat-caption pending" data-testid="locked-caption">
-                Locked until {{ r.lockedUntil | date: 'shortTime' }}
+                Locked until {{ r.lockedUntil | istDate: 'shortTime' }}
               </div>
             }
           </td></ng-container
@@ -102,7 +103,7 @@ import { UserRolesDialogComponent } from './user-roles-dialog.component';
         <ng-container matColumnDef="lastLogin"
           ><th mat-header-cell *matHeaderCellDef>Last sign-in</th>
           <td mat-cell *matCellDef="let r">
-            {{ r.lastLoginAt ? (r.lastLoginAt | date: 'medium') : 'Never' }}
+            {{ r.lastLoginAt ? (r.lastLoginAt | istDate: 'medium') : 'Never' }}
           </td></ng-container
         >
         <ng-container matColumnDef="actions"

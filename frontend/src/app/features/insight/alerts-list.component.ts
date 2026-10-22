@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { DatePipe } from '@angular/common';
+
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -9,6 +9,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { IstDatePipe } from '../../shared/pipes/ist-date.pipe';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
 import { AlertDto, InsightApi } from './insight.api';
@@ -27,7 +28,7 @@ import { AlertDto, InsightApi } from './insight.api';
     MatProgressSpinnerModule,
     MatTooltipModule,
     MatSnackBarModule,
-    DatePipe,
+    IstDatePipe,
     StatusBadgeComponent,
     HasPermissionDirective,
   ],
@@ -80,7 +81,7 @@ import { AlertDto, InsightApi } from './insight.api';
         </ng-container>
         <ng-container matColumnDef="firstSeenAt">
           <th mat-header-cell *matHeaderCellDef>First Seen</th>
-          <td mat-cell *matCellDef="let a">{{ a.firstSeenAt | date: 'short' }}</td>
+          <td mat-cell *matCellDef="let a">{{ a.firstSeenAt | istDate: 'short' }}</td>
         </ng-container>
         <ng-container matColumnDef="actions">
           <th mat-header-cell *matHeaderCellDef>Actions</th>

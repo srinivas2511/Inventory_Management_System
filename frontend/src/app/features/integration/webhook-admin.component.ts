@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { DatePipe } from '@angular/common';
+
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -10,6 +10,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
+import { IstDatePipe } from '../../shared/pipes/ist-date.pipe';
 import { SessionStore } from '../../core/auth/session.store';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import {
@@ -27,7 +28,7 @@ import {
   standalone: true,
   imports: [
     ReactiveFormsModule,
-    DatePipe,
+    IstDatePipe,
     MatButtonModule,
     MatCheckboxModule,
     MatFormFieldModule,
@@ -163,7 +164,7 @@ import {
           <table mat-table [dataSource]="deliveries()" class="mat-elevation-z1">
             <ng-container matColumnDef="created">
               <th mat-header-cell *matHeaderCellDef>Created</th>
-              <td mat-cell *matCellDef="let d">{{ d.createdAt | date: 'dd MMM HH:mm:ss' }}</td>
+              <td mat-cell *matCellDef="let d">{{ d.createdAt | istDate: 'dd MMM HH:mm:ss' }}</td>
             </ng-container>
             <ng-container matColumnDef="event">
               <th mat-header-cell *matHeaderCellDef>Event</th>
@@ -181,7 +182,7 @@ import {
             </ng-container>
             <ng-container matColumnDef="next">
               <th mat-header-cell *matHeaderCellDef>Next attempt</th>
-              <td mat-cell *matCellDef="let d">{{ d.nextRetryAt ? (d.nextRetryAt | date: 'dd MMM HH:mm') : '' }}</td>
+              <td mat-cell *matCellDef="let d">{{ d.nextRetryAt ? (d.nextRetryAt | istDate: 'dd MMM HH:mm') : '' }}</td>
             </ng-container>
             <ng-container matColumnDef="response">
               <th mat-header-cell *matHeaderCellDef>Response</th>

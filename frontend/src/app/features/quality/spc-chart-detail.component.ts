@@ -1,5 +1,5 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { DecimalPipe } from '@angular/common';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -9,6 +9,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
+import { IstDatePipe } from '../../shared/pipes/ist-date.pipe';
 import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
 import { QualityPlusApi, SpcCapability, SpcChartDetail, SpcPoint } from './quality-plus.api';
 import { SpcChartSvgComponent } from './spc-chart-svg.component';
@@ -20,7 +21,7 @@ import { ChartPointInput, parseValues } from './spc-chart.util';
   imports: [
     ReactiveFormsModule,
     RouterLink,
-    DatePipe,
+    IstDatePipe,
     DecimalPipe,
     MatButtonModule,
     MatFormFieldModule,
@@ -53,7 +54,7 @@ import { ChartPointInput, parseValues } from './spc-chart.util';
     @if (chart(); as c) {
       <p class="limits-note">
         @if (c.limitsEstablishedAt) {
-          Control limits established {{ c.limitsEstablishedAt | date: 'dd MMM yyyy HH:mm' }}.
+          Control limits established {{ c.limitsEstablishedAt | istDate: 'dd MMM yyyy HH:mm' }}.
         } @else {
           Control limits are not established yet; they are set automatically once enough points are collected.
         }
@@ -178,7 +179,7 @@ import { ChartPointInput, parseValues } from './spc-chart.util';
             </ng-container>
             <ng-container matColumnDef="at">
               <th mat-header-cell *matHeaderCellDef>When</th>
-              <td mat-cell *matCellDef="let p">{{ p.measuredAt | date: 'dd MMM yyyy HH:mm' }}</td>
+              <td mat-cell *matCellDef="let p">{{ p.measuredAt | istDate: 'dd MMM yyyy HH:mm' }}</td>
             </ng-container>
             <ng-container matColumnDef="action">
               <th mat-header-cell *matHeaderCellDef></th>

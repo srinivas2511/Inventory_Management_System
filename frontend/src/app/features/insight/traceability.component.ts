@@ -1,5 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
-import { DatePipe, TitleCasePipe } from '@angular/common';
+import { TitleCasePipe } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -9,6 +9,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatListModule } from '@angular/material/list';
+import { IstDatePipe } from '../../shared/pipes/ist-date.pipe';
 import { InsightApi, TraceabilityDto } from './insight.api';
 
 @Component({
@@ -25,7 +26,7 @@ import { InsightApi, TraceabilityDto } from './insight.api';
     MatProgressSpinnerModule,
     MatDividerModule,
     MatListModule,
-    DatePipe,
+    IstDatePipe,
     TitleCasePipe,
   ],
   template: `
@@ -63,7 +64,7 @@ import { InsightApi, TraceabilityDto } from './insight.api';
               <mat-icon matListItemIcon>{{ stepIcon(step.stepType) }}</mat-icon>
               <span matListItemTitle>{{ step.stepType | titlecase }} — {{ step.reference }}</span>
               <span matListItemLine>{{ step.description }}</span>
-              <span matListItemMeta>{{ step.timestamp | date: 'short' }}</span>
+              <span matListItemMeta>{{ step.timestamp | istDate: 'short' }}</span>
             </mat-list-item>
             <mat-divider />
           }

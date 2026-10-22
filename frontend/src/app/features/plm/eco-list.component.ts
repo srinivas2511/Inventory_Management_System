@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { DatePipe } from '@angular/common';
+
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -10,6 +10,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
+import { IstDatePipe } from '../../shared/pipes/ist-date.pipe';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
 import { ECO_STATUSES, EcoStatus, EcoSummaryDto, PlmApi } from './plm.api';
@@ -20,7 +21,7 @@ import { ECO_STATUSES, EcoStatus, EcoSummaryDto, PlmApi } from './plm.api';
   imports: [
     ReactiveFormsModule,
     RouterLink,
-    DatePipe,
+    IstDatePipe,
     MatButtonModule,
     MatFormFieldModule,
     MatIconModule,
@@ -83,7 +84,7 @@ import { ECO_STATUSES, EcoStatus, EcoSummaryDto, PlmApi } from './plm.api';
         </ng-container>
         <ng-container matColumnDef="effectivity">
           <th mat-header-cell *matHeaderCellDef>Effectivity</th>
-          <td mat-cell *matCellDef="let r">{{ r.effectivityDate | date: 'dd MMM yyyy' }}</td>
+          <td mat-cell *matCellDef="let r">{{ r.effectivityDate | istDate: 'dd MMM yyyy' }}</td>
         </ng-container>
         <ng-container matColumnDef="status">
           <th mat-header-cell *matHeaderCellDef>Status</th>

@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import { DecimalPipe, DatePipe } from '@angular/common';
+import { DecimalPipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -12,6 +12,7 @@ import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { IstDatePipe } from '../../shared/pipes/ist-date.pipe';
 import { PurchaseOrderFormComponent } from './purchase-order-form.component';
 import { SessionStore } from '../../core/auth/session.store';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
@@ -60,7 +61,7 @@ export interface PurchaseOrderDto {
     MatTooltipModule,
     MatSnackBarModule,
     DecimalPipe,
-    DatePipe,
+    IstDatePipe,
     StatusBadgeComponent,
     HasPermissionDirective,
   ],
@@ -103,7 +104,7 @@ export interface PurchaseOrderDto {
         </ng-container>
         <ng-container matColumnDef="poDate">
           <th mat-header-cell *matHeaderCellDef>PO Date</th>
-          <td mat-cell *matCellDef="let r">{{ r.poDate | date: 'dd/MM/yyyy' }}</td>
+          <td mat-cell *matCellDef="let r">{{ r.poDate | istDate: 'dd/MM/yyyy' }}</td>
         </ng-container>
         <ng-container matColumnDef="grandTotal">
           <th mat-header-cell *matHeaderCellDef>Total</th>

@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { DecimalPipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -10,6 +10,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
+import { IstDatePipe } from '../../shared/pipes/ist-date.pipe';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
 import {
@@ -32,7 +33,7 @@ import {
   standalone: true,
   imports: [
     ReactiveFormsModule,
-    DatePipe,
+    IstDatePipe,
     DecimalPipe,
     RouterLink,
     MatButtonModule,
@@ -61,9 +62,9 @@ import {
         <dd>{{ e.department || '-' }}</dd>
         <dt>Joined</dt>
         <dd>
-          {{ e.dateOfJoining | date: 'dd MMM yyyy' }} ({{ e.employmentType }})
+          {{ e.dateOfJoining | istDate: 'dd MMM yyyy' }} ({{ e.employmentType }})
           @if (e.dateOfLeaving) {
-            - left {{ e.dateOfLeaving | date: 'dd MMM yyyy' }}
+            - left {{ e.dateOfLeaving | istDate: 'dd MMM yyyy' }}
           }
         </dd>
         <dt>System user</dt>
@@ -171,7 +172,7 @@ import {
         <ng-container matColumnDef="expires">
           <th mat-header-cell *matHeaderCellDef>Expires</th>
           <td mat-cell *matCellDef="let s">
-            {{ s.expiresOn | date: 'dd MMM yyyy' }}
+            {{ s.expiresOn | istDate: 'dd MMM yyyy' }}
             @if (s.expired) {
               <app-status-badge status="EXPIRED" />
             }
@@ -248,7 +249,7 @@ import {
         </ng-container>
         <ng-container matColumnDef="date">
           <th mat-header-cell *matHeaderCellDef>Start</th>
-          <td mat-cell *matCellDef="let t">{{ t.startDate | date: 'dd MMM yyyy' }}</td>
+          <td mat-cell *matCellDef="let t">{{ t.startDate | istDate: 'dd MMM yyyy' }}</td>
         </ng-container>
         <ng-container matColumnDef="status">
           <th mat-header-cell *matHeaderCellDef>Status</th>
@@ -256,7 +257,7 @@ import {
         </ng-container>
         <ng-container matColumnDef="renewal">
           <th mat-header-cell *matHeaderCellDef>Renewal due</th>
-          <td mat-cell *matCellDef="let t">{{ t.renewalDueOn | date: 'dd MMM yyyy' }}</td>
+          <td mat-cell *matCellDef="let t">{{ t.renewalDueOn | istDate: 'dd MMM yyyy' }}</td>
         </ng-container>
         <ng-container matColumnDef="actions">
           <th mat-header-cell *matHeaderCellDef></th>

@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { DecimalPipe } from '@angular/common';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -9,6 +9,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { IstDatePipe } from '../../shared/pipes/ist-date.pipe';
 import { SessionStore } from '../../core/auth/session.store';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
@@ -60,7 +61,7 @@ interface ReasonLine {
   imports: [
     ReactiveFormsModule,
     RouterLink,
-    DatePipe,
+    IstDatePipe,
     DecimalPipe,
     MatButtonModule,
     MatFormFieldModule,
@@ -106,11 +107,11 @@ interface ReasonLine {
         <dd>{{ i.sampleSize ?? 'not set' }}</dd>
         @if (i.inspectedAt) {
           <dt>Results recorded</dt>
-          <dd>{{ i.inspectedAt | date: 'dd MMM yyyy HH:mm' }}</dd>
+          <dd>{{ i.inspectedAt | istDate: 'dd MMM yyyy HH:mm' }}</dd>
         }
         @if (i.decisionAt) {
           <dt>Decision</dt>
-          <dd>{{ i.decisionAt | date: 'dd MMM yyyy HH:mm' }}</dd>
+          <dd>{{ i.decisionAt | istDate: 'dd MMM yyyy HH:mm' }}</dd>
         }
       </dl>
 

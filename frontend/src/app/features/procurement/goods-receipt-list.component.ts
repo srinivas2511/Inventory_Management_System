@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { DatePipe } from '@angular/common';
+
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -13,6 +13,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { GoodsReceiptFormComponent } from './goods-receipt-form.component';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { IstDatePipe } from '../../shared/pipes/ist-date.pipe';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
 import { PagedList } from '../../shared/paged-list';
@@ -43,7 +44,7 @@ export interface GoodsReceiptDto {
     MatProgressSpinnerModule,
     MatTooltipModule,
     MatSnackBarModule,
-    DatePipe,
+    IstDatePipe,
     StatusBadgeComponent,
     HasPermissionDirective,
   ],
@@ -77,7 +78,7 @@ export interface GoodsReceiptDto {
         </ng-container>
         <ng-container matColumnDef="receiptDate">
           <th mat-header-cell *matHeaderCellDef>Receipt Date</th>
-          <td mat-cell *matCellDef="let r">{{ r.receiptDate | date: 'dd/MM/yyyy' }}</td>
+          <td mat-cell *matCellDef="let r">{{ r.receiptDate | istDate: 'dd/MM/yyyy' }}</td>
         </ng-container>
         <ng-container matColumnDef="status">
           <th mat-header-cell *matHeaderCellDef>Status</th>

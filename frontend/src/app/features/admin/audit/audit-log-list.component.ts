@@ -6,7 +6,8 @@ import { MatInputModule } from '@angular/material/input';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTableModule } from '@angular/material/table';
-import { DatePipe } from '@angular/common';
+import { IstDatePipe } from '../../../shared/pipes/ist-date.pipe';
+
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { AppConfigService } from '../../../core/config/app-config.service';
 
@@ -34,7 +35,7 @@ interface Page<T> {
     MatFormFieldModule,
     MatInputModule,
     MatProgressSpinnerModule,
-    DatePipe,
+    IstDatePipe,
   ],
   template: `
     <div style="padding:16px 16px 0"><h2 class="mat-h2">Audit Logs</h2></div>
@@ -54,7 +55,7 @@ interface Page<T> {
       <table mat-table [dataSource]="rows()" class="mat-elevation-z1" style="width:100%">
         <ng-container matColumnDef="occurredAt"
           ><th mat-header-cell *matHeaderCellDef>When</th>
-          <td mat-cell *matCellDef="let r">{{ r.occurredAt | date: 'short' }}</td></ng-container
+          <td mat-cell *matCellDef="let r">{{ r.occurredAt | istDate: 'short' }}</td></ng-container
         >
         <ng-container matColumnDef="username"
           ><th mat-header-cell *matHeaderCellDef>User</th>

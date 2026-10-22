@@ -29,21 +29,21 @@ import { SessionStore } from '../../core/auth/session.store';
     <div class="login-wrapper">
       <mat-card class="login-card">
         <mat-card-header>
-          <mat-card-title>ERP</mat-card-title>
-          <mat-card-subtitle>Sign in to continue</mat-card-subtitle>
+          <mat-card-title i18n="@@login.title">ERP</mat-card-title>
+          <mat-card-subtitle i18n="@@login.subtitle">Sign in to continue</mat-card-subtitle>
         </mat-card-header>
         <mat-card-content>
           <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
             <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Username</mat-label>
+              <mat-label i18n="@@login.username">Username</mat-label>
               <input matInput formControlName="username" autocomplete="username" data-testid="username" />
               @if (form.controls.username.hasError('required') && form.controls.username.touched) {
-                <mat-error>Username is required</mat-error>
+                <mat-error i18n="@@login.usernameRequired">Username is required</mat-error>
               }
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Password</mat-label>
+              <mat-label i18n="@@login.password">Password</mat-label>
               <input
                 matInput
                 [type]="showPassword() ? 'text' : 'password'"
@@ -61,7 +61,7 @@ import { SessionStore } from '../../core/auth/session.store';
                 <mat-icon>{{ showPassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
               </button>
               @if (form.controls.password.hasError('required') && form.controls.password.touched) {
-                <mat-error>Password is required</mat-error>
+                <mat-error i18n="@@login.passwordRequired">Password is required</mat-error>
               }
             </mat-form-field>
 
@@ -80,7 +80,7 @@ import { SessionStore } from '../../core/auth/session.store';
               @if (loading()) {
                 <mat-spinner diameter="20" />
               } @else {
-                Sign in
+                <span i18n="@@login.signIn">Sign in</span>
               }
             </button>
           </form>

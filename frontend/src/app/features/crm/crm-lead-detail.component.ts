@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { DecimalPipe } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -8,6 +8,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { IstDatePipe } from '../../shared/pipes/ist-date.pipe';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
 import { CrmActivityTimelineComponent } from './crm-activity-timeline.component';
@@ -19,7 +20,7 @@ import { CrmApi, LeadDto } from './crm.api';
   imports: [
     ReactiveFormsModule,
     RouterLink,
-    DatePipe,
+    IstDatePipe,
     DecimalPipe,
     MatButtonModule,
     MatFormFieldModule,
@@ -49,7 +50,7 @@ import { CrmApi, LeadDto } from './crm.api';
         <dt>Estimated value</dt>
         <dd>{{ l.estimatedValue | number: '1.0-2' }}</dd>
         <dt>Expected close</dt>
-        <dd>{{ l.expectedCloseDate | date: 'dd MMM yyyy' }}</dd>
+        <dd>{{ l.expectedCloseDate | istDate: 'dd MMM yyyy' }}</dd>
         @if (l.disqualifyReason) {
           <dt>Disqualified because</dt>
           <dd>{{ l.disqualifyReason }}</dd>
@@ -61,7 +62,7 @@ import { CrmApi, LeadDto } from './crm.api';
         @if (l.convertedCustomerId) {
           <dt>Converted</dt>
           <dd>
-            {{ l.convertedAt | date: 'dd MMM yyyy' }} - customer #{{ l.convertedCustomerId }}
+            {{ l.convertedAt | istDate: 'dd MMM yyyy' }} - customer #{{ l.convertedCustomerId }}
             <a routerLink="/crm/opportunities">View opportunities</a>
           </dd>
         }

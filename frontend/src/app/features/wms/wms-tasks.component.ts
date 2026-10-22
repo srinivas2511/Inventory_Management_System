@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { DatePipe } from '@angular/common';
+
 import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -10,6 +10,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
+import { IstDatePipe } from '../../shared/pipes/ist-date.pipe';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
 import { WarehouseApi, WarehouseDto } from '../warehouse/warehouse.api';
@@ -27,7 +28,7 @@ const STATUSES: TransferOrderStatus[] = ['CREATED', 'IN_PROGRESS', 'COMPLETED', 
   standalone: true,
   imports: [
     ReactiveFormsModule,
-    DatePipe,
+    IstDatePipe,
     MatButtonModule,
     MatFormFieldModule,
     MatIconModule,
@@ -175,7 +176,7 @@ const STATUSES: TransferOrderStatus[] = ['CREATED', 'IN_PROGRESS', 'COMPLETED', 
         </ng-container>
         <ng-container matColumnDef="created">
           <th mat-header-cell *matHeaderCellDef>Created</th>
-          <td mat-cell *matCellDef="let o">{{ o.createdAt | date: 'dd MMM yyyy HH:mm' }}</td>
+          <td mat-cell *matCellDef="let o">{{ o.createdAt | istDate: 'dd MMM yyyy HH:mm' }}</td>
         </ng-container>
         <ng-container matColumnDef="status">
           <th mat-header-cell *matHeaderCellDef>Status</th>

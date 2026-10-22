@@ -1,5 +1,5 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { DatePipe } from '@angular/common';
+
 import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -10,6 +10,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
+import { IstDatePipe } from '../../shared/pipes/ist-date.pipe';
 import { Observable } from 'rxjs';
 import { SessionStore } from '../../core/auth/session.store';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
@@ -40,7 +41,7 @@ interface ItemRow extends SaveEcoItemRequest {
     DocumentAttachmentsComponent,
     ReactiveFormsModule,
     RouterLink,
-    DatePipe,
+    IstDatePipe,
     MatButtonModule,
     MatFormFieldModule,
     MatIconModule,
@@ -115,7 +116,7 @@ interface ItemRow extends SaveEcoItemRequest {
             <dt>Urgency</dt>
             <dd>{{ e.urgency }}</dd>
             <dt>Effectivity</dt>
-            <dd>{{ e.effectivityDate | date: 'dd MMM yyyy' }}</dd>
+            <dd>{{ e.effectivityDate | istDate: 'dd MMM yyyy' }}</dd>
             <dt>Reason</dt>
             <dd>{{ e.reason }}</dd>
             @if (e.description) {
@@ -132,11 +133,11 @@ interface ItemRow extends SaveEcoItemRequest {
             }
             @if (e.approvedAt) {
               <dt>Approved</dt>
-              <dd>{{ e.approvedAt | date: 'dd MMM yyyy HH:mm' }}</dd>
+              <dd>{{ e.approvedAt | istDate: 'dd MMM yyyy HH:mm' }}</dd>
             }
             @if (e.implementedAt) {
               <dt>Implemented</dt>
-              <dd>{{ e.implementedAt | date: 'dd MMM yyyy HH:mm' }}</dd>
+              <dd>{{ e.implementedAt | istDate: 'dd MMM yyyy HH:mm' }}</dd>
             }
           </dl>
         }

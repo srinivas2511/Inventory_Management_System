@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { DatePipe } from '@angular/common';
+
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Observable } from 'rxjs';
@@ -11,6 +11,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
+import { IstDatePipe } from '../../shared/pipes/ist-date.pipe';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
 import { DocumentDto, DocumentVersionDto, DocumentsApi, LINKABLE_TYPES, formatBytes, saveBlob } from './documents.api';
@@ -23,7 +24,7 @@ type ReasonAction = 'reject' | 'obsolete';
   imports: [
     ReactiveFormsModule,
     RouterLink,
-    DatePipe,
+    IstDatePipe,
     MatButtonModule,
     MatFormFieldModule,
     MatIconModule,
@@ -46,7 +47,7 @@ type ReasonAction = 'reject' | 'obsolete';
         </h2>
       </div>
       <p class="meta">
-        {{ d.categoryName }} · version {{ d.currentVersionNo }} · updated {{ d.updatedAt | date: 'dd MMM yyyy HH:mm' }}
+        {{ d.categoryName }} · version {{ d.currentVersionNo }} · updated {{ d.updatedAt | istDate: 'dd MMM yyyy HH:mm' }}
       </p>
       @if (d.description) {
         <p>{{ d.description }}</p>
@@ -135,7 +136,7 @@ type ReasonAction = 'reject' | 'obsolete';
         </ng-container>
         <ng-container matColumnDef="uploaded">
           <th mat-header-cell *matHeaderCellDef>Uploaded</th>
-          <td mat-cell *matCellDef="let v">{{ v.uploadedAt | date: 'dd MMM yyyy HH:mm' }}</td>
+          <td mat-cell *matCellDef="let v">{{ v.uploadedAt | istDate: 'dd MMM yyyy HH:mm' }}</td>
         </ng-container>
         <ng-container matColumnDef="checksum">
           <th mat-header-cell *matHeaderCellDef>SHA-256</th>

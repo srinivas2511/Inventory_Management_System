@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { DatePipe } from '@angular/common';
+
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -9,6 +9,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { IstDatePipe } from '../../shared/pipes/ist-date.pipe';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
 import { ProductApi, ProductDto } from '../master/product/product.api';
@@ -30,7 +31,7 @@ import {
   imports: [
     ReactiveFormsModule,
     RouterLink,
-    DatePipe,
+    IstDatePipe,
     MatButtonModule,
     MatFormFieldModule,
     MatIconModule,
@@ -125,7 +126,7 @@ import {
           <dt>Customer</dt>
           <dd>{{ c.customerName }}</dd>
           <dt>Date</dt>
-          <dd>{{ c.complaintDate | date: 'dd MMM yyyy' }}</dd>
+          <dd>{{ c.complaintDate | istDate: 'dd MMM yyyy' }}</dd>
           <dt>Product</dt>
           <dd>{{ c.productCode }} {{ c.productName }}</dd>
           <dt>FG batch</dt>
@@ -209,7 +210,7 @@ import {
                 <li>
                   <strong>{{ s.stepType }}</strong> {{ s.reference }} - {{ s.description }}
                   @if (s.timestamp) {
-                    <span class="when">({{ s.timestamp | date: 'dd MMM yyyy HH:mm' }})</span>
+                    <span class="when">({{ s.timestamp | istDate: 'dd MMM yyyy HH:mm' }})</span>
                   }
                 </li>
               } @empty {

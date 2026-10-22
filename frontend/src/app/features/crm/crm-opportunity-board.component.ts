@@ -1,5 +1,5 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { DecimalPipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
@@ -10,6 +10,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
+import { IstDatePipe } from '../../shared/pipes/ist-date.pipe';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
 import { CrmApi, CrmCustomerDto, OPPORTUNITY_STAGES, OpportunityDto, OpportunityStage } from './crm.api';
@@ -19,7 +20,7 @@ import { CrmApi, CrmCustomerDto, OPPORTUNITY_STAGES, OpportunityDto, Opportunity
   standalone: true,
   imports: [
     ReactiveFormsModule,
-    DatePipe,
+    IstDatePipe,
     DecimalPipe,
     MatButtonModule,
     MatButtonToggleModule,
@@ -87,7 +88,7 @@ import { CrmApi, CrmCustomerDto, OPPORTUNITY_STAGES, OpportunityDto, Opportunity
                 <div class="meta">
                   {{ o.estimatedValue | number: '1.0-2' }} · {{ o.probabilityPct }}%
                   @if (o.expectedCloseDate) {
-                    · {{ o.expectedCloseDate | date: 'dd MMM' }}
+                    · {{ o.expectedCloseDate | istDate: 'dd MMM' }}
                   }
                 </div>
                 @if (o.lostReason) {
@@ -131,7 +132,7 @@ import { CrmApi, CrmCustomerDto, OPPORTUNITY_STAGES, OpportunityDto, Opportunity
         </ng-container>
         <ng-container matColumnDef="close">
           <th mat-header-cell *matHeaderCellDef>Expected close</th>
-          <td mat-cell *matCellDef="let r">{{ r.expectedCloseDate | date: 'dd MMM yyyy' }}</td>
+          <td mat-cell *matCellDef="let r">{{ r.expectedCloseDate | istDate: 'dd MMM yyyy' }}</td>
         </ng-container>
         <tr mat-header-row *matHeaderRowDef="columns"></tr>
         <tr mat-row *matRowDef="let row; columns: columns"></tr>

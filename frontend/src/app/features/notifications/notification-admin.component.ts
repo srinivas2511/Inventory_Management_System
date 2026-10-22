@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { DatePipe } from '@angular/common';
+
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -10,6 +10,7 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
+import { IstDatePipe } from '../../shared/pipes/ist-date.pipe';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import {
   DeliveryLogDto,
@@ -26,7 +27,7 @@ import {
   standalone: true,
   imports: [
     ReactiveFormsModule,
-    DatePipe,
+    IstDatePipe,
     MatButtonModule,
     MatFormFieldModule,
     MatIconModule,
@@ -135,7 +136,7 @@ import {
           <table mat-table [dataSource]="log()" class="mat-elevation-z1">
             <ng-container matColumnDef="created">
               <th mat-header-cell *matHeaderCellDef>Created</th>
-              <td mat-cell *matCellDef="let r">{{ r.createdAt | date: 'dd MMM HH:mm' }}</td>
+              <td mat-cell *matCellDef="let r">{{ r.createdAt | istDate: 'dd MMM HH:mm' }}</td>
             </ng-container>
             <ng-container matColumnDef="template">
               <th mat-header-cell *matHeaderCellDef>Template</th>

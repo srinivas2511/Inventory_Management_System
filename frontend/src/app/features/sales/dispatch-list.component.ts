@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { DatePipe, DecimalPipe, CurrencyPipe } from '@angular/common';
+import { DecimalPipe, CurrencyPipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -7,6 +7,7 @@ import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { IstDatePipe } from '../../shared/pipes/ist-date.pipe';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
 import { DispatchFormComponent } from './dispatch-form.component';
@@ -26,7 +27,7 @@ import { ListPaginatorComponent } from '../../shared/components/list-paginator.c
     MatProgressSpinnerModule,
     MatTooltipModule,
     MatSnackBarModule,
-    DatePipe,
+    IstDatePipe,
     DecimalPipe,
     CurrencyPipe,
     StatusBadgeComponent,
@@ -58,7 +59,7 @@ import { ListPaginatorComponent } from '../../shared/components/list-paginator.c
         </ng-container>
         <ng-container matColumnDef="dispatchDate">
           <th mat-header-cell *matHeaderCellDef>Dispatch Date</th>
-          <td mat-cell *matCellDef="let d">{{ d.dispatchDate | date: 'dd MMM yyyy' }}</td>
+          <td mat-cell *matCellDef="let d">{{ d.dispatchDate | istDate: 'dd MMM yyyy' }}</td>
         </ng-container>
         <ng-container matColumnDef="transporter">
           <th mat-header-cell *matHeaderCellDef>Transporter</th>

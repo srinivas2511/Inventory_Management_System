@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { DatePipe } from '@angular/common';
+
 import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -10,6 +10,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
+import { IstDatePipe } from '../../shared/pipes/ist-date.pipe';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
 import { EMPLOYMENT_TYPES, EmployeeDto, EmploymentType, HrmApi } from './hrm.api';
@@ -19,7 +20,7 @@ import { EMPLOYMENT_TYPES, EmployeeDto, EmploymentType, HrmApi } from './hrm.api
   standalone: true,
   imports: [
     ReactiveFormsModule,
-    DatePipe,
+    IstDatePipe,
     MatButtonModule,
     MatFormFieldModule,
     MatIconModule,
@@ -112,7 +113,7 @@ import { EMPLOYMENT_TYPES, EmployeeDto, EmploymentType, HrmApi } from './hrm.api
         </ng-container>
         <ng-container matColumnDef="joined">
           <th mat-header-cell *matHeaderCellDef>Joined</th>
-          <td mat-cell *matCellDef="let r">{{ r.dateOfJoining | date: 'dd MMM yyyy' }}</td>
+          <td mat-cell *matCellDef="let r">{{ r.dateOfJoining | istDate: 'dd MMM yyyy' }}</td>
         </ng-container>
         <ng-container matColumnDef="type">
           <th mat-header-cell *matHeaderCellDef>Type</th>

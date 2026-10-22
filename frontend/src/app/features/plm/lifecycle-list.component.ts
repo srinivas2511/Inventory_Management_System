@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { DatePipe } from '@angular/common';
+
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -9,6 +9,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
+import { IstDatePipe } from '../../shared/pipes/ist-date.pipe';
 import { SessionStore } from '../../core/auth/session.store';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import {
@@ -24,7 +25,7 @@ import {
   standalone: true,
   imports: [
     ReactiveFormsModule,
-    DatePipe,
+    IstDatePipe,
     MatButtonModule,
     MatFormFieldModule,
     MatIconModule,
@@ -103,7 +104,7 @@ import {
       <table mat-table [dataSource]="s.history" class="mat-elevation-z1">
         <ng-container matColumnDef="when">
           <th mat-header-cell *matHeaderCellDef>When</th>
-          <td mat-cell *matCellDef="let h">{{ h.changedAt | date: 'dd MMM yyyy HH:mm' }}</td>
+          <td mat-cell *matCellDef="let h">{{ h.changedAt | istDate: 'dd MMM yyyy HH:mm' }}</td>
         </ng-container>
         <ng-container matColumnDef="change">
           <th mat-header-cell *matHeaderCellDef>Change</th>

@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { DecimalPipe } from '@angular/common';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -9,6 +9,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
+import { IstDatePipe } from '../../shared/pipes/ist-date.pipe';
 import { SessionStore } from '../../core/auth/session.store';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
@@ -41,7 +42,7 @@ export const NEXT_STATUSES: Record<string, { status: string; label: string; icon
   standalone: true,
   imports: [
     ReactiveFormsModule,
-    DatePipe,
+    IstDatePipe,
     DecimalPipe,
     RouterLink,
     MatButtonModule,
@@ -80,7 +81,7 @@ export const NEXT_STATUSES: Record<string, { status: string; label: string; icon
       <table mat-table [dataSource]="activities()" class="mat-elevation-z1" data-test="activities">
         <ng-container matColumnDef="when">
           <th mat-header-cell *matHeaderCellDef>When</th>
-          <td mat-cell *matCellDef="let a">{{ a.performedAt | date: 'medium' }}</td>
+          <td mat-cell *matCellDef="let a">{{ a.performedAt | istDate: 'medium' }}</td>
         </ng-container>
         <ng-container matColumnDef="description">
           <th mat-header-cell *matHeaderCellDef>Work</th>
@@ -192,7 +193,7 @@ export const NEXT_STATUSES: Record<string, { status: string; label: string; icon
           </div>
           @if (c.labourCostFinal) {
             @if (c.costPostedAt) {
-              <div data-test="posted">Labour posted to the GL on {{ c.costPostedAt | date: 'medium' }}.</div>
+              <div data-test="posted">Labour posted to the GL on {{ c.costPostedAt | istDate: 'medium' }}.</div>
             } @else {
               <div class="warn" data-test="not-posted">Labour is not in the GL yet.</div>
               <button

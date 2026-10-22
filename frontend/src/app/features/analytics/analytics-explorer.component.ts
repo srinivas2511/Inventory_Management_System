@@ -1,5 +1,5 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { DecimalPipe } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
@@ -10,6 +10,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
+import { IstDatePipe } from '../../shared/pipes/ist-date.pipe';
 import { SessionStore } from '../../core/auth/session.store';
 import { saveBlob } from '../documents/documents.api';
 import { AnalyticsChartComponent } from './analytics-chart.component';
@@ -24,7 +25,7 @@ import { AnalyticsApi, AnalyticsColumn, QueryDescriptor, QueryResult, toCsv } fr
   standalone: true,
   imports: [
     ReactiveFormsModule,
-    DatePipe,
+    IstDatePipe,
     DecimalPipe,
     MatButtonModule,
     MatButtonToggleModule,
@@ -164,7 +165,7 @@ import { AnalyticsApi, AnalyticsColumn, QueryDescriptor, QueryResult, toCsv } fr
         @if (r.truncated) {
           (limited to the first {{ r.rowCount }}; narrow the period)
         }
-        · generated {{ r.generatedAt | date: 'dd MMM HH:mm' }}
+        · generated {{ r.generatedAt | istDate: 'dd MMM HH:mm' }}
       </p>
     }
   `,

@@ -1,5 +1,5 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { DecimalPipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -9,6 +9,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
+import { IstDatePipe } from '../../shared/pipes/ist-date.pipe';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
 import { HrmApi, LeaveApplicationDto, LeaveBalanceDto, LeaveTypeDto, MONTH_NAMES } from './hrm.api';
@@ -23,7 +24,7 @@ interface CalendarCell {
   standalone: true,
   imports: [
     ReactiveFormsModule,
-    DatePipe,
+    IstDatePipe,
     DecimalPipe,
     MatButtonModule,
     MatCheckboxModule,
@@ -112,7 +113,7 @@ interface CalendarCell {
       <ng-container matColumnDef="dates">
         <th mat-header-cell *matHeaderCellDef>Dates</th>
         <td mat-cell *matCellDef="let r">
-          {{ r.fromDate | date: 'dd MMM' }} - {{ r.toDate | date: 'dd MMM yyyy' }}
+          {{ r.fromDate | istDate: 'dd MMM' }} - {{ r.toDate | istDate: 'dd MMM yyyy' }}
           @if (r.halfDay) {
             (half day)
           }

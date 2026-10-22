@@ -1,12 +1,13 @@
 import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { DatePipe } from '@angular/common';
+
 import { Router, RouterLink } from '@angular/router';
 import { interval } from 'rxjs';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
+import { IstDatePipe } from '../../shared/pipes/ist-date.pipe';
 import { NotificationDto, NotificationsApi, notificationLink } from './notifications.api';
 
 const POLL_MS = 60_000;
@@ -15,7 +16,7 @@ const POLL_MS = 60_000;
 @Component({
   selector: 'app-notification-bell',
   standalone: true,
-  imports: [DatePipe, RouterLink, MatBadgeModule, MatButtonModule, MatIconModule, MatMenuModule],
+  imports: [IstDatePipe, RouterLink, MatBadgeModule, MatButtonModule, MatIconModule, MatMenuModule],
   template: `
     <button
       mat-icon-button
@@ -44,7 +45,7 @@ const POLL_MS = 60_000;
         >
           <span class="subject">{{ n.subject || n.templateCode }}</span>
           <span class="body">{{ n.body }}</span>
-          <span class="when">{{ n.createdAt | date: 'dd MMM HH:mm' }}</span>
+          <span class="when">{{ n.createdAt | istDate: 'dd MMM HH:mm' }}</span>
         </button>
       }
       <div class="footer">

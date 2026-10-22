@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { DatePipe } from '@angular/common';
+
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -11,6 +11,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatTabsModule } from '@angular/material/tabs';
+import { IstDatePipe } from '../../shared/pipes/ist-date.pipe';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
 import { MaintenanceApi, MaintenanceRequestDto, PmScheduleDto } from './maintenance.api';
@@ -30,7 +31,7 @@ import { MaintenanceApi, MaintenanceRequestDto, PmScheduleDto } from './maintena
     MatTooltipModule,
     MatSnackBarModule,
     MatTabsModule,
-    DatePipe,
+    IstDatePipe,
     RouterLink,
     StatusBadgeComponent,
     HasPermissionDirective,
@@ -90,7 +91,7 @@ import { MaintenanceApi, MaintenanceRequestDto, PmScheduleDto } from './maintena
             </ng-container>
             <ng-container matColumnDef="scheduledDate">
               <th mat-header-cell *matHeaderCellDef>Scheduled</th>
-              <td mat-cell *matCellDef="let r">{{ r.scheduledDate | date: 'mediumDate' }}</td>
+              <td mat-cell *matCellDef="let r">{{ r.scheduledDate | istDate: 'mediumDate' }}</td>
             </ng-container>
             <ng-container matColumnDef="actions">
               <th mat-header-cell *matHeaderCellDef>Actions</th>
@@ -150,7 +151,7 @@ import { MaintenanceApi, MaintenanceRequestDto, PmScheduleDto } from './maintena
             </ng-container>
             <ng-container matColumnDef="nextDueDate">
               <th mat-header-cell *matHeaderCellDef>Next Due</th>
-              <td mat-cell *matCellDef="let s">{{ s.nextDueDate | date: 'mediumDate' }}</td>
+              <td mat-cell *matCellDef="let s">{{ s.nextDueDate | istDate: 'mediumDate' }}</td>
             </ng-container>
             <ng-container matColumnDef="actions">
               <th mat-header-cell *matHeaderCellDef>Actions</th>

@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { DecimalPipe, DatePipe, CurrencyPipe } from '@angular/common';
+import { DecimalPipe, CurrencyPipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -11,6 +11,7 @@ import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { IstDatePipe } from '../../shared/pipes/ist-date.pipe';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
 import { ReservationFormComponent } from './reservation-form.component';
@@ -39,7 +40,7 @@ import { ReasonDialogComponent, ReasonDialogData } from '../finance/reason-dialo
     MatTooltipModule,
     MatSnackBarModule,
     DecimalPipe,
-    DatePipe,
+    IstDatePipe,
     CurrencyPipe,
     StatusBadgeComponent,
     HasPermissionDirective,
@@ -82,11 +83,11 @@ import { ReasonDialogComponent, ReasonDialogData } from '../finance/reason-dialo
         </ng-container>
         <ng-container matColumnDef="orderDate">
           <th mat-header-cell *matHeaderCellDef>Order Date</th>
-          <td mat-cell *matCellDef="let o">{{ o.orderDate | date: 'dd MMM yyyy' }}</td>
+          <td mat-cell *matCellDef="let o">{{ o.orderDate | istDate: 'dd MMM yyyy' }}</td>
         </ng-container>
         <ng-container matColumnDef="requiredDate">
           <th mat-header-cell *matHeaderCellDef>Required By</th>
-          <td mat-cell *matCellDef="let o">{{ o.requiredDate ? (o.requiredDate | date: 'dd MMM yyyy') : '—' }}</td>
+          <td mat-cell *matCellDef="let o">{{ o.requiredDate ? (o.requiredDate | istDate: 'dd MMM yyyy') : '—' }}</td>
         </ng-container>
         <ng-container matColumnDef="totalValue">
           <th mat-header-cell *matHeaderCellDef>Value</th>

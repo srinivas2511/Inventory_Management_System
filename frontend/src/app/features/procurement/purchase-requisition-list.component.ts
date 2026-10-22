@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import { DecimalPipe, DatePipe } from '@angular/common';
+import { DecimalPipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -12,6 +12,7 @@ import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { IstDatePipe } from '../../shared/pipes/ist-date.pipe';
 import { PurchaseRequisitionFormComponent } from './purchase-requisition-form.component';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
@@ -45,7 +46,7 @@ export interface PurchaseRequisitionDto {
     MatTooltipModule,
     MatSnackBarModule,
     DecimalPipe,
-    DatePipe,
+    IstDatePipe,
     StatusBadgeComponent,
     HasPermissionDirective,
   ],
@@ -88,7 +89,7 @@ export interface PurchaseRequisitionDto {
         </ng-container>
         <ng-container matColumnDef="neededBy">
           <th mat-header-cell *matHeaderCellDef>Needed By</th>
-          <td mat-cell *matCellDef="let r">{{ r.neededBy | date: 'dd/MM/yyyy' }}</td>
+          <td mat-cell *matCellDef="let r">{{ r.neededBy | istDate: 'dd/MM/yyyy' }}</td>
         </ng-container>
         <ng-container matColumnDef="status">
           <th mat-header-cell *matHeaderCellDef>Status</th>

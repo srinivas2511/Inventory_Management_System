@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { DecimalPipe } from '@angular/common';
 import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -9,6 +9,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
+import { IstDatePipe } from '../../shared/pipes/ist-date.pipe';
 import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
 import { ProductApi, ProductDto } from '../master/product/product.api';
 import { CrmApi, CrmCustomerDto, PriceDto } from './crm.api';
@@ -19,7 +20,7 @@ import { CrmApi, CrmCustomerDto, PriceDto } from './crm.api';
   standalone: true,
   imports: [
     ReactiveFormsModule,
-    DatePipe,
+    IstDatePipe,
     DecimalPipe,
     MatButtonModule,
     MatFormFieldModule,
@@ -118,11 +119,11 @@ import { CrmApi, CrmCustomerDto, PriceDto } from './crm.api';
         </ng-container>
         <ng-container matColumnDef="validFrom">
           <th mat-header-cell *matHeaderCellDef>Valid from</th>
-          <td mat-cell *matCellDef="let r">{{ r.validFrom | date: 'dd MMM yyyy' }}</td>
+          <td mat-cell *matCellDef="let r">{{ r.validFrom | istDate: 'dd MMM yyyy' }}</td>
         </ng-container>
         <ng-container matColumnDef="validTo">
           <th mat-header-cell *matHeaderCellDef>Valid to</th>
-          <td mat-cell *matCellDef="let r">{{ r.validTo ? (r.validTo | date: 'dd MMM yyyy') : 'open' }}</td>
+          <td mat-cell *matCellDef="let r">{{ r.validTo ? (r.validTo | istDate: 'dd MMM yyyy') : 'open' }}</td>
         </ng-container>
         <ng-container matColumnDef="actions">
           <th mat-header-cell *matHeaderCellDef></th>

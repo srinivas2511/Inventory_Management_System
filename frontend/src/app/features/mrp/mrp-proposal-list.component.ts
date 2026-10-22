@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { DecimalPipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -11,6 +11,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
+import { IstDatePipe } from '../../shared/pipes/ist-date.pipe';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
 import { MrpApi, MrpProposalDto } from './mrp.api';
@@ -20,7 +21,7 @@ import { MrpApi, MrpProposalDto } from './mrp.api';
   standalone: true,
   imports: [
     ReactiveFormsModule,
-    DatePipe,
+    IstDatePipe,
     DecimalPipe,
     MatButtonModule,
     MatFormFieldModule,
@@ -118,12 +119,12 @@ import { MrpApi, MrpProposalDto } from './mrp.api';
         </ng-container>
         <ng-container matColumnDef="orderDate">
           <th mat-header-cell *matHeaderCellDef>Order by</th>
-          <td mat-cell *matCellDef="let r">{{ r.proposedOrderDate | date: 'dd MMM yyyy' }}</td>
+          <td mat-cell *matCellDef="let r">{{ r.proposedOrderDate | istDate: 'dd MMM yyyy' }}</td>
         </ng-container>
         <ng-container matColumnDef="needDate">
           <th mat-header-cell *matHeaderCellDef>Needed</th>
           <td mat-cell *matCellDef="let r">
-            {{ r.needDate | date: 'dd MMM yyyy' }}
+            {{ r.needDate | istDate: 'dd MMM yyyy' }}
             @if (r.leadTimeAdjusted) {
               <mat-icon class="warn" title="Earliest possible date after lead time; demand is due sooner">
                 schedule

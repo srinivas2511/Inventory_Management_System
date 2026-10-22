@@ -3,6 +3,8 @@ import { Injectable } from '@angular/core';
 export interface AppConfig {
   apiBaseUrl: string;
   appName: string;
+  /** IANA timezone name for date display; defaults to Asia/Kolkata (IST, +05:30). */
+  timezone?: string;
 }
 
 /** apiBaseUrl is the origin prefix put in front of paths that already start with /api; empty means same origin. */
@@ -33,5 +35,9 @@ export class AppConfigService {
 
   get appName(): string {
     return this.config.appName;
+  }
+
+  get timezone(): string {
+    return this.config.timezone ?? 'Asia/Kolkata';
   }
 }

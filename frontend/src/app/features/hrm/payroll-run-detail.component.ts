@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { DecimalPipe } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -7,6 +7,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { IstDatePipe } from '../../shared/pipes/ist-date.pipe';
 import { SessionStore } from '../../core/auth/session.store';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import { HrmApi, MONTH_NAMES, PayrollRunDto, PayrollSlipDto } from './hrm.api';
@@ -15,7 +16,7 @@ import { HrmApi, MONTH_NAMES, PayrollRunDto, PayrollSlipDto } from './hrm.api';
   selector: 'app-payroll-run-detail',
   standalone: true,
   imports: [
-    DatePipe,
+    IstDatePipe,
     DecimalPipe,
     RouterLink,
     MatButtonModule,
@@ -43,11 +44,11 @@ import { HrmApi, MONTH_NAMES, PayrollRunDto, PayrollSlipDto } from './hrm.api';
         <dd>{{ r.totalNet | number: '1.2-2' }}</dd>
         @if (r.journalNumber) {
           <dt>Payroll journal</dt>
-          <dd>{{ r.journalNumber }} (approved {{ r.completedAt | date: 'dd MMM yyyy HH:mm' }})</dd>
+          <dd>{{ r.journalNumber }} (approved {{ r.completedAt | istDate: 'dd MMM yyyy HH:mm' }})</dd>
         }
         @if (r.paidAt) {
           <dt>Paid</dt>
-          <dd>{{ r.paidAt | date: 'dd MMM yyyy HH:mm' }}</dd>
+          <dd>{{ r.paidAt | istDate: 'dd MMM yyyy HH:mm' }}</dd>
         }
       </dl>
 

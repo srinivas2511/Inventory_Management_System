@@ -1,5 +1,5 @@
 import { Component, Input, OnChanges, inject, signal } from '@angular/core';
-import { DatePipe } from '@angular/common';
+
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -8,6 +8,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { IstDatePipe } from '../../shared/pipes/ist-date.pipe';
 import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
 import { ACTIVITY_TYPES, ActivityDto, ActivityFilter, ActivityType, CrmApi } from './crm.api';
 
@@ -25,7 +26,7 @@ const TYPE_ICONS: Record<ActivityType, string> = {
   standalone: true,
   imports: [
     ReactiveFormsModule,
-    DatePipe,
+    IstDatePipe,
     MatButtonModule,
     MatFormFieldModule,
     MatIconModule,
@@ -77,7 +78,7 @@ const TYPE_ICONS: Record<ActivityType, string> = {
               <div class="title">
                 <strong>{{ a.subject }}</strong>
                 <span class="meta">
-                  {{ a.activityType }} · {{ a.activityDate | date: 'dd MMM yyyy HH:mm' }}
+                  {{ a.activityType }} · {{ a.activityDate | istDate: 'dd MMM yyyy HH:mm' }}
                   @if (a.ownerName) {
                     · {{ a.ownerName }}
                   }

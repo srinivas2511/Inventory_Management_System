@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { DatePipe } from '@angular/common';
+
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -10,6 +10,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
+import { IstDatePipe } from '../../shared/pipes/ist-date.pipe';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
 import { MrpApi, MrpRunDto } from './mrp.api';
@@ -20,7 +21,7 @@ import { MrpApi, MrpRunDto } from './mrp.api';
   imports: [
     ReactiveFormsModule,
     RouterLink,
-    DatePipe,
+    IstDatePipe,
     MatButtonModule,
     MatCheckboxModule,
     MatFormFieldModule,
@@ -67,7 +68,7 @@ import { MrpApi, MrpRunDto } from './mrp.api';
         </ng-container>
         <ng-container matColumnDef="initiatedAt">
           <th mat-header-cell *matHeaderCellDef>Started</th>
-          <td mat-cell *matCellDef="let r">{{ r.initiatedAt | date: 'dd MMM yyyy HH:mm' }}</td>
+          <td mat-cell *matCellDef="let r">{{ r.initiatedAt | istDate: 'dd MMM yyyy HH:mm' }}</td>
         </ng-container>
         <ng-container matColumnDef="horizon">
           <th mat-header-cell *matHeaderCellDef>Horizon</th>

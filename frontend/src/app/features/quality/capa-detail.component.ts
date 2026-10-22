@@ -1,5 +1,5 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { DatePipe } from '@angular/common';
+
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -9,6 +9,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { IstDatePipe } from '../../shared/pipes/ist-date.pipe';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
 import { CAPA_STATUSES, Capa, CapaStatus, QualityPlusApi } from './quality-plus.api';
@@ -23,7 +24,7 @@ type NewSource = 'INTERNAL_AUDIT' | 'REJECTION_ANALYSIS';
     DocumentAttachmentsComponent,
     ReactiveFormsModule,
     RouterLink,
-    DatePipe,
+    IstDatePipe,
     MatButtonModule,
     MatFormFieldModule,
     MatIconModule,
@@ -86,9 +87,9 @@ type NewSource = 'INTERNAL_AUDIT' | 'REJECTION_ANALYSIS';
         </ol>
         <p class="meta">
           Source: {{ c.sourceType }}{{ c.sourceLabel ? ' - ' + c.sourceLabel : '' }}. Opened
-          {{ c.openedAt | date: 'dd MMM yyyy' }}
+          {{ c.openedAt | istDate: 'dd MMM yyyy' }}
           @if (c.closedAt) {
-            , closed {{ c.closedAt | date: 'dd MMM yyyy' }}
+            , closed {{ c.closedAt | istDate: 'dd MMM yyyy' }}
           }
           .
         </p>

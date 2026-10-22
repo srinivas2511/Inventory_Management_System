@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { DatePipe } from '@angular/common';
+
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -8,6 +8,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
+import { IstDatePipe } from '../../shared/pipes/ist-date.pipe';
 import { HrmApi, TrainingDto } from './hrm.api';
 
 @Component({
@@ -15,7 +16,7 @@ import { HrmApi, TrainingDto } from './hrm.api';
   standalone: true,
   imports: [
     ReactiveFormsModule,
-    DatePipe,
+    IstDatePipe,
     RouterLink,
     MatButtonModule,
     MatFormFieldModule,
@@ -53,7 +54,7 @@ import { HrmApi, TrainingDto } from './hrm.api';
       <ng-container matColumnDef="due">
         <th mat-header-cell *matHeaderCellDef>Renewal due</th>
         <td mat-cell *matCellDef="let r" [class.overdue]="isOverdue(r)">
-          {{ r.renewalDueOn | date: 'dd MMM yyyy' }}
+          {{ r.renewalDueOn | istDate: 'dd MMM yyyy' }}
           @if (isOverdue(r)) {
             (overdue)
           }

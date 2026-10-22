@@ -1,18 +1,19 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { DatePipe } from '@angular/common';
+
 import { Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { IstDatePipe } from '../../shared/pipes/ist-date.pipe';
 import { NotificationDto, NotificationsApi, notificationLink } from './notifications.api';
 
 @Component({
   selector: 'app-notification-inbox',
   standalone: true,
   imports: [
-    DatePipe,
+    IstDatePipe,
     RouterLink,
     MatButtonModule,
     MatIconModule,
@@ -46,7 +47,7 @@ import { NotificationDto, NotificationsApi, notificationLink } from './notificat
             <div class="text">
               <div class="subject">{{ n.subject || n.templateCode }}</div>
               <div class="body">{{ n.body }}</div>
-              <div class="when">{{ n.createdAt | date: 'dd MMM yyyy HH:mm' }}</div>
+              <div class="when">{{ n.createdAt | istDate: 'dd MMM yyyy HH:mm' }}</div>
             </div>
             @if (hasLink(n)) {
               <button mat-button type="button" (click)="open(n)">Open</button>

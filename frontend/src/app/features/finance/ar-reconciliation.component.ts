@@ -1,10 +1,11 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { DatePipe } from '@angular/common';
+
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
+import { IstDatePipe } from '../../shared/pipes/ist-date.pipe';
 import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
 import { ArReconcileResultDto, FinanceAlertDto, FinanceApi, MissingArInvoiceDto } from './finance.api';
 
@@ -12,7 +13,7 @@ import { ArReconcileResultDto, FinanceAlertDto, FinanceApi, MissingArInvoiceDto 
   selector: 'app-ar-reconciliation',
   standalone: true,
   imports: [
-    DatePipe,
+    IstDatePipe,
     MatButtonModule,
     MatIconModule,
     MatProgressSpinnerModule,
@@ -57,7 +58,7 @@ import { ArReconcileResultDto, FinanceAlertDto, FinanceApi, MissingArInvoiceDto 
         </ng-container>
         <ng-container matColumnDef="dispatchDate">
           <th mat-header-cell *matHeaderCellDef>Dispatch date</th>
-          <td mat-cell *matCellDef="let r">{{ r.dispatchDate | date: 'dd/MM/yyyy' }}</td>
+          <td mat-cell *matCellDef="let r">{{ r.dispatchDate | istDate: 'dd/MM/yyyy' }}</td>
         </ng-container>
         <ng-container matColumnDef="customerId">
           <th mat-header-cell *matHeaderCellDef>Customer</th>
@@ -68,7 +69,7 @@ import { ArReconcileResultDto, FinanceAlertDto, FinanceApi, MissingArInvoiceDto 
           <td mat-cell *matCellDef="let r">
             @if (alertFor(r.dispatchId); as a) {
               <span class="alert-open" [title]="a.message">
-                {{ a.severity }} · seen {{ a.lastSeenAt | date: 'dd/MM/yyyy HH:mm' }}
+                {{ a.severity }} · seen {{ a.lastSeenAt | istDate: 'dd/MM/yyyy HH:mm' }}
               </span>
               <div class="alert-msg">{{ a.message }}</div>
             } @else {
