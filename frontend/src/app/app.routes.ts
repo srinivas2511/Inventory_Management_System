@@ -790,6 +790,15 @@ export const routes: Routes = [
             (m) => m.AttributeDefinitionsComponent,
           ),
       },
+      {
+        path: 'admin/negative-stock-overrides',
+        title: 'Negative Stock Overrides',
+        canActivate: [permissionGuard('INVENTORY_NEGATIVE_OVERRIDE')],
+        loadComponent: () =>
+          import('./features/admin/negative-stock-overrides/negative-stock-overrides.component').then(
+            (m) => m.NegativeStockOverridesComponent,
+          ),
+      },
     ],
   },
   { path: '**', redirectTo: '' },

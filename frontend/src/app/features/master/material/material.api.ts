@@ -42,6 +42,28 @@ export interface UomDto {
   kind: string;
 }
 
+export interface UomConversionDto {
+  id: number;
+  materialId: number;
+  baseUom: string;
+  altUom: string;
+  factorToBase: number;
+}
+
+export interface PurchasingInfoDto {
+  materialId: number;
+  purchaseUom?: string;
+  purchaseTaxCode?: string;
+  preferredSupplierId?: number;
+  preferredSupplierName?: string;
+}
+
+export interface SavePurchasingInfoRequest {
+  purchaseUom?: string | null;
+  purchaseTaxCode?: string | null;
+  preferredSupplierId?: number | null;
+}
+
 export interface Page<T> {
   content: T[];
   totalElements: number;
@@ -80,5 +102,30 @@ export class MaterialApi {
 
   listUoms(): Observable<UomDto[]> {
     return this.http.get<UomDto[]>(`${this.base}/api/materials/uoms`);
+  }
+
+  getUomConversions(materialId: number): Observable<UomConversionDto[]> {
+    return this.http.get<UomConversionDto[]>(`${this.base}/api/materials/${materialId}/uom-conversions`);
+  }
+
+  addUomConversion(materialId: number, altUom: string, factorToBase: number): Observable<UomConversionDto> {
+    return this.http.put<UomConversionDto>(`${this.base}/api/materials/${materialId}/uom-conversions`, {
+      altUom,
+      factorToBase,
+    });
+  }
+
+  deleteUomConversion(materialId: number, altUom: string): Observable<void> {
+    return this.http.delete<void>(
+      `${this.base}/api/materials/${materialId}/uom-conversions/${encodeURIComponent(altUom)}`,
+    );
+  }
+
+  getPurchasingInfo(materialId: number): Observable<PurchasingInfoDto> {
+    return this.http.get<PurchasingInfoDto>(`${this.base}/api/materials/${materialId}/purchasing-info`);
+  }
+
+  savePurchasingInfo(materialId: number, req: SavePurchasingInfoRequest): Observable<PurchasingInfoDto> {
+    return this.http.put<PurchasingInfoDto>(`${this.base}/api/materials/${materialId}/purchasing-info`, req);
   }
 }

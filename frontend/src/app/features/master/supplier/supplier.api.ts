@@ -4,6 +4,12 @@ import { Observable } from 'rxjs';
 import { AppConfigService } from '../../../core/config/app-config.service';
 import { Page } from '../material/material.api';
 
+export interface ApprovedMaterialDto {
+  id: number;
+  code: string;
+  name: string;
+}
+
 export interface SupplierDto {
   id: number;
   supplierCode: string;
@@ -51,5 +57,13 @@ export class SupplierApi {
 
   deactivate(id: number): Observable<void> {
     return this.http.delete<void>(`${this.base}/api/suppliers/${id}`);
+  }
+
+  getApprovedMaterials(supplierId: number): Observable<ApprovedMaterialDto[]> {
+    return this.http.get<ApprovedMaterialDto[]>(`${this.base}/api/suppliers/${supplierId}/approved-materials`);
+  }
+
+  setApprovedMaterials(supplierId: number, ids: number[]): Observable<void> {
+    return this.http.put<void>(`${this.base}/api/suppliers/${supplierId}/approved-materials`, { ids });
   }
 }

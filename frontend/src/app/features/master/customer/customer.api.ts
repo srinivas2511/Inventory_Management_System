@@ -4,6 +4,30 @@ import { Observable } from 'rxjs';
 import { AppConfigService } from '../../../core/config/app-config.service';
 import { Page } from '../material/material.api';
 
+export interface ApprovedProductDto {
+  id: number;
+  code: string;
+  name: string;
+}
+
+export interface CustomerSpecOverrideDto {
+  id: number;
+  customerId: number;
+  productId: number;
+  parameterName: string;
+  lowerLimit?: number;
+  upperLimit?: number;
+  nominal?: number;
+  active: boolean;
+}
+
+export interface SaveSpecOverrideRequest {
+  parameterName: string;
+  lowerLimit?: number | null;
+  upperLimit?: number | null;
+  nominal?: number | null;
+}
+
 export interface CustomerDto {
   id: number;
   customerCode: string;
@@ -51,5 +75,37 @@ export class CustomerApi {
 
   deactivate(id: number): Observable<void> {
     return this.http.delete<void>(`${this.base}/api/customers/${id}`);
+  }
+
+  getApprovedProducts(customerId: number): Observable<ApprovedProductDto[]> {
+    return this.http.get<ApprovedProductDto[]>(`${this.base}/api/customers/${customerId}/approved-products`);
+  }
+
+  setApprovedProducts(customerId: number, ids: number[]): Observable<void> {
+    return this.http.put<void>(`${this.base}/api/customers/${customerId}/approved-products`, { ids });
+  }
+
+  getProductSpecOverrides(customerId: number, productId: number): Observable<CustomerSpecOverrideDto[]> {
+    return this.http.get<CustomerSpecOverrideDto[]>(
+      `${this.base}/api/customers/${customerId}/product-specs/${productId}/overrides`,
+    );
+  }
+
+  saveProductSpecOverride(
+    customerId: number,
+    productId: number,
+    req: SaveSpecOverrideRequest,
+  ): Observable<CustomerSpecOverrideDto> {
+    return this.http.put<CustomerSpecOverrideDto>(
+      `${this.base}/api/customers/${customerId}/product-specs/${productId}/overrides`,
+      req,
+    );
+  }
+
+  deleteProductSpecOverride(customerId: number, productId: number, parameterName: string): Observable<void> {
+    const params = new HttpParams().set('parameterName', parameterName);
+    return this.http.delete<void>(`${this.base}/api/customers/${customerId}/product-specs/${productId}/overrides`, {
+      params,
+    });
   }
 }

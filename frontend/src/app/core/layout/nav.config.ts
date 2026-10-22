@@ -515,6 +515,13 @@ export const NAV_GROUPS: NavGroup[] = [
         permission: 'ATTRIBUTE_MANAGE',
         enabled: true,
       },
+      {
+        label: 'Negative Stock',
+        icon: 'remove_circle_outline',
+        route: '/admin/negative-stock-overrides',
+        permission: 'INVENTORY_NEGATIVE_OVERRIDE',
+        enabled: true,
+      },
     ],
   },
 ];
