@@ -10,6 +10,7 @@ services:
       SWAGGER_ENABLED: "true"
       CORS_ORIGINS: http://localhost:8081,http://localhost:4200
       SMTP_HOST: mailhog
+      IMS_DEMO_LOAD_DATA: "true"
     ports:
       - "8080:8080"
 
