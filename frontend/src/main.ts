@@ -1,3 +1,4 @@
+import '@angular/localize/init';
 import { registerLocaleData } from '@angular/common';
 import localeEnIn from '@angular/common/locales/en-IN';
 import { bootstrapApplication } from '@angular/platform-browser';
