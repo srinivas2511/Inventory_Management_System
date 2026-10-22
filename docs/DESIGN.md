@@ -1001,7 +1001,7 @@ Passwords never logged or returned; `password_hash` excluded from all DTOs; refr
 ### 8.2 Layout
 ```text
 ┌──────────────────────────────────────────────────────────────────────────────┐
-│ ☰  Spring IMS            [ global search ]        🔔 3   Ravi K. ▾ (Operator)│  ← top bar
+│ ☰  ERP                   [ global search ]        🔔 3   Ravi K. ▾ (Operator)│  ← top bar
 ├─────────────┬────────────────────────────────────────────────────────────────┤
 │ Dashboard   │  Breadcrumb › Page title                       [ + New ] [⋮]   │
 │ Master Data │ ┌────────────────────────────────────────────────────────────┐ │
