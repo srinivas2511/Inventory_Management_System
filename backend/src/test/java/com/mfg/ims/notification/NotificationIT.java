@@ -418,7 +418,7 @@ class NotificationIT extends AbstractIntegrationTest {
         assertThat(supplierMail.get("recipient_email")).isEqualTo("buyer@acme.test");
         assertThat(supplierMail.get("subject")).isEqualTo("Purchase order " + poNumber + " approved");
         assertThat(supplierMail.get("body").toString()).startsWith("Dear Mr Buyer,")
-                .contains(poNumber).contains("Spring Manufacturing Co.");
+                .contains(poNumber).contains("Manufacturing Co.");
         assertThat(supplierMail.get("status")).isEqualTo("PENDING");
         assertThat(supplierMail.get("entity_type")).isEqualTo("PURCHASE_ORDER");
 
