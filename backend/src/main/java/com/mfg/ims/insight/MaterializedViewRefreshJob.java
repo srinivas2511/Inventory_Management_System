@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 
 import com.mfg.ims.analytics.AnalyticsDtos.RefreshResult;
 import com.mfg.ims.analytics.AnalyticsViewRefresher;
+import com.mfg.ims.analytics.ReportingHealthIndicator;
 
 /** Hourly refresh of the reporting views; a failing view is logged and does not stop the others. */
 @Component
@@ -18,10 +19,13 @@ public class MaterializedViewRefreshJob {
 
     private final AnalyticsViewRefresher refresher;
     private final CacheManager cacheManager;
+    private final ReportingHealthIndicator reportingHealth;
 
-    public MaterializedViewRefreshJob(AnalyticsViewRefresher refresher, CacheManager cacheManager) {
+    public MaterializedViewRefreshJob(AnalyticsViewRefresher refresher, CacheManager cacheManager,
+            ReportingHealthIndicator reportingHealth) {
         this.refresher = refresher;
         this.cacheManager = cacheManager;
+        this.reportingHealth = reportingHealth;
     }
 
     @Scheduled(cron = "0 0 */1 * * *")
@@ -29,6 +33,7 @@ public class MaterializedViewRefreshJob {
     public void refresh() {
         log.info("Refreshing materialized views");
         RefreshResult result = refresher.refreshAll();
+        reportingHealth.updateLastResult(result);
         var cache = cacheManager.getCache("dashboardKpis");
         if (cache != null) {
             cache.clear();

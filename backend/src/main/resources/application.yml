@@ -61,9 +61,15 @@ management:
       probes:
         enabled: true
       show-details: never
+      status:
+        order: DOWN,OUT_OF_SERVICE,DEGRADED,UP,UNKNOWN
+        http-mapping:
+          DEGRADED: 200     # reporting degradation is non-critical; app is still available (NFR-003)
       group:
         readiness:
           include: readinessState,db
+        reporting:
+          include: reporting        # DEGRADED here never affects readiness (NFR-003)
   info:
     build:
       enabled: true
