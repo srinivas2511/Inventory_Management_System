@@ -11,6 +11,7 @@ services:
       CORS_ORIGINS: http://localhost:8081,http://localhost:4200
       SMTP_HOST: mailhog
       IMS_DEMO_LOAD_DATA: "true"
+      JAVA_TOOL_OPTIONS: "-Duser.timezone=Asia/Kolkata"
     ports:
       - "8080:8080"
 
