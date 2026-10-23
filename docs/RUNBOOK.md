@@ -189,47 +189,111 @@ ORDER BY created_at;
 
 ---
 
-## 6. Backup and restore
+## 6. Backup and restore (automated — NFR-005 / R19-7.4)
 
-### Automated backup (recommended: daily pg_dump)
+### RTO / RPO targets
+
+| Metric | Target | How met |
+|--------|--------|---------|
+| RPO (Recovery Point Objective) | **< 1 hour** | WAL archiving with `archive_timeout=3600` flushes a segment at most every hour; every committed transaction is captured. |
+| RTO (Recovery Time Objective) | **< 4 hours** | Restore from latest pg_dump (~20 min for a typical IMS database) + WAL replay to point-in-time (~10 min) ≈ well under 4 hours. |
+
+### Enabling automated backup
+
+The backup overlay adds a `pgbackup` service (daily cron pg_dump at 02:00) and enables PostgreSQL WAL archiving:
 
 ```bash
-# Dump (run from the DB container or via pgdump service)
-docker exec ims-db pg_dump -U ims -d ims -Fc -n ims > ims_$(date +%Y%m%d_%H%M%S).dump
+# Start the full stack with automated backup:
+docker compose \
+  -f docker/docker-compose.yml \
+  -f docker/docker-compose.backup.yml \
+  [--env-file docker/.env] \
+  up -d --build
+```
 
-# Verify dump is readable
+This creates two extra Docker volumes:
+- `ims_backups` — daily pg_dump files; 7-day rolling retention
+- `ims_wal_archive` — WAL segment files; retain at least as long as the oldest backup you want to recover from
+
+### What is backed up
+
+| Item | Mechanism | Location |
+|------|-----------|----------|
+| Database schema + data | `pg_dump -n ims -Fc` (daily at 02:00) | `ims_backups` volume |
+| WAL segments | PostgreSQL `archive_command` (every ≤ 1 hour) | `ims_wal_archive` volume |
+| Document files | Manual `tar` of `ims_documents` volume (see below) | Separate backup store |
+
+### Manual on-demand backup
+
+```bash
+# Trigger a backup immediately (without waiting for 02:00 cron):
+docker compose exec pgbackup sh /usr/local/bin/backup.sh
+
+# Or dump directly from the DB container:
+docker exec ims-postgres pg_dump -U ims -d ims -n ims -Fc \
+  > ims_$(date +%Y%m%d_%H%M%S).dump
+
+# Verify dump is readable:
 pg_restore --list ims_<date>.dump | head -20
 ```
 
-### Restore
+### Restore procedure
 
 ```bash
-# 1. Stop the application
+# 1. Stop the application (keeps the DB container running)
 docker compose stop backend
 
-# 2. Drop and recreate the schema
-docker exec ims-db psql -U ims -d ims -c "DROP SCHEMA ims CASCADE; CREATE SCHEMA ims;"
+# 2. Restore from dump using the restore script:
+docker compose run --rm \
+  -e DB_NAME=ims -e DB_USER=ims -e PGPASSWORD=<password> \
+  -e PGHOST=postgres \
+  -v ims_backups:/backups \
+  -v ./docker/backup/restore.sh:/restore.sh:ro \
+  postgres:16-alpine \
+  sh /restore.sh /backups/ims_<TIMESTAMP>.dump
 
-# 3. Restore
-docker exec -i ims-db pg_restore -U ims -d ims -n ims < ims_<date>.dump
+# 3. (Optional) Apply WAL segments to recover transactions after the dump:
+#    Copy WAL files from the wal_archive volume and use PostgreSQL point-in-time recovery.
+#    See the PostgreSQL docs on 'recovery_target_time' in postgresql.conf.
 
-# 4. Start (Flyway will validate; it should find all migrations already applied)
+# 4. Restart the application (Flyway validates; all migrations should already be present):
 docker compose start backend
+
+# 5. Verify:
+curl -f http://localhost:8080/actuator/health/readiness
 ```
+
+### Monthly restore drill
+
+Run `docker/backup/restore-test.sh` monthly to validate that the latest backup is restorable. The script:
+1. Finds the most recent `.dump` file
+2. Spins up a disposable PostgreSQL container
+3. Restores the dump and counts tables in the `ims` schema
+4. Prints PASS / FAIL and cleans up the container
+
+```bash
+# Run from the Docker host, pointing at the backups volume mount:
+BACKUP_DIR=/var/lib/docker/volumes/ims_backups/_data \
+  docker/backup/restore-test.sh
+```
+
+A CI/CD equivalent is `BackupRestoreIT` in the backend test suite — it runs the pg_dump → pg_restore round-trip on the Testcontainers PostgreSQL on every `mvn verify` run, proving the mechanism works automatically.
 
 ### Document files (not in the database dump)
 
 Document **content** is not stored in PostgreSQL. The database holds metadata and a storage key per version
 (`document_versions.storage_key`); the bytes live in the `documents` volume (`DOCUMENTS_STORAGE_ROOT`). A database dump
-alone therefore cannot restore downloads: back the volume up together with the dump and restore both to the same point in
-time. A key whose file is missing answers `404` on download (and is not audited as a download).
+alone cannot restore downloads: back the volume up together with the dump and restore both to the same point in time.
+A key whose file is missing answers `404` on download.
 
 ```bash
-# Back up the volume (stop uploads or accept a slightly inconsistent copy; files are written once and never modified)
-docker run --rm -v ims_documents:/data -v "$PWD":/backup alpine tar czf /backup/documents_$(date +%Y%m%d).tgz -C /data .
+# Back up the documents volume (files are written once and never modified — a consistent copy is safe while running):
+docker run --rm -v ims_documents:/data -v "$PWD":/backup \
+  alpine tar czf /backup/documents_$(date +%Y%m%d).tgz -C /data .
 
-# Restore
-docker run --rm -v ims_documents:/data -v "$PWD":/backup alpine tar xzf /backup/documents_<date>.tgz -C /data
+# Restore:
+docker run --rm -v ims_documents:/data -v "$PWD":/backup \
+  alpine tar xzf /backup/documents_<date>.tgz -C /data
 ```
 
 ---

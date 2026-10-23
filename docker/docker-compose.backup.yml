@@ -1,0 +1,59 @@
+# Backup overlay — NFR-005 / R19-7.4
+#
+# Adds automated daily pg_dump and WAL archiving to the base stack.
+# RPO < 1 hour (WAL archive covers transactions between dumps; archive_timeout=3600 flushes a segment every hour).
+# RTO < 4 hours (restore latest dump ~20 min + WAL replay ~10 min on modest hardware; validated monthly by restore-test.sh).
+#
+# Usage:
+#   docker compose \
+#     -f docker/docker-compose.yml \
+#     -f docker/docker-compose.backup.yml \
+#     [--env-file docker/.env] \
+#     up -d --build
+#
+# Volumes created:
+#   ims_backups      daily pg_dump files (7-day rolling retention)
+#   ims_wal_archive  WAL segment files (manage retention separately; keep at least one full backup cycle)
+
+name: ims
+
+services:
+  postgres:
+    # Enable WAL archiving.  archive_timeout=3600 guarantees a WAL segment is archived at least every hour,
+    # ensuring RPO < 1 hour even when the database is idle.
+    command: >
+      postgres
+        -c wal_level=replica
+        -c archive_mode=on
+        -c archive_command='cp %p /wal_archive/%f'
+        -c archive_timeout=3600
+    volumes:
+      - wal_archive:/wal_archive
+
+  pgbackup:
+    image: postgres:16-alpine
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PGHOST: postgres
+      PGPORT: "5432"
+      PGPASSWORD: ${DB_PASSWORD:-ims}
+      DB_NAME: ${DB_NAME:-ims}
+      DB_USER: ${DB_USER:-ims}
+      BACKUP_DIR: /backups
+      KEEP_DAYS: "7"
+    volumes:
+      - backups:/backups
+      - ./backup/backup.sh:/usr/local/bin/backup.sh:ro
+    # Run backup.sh daily at 02:00 (server local time).  crond -f keeps the container alive in foreground.
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        echo "0 2 * * * sh /usr/local/bin/backup.sh >> /var/log/backup.log 2>&1" | crontab -
+        crond -f -l 2
+    restart: unless-stopped
+
+volumes:
+  backups:
+  wal_archive:

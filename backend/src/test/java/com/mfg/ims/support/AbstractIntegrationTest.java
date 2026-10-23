@@ -39,6 +39,11 @@ public abstract class AbstractIntegrationTest {
     @Autowired
     protected MockMvc mockMvc;
 
+    /** Exposes the shared Testcontainers instance for tests that need direct container access (e.g. BackupRestoreIT). */
+    protected static PostgreSQLContainer<?> sharedPostgres() {
+        return postgres;
+    }
+
     @DynamicPropertySource
     static void datasource(DynamicPropertyRegistry registry) {
         synchronized (postgres) {
