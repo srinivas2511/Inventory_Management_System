@@ -7,7 +7,9 @@ import { Page } from '../master/material/material.api';
 export interface InventoryBalanceDto {
   id: number;
   warehouseId: number;
+  warehouseName: string;
   locationId: number;
+  locationName: string;
   itemType: string;
   materialId?: number;
   productId?: number;

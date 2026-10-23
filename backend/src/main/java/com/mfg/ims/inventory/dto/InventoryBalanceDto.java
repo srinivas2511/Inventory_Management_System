@@ -8,7 +8,9 @@ import com.mfg.ims.inventory.domain.InventoryBalance;
 public record InventoryBalanceDto(
         Long id,
         Long warehouseId,
+        String warehouseName,
         Long locationId,
+        String locationName,
         String itemType,
         Long materialId,
         Long productId,
@@ -22,9 +24,9 @@ public record InventoryBalanceDto(
         BigDecimal totalValue,
         Instant updatedAt) {
 
-    public static InventoryBalanceDto from(InventoryBalance b) {
+    public static InventoryBalanceDto from(InventoryBalance b, String warehouseName, String locationName) {
         return new InventoryBalanceDto(
-                b.getId(), b.getWarehouseId(), b.getLocationId(),
+                b.getId(), b.getWarehouseId(), warehouseName, b.getLocationId(), locationName,
                 b.getItemType(), b.getMaterialId(), b.getProductId(),
                 b.getMaterialBatchId(), b.getFgBatchId(), b.getStockStatus(),
                 b.getQtyOnHand(), b.getQtyReserved(), b.available(),

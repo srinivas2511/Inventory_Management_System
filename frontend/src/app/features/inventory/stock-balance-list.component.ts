@@ -13,6 +13,7 @@ import { DecimalPipe } from '@angular/common';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
 import { InventoryApi, InventoryBalanceDto } from './inventory.api';
+import { LookupApi, LookupOption } from '../../shared/lookup.api';
 import { OpeningBalanceDialogComponent } from './opening-balance-dialog.component';
 
 @Component({
@@ -49,6 +50,15 @@ import { OpeningBalanceDialogComponent } from './opening-balance-dialog.componen
 
     <div class="filter-bar">
       <mat-form-field appearance="outline">
+        <mat-label>Warehouse</mat-label>
+        <mat-select [formControl]="warehouseCtrl" data-testid="warehouse-filter">
+          <mat-option [value]="null">All warehouses</mat-option>
+          @for (w of warehouses(); track w.id) {
+            <mat-option [value]="w.id">{{ w.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
         <mat-label>Stock Status</mat-label>
         <mat-select [formControl]="statusCtrl" data-testid="status-filter">
           <mat-option [value]="null">All</mat-option>
@@ -73,8 +83,8 @@ import { OpeningBalanceDialogComponent } from './opening-balance-dialog.componen
           <td mat-cell *matCellDef="let r">{{ r.materialId ?? r.productId }}</td>
         </ng-container>
         <ng-container matColumnDef="warehouse">
-          <th mat-header-cell *matHeaderCellDef>WH / Location</th>
-          <td mat-cell *matCellDef="let r">{{ r.warehouseId }} / {{ r.locationId }}</td>
+          <th mat-header-cell *matHeaderCellDef>Warehouse / Location</th>
+          <td mat-cell *matCellDef="let r">{{ r.warehouseName }} / {{ r.locationName }}</td>
         </ng-container>
         <ng-container matColumnDef="stockStatus">
           <th mat-header-cell *matHeaderCellDef>Status</th>
@@ -109,14 +119,19 @@ import { OpeningBalanceDialogComponent } from './opening-balance-dialog.componen
 })
 export class StockBalanceListComponent implements OnInit {
   private readonly api = inject(InventoryApi);
+  private readonly lookups = inject(LookupApi);
   private readonly dialog = inject(MatDialog);
 
   readonly loading = signal(false);
   readonly rows = signal<InventoryBalanceDto[]>([]);
+  readonly warehouses = signal<LookupOption[]>([]);
+  readonly warehouseCtrl = new FormControl<number | null>(null);
   readonly statusCtrl = new FormControl<string | null>(null);
   readonly cols = ['itemType', 'itemId', 'warehouse', 'stockStatus', 'qtyOnHand', 'available', 'avgCost', 'value'];
 
   ngOnInit(): void {
+    this.lookups.warehouses().subscribe((list) => this.warehouses.set(list));
+    this.warehouseCtrl.valueChanges.subscribe(() => this.load());
     this.statusCtrl.valueChanges.subscribe(() => this.load());
     this.load();
   }
@@ -132,8 +147,9 @@ export class StockBalanceListComponent implements OnInit {
 
   load(): void {
     this.loading.set(true);
+    const warehouseId = this.warehouseCtrl.value ?? undefined;
     const status = this.statusCtrl.value ?? undefined;
-    this.api.getBalances(undefined, undefined, status).subscribe({
+    this.api.getBalances(warehouseId, undefined, status).subscribe({
       next: (data) => {
         this.rows.set(data);
         this.loading.set(false);

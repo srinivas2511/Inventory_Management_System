@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -21,6 +22,8 @@ import com.mfg.ims.inventory.dto.TransferCommand;
 import com.mfg.ims.inventory.dto.TransferRequest;
 import com.mfg.ims.inventory.repository.InventoryBalanceRepository;
 import com.mfg.ims.inventory.repository.InventoryTransactionRepository;
+import com.mfg.ims.warehouse.repository.WarehouseLocationRepository;
+import com.mfg.ims.warehouse.repository.WarehouseRepository;
 
 @Service
 public class InventoryQueryService {
@@ -28,20 +31,22 @@ public class InventoryQueryService {
     private final InventoryBalanceRepository balanceRepo;
     private final InventoryTransactionRepository txRepo;
     private final InventoryPostingService postingService;
-
+    private final WarehouseRepository warehouseRepo;
+    private final WarehouseLocationRepository locationRepo;
     private final com.mfg.ims.enterprise.scope.PlantScope plantScope;
-
 
     public InventoryQueryService(InventoryBalanceRepository balanceRepo,
                                   InventoryTransactionRepository txRepo,
                                   InventoryPostingService postingService,
-
-            com.mfg.ims.enterprise.scope.PlantScope plantScope) {
-
+                                  WarehouseRepository warehouseRepo,
+                                  WarehouseLocationRepository locationRepo,
+                                  com.mfg.ims.enterprise.scope.PlantScope plantScope) {
         this.plantScope = plantScope;
         this.balanceRepo = balanceRepo;
         this.txRepo = txRepo;
         this.postingService = postingService;
+        this.warehouseRepo = warehouseRepo;
+        this.locationRepo = locationRepo;
     }
 
     @Transactional(readOnly = true)
@@ -58,11 +63,21 @@ public class InventoryQueryService {
         }
 
         PlantScope.Filter wh = plantScope.warehouseFilter();
-        return results.stream()
+        List<InventoryBalance> filtered = results.stream()
                 .filter(b -> !wh.scoped() || wh.plantIds().contains(b.getWarehouseId()))
                 .filter(b -> stockStatus == null || stockStatus.equals(b.getStockStatus()))
                 .filter(b -> warehouseId == null || warehouseId.equals(b.getWarehouseId()))
-                .map(InventoryBalanceDto::from)
+                .toList();
+
+        Map<Long, String> warehouseNames = warehouseRepo.findAll().stream()
+                .collect(Collectors.toMap(w -> w.getId(), w -> w.getName()));
+        Map<Long, String> locationNames = locationRepo.findAll().stream()
+                .collect(Collectors.toMap(l -> l.getId(), l -> l.getName()));
+
+        return filtered.stream()
+                .map(b -> InventoryBalanceDto.from(b,
+                        warehouseNames.getOrDefault(b.getWarehouseId(), String.valueOf(b.getWarehouseId())),
+                        locationNames.getOrDefault(b.getLocationId(), String.valueOf(b.getLocationId()))))
                 .toList();
     }
 
