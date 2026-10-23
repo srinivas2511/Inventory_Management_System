@@ -206,6 +206,10 @@
         <source>Credit Notes</source>
         <target>ಕ್ರೆಡಿಟ್ ನೋಟ್‌ಗಳು</target>
       </trans-unit>
+      <trans-unit id="nav.item-debit-notes" datatype="html">
+        <source>Debit Notes</source>
+        <target>ಡೆಬಿಟ್ ನೋಟ್‌ಗಳು</target>
+      </trans-unit>
       <trans-unit id="nav.item-gst-tax" datatype="html">
         <source>GST Tax</source>
         <target>ಜಿಎಸ್‌ಟಿ ತೆರಿಗೆ</target>

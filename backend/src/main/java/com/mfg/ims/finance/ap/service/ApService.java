@@ -194,7 +194,7 @@ public class ApService {
             throw new BusinessRuleException(ErrorCode.ILLEGAL_STATE_TRANSITION,
                     "Invoice " + inv.getInvoiceNumber() + " is not payable");
         }
-        BigDecimal balance = inv.getTotalAmount().subtract(inv.getPaidAmount());
+        BigDecimal balance = inv.getTotalAmount().subtract(inv.getPaidAmount()).subtract(inv.getDebitedAmount());
         if (req.amount().compareTo(balance) > 0) {
             throw new BusinessRuleException(ErrorCode.VALIDATION_FAILED,
                     "Payment amount exceeds outstanding balance of " + balance);
@@ -246,7 +246,7 @@ public class ApService {
 
         BigDecimal newPaid = inv.getPaidAmount().add(req.amount());
         inv.setPaidAmount(newPaid);
-        inv.setStatus(newPaid.compareTo(inv.getTotalAmount()) >= 0 ? "PAID" : "PARTIALLY_PAID");
+        inv.setStatus(newPaid.add(inv.getDebitedAmount()).compareTo(inv.getTotalAmount()) >= 0 ? "PAID" : "PARTIALLY_PAID");
         return toDto(apInvoiceRepo.save(inv));
     }
 
@@ -378,7 +378,7 @@ public class ApService {
     }
 
     private ApInvoiceDto toDto(ApInvoice inv) {
-        BigDecimal balance = inv.getTotalAmount().subtract(inv.getPaidAmount());
+        BigDecimal balance = inv.getTotalAmount().subtract(inv.getPaidAmount()).subtract(inv.getDebitedAmount());
         return new ApInvoiceDto(inv.getId(), inv.getInvoiceNumber(), inv.getSupplierInvoiceNo(),
                 inv.getSupplierId(), inv.getInvoiceDate(), inv.getDueDate(),
                 inv.getGoodsReceiptId(), inv.getSubtotal(), inv.getTaxTotal(),
@@ -386,7 +386,8 @@ public class ApService {
                 inv.getPeriodId(), inv.getJournalHeaderId(),
                 inv.getMatchStatus(), inv.getMatchExpectedAmount(), inv.getMatchVariance(), inv.getMatchMessage(),
                 inv.getTaxSlabCode(), inv.getSupplyType(), invoiceTax.lines("AP_INVOICE", inv.getId()),
-                inv.getCurrencyCode(), inv.getExchangeRate(), inv.getTotalInr(), inv.getPriceVarianceInr());
+                inv.getCurrencyCode(), inv.getExchangeRate(), inv.getTotalInr(), inv.getPriceVarianceInr(),
+                inv.getDebitedAmount());
     }
 
     private Long currentUserId() {

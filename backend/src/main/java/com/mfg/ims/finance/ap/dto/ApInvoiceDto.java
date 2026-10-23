@@ -31,5 +31,6 @@ public record ApInvoiceDto(
         String currencyCode,
         BigDecimal exchangeRate,
         BigDecimal totalInr,
-        BigDecimal priceVarianceInr
+        BigDecimal priceVarianceInr,
+        BigDecimal debitedAmount
 ) {}

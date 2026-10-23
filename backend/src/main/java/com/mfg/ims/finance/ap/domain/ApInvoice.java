@@ -89,11 +89,17 @@ public class ApInvoice extends BaseEntity {
     public void setExchangeRate(BigDecimal exchangeRate) { this.exchangeRate = exchangeRate; }
     public void setTotalInr(BigDecimal totalInr) { this.totalInr = totalInr; }
 
+    @Column(name = "debited_amount", nullable = false, precision = 18, scale = 4)
+    private BigDecimal debitedAmount = BigDecimal.ZERO;
+
     @Column(name = "tax_slab_code", length = 15)
     private String taxSlabCode;
 
     @Column(name = "supply_type", length = 5)
     private String supplyType;
+
+    public BigDecimal getDebitedAmount() { return debitedAmount; }
+    public void setDebitedAmount(BigDecimal debitedAmount) { this.debitedAmount = debitedAmount; }
 
     public String getTaxSlabCode() { return taxSlabCode; }
     public String getSupplyType() { return supplyType; }

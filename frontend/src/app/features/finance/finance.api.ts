@@ -111,6 +111,7 @@ export interface ApInvoiceDto {
   exchangeRate?: number;
   totalInr?: number;
   priceVarianceInr?: number;
+  debitedAmount?: number;
 }
 
 export interface ArInvoiceDto {
@@ -294,6 +295,32 @@ export interface ExchangeRateRequest {
   fromCurrency: string;
   periodId: number;
   rate: number;
+}
+
+/** Mirrors ApDebitNoteDtos. */
+export interface ApDebitNoteDto {
+  id: number;
+  debitNoteNumber: string;
+  apInvoiceId: number;
+  invoiceNumber: string;
+  currencyCode: string;
+  debitDate: string;
+  reason: string;
+  subtotal: number;
+  taxTotal: number;
+  totalAmount: number;
+  status: 'DRAFT' | 'POSTED' | 'CANCELLED';
+  journalHeaderId: number | null;
+  createdBy: number | null;
+  approvedBy: number | null;
+  approvedAt: string | null;
+}
+
+export interface CreateDebitNoteRequest {
+  apInvoiceId: number;
+  debitDate: string;
+  subtotal: number;
+  reason: string;
 }
 
 /** Mirrors CreditNoteDtos. */
@@ -556,6 +583,23 @@ export class FinanceApi {
 
   cancelCreditNote(id: number): Observable<CreditNoteDto> {
     return this.http.post<CreditNoteDto>(`${this.base}/ar/credit-notes/${id}/cancel`, {});
+  }
+
+  getDebitNotes(page = 0, size = 20): Observable<Page<ApDebitNoteDto>> {
+    const params = new HttpParams().set('page', page).set('size', size);
+    return this.http.get<Page<ApDebitNoteDto>>(`${this.base}/ap/debit-notes`, { params });
+  }
+
+  createDebitNote(request: CreateDebitNoteRequest): Observable<ApDebitNoteDto> {
+    return this.http.post<ApDebitNoteDto>(`${this.base}/ap/debit-notes`, request);
+  }
+
+  approveDebitNote(id: number): Observable<ApDebitNoteDto> {
+    return this.http.post<ApDebitNoteDto>(`${this.base}/ap/debit-notes/${id}/approve`, {});
+  }
+
+  cancelDebitNote(id: number): Observable<ApDebitNoteDto> {
+    return this.http.post<ApDebitNoteDto>(`${this.base}/ap/debit-notes/${id}/cancel`, {});
   }
 
   getApPayments(invoiceId: number): Observable<SettlementDto[]> {

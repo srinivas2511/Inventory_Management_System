@@ -356,6 +356,13 @@ export const NAV_GROUPS: NavGroup[] = [
         enabled: true,
       },
       {
+        label: $localize`:@@nav.item-debit-notes:Debit Notes`,
+        icon: 'remove_circle_outline',
+        route: '/finance/debit-notes',
+        permission: 'AP_MANAGE',
+        enabled: true,
+      },
+      {
         label: $localize`:@@nav.item-gst-tax:GST Tax`,
         icon: 'percent',
         route: '/finance/tax',

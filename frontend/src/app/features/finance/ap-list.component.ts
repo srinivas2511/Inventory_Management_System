@@ -16,6 +16,7 @@ import { StatusBadgeComponent } from '../../shared/components/status-badge.compo
 import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
 import { LookupApi } from '../../shared/lookup.api';
 import { ApInvoiceFormComponent } from './ap-invoice-form.component';
+import { DebitNoteDialogComponent, DebitNoteDialogData } from './debit-note-dialog.component';
 import { FinanceApi, ApInvoiceDto, ApAgeingRow } from './finance.api';
 import { SettlementDialogComponent } from './settlement-dialog.component';
 import { SettlementHistoryDialogComponent } from './settlement-history-dialog.component';
@@ -155,6 +156,7 @@ import { ListPaginatorComponent } from '../../shared/components/list-paginator.c
                 }
                 @if (r.status === 'OPEN' || r.status === 'PARTIALLY_PAID') {
                   <button mat-stroked-button *appHasPermission="'AP_MANAGE'" (click)="pay(r)">Pay</button>
+                  <button mat-stroked-button *appHasPermission="'AP_MANAGE'" (click)="debitNote(r)">Debit note</button>
                 }
                 @if (r.status === 'OPEN' || r.status === 'PARTIALLY_PAID' || r.status === 'PAID') {
                   <button mat-button *appHasPermission="'AP_MANAGE'" (click)="history(r)">History</button>
@@ -399,6 +401,28 @@ export class ApListComponent implements OnInit {
   closeOverride() {
     this.overrideTarget.set(null);
     this.reason = '';
+  }
+
+  debitNote(invoice: ApInvoiceDto) {
+    const data: DebitNoteDialogData = {
+      invoice: {
+        id: invoice.id,
+        invoiceNumber: invoice.invoiceNumber,
+        subtotal: invoice.subtotal ?? 0,
+        taxTotal: invoice.taxTotal ?? 0,
+        currencyCode: invoice.currencyCode ?? 'INR',
+        counterparty: this.supplierName(invoice.supplierId),
+      },
+    };
+    this.dialog
+      .open(DebitNoteDialogComponent, { width: '560px', maxWidth: '96vw', data })
+      .afterClosed()
+      .subscribe((created) => {
+        if (created) {
+          this.snack.open(`Debit note ${created.debitNoteNumber} created as draft`, 'OK', { duration: 4000 });
+          this.load();
+        }
+      });
   }
 
   approveVariance(invoice: ApInvoiceDto) {

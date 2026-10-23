@@ -366,6 +366,12 @@ export const routes: Routes = [
         loadComponent: () => import('./features/finance/credit-notes.component').then((m) => m.CreditNotesComponent),
       },
       {
+        path: 'finance/debit-notes',
+        title: 'Debit Notes',
+        canActivate: [permissionGuard('AP_MANAGE')],
+        loadComponent: () => import('./features/finance/debit-notes.component').then((m) => m.DebitNotesComponent),
+      },
+      {
         path: 'finance/tax',
         title: 'GST Tax',
         canActivate: [permissionGuard('GL_VIEW')],
