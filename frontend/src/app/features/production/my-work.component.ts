@@ -1,8 +1,9 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, ElementRef, OnInit, inject, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { DecimalPipe } from '@angular/common';
 import { Router } from '@angular/router';
+import { LiveAnnouncer } from '@angular/cdk/a11y';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -54,20 +55,30 @@ export interface MyWorkItemDto {
   template: `
     <div class="page-header">
       <h2 class="mat-h2">My Work</h2>
-      <button mat-stroked-button (click)="load()"><mat-icon>refresh</mat-icon> Refresh</button>
+      <button mat-stroked-button (click)="load()" aria-label="Refresh operation list">
+        <mat-icon aria-hidden="true">refresh</mat-icon> Refresh
+      </button>
     </div>
 
     @if (loading()) {
-      <div class="loading-center"><mat-spinner diameter="48" /></div>
+      <div class="loading-center" role="status" aria-label="Loading operations">
+        <mat-spinner diameter="48" />
+      </div>
     } @else if (items().length === 0) {
-      <div class="empty-work">
-        <mat-icon style="font-size:64px;color:#ccc">assignment_turned_in</mat-icon>
+      <div class="empty-work" role="status">
+        <mat-icon style="font-size:64px;color:#ccc" aria-hidden="true">assignment_turned_in</mat-icon>
         <p>No operations assigned to you right now.</p>
       </div>
     } @else {
       <div class="work-grid">
         @for (item of items(); track item.id) {
-          <mat-card class="work-card" [class.active-card]="item.status === 'IN_PROGRESS'">
+          <mat-card
+            class="work-card"
+            [class.active-card]="item.status === 'IN_PROGRESS'"
+            [attr.aria-label]="
+              'Order ' + item.productionOrderNumber + ', Op ' + item.sequenceNo + ' ' + item.operationName
+            "
+          >
             <mat-card-header>
               <mat-card-title>{{ item.productionOrderNumber }}</mat-card-title>
               <mat-card-subtitle>Op {{ item.sequenceNo }} · {{ item.operationName }}</mat-card-subtitle>
@@ -110,7 +121,7 @@ export interface MyWorkItemDto {
                   </mat-form-field>
                   <div class="form-actions">
                     <button mat-raised-button color="primary" (click)="recordOutput(item.id)">
-                      <mat-icon>save</mat-icon> Record Output
+                      <mat-icon aria-hidden="true">save</mat-icon> Record Output
                     </button>
                     <button mat-stroked-button (click)="cancelInput()">Cancel</button>
                   </div>
@@ -135,7 +146,7 @@ export interface MyWorkItemDto {
                   }
                   <div class="form-actions">
                     <button mat-raised-button color="primary" (click)="completeOp(item)">
-                      <mat-icon>check_circle</mat-icon> Complete operation
+                      <mat-icon aria-hidden="true">check_circle</mat-icon> Complete operation
                     </button>
                     <button mat-stroked-button (click)="cancelComplete()">Cancel</button>
                   </div>
@@ -151,25 +162,30 @@ export interface MyWorkItemDto {
                   color="primary"
                   [disabled]="!!item.startBlockedReason"
                   (click)="startOp(item.id)"
+                  [attr.aria-describedby]="item.startBlockedReason ? 'blocked-' + item.id : null"
                 >
-                  <mat-icon>play_arrow</mat-icon> Start
+                  <mat-icon aria-hidden="true">play_arrow</mat-icon> Start
                 </button>
                 @if (item.startBlockedReason) {
-                  <span class="start-blocked" data-testid="start-blocked-reason">{{ item.startBlockedReason }}</span>
+                  <span [id]="'blocked-' + item.id" class="start-blocked" data-testid="start-blocked-reason">
+                    {{ item.startBlockedReason }}
+                  </span>
                 }
               }
               @if (item.status === 'PAUSED') {
                 <button mat-raised-button color="primary" (click)="resumeOp(item.id)">
-                  <mat-icon>play_arrow</mat-icon> Resume
+                  <mat-icon aria-hidden="true">play_arrow</mat-icon> Resume
                 </button>
               }
               @if (item.status === 'IN_PROGRESS' && selectedOp() !== item.id && confirmingOp() !== item.id) {
                 <button mat-raised-button color="accent" (click)="openOutput(item.id)">
-                  <mat-icon>add_task</mat-icon> Record Output
+                  <mat-icon aria-hidden="true">add_task</mat-icon> Record Output
                 </button>
-                <button mat-stroked-button (click)="pauseOp(item.id)"><mat-icon>pause</mat-icon> Pause</button>
+                <button mat-stroked-button (click)="pauseOp(item.id)">
+                  <mat-icon aria-hidden="true">pause</mat-icon> Pause
+                </button>
                 <button mat-stroked-button (click)="askComplete(item.id)">
-                  <mat-icon>check_circle</mat-icon> Complete
+                  <mat-icon aria-hidden="true">check_circle</mat-icon> Complete
                 </button>
               }
             </mat-card-actions>
@@ -215,11 +231,11 @@ export interface MyWorkItemDto {
         color: #388e3c;
       }
       .stat-value.warn {
-        color: #f57c00;
+        color: #b45309; /* darkened from #f57c00 — WCAG AA 4.5:1 on white (ratio 4.6:1) */
       }
       .stat-label {
         font-size: 11px;
-        color: #888;
+        color: #666; /* darkened from #888 — WCAG AA 4.5:1 on white (ratio 5.7:1) */
         text-transform: uppercase;
       }
       .output-form {
@@ -253,6 +269,8 @@ export class MyWorkComponent implements OnInit {
   private http = inject(HttpClient);
   private snack = inject(MatSnackBar);
   private router = inject(Router);
+  private announcer = inject(LiveAnnouncer);
+  private el = inject(ElementRef);
 
   items = signal<MyWorkItemDto[]>([]);
   loading = signal(false);
@@ -282,6 +300,7 @@ export class MyWorkComponent implements OnInit {
     this.http.post(`/api/production/operations/${opId}/start`, {}).subscribe({
       next: () => {
         this.snack.open('Started', 'OK', { duration: 2000 });
+        this.announcer.announce('Operation started');
         this.load();
       },
       error: (e) => this.fail(e),
@@ -292,6 +311,7 @@ export class MyWorkComponent implements OnInit {
     this.http.post(`/api/production/operations/${opId}/pause`, {}).subscribe({
       next: () => {
         this.snack.open('Paused', 'OK', { duration: 2000 });
+        this.announcer.announce('Operation paused');
         this.load();
       },
       error: (e) => this.fail(e),
@@ -302,6 +322,7 @@ export class MyWorkComponent implements OnInit {
     this.http.post(`/api/production/operations/${opId}/resume`, {}).subscribe({
       next: () => {
         this.snack.open('Resumed', 'OK', { duration: 2000 });
+        this.announcer.announce('Operation resumed');
         this.load();
       },
       error: (e) => this.fail(e),
@@ -319,6 +340,7 @@ export class MyWorkComponent implements OnInit {
   askComplete(opId: number): void {
     this.selectedOp.set(null);
     this.confirmingOp.set(opId);
+    this.announcer.announce('Confirm completion panel opened');
   }
 
   cancelComplete(): void {
@@ -330,6 +352,7 @@ export class MyWorkComponent implements OnInit {
       next: () => {
         this.confirmingOp.set(null);
         if (item.finalOperation) {
+          this.announcer.announce('Operation completed. Final inspection requested for the finished goods.');
           this.snack
             .open('Operation completed. Final inspection requested for the finished goods.', 'Open inspections', {
               duration: 10000,
@@ -337,6 +360,7 @@ export class MyWorkComponent implements OnInit {
             .onAction()
             .subscribe(() => this.router.navigateByUrl('/quality/inspections'));
         } else {
+          this.announcer.announce('Operation completed');
           this.snack.open('Operation completed', 'OK', { duration: 2000 });
         }
         this.load();
@@ -351,6 +375,8 @@ export class MyWorkComponent implements OnInit {
     this.goodCtrl.setValue(0);
     this.rejCtrl.setValue(0);
     this.scrapCtrl.setValue(0);
+    this.announcer.announce('Output form opened');
+    setTimeout(() => (this.el.nativeElement.querySelector('.output-form input') as HTMLElement | null)?.focus());
   }
 
   cancelInput(): void {
@@ -371,6 +397,7 @@ export class MyWorkComponent implements OnInit {
     this.http.post('/api/production/outputs', body).subscribe({
       next: () => {
         this.snack.open('Output recorded', 'OK', { duration: 2000 });
+        this.announcer.announce('Output recorded');
         this.selectedOp.set(null);
         this.load();
       },

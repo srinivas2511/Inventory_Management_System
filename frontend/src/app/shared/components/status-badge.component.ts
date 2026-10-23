@@ -82,8 +82,8 @@ const STATUS_MAP: Record<string, { color: StatusColor; icon: string; label?: str
   standalone: true,
   imports: [MatChipsModule, MatIconModule],
   template: `
-    <span class="status-badge status-{{ color }}">
-      <mat-icon class="status-icon">{{ icon }}</mat-icon>
+    <span class="status-badge status-{{ color }}" role="img" [attr.aria-label]="displayLabel">
+      <mat-icon class="status-icon" aria-hidden="true">{{ icon }}</mat-icon>
       {{ displayLabel }}
     </span>
   `,
@@ -110,7 +110,7 @@ const STATUS_MAP: Record<string, { color: StatusColor; icon: string; label?: str
       }
       .status-amber {
         background: #fff8e1;
-        color: #f57f17;
+        color: #92400e; /* darkened from #f57f17 — WCAG AA 4.5:1 on #fff8e1 (ratio 5.9:1) */
       }
       .status-orange {
         background: #fff3e0;

@@ -4,6 +4,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Router, provideRouter } from '@angular/router';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { LiveAnnouncer } from '@angular/cdk/a11y';
 import { Subject } from 'rxjs';
 import { MyWorkComponent, MyWorkItemDto } from './my-work.component';
 
@@ -51,6 +52,48 @@ describe('MyWorkComponent', () => {
   }
 
   afterEach(() => backend.verify());
+
+  // ── Accessibility (NFR-007 / WCAG 2.1 AA) ─────────────────────────────────
+
+  it('A11Y: each work card has an accessible name containing the order number and operation', async () => {
+    await show([op]);
+    const card = fixture.nativeElement.querySelector('mat-card') as HTMLElement;
+    const label = card.getAttribute('aria-label') ?? '';
+    expect(label).toContain('PO/26/00009');
+    expect(label).toContain('Coiling');
+  });
+
+  it('A11Y: blocked Start button has aria-describedby pointing to the reason text', async () => {
+    await show([{ ...op, startBlockedReason: 'Operation 10 must complete first' }]);
+    const startBtn = (Array.from(fixture.nativeElement.querySelectorAll('button')) as HTMLButtonElement[]).find((b) =>
+      b.textContent?.includes('Start'),
+    )!;
+    const describedBy = startBtn.getAttribute('aria-describedby');
+    expect(describedBy).toBeTruthy();
+    const reasonEl = fixture.nativeElement.querySelector(`#${describedBy}`);
+    expect(reasonEl).not.toBeNull();
+    expect((reasonEl as HTMLElement).textContent).toContain('Operation 10 must complete first');
+  });
+
+  it('A11Y: LiveAnnouncer announces state changes for screen readers', async () => {
+    await show([op]);
+    const announcer = TestBed.inject(LiveAnnouncer);
+    const spy = spyOn(announcer, 'announce').and.callThrough();
+    click('Start');
+    backend.expectOne('/api/production/operations/55/start').flush({});
+    backend.expectOne('/api/production/my-work').flush([]);
+    expect(spy).toHaveBeenCalledWith('Operation started');
+  });
+
+  it('A11Y: LiveAnnouncer announces when the output form opens', async () => {
+    await show([{ ...op, status: 'IN_PROGRESS' }]);
+    const announcer = TestBed.inject(LiveAnnouncer);
+    const spy = spyOn(announcer, 'announce').and.callThrough();
+    click('Record Output');
+    expect(spy).toHaveBeenCalledWith('Output form opened');
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
 
   it('titles each card with the production order number', async () => {
     await show([op]);
