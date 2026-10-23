@@ -407,6 +407,30 @@ export interface BudgetRequest {
   budgetName: string | null;
 }
 
+export interface FxRevaluationRunResult {
+  apCount: number;
+  arCount: number;
+  apGainInr: number;
+  apLossInr: number;
+  arGainInr: number;
+  arLossInr: number;
+}
+
+export interface FxRevaluationDto {
+  id: number;
+  periodId: number;
+  periodName: string;
+  documentType: string;
+  documentId: number;
+  documentNumber: string;
+  currencyCode: string;
+  remainingForeign: number;
+  bookingRate: number;
+  closingRate: number;
+  differenceInr: number;
+  journalHeaderId: number | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class FinanceApi {
   private http = inject(HttpClient);
@@ -629,5 +653,15 @@ export class FinanceApi {
 
   getDashboard(): Observable<FinanceDashboardDto> {
     return this.http.get<FinanceDashboardDto>(`${this.base}/finance/dashboard`);
+  }
+
+  runFxRevaluation(periodId: number): Observable<FxRevaluationRunResult> {
+    const params = new HttpParams().set('periodId', periodId);
+    return this.http.post<FxRevaluationRunResult>(`${this.base}/finance/fx-revaluation/run`, null, { params });
+  }
+
+  listFxRevaluations(periodId: number): Observable<FxRevaluationDto[]> {
+    const params = new HttpParams().set('periodId', periodId);
+    return this.http.get<FxRevaluationDto[]>(`${this.base}/finance/fx-revaluation`, { params });
   }
 }

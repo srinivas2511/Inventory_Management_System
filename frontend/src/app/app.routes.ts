@@ -399,6 +399,13 @@ export const routes: Routes = [
           import('./features/finance/bank-reconciliation.component').then((m) => m.BankReconciliationComponent),
       },
       {
+        path: 'finance/fx-revaluation',
+        title: 'FX Revaluation',
+        canActivate: [permissionGuard('FX_REVALUATION_RUN')],
+        loadComponent: () =>
+          import('./features/finance/fx-revaluation.component').then((m) => m.FxRevaluationComponent),
+      },
+      {
         path: 'controlling/cost-centres',
         title: 'Cost Centres',
         canActivate: [permissionGuard('CONTROLLING_VIEW')],

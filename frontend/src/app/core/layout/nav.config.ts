@@ -390,6 +390,13 @@ export const NAV_GROUPS: NavGroup[] = [
         permission: 'BANK_RECONCILE',
         enabled: true,
       },
+      {
+        label: $localize`:@@nav.item-fx-revaluation:FX Revaluation`,
+        icon: 'sync_alt',
+        route: '/finance/fx-revaluation',
+        permission: 'FX_REVALUATION_RUN',
+        enabled: true,
+      },
     ],
   },
   {

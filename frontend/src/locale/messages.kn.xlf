@@ -226,6 +226,10 @@
         <source>Bank Reconciliation</source>
         <target>ಬ್ಯಾಂಕ್ ಸಮನ್ವಯ</target>
       </trans-unit>
+      <trans-unit id="nav.item-fx-revaluation" datatype="html">
+        <source>FX Revaluation</source>
+        <target>ವಿದೇಶಿ ವಿನಿಮಯ ಮರುಮೌಲ್ಯಮಾಪನ</target>
+      </trans-unit>
       <trans-unit id="nav.group-controlling" datatype="html">
         <source>Controlling</source>
         <target>ನಿಯಂತ್ರಣ</target>

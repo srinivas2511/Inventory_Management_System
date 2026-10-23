@@ -219,6 +219,11 @@ class RoleAccessIT extends AbstractIntegrationTest {
                     Set.of("OPERATOR", "ACCOUNTANT", "SALES")),
             Probe.of(HttpMethod.POST, "/api/ar/credit-notes/" + MISSING + "/cancel", Set.of("ADMIN", "ACCOUNTANT", "FINANCE_MANAGER"),
                     Set.of("OPERATOR", "SALES", "DISPATCH")),
+            // Unrealised FX revaluation: run and list gated behind FX_REVALUATION_RUN (ADMIN + FINANCE_MANAGER only)
+            Probe.of(HttpMethod.GET, "/api/finance/fx-revaluation", Set.of("ADMIN", "FINANCE_MANAGER"),
+                    Set.of("OPERATOR", "DISPATCH", "SALES")),
+            Probe.of(HttpMethod.POST, "/api/finance/fx-revaluation/run?periodId=" + MISSING,
+                    Set.of("ADMIN", "FINANCE_MANAGER"), Set.of("OPERATOR", "ACCOUNTANT", "DISPATCH")),
             // R9-7.10 module activation: any signed-in user reads the list (the navigation needs it); only MODULE_MANAGE switches
             Probe.of(HttpMethod.GET, "/api/modules", Set.of("ADMIN", "OPERATOR", "SALES", "DISPATCH"), Set.of()),
             Probe.withBody(HttpMethod.PUT, "/api/modules/CRM", "{\"active\":true}", Set.of("ADMIN"),
@@ -564,6 +569,7 @@ class RoleAccessIT extends AbstractIntegrationTest {
             Map.entry("POST /api/ar/credit-notes", 404),
             Map.entry("POST /api/ar/credit-notes/999999/approve", 404),
             Map.entry("POST /api/ar/credit-notes/999999/cancel", 404),
+            Map.entry("POST /api/finance/fx-revaluation/run?periodId=999999", 404),
             Map.entry("PUT /api/finance/exchange-rates", 404),
             Map.entry("PUT /api/finance/tax/product-slabs/999999", 404),
             Map.entry("GET /api/traceability/fg-batch/999999", 404),
