@@ -29,13 +29,24 @@ export const NAV_GROUPS: NavGroup[] = [
         enabled: true,
         companyLevel: true,
       },
-      { label: $localize`:@@nav.item-notifications:Notifications`, icon: 'notifications', route: '/notifications', enabled: true },
+      {
+        label: $localize`:@@nav.item-notifications:Notifications`,
+        icon: 'notifications',
+        route: '/notifications',
+        enabled: true,
+      },
     ],
   },
   {
     label: $localize`:@@nav.group-master-data:Master Data`,
     items: [
-      { label: $localize`:@@nav.item-materials:Materials`, icon: 'category', route: '/master/materials', permission: 'MATERIAL_VIEW', enabled: true },
+      {
+        label: $localize`:@@nav.item-materials:Materials`,
+        icon: 'category',
+        route: '/master/materials',
+        permission: 'MATERIAL_VIEW',
+        enabled: true,
+      },
       {
         label: $localize`:@@nav.item-products:Products`,
         icon: 'settings_input_component',
@@ -50,7 +61,13 @@ export const NAV_GROUPS: NavGroup[] = [
         permission: 'SUPPLIER_MANAGE',
         enabled: true,
       },
-      { label: $localize`:@@nav.item-customers:Customers`, icon: 'groups', route: '/master/customers', permission: 'CUSTOMER_MANAGE', enabled: true },
+      {
+        label: $localize`:@@nav.item-customers:Customers`,
+        icon: 'groups',
+        route: '/master/customers',
+        permission: 'CUSTOMER_MANAGE',
+        enabled: true,
+      },
     ],
   },
   {
@@ -122,7 +139,13 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     label: $localize`:@@nav.group-engineering:Engineering`,
     items: [
-      { label: $localize`:@@nav.item-bill-of-materials:Bill of Materials`, icon: 'schema', route: '/engineering/bom', permission: 'BOM_VIEW', enabled: true },
+      {
+        label: $localize`:@@nav.item-bill-of-materials:Bill of Materials`,
+        icon: 'schema',
+        route: '/engineering/bom',
+        permission: 'BOM_VIEW',
+        enabled: true,
+      },
       {
         label: $localize`:@@nav.item-product-routing:Product Routing`,
         icon: 'route',
@@ -156,7 +179,13 @@ export const NAV_GROUPS: NavGroup[] = [
         permission: 'SCHEDULE_VIEW',
         enabled: true,
       },
-      { label: $localize`:@@nav.item-oee:OEE`, icon: 'speed', route: '/production/oee', permission: 'OEE_VIEW', enabled: true },
+      {
+        label: $localize`:@@nav.item-oee:OEE`,
+        icon: 'speed',
+        route: '/production/oee',
+        permission: 'OEE_VIEW',
+        enabled: true,
+      },
     ],
   },
   {
@@ -183,8 +212,20 @@ export const NAV_GROUPS: NavGroup[] = [
         permission: 'QUALITY_VIEW',
         enabled: true,
       },
-      { label: $localize`:@@nav.item-spc-charts:SPC Charts`, icon: 'show_chart', route: '/quality/spc', permission: 'QUALITY_VIEW', enabled: true },
-      { label: $localize`:@@nav.item-capa:CAPA`, icon: 'assignment_late', route: '/quality/capa', permission: 'QUALITY_VIEW', enabled: true },
+      {
+        label: $localize`:@@nav.item-spc-charts:SPC Charts`,
+        icon: 'show_chart',
+        route: '/quality/spc',
+        permission: 'QUALITY_VIEW',
+        enabled: true,
+      },
+      {
+        label: $localize`:@@nav.item-capa:CAPA`,
+        icon: 'assignment_late',
+        route: '/quality/capa',
+        permission: 'QUALITY_VIEW',
+        enabled: true,
+      },
       {
         label: $localize`:@@nav.item-complaints:Complaints`,
         icon: 'report_problem',
@@ -192,13 +233,25 @@ export const NAV_GROUPS: NavGroup[] = [
         permission: 'QUALITY_VIEW',
         enabled: true,
       },
-      { label: $localize`:@@nav.item-first-article:First Article`, icon: 'rule', route: '/quality/fai', permission: 'QUALITY_VIEW', enabled: true },
+      {
+        label: $localize`:@@nav.item-first-article:First Article`,
+        icon: 'rule',
+        route: '/quality/fai',
+        permission: 'QUALITY_VIEW',
+        enabled: true,
+      },
     ],
   },
   {
     label: $localize`:@@nav.group-sales:Sales`,
     items: [
-      { label: $localize`:@@nav.item-sales-orders:Sales Orders`, icon: 'sell', route: '/sales/orders', permission: 'SALES_VIEW', enabled: true },
+      {
+        label: $localize`:@@nav.item-sales-orders:Sales Orders`,
+        icon: 'sell',
+        route: '/sales/orders',
+        permission: 'SALES_VIEW',
+        enabled: true,
+      },
       {
         label: $localize`:@@nav.item-dispatches:Dispatches`,
         icon: 'local_shipping',
@@ -219,7 +272,13 @@ export const NAV_GROUPS: NavGroup[] = [
         permission: 'ALERT_VIEW',
         enabled: true,
       },
-      { label: $localize`:@@nav.item-reports:Reports`, icon: 'assessment', route: '/insight/reports', permission: 'REPORT_VIEW', enabled: true },
+      {
+        label: $localize`:@@nav.item-reports:Reports`,
+        icon: 'assessment',
+        route: '/insight/reports',
+        permission: 'REPORT_VIEW',
+        enabled: true,
+      },
       {
         label: $localize`:@@nav.item-analytics:Analytics`,
         icon: 'insights',
@@ -268,7 +327,13 @@ export const NAV_GROUPS: NavGroup[] = [
         permission: 'GL_VIEW',
         enabled: true,
       },
-      { label: $localize`:@@nav.item-accounts-payable:Accounts Payable`, icon: 'payments', route: '/finance/ap', permission: 'AP_MANAGE', enabled: true },
+      {
+        label: $localize`:@@nav.item-accounts-payable:Accounts Payable`,
+        icon: 'payments',
+        route: '/finance/ap',
+        permission: 'AP_MANAGE',
+        enabled: true,
+      },
       {
         label: $localize`:@@nav.item-accounts-receivable:Accounts Receivable`,
         icon: 'request_quote',
@@ -290,7 +355,13 @@ export const NAV_GROUPS: NavGroup[] = [
         permission: 'AR_MANAGE',
         enabled: true,
       },
-      { label: $localize`:@@nav.item-gst-tax:GST Tax`, icon: 'percent', route: '/finance/tax', permission: 'GL_VIEW', enabled: true },
+      {
+        label: $localize`:@@nav.item-gst-tax:GST Tax`,
+        icon: 'percent',
+        route: '/finance/tax',
+        permission: 'GL_VIEW',
+        enabled: true,
+      },
       {
         label: $localize`:@@nav.item-exchange-rates:Exchange Rates`,
         icon: 'currency_exchange',
@@ -352,7 +423,13 @@ export const NAV_GROUPS: NavGroup[] = [
     label: $localize`:@@nav.group-planning-mrp:Planning (MRP)`,
     companyLevel: true,
     items: [
-      { label: $localize`:@@nav.item-mrp-runs:MRP Runs`, icon: 'event_repeat', route: '/mrp/runs', permission: 'MRP_VIEW', enabled: true },
+      {
+        label: $localize`:@@nav.item-mrp-runs:MRP Runs`,
+        icon: 'event_repeat',
+        route: '/mrp/runs',
+        permission: 'MRP_VIEW',
+        enabled: true,
+      },
       {
         label: $localize`:@@nav.item-mrp-proposals:MRP Proposals`,
         icon: 'playlist_add_check',
@@ -367,13 +444,25 @@ export const NAV_GROUPS: NavGroup[] = [
         permission: 'MRP_VIEW',
         enabled: true,
       },
-      { label: $localize`:@@nav.item-planning-parameters:Planning Parameters`, icon: 'tune', route: '/mrp/planning', permission: 'MRP_VIEW', enabled: true },
+      {
+        label: $localize`:@@nav.item-planning-parameters:Planning Parameters`,
+        icon: 'tune',
+        route: '/mrp/planning',
+        permission: 'MRP_VIEW',
+        enabled: true,
+      },
     ],
   },
   {
     label: $localize`:@@nav.group-documents:Documents`,
     items: [
-      { label: $localize`:@@nav.item-documents:Documents`, icon: 'folder_open', route: '/documents', permission: 'DOCUMENT_VIEW', enabled: true },
+      {
+        label: $localize`:@@nav.item-documents:Documents`,
+        icon: 'folder_open',
+        route: '/documents',
+        permission: 'DOCUMENT_VIEW',
+        enabled: true,
+      },
     ],
   },
   {
@@ -398,7 +487,13 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     label: $localize`:@@nav.group-crm:CRM`,
     items: [
-      { label: $localize`:@@nav.item-leads:Leads`, icon: 'person_search', route: '/crm/leads', permission: 'CRM_VIEW', enabled: true },
+      {
+        label: $localize`:@@nav.item-leads:Leads`,
+        icon: 'person_search',
+        route: '/crm/leads',
+        permission: 'CRM_VIEW',
+        enabled: true,
+      },
       {
         label: $localize`:@@nav.item-opportunities:Opportunities`,
         icon: 'view_kanban',
@@ -406,31 +501,121 @@ export const NAV_GROUPS: NavGroup[] = [
         permission: 'CRM_VIEW',
         enabled: true,
       },
-      { label: $localize`:@@nav.item-quotations:Quotations`, icon: 'request_quote', route: '/crm/quotations', permission: 'CRM_VIEW', enabled: true },
-      { label: $localize`:@@nav.item-contacts:Contacts`, icon: 'contacts', route: '/crm/contacts', permission: 'CRM_VIEW', enabled: true },
-      { label: $localize`:@@nav.item-customer-activity:Customer Activity`, icon: 'history', route: '/crm/activities', permission: 'CRM_VIEW', enabled: true },
-      { label: $localize`:@@nav.item-customer-segments:Customer Segments`, icon: 'label', route: '/crm/customers', permission: 'CRM_VIEW', enabled: true },
-      { label: $localize`:@@nav.item-price-lists:Price Lists`, icon: 'sell', route: '/crm/prices', permission: 'CRM_VIEW', enabled: true },
-      { label: $localize`:@@nav.item-sales-pipeline:Sales Pipeline`, icon: 'filter_alt', route: '/crm/pipeline', permission: 'CRM_VIEW', enabled: true },
+      {
+        label: $localize`:@@nav.item-quotations:Quotations`,
+        icon: 'request_quote',
+        route: '/crm/quotations',
+        permission: 'CRM_VIEW',
+        enabled: true,
+      },
+      {
+        label: $localize`:@@nav.item-contacts:Contacts`,
+        icon: 'contacts',
+        route: '/crm/contacts',
+        permission: 'CRM_VIEW',
+        enabled: true,
+      },
+      {
+        label: $localize`:@@nav.item-customer-activity:Customer Activity`,
+        icon: 'history',
+        route: '/crm/activities',
+        permission: 'CRM_VIEW',
+        enabled: true,
+      },
+      {
+        label: $localize`:@@nav.item-customer-segments:Customer Segments`,
+        icon: 'label',
+        route: '/crm/customers',
+        permission: 'CRM_VIEW',
+        enabled: true,
+      },
+      {
+        label: $localize`:@@nav.item-price-lists:Price Lists`,
+        icon: 'sell',
+        route: '/crm/prices',
+        permission: 'CRM_VIEW',
+        enabled: true,
+      },
+      {
+        label: $localize`:@@nav.item-sales-pipeline:Sales Pipeline`,
+        icon: 'filter_alt',
+        route: '/crm/pipeline',
+        permission: 'CRM_VIEW',
+        enabled: true,
+      },
     ],
   },
   {
     label: $localize`:@@nav.group-hr:HR`,
     items: [
-      { label: $localize`:@@nav.item-employees:Employees`, icon: 'badge', route: '/hrm/employees', permission: 'HR_VIEW', enabled: true },
-      { label: $localize`:@@nav.item-attendance:Attendance`, icon: 'event_available', route: '/hrm/attendance', permission: 'HR_VIEW', enabled: true },
-      { label: $localize`:@@nav.item-shifts:Shifts`, icon: 'schedule', route: '/hrm/shifts', permission: 'HR_VIEW', enabled: true },
-      { label: $localize`:@@nav.item-leave:Leave`, icon: 'beach_access', route: '/hrm/leave', permission: 'LEAVE_APPLY', enabled: true },
-      { label: $localize`:@@nav.item-training:Training`, icon: 'school', route: '/hrm/training', permission: 'HR_VIEW', enabled: true },
-      { label: $localize`:@@nav.item-payroll:Payroll`, icon: 'payments', route: '/hrm/payroll', permission: 'PAYROLL_RUN', enabled: true },
+      {
+        label: $localize`:@@nav.item-employees:Employees`,
+        icon: 'badge',
+        route: '/hrm/employees',
+        permission: 'HR_VIEW',
+        enabled: true,
+      },
+      {
+        label: $localize`:@@nav.item-attendance:Attendance`,
+        icon: 'event_available',
+        route: '/hrm/attendance',
+        permission: 'HR_VIEW',
+        enabled: true,
+      },
+      {
+        label: $localize`:@@nav.item-shifts:Shifts`,
+        icon: 'schedule',
+        route: '/hrm/shifts',
+        permission: 'HR_VIEW',
+        enabled: true,
+      },
+      {
+        label: $localize`:@@nav.item-leave:Leave`,
+        icon: 'beach_access',
+        route: '/hrm/leave',
+        permission: 'LEAVE_APPLY',
+        enabled: true,
+      },
+      {
+        label: $localize`:@@nav.item-training:Training`,
+        icon: 'school',
+        route: '/hrm/training',
+        permission: 'HR_VIEW',
+        enabled: true,
+      },
+      {
+        label: $localize`:@@nav.item-payroll:Payroll`,
+        icon: 'payments',
+        route: '/hrm/payroll',
+        permission: 'PAYROLL_RUN',
+        enabled: true,
+      },
     ],
   },
   {
     label: $localize`:@@nav.group-warehouse-operations:Warehouse Operations`,
     items: [
-      { label: $localize`:@@nav.item-zones-bins:Zones & Bins`, icon: 'grid_view', route: '/wms/bins', permission: 'WMS_VIEW', enabled: true },
-      { label: $localize`:@@nav.item-bin-view:Bin View`, icon: 'inventory', route: '/wms/bin-view', permission: 'WMS_VIEW', enabled: true },
-      { label: $localize`:@@nav.item-put-away:Put-away`, icon: 'move_to_inbox', route: '/wms/putaway', permission: 'WMS_VIEW', enabled: true },
+      {
+        label: $localize`:@@nav.item-zones-bins:Zones & Bins`,
+        icon: 'grid_view',
+        route: '/wms/bins',
+        permission: 'WMS_VIEW',
+        enabled: true,
+      },
+      {
+        label: $localize`:@@nav.item-bin-view:Bin View`,
+        icon: 'inventory',
+        route: '/wms/bin-view',
+        permission: 'WMS_VIEW',
+        enabled: true,
+      },
+      {
+        label: $localize`:@@nav.item-put-away:Put-away`,
+        icon: 'move_to_inbox',
+        route: '/wms/putaway',
+        permission: 'WMS_VIEW',
+        enabled: true,
+      },
       {
         label: $localize`:@@nav.item-picking:Picking`,
         icon: 'shopping_cart_checkout',
@@ -438,16 +623,46 @@ export const NAV_GROUPS: NavGroup[] = [
         permission: 'WMS_VIEW',
         enabled: true,
       },
-      { label: $localize`:@@nav.item-pick-waves:Pick Waves`, icon: 'waves', route: '/wms/waves', permission: 'WMS_VIEW', enabled: true },
-      { label: $localize`:@@nav.item-transfers:Transfers`, icon: 'swap_horiz', route: '/wms/transfers', permission: 'WMS_VIEW', enabled: true },
-      { label: $localize`:@@nav.item-cross-dock:Cross-dock`, icon: 'sync_alt', route: '/wms/cross-dock', permission: 'WMS_VIEW', enabled: true },
-      { label: $localize`:@@nav.item-cycle-counts:Cycle Counts`, icon: 'fact_check', route: '/wms/cycle-counts', permission: 'WMS_VIEW', enabled: true },
+      {
+        label: $localize`:@@nav.item-pick-waves:Pick Waves`,
+        icon: 'waves',
+        route: '/wms/waves',
+        permission: 'WMS_VIEW',
+        enabled: true,
+      },
+      {
+        label: $localize`:@@nav.item-transfers:Transfers`,
+        icon: 'swap_horiz',
+        route: '/wms/transfers',
+        permission: 'WMS_VIEW',
+        enabled: true,
+      },
+      {
+        label: $localize`:@@nav.item-cross-dock:Cross-dock`,
+        icon: 'sync_alt',
+        route: '/wms/cross-dock',
+        permission: 'WMS_VIEW',
+        enabled: true,
+      },
+      {
+        label: $localize`:@@nav.item-cycle-counts:Cycle Counts`,
+        icon: 'fact_check',
+        route: '/wms/cycle-counts',
+        permission: 'WMS_VIEW',
+        enabled: true,
+      },
     ],
   },
   {
     label: $localize`:@@nav.group-maintenance:Maintenance`,
     items: [
-      { label: $localize`:@@nav.item-maintenance:Maintenance`, icon: 'build', route: '/maintenance', permission: 'MAINTENANCE_VIEW', enabled: true },
+      {
+        label: $localize`:@@nav.item-maintenance:Maintenance`,
+        icon: 'build',
+        route: '/maintenance',
+        permission: 'MAINTENANCE_VIEW',
+        enabled: true,
+      },
       {
         label: $localize`:@@nav.item-spare-parts:Spare Parts`,
         icon: 'handyman',
@@ -460,7 +675,13 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     label: $localize`:@@nav.group-administration:Administration`,
     items: [
-      { label: $localize`:@@nav.item-users:Users`, icon: 'manage_accounts', route: '/admin/users', permission: 'USER_VIEW', enabled: true },
+      {
+        label: $localize`:@@nav.item-users:Users`,
+        icon: 'manage_accounts',
+        route: '/admin/users',
+        permission: 'USER_VIEW',
+        enabled: true,
+      },
       {
         label: $localize`:@@nav.item-roles:Roles`,
         icon: 'admin_panel_settings',
@@ -476,8 +697,20 @@ export const NAV_GROUPS: NavGroup[] = [
         enabled: true,
         companyLevel: true,
       },
-      { label: $localize`:@@nav.item-modules:Modules`, icon: 'extension', route: '/admin/modules', permission: 'MODULE_MANAGE', enabled: true },
-      { label: $localize`:@@nav.item-plants:Plants`, icon: 'factory', route: '/admin/plants', permission: 'PLANT_MANAGE', enabled: true },
+      {
+        label: $localize`:@@nav.item-modules:Modules`,
+        icon: 'extension',
+        route: '/admin/modules',
+        permission: 'MODULE_MANAGE',
+        enabled: true,
+      },
+      {
+        label: $localize`:@@nav.item-plants:Plants`,
+        icon: 'factory',
+        route: '/admin/plants',
+        permission: 'PLANT_MANAGE',
+        enabled: true,
+      },
       {
         label: $localize`:@@nav.item-notification-admin:Notification Admin`,
         icon: 'mark_email_read',

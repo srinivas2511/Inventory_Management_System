@@ -47,7 +47,8 @@ type ReasonAction = 'reject' | 'obsolete';
         </h2>
       </div>
       <p class="meta">
-        {{ d.categoryName }} · version {{ d.currentVersionNo }} · updated {{ d.updatedAt | istDate: 'dd MMM yyyy HH:mm' }}
+        {{ d.categoryName }} · version {{ d.currentVersionNo }} · updated
+        {{ d.updatedAt | istDate: 'dd MMM yyyy HH:mm' }}
       </p>
       @if (d.description) {
         <p>{{ d.description }}</p>

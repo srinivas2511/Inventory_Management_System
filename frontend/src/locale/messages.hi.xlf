@@ -1,0 +1,491 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+  <file source-language="en-IN" target-language="hi" datatype="plaintext" original="ng2.template">
+    <body>
+      <trans-unit id="nav.group-overview" datatype="html">
+        <source>Overview</source>
+        <target>अवलोकन</target>
+      </trans-unit>
+      <trans-unit id="nav.item-dashboard" datatype="html">
+        <source>Dashboard</source>
+        <target>डैशबोर्ड</target>
+      </trans-unit>
+      <trans-unit id="nav.item-notifications" datatype="html">
+        <source>Notifications</source>
+        <target>सूचनाएं</target>
+      </trans-unit>
+      <trans-unit id="nav.group-master-data" datatype="html">
+        <source>Master Data</source>
+        <target>मास्टर डेटा</target>
+      </trans-unit>
+      <trans-unit id="nav.item-materials" datatype="html">
+        <source>Materials</source>
+        <target>सामग्री</target>
+      </trans-unit>
+      <trans-unit id="nav.item-products" datatype="html">
+        <source>Products</source>
+        <target>उत्पाद</target>
+      </trans-unit>
+      <trans-unit id="nav.item-suppliers" datatype="html">
+        <source>Suppliers</source>
+        <target>आपूर्तिकर्ता</target>
+      </trans-unit>
+      <trans-unit id="nav.item-customers" datatype="html">
+        <source>Customers</source>
+        <target>ग्राहक</target>
+      </trans-unit>
+      <trans-unit id="nav.group-warehouses-inventory" datatype="html">
+        <source>Warehouses &amp; Inventory</source>
+        <target>गोदाम और इन्वेंटरी</target>
+      </trans-unit>
+      <trans-unit id="nav.item-warehouses" datatype="html">
+        <source>Warehouses</source>
+        <target>गोदाम</target>
+      </trans-unit>
+      <trans-unit id="nav.item-current-stock" datatype="html">
+        <source>Current Stock</source>
+        <target>वर्तमान स्टॉक</target>
+      </trans-unit>
+      <trans-unit id="nav.item-stock-ledger" datatype="html">
+        <source>Stock Ledger</source>
+        <target>स्टॉक खाता</target>
+      </trans-unit>
+      <trans-unit id="nav.item-batch-tracking" datatype="html">
+        <source>Batch Tracking</source>
+        <target>बैच ट्रैकिंग</target>
+      </trans-unit>
+      <trans-unit id="nav.item-adjustments" datatype="html">
+        <source>Adjustments</source>
+        <target>समायोजन</target>
+      </trans-unit>
+      <trans-unit id="nav.group-procurement" datatype="html">
+        <source>Procurement</source>
+        <target>खरीद</target>
+      </trans-unit>
+      <trans-unit id="nav.item-purchase-orders" datatype="html">
+        <source>Purchase Orders</source>
+        <target>खरीद आदेश</target>
+      </trans-unit>
+      <trans-unit id="nav.item-requisitions" datatype="html">
+        <source>Requisitions</source>
+        <target>आवश्यकताएं</target>
+      </trans-unit>
+      <trans-unit id="nav.item-goods-receipts" datatype="html">
+        <source>Goods Receipts</source>
+        <target>माल रसीदें</target>
+      </trans-unit>
+      <trans-unit id="nav.group-engineering" datatype="html">
+        <source>Engineering</source>
+        <target>इंजीनियरिंग</target>
+      </trans-unit>
+      <trans-unit id="nav.item-bill-of-materials" datatype="html">
+        <source>Bill of Materials</source>
+        <target>सामग्री बिल</target>
+      </trans-unit>
+      <trans-unit id="nav.item-product-routing" datatype="html">
+        <source>Product Routing</source>
+        <target>उत्पाद रूटिंग</target>
+      </trans-unit>
+      <trans-unit id="nav.group-production" datatype="html">
+        <source>Production</source>
+        <target>उत्पादन</target>
+      </trans-unit>
+      <trans-unit id="nav.item-production-orders" datatype="html">
+        <source>Production Orders</source>
+        <target>उत्पादन आदेश</target>
+      </trans-unit>
+      <trans-unit id="nav.item-my-work" datatype="html">
+        <source>My Work</source>
+        <target>मेरा कार्य</target>
+      </trans-unit>
+      <trans-unit id="nav.item-schedule" datatype="html">
+        <source>Schedule</source>
+        <target>अनुसूची</target>
+      </trans-unit>
+      <trans-unit id="nav.item-oee" datatype="html">
+        <source>OEE</source>
+        <target>ओईई</target>
+      </trans-unit>
+      <trans-unit id="nav.group-quality" datatype="html">
+        <source>Quality</source>
+        <target>गुणवत्ता</target>
+      </trans-unit>
+      <trans-unit id="nav.item-inspections" datatype="html">
+        <source>Inspections</source>
+        <target>निरीक्षण</target>
+      </trans-unit>
+      <trans-unit id="nav.item-fg-batches" datatype="html">
+        <source>FG Batches</source>
+        <target>तैयार माल बैच</target>
+      </trans-unit>
+      <trans-unit id="nav.item-rejection-analysis" datatype="html">
+        <source>Rejection Analysis</source>
+        <target>अस्वीकृति विश्लेषण</target>
+      </trans-unit>
+      <trans-unit id="nav.item-spc-charts" datatype="html">
+        <source>SPC Charts</source>
+        <target>एसपीसी चार्ट</target>
+      </trans-unit>
+      <trans-unit id="nav.item-capa" datatype="html">
+        <source>CAPA</source>
+        <target>सीएपीए</target>
+      </trans-unit>
+      <trans-unit id="nav.item-complaints" datatype="html">
+        <source>Complaints</source>
+        <target>शिकायतें</target>
+      </trans-unit>
+      <trans-unit id="nav.item-first-article" datatype="html">
+        <source>First Article</source>
+        <target>प्रथम लेख</target>
+      </trans-unit>
+      <trans-unit id="nav.group-sales" datatype="html">
+        <source>Sales</source>
+        <target>बिक्री</target>
+      </trans-unit>
+      <trans-unit id="nav.item-sales-orders" datatype="html">
+        <source>Sales Orders</source>
+        <target>बिक्री आदेश</target>
+      </trans-unit>
+      <trans-unit id="nav.item-dispatches" datatype="html">
+        <source>Dispatches</source>
+        <target>प्रेषण</target>
+      </trans-unit>
+      <trans-unit id="nav.group-insight" datatype="html">
+        <source>Insight</source>
+        <target>अंतर्दृष्टि</target>
+      </trans-unit>
+      <trans-unit id="nav.item-alerts" datatype="html">
+        <source>Alerts</source>
+        <target>चेतावनियां</target>
+      </trans-unit>
+      <trans-unit id="nav.item-reports" datatype="html">
+        <source>Reports</source>
+        <target>रिपोर्ट</target>
+      </trans-unit>
+      <trans-unit id="nav.item-analytics" datatype="html">
+        <source>Analytics</source>
+        <target>विश्लेषण</target>
+      </trans-unit>
+      <trans-unit id="nav.item-analytics-explorer" datatype="html">
+        <source>Analytics Explorer</source>
+        <target>विश्लेषण एक्सप्लोरर</target>
+      </trans-unit>
+      <trans-unit id="nav.item-traceability" datatype="html">
+        <source>Traceability</source>
+        <target>ट्रेसेबिलिटी</target>
+      </trans-unit>
+      <trans-unit id="nav.group-finance" datatype="html">
+        <source>Finance</source>
+        <target>वित्त</target>
+      </trans-unit>
+      <trans-unit id="nav.item-dashboard-2" datatype="html">
+        <source>Dashboard</source>
+        <target>डैशबोर्ड</target>
+      </trans-unit>
+      <trans-unit id="nav.item-journal-entries" datatype="html">
+        <source>Journal Entries</source>
+        <target>जर्नल प्रविष्टियां</target>
+      </trans-unit>
+      <trans-unit id="nav.item-fiscal-periods" datatype="html">
+        <source>Fiscal Periods</source>
+        <target>वित्तीय अवधि</target>
+      </trans-unit>
+      <trans-unit id="nav.item-accounts-payable" datatype="html">
+        <source>Accounts Payable</source>
+        <target>देय खाते</target>
+      </trans-unit>
+      <trans-unit id="nav.item-accounts-receivable" datatype="html">
+        <source>Accounts Receivable</source>
+        <target>प्राप्य खाते</target>
+      </trans-unit>
+      <trans-unit id="nav.item-ar-reconciliation" datatype="html">
+        <source>AR Reconciliation</source>
+        <target>एआर समाधान</target>
+      </trans-unit>
+      <trans-unit id="nav.item-credit-notes" datatype="html">
+        <source>Credit Notes</source>
+        <target>क्रेडिट नोट</target>
+      </trans-unit>
+      <trans-unit id="nav.item-gst-tax" datatype="html">
+        <source>GST Tax</source>
+        <target>जीएसटी कर</target>
+      </trans-unit>
+      <trans-unit id="nav.item-exchange-rates" datatype="html">
+        <source>Exchange Rates</source>
+        <target>विनिमय दर</target>
+      </trans-unit>
+      <trans-unit id="nav.item-budget-vs-actual" datatype="html">
+        <source>Budget vs Actual</source>
+        <target>बजट बनाम वास्तविक</target>
+      </trans-unit>
+      <trans-unit id="nav.item-bank-reconciliation" datatype="html">
+        <source>Bank Reconciliation</source>
+        <target>बैंक समाधान</target>
+      </trans-unit>
+      <trans-unit id="nav.group-controlling" datatype="html">
+        <source>Controlling</source>
+        <target>नियंत्रण</target>
+      </trans-unit>
+      <trans-unit id="nav.item-cost-centres" datatype="html">
+        <source>Cost Centres</source>
+        <target>लागत केंद्र</target>
+      </trans-unit>
+      <trans-unit id="nav.item-product-costing" datatype="html">
+        <source>Product Costing</source>
+        <target>उत्पाद लागत</target>
+      </trans-unit>
+      <trans-unit id="nav.item-variance-analysis" datatype="html">
+        <source>Variance Analysis</source>
+        <target>भिन्नता विश्लेषण</target>
+      </trans-unit>
+      <trans-unit id="nav.item-controlling-reports" datatype="html">
+        <source>Controlling Reports</source>
+        <target>नियंत्रण रिपोर्ट</target>
+      </trans-unit>
+      <trans-unit id="nav.group-planning-mrp" datatype="html">
+        <source>Planning (MRP)</source>
+        <target>योजना (एमआरपी)</target>
+      </trans-unit>
+      <trans-unit id="nav.item-mrp-runs" datatype="html">
+        <source>MRP Runs</source>
+        <target>एमआरपी रन</target>
+      </trans-unit>
+      <trans-unit id="nav.item-mrp-proposals" datatype="html">
+        <source>MRP Proposals</source>
+        <target>एमआरपी प्रस्ताव</target>
+      </trans-unit>
+      <trans-unit id="nav.item-demand-forecasts" datatype="html">
+        <source>Demand Forecasts</source>
+        <target>मांग पूर्वानुमान</target>
+      </trans-unit>
+      <trans-unit id="nav.item-planning-parameters" datatype="html">
+        <source>Planning Parameters</source>
+        <target>योजना पैरामीटर</target>
+      </trans-unit>
+      <trans-unit id="nav.group-documents" datatype="html">
+        <source>Documents</source>
+        <target>दस्तावेज़</target>
+      </trans-unit>
+      <trans-unit id="nav.item-documents" datatype="html">
+        <source>Documents</source>
+        <target>दस्तावेज़</target>
+      </trans-unit>
+      <trans-unit id="nav.group-plm" datatype="html">
+        <source>PLM</source>
+        <target>पीएलएम</target>
+      </trans-unit>
+      <trans-unit id="nav.item-change-orders" datatype="html">
+        <source>Change Orders</source>
+        <target>परिवर्तन आदेश</target>
+      </trans-unit>
+      <trans-unit id="nav.item-product-lifecycle" datatype="html">
+        <source>Product Lifecycle</source>
+        <target>उत्पाद जीवनचक्र</target>
+      </trans-unit>
+      <trans-unit id="nav.group-crm" datatype="html">
+        <source>CRM</source>
+        <target>सीआरएम</target>
+      </trans-unit>
+      <trans-unit id="nav.item-leads" datatype="html">
+        <source>Leads</source>
+        <target>लीड</target>
+      </trans-unit>
+      <trans-unit id="nav.item-opportunities" datatype="html">
+        <source>Opportunities</source>
+        <target>अवसर</target>
+      </trans-unit>
+      <trans-unit id="nav.item-quotations" datatype="html">
+        <source>Quotations</source>
+        <target>उद्धरण</target>
+      </trans-unit>
+      <trans-unit id="nav.item-contacts" datatype="html">
+        <source>Contacts</source>
+        <target>संपर्क</target>
+      </trans-unit>
+      <trans-unit id="nav.item-customer-activity" datatype="html">
+        <source>Customer Activity</source>
+        <target>ग्राहक गतिविधि</target>
+      </trans-unit>
+      <trans-unit id="nav.item-customer-segments" datatype="html">
+        <source>Customer Segments</source>
+        <target>ग्राहक खंड</target>
+      </trans-unit>
+      <trans-unit id="nav.item-price-lists" datatype="html">
+        <source>Price Lists</source>
+        <target>मूल्य सूची</target>
+      </trans-unit>
+      <trans-unit id="nav.item-sales-pipeline" datatype="html">
+        <source>Sales Pipeline</source>
+        <target>बिक्री पाइपलाइन</target>
+      </trans-unit>
+      <trans-unit id="nav.group-hr" datatype="html">
+        <source>HR</source>
+        <target>एचआर</target>
+      </trans-unit>
+      <trans-unit id="nav.item-employees" datatype="html">
+        <source>Employees</source>
+        <target>कर्मचारी</target>
+      </trans-unit>
+      <trans-unit id="nav.item-attendance" datatype="html">
+        <source>Attendance</source>
+        <target>उपस्थिति</target>
+      </trans-unit>
+      <trans-unit id="nav.item-shifts" datatype="html">
+        <source>Shifts</source>
+        <target>पालियां</target>
+      </trans-unit>
+      <trans-unit id="nav.item-leave" datatype="html">
+        <source>Leave</source>
+        <target>अवकाश</target>
+      </trans-unit>
+      <trans-unit id="nav.item-training" datatype="html">
+        <source>Training</source>
+        <target>प्रशिक्षण</target>
+      </trans-unit>
+      <trans-unit id="nav.item-payroll" datatype="html">
+        <source>Payroll</source>
+        <target>वेतन पत्रक</target>
+      </trans-unit>
+      <trans-unit id="nav.group-warehouse-operations" datatype="html">
+        <source>Warehouse Operations</source>
+        <target>गोदाम संचालन</target>
+      </trans-unit>
+      <trans-unit id="nav.item-zones-bins" datatype="html">
+        <source>Zones &amp; Bins</source>
+        <target>क्षेत्र और डिब्बे</target>
+      </trans-unit>
+      <trans-unit id="nav.item-bin-view" datatype="html">
+        <source>Bin View</source>
+        <target>डिब्बा दृश्य</target>
+      </trans-unit>
+      <trans-unit id="nav.item-put-away" datatype="html">
+        <source>Put-away</source>
+        <target>रखना</target>
+      </trans-unit>
+      <trans-unit id="nav.item-picking" datatype="html">
+        <source>Picking</source>
+        <target>चुनना</target>
+      </trans-unit>
+      <trans-unit id="nav.item-pick-waves" datatype="html">
+        <source>Pick Waves</source>
+        <target>चुनाव तरंगें</target>
+      </trans-unit>
+      <trans-unit id="nav.item-transfers" datatype="html">
+        <source>Transfers</source>
+        <target>स्थानांतरण</target>
+      </trans-unit>
+      <trans-unit id="nav.item-cross-dock" datatype="html">
+        <source>Cross-dock</source>
+        <target>क्रॉस-डॉक</target>
+      </trans-unit>
+      <trans-unit id="nav.item-cycle-counts" datatype="html">
+        <source>Cycle Counts</source>
+        <target>चक्र गणना</target>
+      </trans-unit>
+      <trans-unit id="nav.group-maintenance" datatype="html">
+        <source>Maintenance</source>
+        <target>रखरखाव</target>
+      </trans-unit>
+      <trans-unit id="nav.item-maintenance" datatype="html">
+        <source>Maintenance</source>
+        <target>रखरखाव</target>
+      </trans-unit>
+      <trans-unit id="nav.item-spare-parts" datatype="html">
+        <source>Spare Parts</source>
+        <target>स्पेयर पार्ट्स</target>
+      </trans-unit>
+      <trans-unit id="nav.group-administration" datatype="html">
+        <source>Administration</source>
+        <target>प्रशासन</target>
+      </trans-unit>
+      <trans-unit id="nav.item-users" datatype="html">
+        <source>Users</source>
+        <target>उपयोगकर्ता</target>
+      </trans-unit>
+      <trans-unit id="nav.item-roles" datatype="html">
+        <source>Roles</source>
+        <target>भूमिकाएं</target>
+      </trans-unit>
+      <trans-unit id="nav.item-audit-logs" datatype="html">
+        <source>Audit Logs</source>
+        <target>ऑडिट लॉग</target>
+      </trans-unit>
+      <trans-unit id="nav.item-modules" datatype="html">
+        <source>Modules</source>
+        <target>मॉड्यूल</target>
+      </trans-unit>
+      <trans-unit id="nav.item-plants" datatype="html">
+        <source>Plants</source>
+        <target>संयंत्र</target>
+      </trans-unit>
+      <trans-unit id="nav.item-notification-admin" datatype="html">
+        <source>Notification Admin</source>
+        <target>अधिसूचना प्रशासन</target>
+      </trans-unit>
+      <trans-unit id="nav.item-webhooks" datatype="html">
+        <source>Webhooks</source>
+        <target>वेबहुक</target>
+      </trans-unit>
+      <trans-unit id="nav.item-data-import-export" datatype="html">
+        <source>Data Import / Export</source>
+        <target>डेटा आयात / निर्यात</target>
+      </trans-unit>
+      <trans-unit id="nav.item-system-settings" datatype="html">
+        <source>System Settings</source>
+        <target>सिस्टम सेटिंग</target>
+      </trans-unit>
+      <trans-unit id="nav.item-attribute-definitions" datatype="html">
+        <source>Attribute Definitions</source>
+        <target>विशेषता परिभाषाएं</target>
+      </trans-unit>
+      <trans-unit id="nav.item-negative-stock" datatype="html">
+        <source>Negative Stock</source>
+        <target>ऋणात्मक स्टॉक</target>
+      </trans-unit>
+      <trans-unit id="shell.toggleNav" datatype="html">
+        <source>Toggle navigation</source>
+        <target>नेविगेशन टॉगल करें</target>
+      </trans-unit>
+      <trans-unit id="shell.changePassword" datatype="html">
+        <source>Change password</source>
+        <target>पासवर्ड बदलें</target>
+      </trans-unit>
+      <trans-unit id="shell.signOut" datatype="html">
+        <source>Sign out</source>
+        <target>साइन आउट</target>
+      </trans-unit>
+      <trans-unit id="shell.notSignedIn" datatype="html">
+        <source>Not signed in</source>
+        <target>साइन इन नहीं</target>
+      </trans-unit>
+      <trans-unit id="login.title" datatype="html">
+        <source>ERP</source>
+        <target>ईआरपी</target>
+      </trans-unit>
+      <trans-unit id="login.subtitle" datatype="html">
+        <source>Sign in to continue</source>
+        <target>जारी रखने के लिए साइन इन करें</target>
+      </trans-unit>
+      <trans-unit id="login.username" datatype="html">
+        <source>Username</source>
+        <target>उपयोगकर्ता नाम</target>
+      </trans-unit>
+      <trans-unit id="login.usernameRequired" datatype="html">
+        <source>Username is required</source>
+        <target>उपयोगकर्ता नाम आवश्यक है</target>
+      </trans-unit>
+      <trans-unit id="login.password" datatype="html">
+        <source>Password</source>
+        <target>पासवर्ड</target>
+      </trans-unit>
+      <trans-unit id="login.passwordRequired" datatype="html">
+        <source>Password is required</source>
+        <target>पासवर्ड आवश्यक है</target>
+      </trans-unit>
+      <trans-unit id="login.signIn" datatype="html">
+        <source>Sign in</source>
+        <target>साइन इन</target>
+      </trans-unit>
+    </body>
+  </file>
+</xliff>

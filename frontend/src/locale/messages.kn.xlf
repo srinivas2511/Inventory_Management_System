@@ -1,0 +1,491 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+  <file source-language="en-IN" target-language="kn" datatype="plaintext" original="ng2.template">
+    <body>
+      <trans-unit id="nav.group-overview" datatype="html">
+        <source>Overview</source>
+        <target>ಅವಲೋಕನ</target>
+      </trans-unit>
+      <trans-unit id="nav.item-dashboard" datatype="html">
+        <source>Dashboard</source>
+        <target>ಡ್ಯಾಶ್‌ಬೋರ್ಡ್</target>
+      </trans-unit>
+      <trans-unit id="nav.item-notifications" datatype="html">
+        <source>Notifications</source>
+        <target>ಅಧಿಸೂಚನೆಗಳು</target>
+      </trans-unit>
+      <trans-unit id="nav.group-master-data" datatype="html">
+        <source>Master Data</source>
+        <target>ಮಾಸ್ಟರ್ ಡೇಟಾ</target>
+      </trans-unit>
+      <trans-unit id="nav.item-materials" datatype="html">
+        <source>Materials</source>
+        <target>ವಸ್ತುಗಳು</target>
+      </trans-unit>
+      <trans-unit id="nav.item-products" datatype="html">
+        <source>Products</source>
+        <target>ಉತ್ಪನ್ನಗಳು</target>
+      </trans-unit>
+      <trans-unit id="nav.item-suppliers" datatype="html">
+        <source>Suppliers</source>
+        <target>ಪೂರೈಕೆದಾರರು</target>
+      </trans-unit>
+      <trans-unit id="nav.item-customers" datatype="html">
+        <source>Customers</source>
+        <target>ಗ್ರಾಹಕರು</target>
+      </trans-unit>
+      <trans-unit id="nav.group-warehouses-inventory" datatype="html">
+        <source>Warehouses &amp; Inventory</source>
+        <target>ಗೋದಾಮುಗಳು ಮತ್ತು ದಾಸ್ತಾನು</target>
+      </trans-unit>
+      <trans-unit id="nav.item-warehouses" datatype="html">
+        <source>Warehouses</source>
+        <target>ಗೋದಾಮುಗಳು</target>
+      </trans-unit>
+      <trans-unit id="nav.item-current-stock" datatype="html">
+        <source>Current Stock</source>
+        <target>ಪ್ರಸ್ತುತ ಸ್ಟಾಕ್</target>
+      </trans-unit>
+      <trans-unit id="nav.item-stock-ledger" datatype="html">
+        <source>Stock Ledger</source>
+        <target>ಸ್ಟಾಕ್ ಲೆಡ್ಜರ್</target>
+      </trans-unit>
+      <trans-unit id="nav.item-batch-tracking" datatype="html">
+        <source>Batch Tracking</source>
+        <target>ಬ್ಯಾಚ್ ಟ್ರ್ಯಾಕಿಂಗ್</target>
+      </trans-unit>
+      <trans-unit id="nav.item-adjustments" datatype="html">
+        <source>Adjustments</source>
+        <target>ಹೊಂದಾಣಿಕೆಗಳು</target>
+      </trans-unit>
+      <trans-unit id="nav.group-procurement" datatype="html">
+        <source>Procurement</source>
+        <target>ಖರೀದಿ</target>
+      </trans-unit>
+      <trans-unit id="nav.item-purchase-orders" datatype="html">
+        <source>Purchase Orders</source>
+        <target>ಖರೀದಿ ಆದೇಶಗಳು</target>
+      </trans-unit>
+      <trans-unit id="nav.item-requisitions" datatype="html">
+        <source>Requisitions</source>
+        <target>ಅವಶ್ಯಕತೆಗಳು</target>
+      </trans-unit>
+      <trans-unit id="nav.item-goods-receipts" datatype="html">
+        <source>Goods Receipts</source>
+        <target>ಸರಕು ರಸೀದಿಗಳು</target>
+      </trans-unit>
+      <trans-unit id="nav.group-engineering" datatype="html">
+        <source>Engineering</source>
+        <target>ಎಂಜಿನಿಯರಿಂಗ್</target>
+      </trans-unit>
+      <trans-unit id="nav.item-bill-of-materials" datatype="html">
+        <source>Bill of Materials</source>
+        <target>ವಸ್ತು ಪಟ್ಟಿ</target>
+      </trans-unit>
+      <trans-unit id="nav.item-product-routing" datatype="html">
+        <source>Product Routing</source>
+        <target>ಉತ್ಪನ್ನ ರೂಟಿಂಗ್</target>
+      </trans-unit>
+      <trans-unit id="nav.group-production" datatype="html">
+        <source>Production</source>
+        <target>ಉತ್ಪಾದನೆ</target>
+      </trans-unit>
+      <trans-unit id="nav.item-production-orders" datatype="html">
+        <source>Production Orders</source>
+        <target>ಉತ್ಪಾದನಾ ಆದೇಶಗಳು</target>
+      </trans-unit>
+      <trans-unit id="nav.item-my-work" datatype="html">
+        <source>My Work</source>
+        <target>ನನ್ನ ಕೆಲಸ</target>
+      </trans-unit>
+      <trans-unit id="nav.item-schedule" datatype="html">
+        <source>Schedule</source>
+        <target>ವೇಳಾಪಟ್ಟಿ</target>
+      </trans-unit>
+      <trans-unit id="nav.item-oee" datatype="html">
+        <source>OEE</source>
+        <target>ಒಇಇ</target>
+      </trans-unit>
+      <trans-unit id="nav.group-quality" datatype="html">
+        <source>Quality</source>
+        <target>ಗುಣಮಟ್ಟ</target>
+      </trans-unit>
+      <trans-unit id="nav.item-inspections" datatype="html">
+        <source>Inspections</source>
+        <target>ತಪಾಸಣೆಗಳು</target>
+      </trans-unit>
+      <trans-unit id="nav.item-fg-batches" datatype="html">
+        <source>FG Batches</source>
+        <target>ಸಿದ್ಧ ಸರಕು ಬ್ಯಾಚ್‌ಗಳು</target>
+      </trans-unit>
+      <trans-unit id="nav.item-rejection-analysis" datatype="html">
+        <source>Rejection Analysis</source>
+        <target>ತಿರಸ್ಕಾರ ವಿಶ್ಲೇಷಣೆ</target>
+      </trans-unit>
+      <trans-unit id="nav.item-spc-charts" datatype="html">
+        <source>SPC Charts</source>
+        <target>ಎಸ್‌ಪಿಸಿ ಚಾರ್ಟ್‌ಗಳು</target>
+      </trans-unit>
+      <trans-unit id="nav.item-capa" datatype="html">
+        <source>CAPA</source>
+        <target>ಸಿಎಪಿಎ</target>
+      </trans-unit>
+      <trans-unit id="nav.item-complaints" datatype="html">
+        <source>Complaints</source>
+        <target>ದೂರುಗಳು</target>
+      </trans-unit>
+      <trans-unit id="nav.item-first-article" datatype="html">
+        <source>First Article</source>
+        <target>ಮೊದಲ ಲೇಖನ</target>
+      </trans-unit>
+      <trans-unit id="nav.group-sales" datatype="html">
+        <source>Sales</source>
+        <target>ಮಾರಾಟ</target>
+      </trans-unit>
+      <trans-unit id="nav.item-sales-orders" datatype="html">
+        <source>Sales Orders</source>
+        <target>ಮಾರಾಟ ಆದೇಶಗಳು</target>
+      </trans-unit>
+      <trans-unit id="nav.item-dispatches" datatype="html">
+        <source>Dispatches</source>
+        <target>ರವಾನೆಗಳು</target>
+      </trans-unit>
+      <trans-unit id="nav.group-insight" datatype="html">
+        <source>Insight</source>
+        <target>ಒಳನೋಟ</target>
+      </trans-unit>
+      <trans-unit id="nav.item-alerts" datatype="html">
+        <source>Alerts</source>
+        <target>ಎಚ್ಚರಿಕೆಗಳು</target>
+      </trans-unit>
+      <trans-unit id="nav.item-reports" datatype="html">
+        <source>Reports</source>
+        <target>ವರದಿಗಳು</target>
+      </trans-unit>
+      <trans-unit id="nav.item-analytics" datatype="html">
+        <source>Analytics</source>
+        <target>ವಿಶ್ಲೇಷಣೆ</target>
+      </trans-unit>
+      <trans-unit id="nav.item-analytics-explorer" datatype="html">
+        <source>Analytics Explorer</source>
+        <target>ವಿಶ್ಲೇಷಣೆ ಎಕ್ಸ್‌ಪ್ಲೋರರ್</target>
+      </trans-unit>
+      <trans-unit id="nav.item-traceability" datatype="html">
+        <source>Traceability</source>
+        <target>ಟ್ರೇಸೆಬಿಲಿಟಿ</target>
+      </trans-unit>
+      <trans-unit id="nav.group-finance" datatype="html">
+        <source>Finance</source>
+        <target>ಹಣಕಾಸು</target>
+      </trans-unit>
+      <trans-unit id="nav.item-dashboard-2" datatype="html">
+        <source>Dashboard</source>
+        <target>ಡ್ಯಾಶ್‌ಬೋರ್ಡ್</target>
+      </trans-unit>
+      <trans-unit id="nav.item-journal-entries" datatype="html">
+        <source>Journal Entries</source>
+        <target>ಜರ್ನಲ್ ನಮೂದುಗಳು</target>
+      </trans-unit>
+      <trans-unit id="nav.item-fiscal-periods" datatype="html">
+        <source>Fiscal Periods</source>
+        <target>ಹಣಕಾಸು ಅವಧಿಗಳು</target>
+      </trans-unit>
+      <trans-unit id="nav.item-accounts-payable" datatype="html">
+        <source>Accounts Payable</source>
+        <target>ಪಾವತಿಸಬೇಕಾದ ಖಾತೆಗಳು</target>
+      </trans-unit>
+      <trans-unit id="nav.item-accounts-receivable" datatype="html">
+        <source>Accounts Receivable</source>
+        <target>ಸ್ವೀಕರಿಸಬೇಕಾದ ಖಾತೆಗಳು</target>
+      </trans-unit>
+      <trans-unit id="nav.item-ar-reconciliation" datatype="html">
+        <source>AR Reconciliation</source>
+        <target>ಎಆರ್ ಸಮನ್ವಯ</target>
+      </trans-unit>
+      <trans-unit id="nav.item-credit-notes" datatype="html">
+        <source>Credit Notes</source>
+        <target>ಕ್ರೆಡಿಟ್ ನೋಟ್‌ಗಳು</target>
+      </trans-unit>
+      <trans-unit id="nav.item-gst-tax" datatype="html">
+        <source>GST Tax</source>
+        <target>ಜಿಎಸ್‌ಟಿ ತೆರಿಗೆ</target>
+      </trans-unit>
+      <trans-unit id="nav.item-exchange-rates" datatype="html">
+        <source>Exchange Rates</source>
+        <target>ವಿನಿಮಯ ದರಗಳು</target>
+      </trans-unit>
+      <trans-unit id="nav.item-budget-vs-actual" datatype="html">
+        <source>Budget vs Actual</source>
+        <target>ಬಜೆಟ್ ಮತ್ತು ವಾಸ್ತವ</target>
+      </trans-unit>
+      <trans-unit id="nav.item-bank-reconciliation" datatype="html">
+        <source>Bank Reconciliation</source>
+        <target>ಬ್ಯಾಂಕ್ ಸಮನ್ವಯ</target>
+      </trans-unit>
+      <trans-unit id="nav.group-controlling" datatype="html">
+        <source>Controlling</source>
+        <target>ನಿಯಂತ್ರಣ</target>
+      </trans-unit>
+      <trans-unit id="nav.item-cost-centres" datatype="html">
+        <source>Cost Centres</source>
+        <target>ವೆಚ್ಚ ಕೇಂದ್ರಗಳು</target>
+      </trans-unit>
+      <trans-unit id="nav.item-product-costing" datatype="html">
+        <source>Product Costing</source>
+        <target>ಉತ್ಪನ್ನ ವೆಚ್ಚ</target>
+      </trans-unit>
+      <trans-unit id="nav.item-variance-analysis" datatype="html">
+        <source>Variance Analysis</source>
+        <target>ವ್ಯತ್ಯಾಸ ವಿಶ್ಲೇಷಣೆ</target>
+      </trans-unit>
+      <trans-unit id="nav.item-controlling-reports" datatype="html">
+        <source>Controlling Reports</source>
+        <target>ನಿಯಂತ್ರಣ ವರದಿಗಳು</target>
+      </trans-unit>
+      <trans-unit id="nav.group-planning-mrp" datatype="html">
+        <source>Planning (MRP)</source>
+        <target>ಯೋಜನೆ (ಎಂಆರ್‌ಪಿ)</target>
+      </trans-unit>
+      <trans-unit id="nav.item-mrp-runs" datatype="html">
+        <source>MRP Runs</source>
+        <target>ಎಂಆರ್‌ಪಿ ರನ್‌ಗಳು</target>
+      </trans-unit>
+      <trans-unit id="nav.item-mrp-proposals" datatype="html">
+        <source>MRP Proposals</source>
+        <target>ಎಂಆರ್‌ಪಿ ಪ್ರಸ್ತಾವನೆಗಳು</target>
+      </trans-unit>
+      <trans-unit id="nav.item-demand-forecasts" datatype="html">
+        <source>Demand Forecasts</source>
+        <target>ಬೇಡಿಕೆ ಮುನ್ಸೂಚನೆಗಳು</target>
+      </trans-unit>
+      <trans-unit id="nav.item-planning-parameters" datatype="html">
+        <source>Planning Parameters</source>
+        <target>ಯೋಜನಾ ನಿಯತಾಂಕಗಳು</target>
+      </trans-unit>
+      <trans-unit id="nav.group-documents" datatype="html">
+        <source>Documents</source>
+        <target>ದಾಖಲೆಗಳು</target>
+      </trans-unit>
+      <trans-unit id="nav.item-documents" datatype="html">
+        <source>Documents</source>
+        <target>ದಾಖಲೆಗಳು</target>
+      </trans-unit>
+      <trans-unit id="nav.group-plm" datatype="html">
+        <source>PLM</source>
+        <target>ಪಿಎಲ್‌ಎಂ</target>
+      </trans-unit>
+      <trans-unit id="nav.item-change-orders" datatype="html">
+        <source>Change Orders</source>
+        <target>ಬದಲಾವಣೆ ಆದೇಶಗಳು</target>
+      </trans-unit>
+      <trans-unit id="nav.item-product-lifecycle" datatype="html">
+        <source>Product Lifecycle</source>
+        <target>ಉತ್ಪನ್ನ ಜೀವನಚಕ್ರ</target>
+      </trans-unit>
+      <trans-unit id="nav.group-crm" datatype="html">
+        <source>CRM</source>
+        <target>ಸಿಆರ್‌ಎಂ</target>
+      </trans-unit>
+      <trans-unit id="nav.item-leads" datatype="html">
+        <source>Leads</source>
+        <target>ಲೀಡ್‌ಗಳು</target>
+      </trans-unit>
+      <trans-unit id="nav.item-opportunities" datatype="html">
+        <source>Opportunities</source>
+        <target>ಅವಕಾಶಗಳು</target>
+      </trans-unit>
+      <trans-unit id="nav.item-quotations" datatype="html">
+        <source>Quotations</source>
+        <target>ಉಲ್ಲೇಖಗಳು</target>
+      </trans-unit>
+      <trans-unit id="nav.item-contacts" datatype="html">
+        <source>Contacts</source>
+        <target>ಸಂಪರ್ಕಗಳು</target>
+      </trans-unit>
+      <trans-unit id="nav.item-customer-activity" datatype="html">
+        <source>Customer Activity</source>
+        <target>ಗ್ರಾಹಕ ಚಟುವಟಿಕೆ</target>
+      </trans-unit>
+      <trans-unit id="nav.item-customer-segments" datatype="html">
+        <source>Customer Segments</source>
+        <target>ಗ್ರಾಹಕ ವಿಭಾಗಗಳು</target>
+      </trans-unit>
+      <trans-unit id="nav.item-price-lists" datatype="html">
+        <source>Price Lists</source>
+        <target>ಬೆಲೆ ಪಟ್ಟಿಗಳು</target>
+      </trans-unit>
+      <trans-unit id="nav.item-sales-pipeline" datatype="html">
+        <source>Sales Pipeline</source>
+        <target>ಮಾರಾಟ ಪೈಪ್‌ಲೈನ್</target>
+      </trans-unit>
+      <trans-unit id="nav.group-hr" datatype="html">
+        <source>HR</source>
+        <target>ಎಚ್‌ಆರ್</target>
+      </trans-unit>
+      <trans-unit id="nav.item-employees" datatype="html">
+        <source>Employees</source>
+        <target>ಉದ್ಯೋಗಿಗಳು</target>
+      </trans-unit>
+      <trans-unit id="nav.item-attendance" datatype="html">
+        <source>Attendance</source>
+        <target>ಹಾಜರಾತಿ</target>
+      </trans-unit>
+      <trans-unit id="nav.item-shifts" datatype="html">
+        <source>Shifts</source>
+        <target>ಪಾಳಿಗಳು</target>
+      </trans-unit>
+      <trans-unit id="nav.item-leave" datatype="html">
+        <source>Leave</source>
+        <target>ರಜೆ</target>
+      </trans-unit>
+      <trans-unit id="nav.item-training" datatype="html">
+        <source>Training</source>
+        <target>ತರಬೇತಿ</target>
+      </trans-unit>
+      <trans-unit id="nav.item-payroll" datatype="html">
+        <source>Payroll</source>
+        <target>ವೇತನ ಪಟ್ಟಿ</target>
+      </trans-unit>
+      <trans-unit id="nav.group-warehouse-operations" datatype="html">
+        <source>Warehouse Operations</source>
+        <target>ಗೋದಾಮು ಕಾರ್ಯಾಚರಣೆಗಳು</target>
+      </trans-unit>
+      <trans-unit id="nav.item-zones-bins" datatype="html">
+        <source>Zones &amp; Bins</source>
+        <target>ವಲಯಗಳು ಮತ್ತು ಡಬ್ಬಿಗಳು</target>
+      </trans-unit>
+      <trans-unit id="nav.item-bin-view" datatype="html">
+        <source>Bin View</source>
+        <target>ಡಬ್ಬಿ ನೋಟ</target>
+      </trans-unit>
+      <trans-unit id="nav.item-put-away" datatype="html">
+        <source>Put-away</source>
+        <target>ಇಡುವುದು</target>
+      </trans-unit>
+      <trans-unit id="nav.item-picking" datatype="html">
+        <source>Picking</source>
+        <target>ಆರಿಸುವುದು</target>
+      </trans-unit>
+      <trans-unit id="nav.item-pick-waves" datatype="html">
+        <source>Pick Waves</source>
+        <target>ಆರಿಕೆ ತರಂಗಗಳು</target>
+      </trans-unit>
+      <trans-unit id="nav.item-transfers" datatype="html">
+        <source>Transfers</source>
+        <target>ವರ್ಗಾವಣೆಗಳು</target>
+      </trans-unit>
+      <trans-unit id="nav.item-cross-dock" datatype="html">
+        <source>Cross-dock</source>
+        <target>ಕ್ರಾಸ್-ಡಾಕ್</target>
+      </trans-unit>
+      <trans-unit id="nav.item-cycle-counts" datatype="html">
+        <source>Cycle Counts</source>
+        <target>ಚಕ್ರ ಎಣಿಕೆಗಳು</target>
+      </trans-unit>
+      <trans-unit id="nav.group-maintenance" datatype="html">
+        <source>Maintenance</source>
+        <target>ನಿರ್ವಹಣೆ</target>
+      </trans-unit>
+      <trans-unit id="nav.item-maintenance" datatype="html">
+        <source>Maintenance</source>
+        <target>ನಿರ್ವಹಣೆ</target>
+      </trans-unit>
+      <trans-unit id="nav.item-spare-parts" datatype="html">
+        <source>Spare Parts</source>
+        <target>ಬಿಡಿ ಭಾಗಗಳು</target>
+      </trans-unit>
+      <trans-unit id="nav.group-administration" datatype="html">
+        <source>Administration</source>
+        <target>ಆಡಳಿತ</target>
+      </trans-unit>
+      <trans-unit id="nav.item-users" datatype="html">
+        <source>Users</source>
+        <target>ಬಳಕೆದಾರರು</target>
+      </trans-unit>
+      <trans-unit id="nav.item-roles" datatype="html">
+        <source>Roles</source>
+        <target>ಪಾತ್ರಗಳು</target>
+      </trans-unit>
+      <trans-unit id="nav.item-audit-logs" datatype="html">
+        <source>Audit Logs</source>
+        <target>ಆಡಿಟ್ ಲಾಗ್‌ಗಳು</target>
+      </trans-unit>
+      <trans-unit id="nav.item-modules" datatype="html">
+        <source>Modules</source>
+        <target>ಮಾಡ್ಯೂಲ್‌ಗಳು</target>
+      </trans-unit>
+      <trans-unit id="nav.item-plants" datatype="html">
+        <source>Plants</source>
+        <target>ಕಾರ್ಖಾನೆಗಳು</target>
+      </trans-unit>
+      <trans-unit id="nav.item-notification-admin" datatype="html">
+        <source>Notification Admin</source>
+        <target>ಅಧಿಸೂಚನೆ ನಿರ್ವಾಹಕ</target>
+      </trans-unit>
+      <trans-unit id="nav.item-webhooks" datatype="html">
+        <source>Webhooks</source>
+        <target>ವೆಬ್‌ಹುಕ್‌ಗಳು</target>
+      </trans-unit>
+      <trans-unit id="nav.item-data-import-export" datatype="html">
+        <source>Data Import / Export</source>
+        <target>ಡೇಟಾ ಆಮದು / ರಫ್ತು</target>
+      </trans-unit>
+      <trans-unit id="nav.item-system-settings" datatype="html">
+        <source>System Settings</source>
+        <target>ಸಿಸ್ಟಮ್ ಸೆಟ್ಟಿಂಗ್‌ಗಳು</target>
+      </trans-unit>
+      <trans-unit id="nav.item-attribute-definitions" datatype="html">
+        <source>Attribute Definitions</source>
+        <target>ಗುಣಲಕ್ಷಣ ವ್ಯಾಖ್ಯಾನಗಳು</target>
+      </trans-unit>
+      <trans-unit id="nav.item-negative-stock" datatype="html">
+        <source>Negative Stock</source>
+        <target>ಋಣಾತ್ಮಕ ಸ್ಟಾಕ್</target>
+      </trans-unit>
+      <trans-unit id="shell.toggleNav" datatype="html">
+        <source>Toggle navigation</source>
+        <target>ನ್ಯಾವಿಗೇಷನ್ ಟಾಗಲ್ ಮಾಡಿ</target>
+      </trans-unit>
+      <trans-unit id="shell.changePassword" datatype="html">
+        <source>Change password</source>
+        <target>ಪಾಸ್‌ವರ್ಡ್ ಬದಲಿಸಿ</target>
+      </trans-unit>
+      <trans-unit id="shell.signOut" datatype="html">
+        <source>Sign out</source>
+        <target>ಸೈನ್ ಔಟ್</target>
+      </trans-unit>
+      <trans-unit id="shell.notSignedIn" datatype="html">
+        <source>Not signed in</source>
+        <target>ಸೈನ್ ಇನ್ ಆಗಿಲ್ಲ</target>
+      </trans-unit>
+      <trans-unit id="login.title" datatype="html">
+        <source>ERP</source>
+        <target>ಇಆರ್‌ಪಿ</target>
+      </trans-unit>
+      <trans-unit id="login.subtitle" datatype="html">
+        <source>Sign in to continue</source>
+        <target>ಮುಂದುವರಿಯಲು ಸೈನ್ ಇನ್ ಮಾಡಿ</target>
+      </trans-unit>
+      <trans-unit id="login.username" datatype="html">
+        <source>Username</source>
+        <target>ಬಳಕೆದಾರ ಹೆಸರು</target>
+      </trans-unit>
+      <trans-unit id="login.usernameRequired" datatype="html">
+        <source>Username is required</source>
+        <target>ಬಳಕೆದಾರ ಹೆಸರು ಅಗತ್ಯ</target>
+      </trans-unit>
+      <trans-unit id="login.password" datatype="html">
+        <source>Password</source>
+        <target>ಪಾಸ್‌ವರ್ಡ್</target>
+      </trans-unit>
+      <trans-unit id="login.passwordRequired" datatype="html">
+        <source>Password is required</source>
+        <target>ಪಾಸ್‌ವರ್ಡ್ ಅಗತ್ಯ</target>
+      </trans-unit>
+      <trans-unit id="login.signIn" datatype="html">
+        <source>Sign in</source>
+        <target>ಸೈನ್ ಇನ್</target>
+      </trans-unit>
+    </body>
+  </file>
+</xliff>

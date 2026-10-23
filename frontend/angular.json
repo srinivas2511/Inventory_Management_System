@@ -12,7 +12,17 @@
     "ims-frontend": {
       "projectType": "application",
       "i18n": {
-        "sourceLocale": "en-IN"
+        "sourceLocale": "en-IN",
+        "locales": {
+          "hi": {
+            "translation": "src/locale/messages.hi.xlf",
+            "baseHref": "/hi/"
+          },
+          "kn": {
+            "translation": "src/locale/messages.kn.xlf",
+            "baseHref": "/kn/"
+          }
+        }
       },
       "schematics": {
         "@schematics/angular:component": {
@@ -67,6 +77,38 @@
               ],
               "outputHashing": "all"
             },
+            "hi": {
+              "localize": ["hi"],
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "1.5MB",
+                  "maximumError": "2MB"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "2kB",
+                  "maximumError": "4kB"
+                }
+              ],
+              "outputHashing": "all"
+            },
+            "kn": {
+              "localize": ["kn"],
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "1.5MB",
+                  "maximumError": "2MB"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "2kB",
+                  "maximumError": "4kB"
+                }
+              ],
+              "outputHashing": "all"
+            },
             "development": {
               "optimization": false,
               "extractLicenses": false,
@@ -80,6 +122,12 @@
           "configurations": {
             "production": {
               "buildTarget": "ims-frontend:build:production"
+            },
+            "hi": {
+              "buildTarget": "ims-frontend:build:hi"
+            },
+            "kn": {
+              "buildTarget": "ims-frontend:build:kn"
             },
             "development": {
               "buildTarget": "ims-frontend:build:development"

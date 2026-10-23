@@ -14,8 +14,8 @@ export class IstDatePipe implements PipeTransform {
 
   transform(
     value: Date | string | number | null | undefined,
-    format: string = 'medium',
-    timezone: string = this.timezone,
+    format = 'medium',
+    timezone = this.timezone,
   ): string | null {
     return this.dp.transform(value, format, timezone);
   }
