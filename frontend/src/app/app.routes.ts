@@ -406,6 +406,13 @@ export const routes: Routes = [
           import('./features/finance/fx-revaluation.component').then((m) => m.FxRevaluationComponent),
       },
       {
+        path: 'finance/financial-statements',
+        title: 'Financial Statements',
+        canActivate: [permissionGuard('FINANCE_REPORT')],
+        loadComponent: () =>
+          import('./features/finance/financial-statements.component').then((m) => m.FinancialStatementsComponent),
+      },
+      {
         path: 'controlling/cost-centres',
         title: 'Cost Centres',
         canActivate: [permissionGuard('CONTROLLING_VIEW')],

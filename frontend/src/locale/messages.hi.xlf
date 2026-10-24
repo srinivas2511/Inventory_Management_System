@@ -230,6 +230,10 @@
         <source>FX Revaluation</source>
         <target>विदेशी मुद्रा पुनर्मूल्यांकन</target>
       </trans-unit>
+      <trans-unit id="nav.item-financial-statements" datatype="html">
+        <source>Financial Statements</source>
+        <target>वित्तीय विवरण</target>
+      </trans-unit>
       <trans-unit id="nav.group-controlling" datatype="html">
         <source>Controlling</source>
         <target>नियंत्रण</target>

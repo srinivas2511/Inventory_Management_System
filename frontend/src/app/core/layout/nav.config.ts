@@ -397,6 +397,13 @@ export const NAV_GROUPS: NavGroup[] = [
         permission: 'FX_REVALUATION_RUN',
         enabled: true,
       },
+      {
+        label: $localize`:@@nav.item-financial-statements:Financial Statements`,
+        icon: 'analytics',
+        route: '/finance/financial-statements',
+        permission: 'FINANCE_REPORT',
+        enabled: true,
+      },
     ],
   },
   {

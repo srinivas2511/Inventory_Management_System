@@ -230,6 +230,10 @@
         <source>FX Revaluation</source>
         <target>ವಿದೇಶಿ ವಿನಿಮಯ ಮರುಮೌಲ್ಯಮಾಪನ</target>
       </trans-unit>
+      <trans-unit id="nav.item-financial-statements" datatype="html">
+        <source>Financial Statements</source>
+        <target>ಹಣಕಾಸು ಹೇಳಿಕೆಗಳು</target>
+      </trans-unit>
       <trans-unit id="nav.group-controlling" datatype="html">
         <source>Controlling</source>
         <target>ನಿಯಂತ್ರಣ</target>

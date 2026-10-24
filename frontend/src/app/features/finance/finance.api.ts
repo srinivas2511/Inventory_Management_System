@@ -431,6 +431,60 @@ export interface FxRevaluationDto {
   journalHeaderId: number | null;
 }
 
+// R9-5.1 Financial Statements DTOs
+
+export interface FinancialStatementRow {
+  glAccountId: number;
+  accountCode: string;
+  accountName: string;
+  accountType: string;
+  balance: number;
+}
+
+export interface ProfitLossStatement {
+  periodId: number;
+  periodName: string;
+  fiscalYear: number;
+  revenue: FinancialStatementRow[];
+  cogs: FinancialStatementRow[];
+  expenses: FinancialStatementRow[];
+  totalRevenue: number;
+  totalCogs: number;
+  grossProfit: number;
+  totalExpenses: number;
+  netIncome: number;
+}
+
+export interface BalanceSheetStatement {
+  periodId: number;
+  periodName: string;
+  assets: FinancialStatementRow[];
+  liabilities: FinancialStatementRow[];
+  equity: FinancialStatementRow[];
+  totalAssets: number;
+  totalLiabilities: number;
+  retainedEarnings: number;
+  totalEquity: number;
+  totalLiabilitiesAndEquity: number;
+}
+
+export interface CashFlowLine {
+  activity: string;
+  journalType: string;
+  sourceModule: string;
+  netCash: number;
+}
+
+export interface CashFlowStatement {
+  periodId: number;
+  periodName: string;
+  lines: CashFlowLine[];
+  netOperating: number;
+  netInvesting: number;
+  netFinancing: number;
+  netCashChange: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class FinanceApi {
   private http = inject(HttpClient);
@@ -663,5 +717,20 @@ export class FinanceApi {
   listFxRevaluations(periodId: number): Observable<FxRevaluationDto[]> {
     const params = new HttpParams().set('periodId', periodId);
     return this.http.get<FxRevaluationDto[]>(`${this.base}/finance/fx-revaluation`, { params });
+  }
+
+  getProfitLoss(periodId: number): Observable<ProfitLossStatement> {
+    const params = new HttpParams().set('periodId', periodId);
+    return this.http.get<ProfitLossStatement>(`${this.base}/gl/profit-loss`, { params });
+  }
+
+  getBalanceSheet(periodId: number): Observable<BalanceSheetStatement> {
+    const params = new HttpParams().set('periodId', periodId);
+    return this.http.get<BalanceSheetStatement>(`${this.base}/gl/balance-sheet`, { params });
+  }
+
+  getCashFlow(periodId: number): Observable<CashFlowStatement> {
+    const params = new HttpParams().set('periodId', periodId);
+    return this.http.get<CashFlowStatement>(`${this.base}/gl/cash-flow`, { params });
   }
 }
