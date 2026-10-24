@@ -64,6 +64,7 @@ describe('UserListComponent', () => {
     dialog = TestBed.inject(MatDialog);
     fixture = TestBed.createComponent(UserListComponent);
     fixture.detectChanges();
+    http.expectOne('/api/admin/users/capacity').flush({ total: rows.length, limit: 0 });
     http.expectOne(listCall()).flush(page(rows));
     fixture.detectChanges();
   }

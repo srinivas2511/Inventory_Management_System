@@ -40,7 +40,7 @@ test.describe('User and role administration through the UI', () => {
     await r.getByTestId('roles-user').click();
     const d = dialog(p);
     await expect(d.getByTestId('role-QUALITY_MANAGER')).toBeVisible();
-    await d.getByTestId('role-QUALITY_MANAGER').click();
+    await d.locator('[data-testid="role-QUALITY_MANAGER"] input[type="checkbox"]').click();
     await d.getByTestId('roles-save').click();
     await expect(d).toBeHidden();
     await expect

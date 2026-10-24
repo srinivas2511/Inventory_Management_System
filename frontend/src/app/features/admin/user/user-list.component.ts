@@ -308,7 +308,9 @@ export class UserListComponent implements OnInit {
   private loadCapacity(): void {
     this.api.getUserCapacity().subscribe({
       next: (c) => this.capacity.set(c),
-      error: () => { /* non-critical; hide badge on error */ },
+      error: () => {
+        /* non-critical; hide badge on error */
+      },
     });
   }
 
