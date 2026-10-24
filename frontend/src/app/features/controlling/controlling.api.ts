@@ -276,4 +276,74 @@ export class ControllingApi {
   settleInternalOrder(id: number, req: SettleInternalOrderRequest): Observable<InternalOrderDto> {
     return this.http.post<InternalOrderDto>(`${this.base}/internal-orders/${id}/settle`, req);
   }
+
+  // R10-6.3 Overhead Allocation
+
+  getAllocationRules(): Observable<CostAllocationRuleDto[]> {
+    return this.http.get<CostAllocationRuleDto[]>(`${this.base}/overhead-allocation/rules`);
+  }
+
+  createAllocationRule(req: SaveAllocationRuleRequest): Observable<CostAllocationRuleDto> {
+    return this.http.post<CostAllocationRuleDto>(`${this.base}/overhead-allocation/rules`, req);
+  }
+
+  setRuleActive(id: number, active: boolean): Observable<CostAllocationRuleDto> {
+    return this.http.post<CostAllocationRuleDto>(
+      `${this.base}/overhead-allocation/rules/${id}/${active ? 'activate' : 'deactivate'}`,
+      {},
+    );
+  }
+
+  getAllocationRuns(): Observable<AllocationRunDto[]> {
+    return this.http.get<AllocationRunDto[]>(`${this.base}/overhead-allocation/runs`);
+  }
+
+  getAllocationRun(id: number): Observable<AllocationRunDto> {
+    return this.http.get<AllocationRunDto>(`${this.base}/overhead-allocation/runs/${id}`);
+  }
+
+  runAllocation(periodId: number): Observable<AllocationRunDto> {
+    return this.http.post<AllocationRunDto>(`${this.base}/overhead-allocation/runs`, {}, { params: { periodId } });
+  }
+}
+
+// ── R10-6.3 DTOs ─────────────────────────────────────────────────────────────
+
+export interface CostAllocationRuleDto {
+  id: number;
+  costCentreId: number;
+  costCentreCode: string;
+  costCentreName: string;
+  allocationBase: string;
+  active: boolean;
+}
+
+export interface SaveAllocationRuleRequest {
+  costCentreId: number;
+  allocationBase: string;
+}
+
+export interface AllocationRunDto {
+  id: number;
+  periodId: number;
+  periodName: string;
+  status: string;
+  runAt: string;
+  runBy: number;
+  journalHeaderId: number | null;
+  totalAllocated: number;
+  lines: AllocationLineDto[];
+}
+
+export interface AllocationLineDto {
+  id: number;
+  costCentreId: number;
+  costCentreCode: string;
+  productId: number;
+  productCode: string;
+  productName: string;
+  allocationBase: string;
+  baseQty: number;
+  ratePerUnit: number;
+  allocatedAmount: number;
 }

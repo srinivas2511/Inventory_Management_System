@@ -246,6 +246,10 @@
         <source>Internal Orders</source>
         <target>आंतरिक आदेश</target>
       </trans-unit>
+      <trans-unit id="nav.item-overhead-allocation" datatype="html">
+        <source>Overhead Allocation</source>
+        <target>ओवरहेड आवंटन</target>
+      </trans-unit>
       <trans-unit id="nav.item-product-costing" datatype="html">
         <source>Product Costing</source>
         <target>उत्पाद लागत</target>

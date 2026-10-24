@@ -429,6 +429,13 @@
           <context context-type="linenumber">328</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="nav.item-overhead-allocation" datatype="html">
+        <source>Overhead Allocation</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/layout/nav.config.ts</context>
+          <context context-type="linenumber">442</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="nav.item-product-costing" datatype="html">
         <source>Product Costing</source>
         <context-group purpose="location">

@@ -246,6 +246,10 @@
         <source>Internal Orders</source>
         <target>ಆಂತರಿಕ ಆದೇಶಗಳು</target>
       </trans-unit>
+      <trans-unit id="nav.item-overhead-allocation" datatype="html">
+        <source>Overhead Allocation</source>
+        <target>ಓವರ್‌ಹೆಡ್ ಹಂಚಿಕೆ</target>
+      </trans-unit>
       <trans-unit id="nav.item-product-costing" datatype="html">
         <source>Product Costing</source>
         <target>ಉತ್ಪನ್ನ ವೆಚ್ಚ</target>

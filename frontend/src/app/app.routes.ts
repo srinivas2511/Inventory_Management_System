@@ -457,6 +457,13 @@ export const routes: Routes = [
           import('./features/controlling/controlling-reports.component').then((m) => m.ControllingReportsComponent),
       },
       {
+        path: 'controlling/overhead-allocation',
+        title: 'Overhead Allocation',
+        canActivate: [permissionGuard('OVERHEAD_ALLOC_VIEW')],
+        loadComponent: () =>
+          import('./features/controlling/overhead-allocation.component').then((m) => m.OverheadAllocationComponent),
+      },
+      {
         path: 'mrp/runs',
         title: 'MRP Runs',
         canActivate: [permissionGuard('MRP_VIEW')],

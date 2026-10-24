@@ -10,6 +10,4 @@ public record FinanceDashboardDto(
         BigDecimal apOverdue,
         BigDecimal arOverdue,
         List<RevenueVsBudgetItem> revenueVsBudget
-) {
-    public record RevenueVsBudgetItem(String period, BigDecimal actual, BigDecimal budget) {}
-}
+) {}

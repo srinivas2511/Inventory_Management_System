@@ -439,6 +439,13 @@ export const NAV_GROUPS: NavGroup[] = [
         enabled: true,
       },
       {
+        label: $localize`:@@nav.item-overhead-allocation:Overhead Allocation`,
+        icon: 'account_balance',
+        route: '/controlling/overhead-allocation',
+        permission: 'OVERHEAD_ALLOC_VIEW',
+        enabled: true,
+      },
+      {
         label: $localize`:@@nav.item-controlling-reports:Controlling Reports`,
         icon: 'analytics',
         route: '/controlling/reports',
