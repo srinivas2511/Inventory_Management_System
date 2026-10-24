@@ -242,6 +242,10 @@
         <source>Cost Centres</source>
         <target>लागत केंद्र</target>
       </trans-unit>
+      <trans-unit id="nav.item-internal-orders" datatype="html">
+        <source>Internal Orders</source>
+        <target>आंतरिक आदेश</target>
+      </trans-unit>
       <trans-unit id="nav.item-product-costing" datatype="html">
         <source>Product Costing</source>
         <target>उत्पाद लागत</target>

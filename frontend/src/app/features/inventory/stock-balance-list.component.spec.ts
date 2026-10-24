@@ -13,20 +13,42 @@ const WAREHOUSES: LookupOption[] = [
 
 const BALANCES: InventoryBalanceDto[] = [
   {
-    id: 1, warehouseId: 1, warehouseName: 'Main Warehouse',
-    locationId: 10, locationName: 'Raw Materials Store',
-    itemType: 'MATERIAL', materialId: 5, productId: undefined,
-    materialBatchId: undefined, fgBatchId: undefined,
-    stockStatus: 'AVAILABLE', qtyOnHand: 100, qtyReserved: 0,
-    qtyAvailable: 100, avgUnitCost: 50, totalValue: 5000, updatedAt: '2026-10-01T00:00:00Z',
+    id: 1,
+    warehouseId: 1,
+    warehouseName: 'Main Warehouse',
+    locationId: 10,
+    locationName: 'Raw Materials Store',
+    itemType: 'MATERIAL',
+    materialId: 5,
+    productId: undefined,
+    materialBatchId: undefined,
+    fgBatchId: undefined,
+    stockStatus: 'AVAILABLE',
+    qtyOnHand: 100,
+    qtyReserved: 0,
+    qtyAvailable: 100,
+    avgUnitCost: 50,
+    totalValue: 5000,
+    updatedAt: '2026-10-01T00:00:00Z',
   },
   {
-    id: 2, warehouseId: 2, warehouseName: 'Stores',
-    locationId: 20, locationName: 'FG Store',
-    itemType: 'PRODUCT', materialId: undefined, productId: 3,
-    materialBatchId: undefined, fgBatchId: 7,
-    stockStatus: 'AVAILABLE', qtyOnHand: 50, qtyReserved: 10,
-    qtyAvailable: 40, avgUnitCost: 200, totalValue: 10000, updatedAt: '2026-10-01T00:00:00Z',
+    id: 2,
+    warehouseId: 2,
+    warehouseName: 'Stores',
+    locationId: 20,
+    locationName: 'FG Store',
+    itemType: 'PRODUCT',
+    materialId: undefined,
+    productId: 3,
+    materialBatchId: undefined,
+    fgBatchId: 7,
+    stockStatus: 'AVAILABLE',
+    qtyOnHand: 50,
+    qtyReserved: 10,
+    qtyAvailable: 40,
+    avgUnitCost: 200,
+    totalValue: 10000,
+    updatedAt: '2026-10-01T00:00:00Z',
   },
 ];
 
@@ -64,7 +86,7 @@ describe('StockBalanceListComponent', () => {
 
   it('displays warehouse and location names in the table (not IDs)', () => {
     const cells = fixture.nativeElement.querySelectorAll('td[mat-cell]');
-    const cellTexts = Array.from(cells).map((c: any) => c.textContent?.trim());
+    const cellTexts = Array.from(cells).map((c) => (c as HTMLElement).textContent?.trim());
     expect(cellTexts.some((t) => t?.includes('Main Warehouse'))).toBeTrue();
     expect(cellTexts.some((t) => t?.includes('Raw Materials Store'))).toBeTrue();
     expect(cellTexts.some((t) => t?.includes('Stores'))).toBeTrue();

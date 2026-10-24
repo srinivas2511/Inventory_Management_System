@@ -420,6 +420,13 @@ export const routes: Routes = [
           import('./features/controlling/cost-centre-list.component').then((m) => m.CostCentreListComponent),
       },
       {
+        path: 'controlling/internal-orders',
+        title: 'Internal Orders',
+        canActivate: [permissionGuard('INTERNAL_ORDER_VIEW')],
+        loadComponent: () =>
+          import('./features/controlling/internal-order-list.component').then((m) => m.InternalOrderListComponent),
+      },
+      {
         path: 'controlling/cost-estimates',
         title: 'Product Costing',
         canActivate: [permissionGuard('CONTROLLING_VIEW')],

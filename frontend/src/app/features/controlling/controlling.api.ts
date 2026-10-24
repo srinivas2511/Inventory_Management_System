@@ -128,6 +128,50 @@ export interface ReportResult {
   totalRows: number;
 }
 
+// R10-6.1 Internal Orders
+
+export interface InternalOrderDto {
+  id: number;
+  orderNumber: string;
+  description: string;
+  orderType: string;
+  responsibleCostCentreId: number | null;
+  budgetAmount: number;
+  actualAmount: number;
+  status: string;
+  settlementCostCentreId: number | null;
+  settledAmount: number | null;
+  settledAt: string | null;
+  settledBy: number | null;
+  settlementJournalId: number | null;
+  startDate: string | null;
+  endDate: string | null;
+}
+
+export interface CreateInternalOrderRequest {
+  orderNumber: string;
+  description: string;
+  orderType: string;
+  responsibleCostCentreId: number | null;
+  budgetAmount: number;
+  startDate: string | null;
+  endDate: string | null;
+}
+
+export interface SettleInternalOrderRequest {
+  settlementCostCentreId: number;
+  reason: string;
+}
+
+export interface InternalOrderCostRow {
+  glAccountId: number;
+  accountCode: string;
+  accountName: string;
+  totalDebit: number;
+  totalCredit: number;
+  netAmount: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ControllingApi {
   private http = inject(HttpClient);
@@ -205,5 +249,31 @@ export class ControllingApi {
     if (to) params = params.set('to', to);
     if (entityId) params = params.set('entityId', entityId);
     return this.http.get<ReportResult>(`/api/reports/${code}`, { params });
+  }
+
+  // R10-6.1 Internal Orders
+
+  getInternalOrders(): Observable<InternalOrderDto[]> {
+    return this.http.get<InternalOrderDto[]>(`${this.base}/internal-orders`);
+  }
+
+  getInternalOrder(id: number): Observable<InternalOrderDto> {
+    return this.http.get<InternalOrderDto>(`${this.base}/internal-orders/${id}`);
+  }
+
+  createInternalOrder(req: CreateInternalOrderRequest): Observable<InternalOrderDto> {
+    return this.http.post<InternalOrderDto>(`${this.base}/internal-orders`, req);
+  }
+
+  updateInternalOrder(id: number, req: CreateInternalOrderRequest): Observable<InternalOrderDto> {
+    return this.http.put<InternalOrderDto>(`${this.base}/internal-orders/${id}`, req);
+  }
+
+  getInternalOrderCosts(id: number): Observable<InternalOrderCostRow[]> {
+    return this.http.get<InternalOrderCostRow[]>(`${this.base}/internal-orders/${id}/costs`);
+  }
+
+  settleInternalOrder(id: number, req: SettleInternalOrderRequest): Observable<InternalOrderDto> {
+    return this.http.post<InternalOrderDto>(`${this.base}/internal-orders/${id}/settle`, req);
   }
 }

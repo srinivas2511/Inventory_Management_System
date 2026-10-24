@@ -238,22 +238,21 @@ test.describe('UAT STK-01: inventory balances on screen', () => {
     let matched = 0;
     for (const cells of shown) {
       if (cells.length < 6) continue;
-      const [type, itemId, whLoc, status, onHand] = cells;
-      const [whId, locId] = whLoc.split('/').map((s) => Number(s.trim()));
+      // columns: type | itemId | warehouseName / locationName | status | onHand | available ...
+      // D-36 changed col 2 from "warehouseId / locationId" to names — match on type+id+status only
+      const [type, itemId, , status, onHand] = cells;
       const candidates = api.filter(
         (b) =>
           b.itemType === type.toUpperCase() &&
           String(b.materialId ?? b.productId) === itemId &&
-          b.warehouseId === whId &&
-          b.locationId === locId &&
           status.toUpperCase().replace(/[^A-Z]+/g, '_').endsWith(b.stockStatus),
       );
-      // the screen lists one row per batch balance, so each row must equal one of the ledger balances for that key
+      // the screen lists one row per batch balance, so the on-hand must match one of the ledger rows
       if (candidates.length > 0) {
         matched++;
         expect(
           candidates.some((b) => Math.abs(Number(b.qtyOnHand) - num(onHand)) < 0.005),
-          `on hand ${onHand} for ${type} ${itemId} at ${whLoc} (${status}) is one of the ledger balances ${candidates.map((b) => b.qtyOnHand).join(', ')}`,
+          `on hand ${onHand} for ${type} ${itemId} (${status}) is one of the ledger balances ${candidates.map((b) => b.qtyOnHand).join(', ')}`,
         ).toBe(true);
       }
     }

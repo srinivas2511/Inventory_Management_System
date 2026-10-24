@@ -418,6 +418,13 @@ export const NAV_GROUPS: NavGroup[] = [
         enabled: true,
       },
       {
+        label: $localize`:@@nav.item-internal-orders:Internal Orders`,
+        icon: 'assignment',
+        route: '/controlling/internal-orders',
+        permission: 'INTERNAL_ORDER_VIEW',
+        enabled: true,
+      },
+      {
         label: $localize`:@@nav.item-product-costing:Product Costing`,
         icon: 'calculate',
         route: '/controlling/cost-estimates',

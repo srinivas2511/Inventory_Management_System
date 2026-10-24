@@ -242,6 +242,10 @@
         <source>Cost Centres</source>
         <target>ವೆಚ್ಚ ಕೇಂದ್ರಗಳು</target>
       </trans-unit>
+      <trans-unit id="nav.item-internal-orders" datatype="html">
+        <source>Internal Orders</source>
+        <target>ಆಂತರಿಕ ಆದೇಶಗಳು</target>
+      </trans-unit>
       <trans-unit id="nav.item-product-costing" datatype="html">
         <source>Product Costing</source>
         <target>ಉತ್ಪನ್ನ ವೆಚ್ಚ</target>
