@@ -450,6 +450,10 @@
         <source>Data Import / Export</source>
         <target>ಡೇಟಾ ಆಮದು / ರಫ್ತು</target>
       </trans-unit>
+      <trans-unit id="nav.item-gst-einvoice" datatype="html">
+        <source>GST e-Invoice</source>
+        <target>ಜಿಎಸ್‌ಟಿ ಇ-ಇನ್‌ವಾಯ್ಸ್</target>
+      </trans-unit>
       <trans-unit id="nav.item-system-settings" datatype="html">
         <source>System Settings</source>
         <target>ಸಿಸ್ಟಮ್ ಸೆಟ್ಟಿಂಗ್‌ಗಳು</target>

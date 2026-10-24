@@ -112,6 +112,56 @@ export interface MaintenanceCostDto {
   costPostedAt: string | null;
 }
 
+export interface PredictionDto {
+  id: number;
+  machineId: number;
+  machineCode: string | null;
+  machineName: string | null;
+  predictedFailureAt: string | null;
+  confidencePct: number;
+  mtbfHours: number | null;
+  failureCount: number;
+  lastFailureAt: string | null;
+  algorithmVersion: string | null;
+  generatedAt: string;
+  acknowledged: boolean;
+  acknowledgedAt: string | null;
+  notes: string | null;
+}
+
+export interface MachineRiskRow {
+  machineId: number;
+  machineCode: string | null;
+  machineName: string | null;
+  failureCountLast90Days: number;
+  mtbfHours: number | null;
+  nextPredictedFailure: string | null;
+  confidencePct: number | null;
+  riskLevel: string;
+}
+
+export interface PredictionSummary {
+  machinesAnalyzed: number;
+  predictionsGenerated: number;
+  highRiskCount: number;
+  acknowledgedCount: number;
+}
+
+export interface RunPredictionsResponse {
+  summary: PredictionSummary;
+  machines: MachineRiskRow[];
+}
+
+export interface SensorReadingDto {
+  id: number;
+  machineId: number;
+  readingType: string;
+  readingValue: number;
+  unit: string | null;
+  readAt: string;
+  source: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class MaintenanceApi {
   private http = inject(HttpClient);
@@ -210,5 +260,37 @@ export class MaintenanceApi {
 
   generatePmRequest(scheduleId: number): Observable<MaintenanceRequestDto> {
     return this.http.post<MaintenanceRequestDto>(`/api/maintenance/pm-schedules/${scheduleId}/generate-request`, {});
+  }
+
+  // Predictive maintenance (R19-5.2)
+  getPredictions(all = false): Observable<PredictionDto[]> {
+    const params = new HttpParams().set('all', all);
+    return this.http.get<PredictionDto[]>('/api/maintenance/predictive/predictions', { params });
+  }
+
+  runPredictions(): Observable<RunPredictionsResponse> {
+    return this.http.post<RunPredictionsResponse>('/api/maintenance/predictive/run', {});
+  }
+
+  acknowledgePrediction(id: number): Observable<PredictionDto> {
+    return this.http.post<PredictionDto>(`/api/maintenance/predictive/predictions/${id}/acknowledge`, {});
+  }
+
+  getMachineRisk(): Observable<MachineRiskRow[]> {
+    return this.http.get<MachineRiskRow[]>('/api/maintenance/predictive/machine-risk');
+  }
+
+  getSensorReadings(machineId: number): Observable<SensorReadingDto[]> {
+    const params = new HttpParams().set('machineId', machineId);
+    return this.http.get<SensorReadingDto[]>('/api/maintenance/predictive/sensor-readings', { params });
+  }
+
+  recordSensorReading(body: {
+    machineId: number;
+    readingType: string;
+    readingValue: number;
+    unit?: string;
+  }): Observable<SensorReadingDto> {
+    return this.http.post<SensorReadingDto>('/api/maintenance/predictive/sensor-readings', body);
   }
 }
