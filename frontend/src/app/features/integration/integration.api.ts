@@ -55,6 +55,25 @@ export interface WebhookDeliveryDto {
   createdAt: string;
 }
 
+export interface EInvoiceDto {
+  id: number;
+  dispatchId: number;
+  irn: string | null;
+  ackNo: string | null;
+  ackDate: string | null;
+  status: string;
+  generatedAt: string;
+}
+
+export interface IoTEvent {
+  machineId: number;
+  eventType: string;
+  readingType: string | null;
+  value: number | null;
+  unit: string | null;
+  timestamp: string | null;
+}
+
 export interface ImportRowResult {
   rowNumber: number;
   key: string;
@@ -152,5 +171,25 @@ export class IntegrationApi {
 
   tallyLedgers() {
     return this.http.get('/api/integration/tally/ledgers', { observe: 'response', responseType: 'blob' });
+  }
+
+  // GST e-invoice (R19-6.5)
+  getEInvoices(): Observable<EInvoiceDto[]> {
+    return this.http.get<EInvoiceDto[]>('/api/integration/gst-einvoice');
+  }
+
+  generateEInvoice(dispatchId: number): Observable<EInvoiceDto> {
+    return this.http.post<EInvoiceDto>('/api/integration/gst-einvoice/generate', { dispatchId });
+  }
+
+  downloadEInvoicePayload(id: number): Observable<{ payload: string }> {
+    return this.http.get<{ payload: string }>(`/api/integration/gst-einvoice/${id}/payload`);
+  }
+
+  // IoT ingestion (R19-6.3)
+  ingestIoTEvents(events: IoTEvent[]): Observable<{ accepted: number; rejected: number; errors: string[] }> {
+    return this.http.post<{ accepted: number; rejected: number; errors: string[] }>('/api/integration/iot/events', {
+      events,
+    });
   }
 }
