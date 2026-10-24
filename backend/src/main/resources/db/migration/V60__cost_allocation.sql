@@ -27,6 +27,10 @@ CREATE TABLE ims.cost_allocation_rules (
     active              BOOLEAN NOT NULL DEFAULT TRUE,
     company_id          BIGINT NOT NULL DEFAULT 1,
     created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
+    created_by          BIGINT,
+    updated_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_by          BIGINT,
+    version             BIGINT NOT NULL DEFAULT 0,
     CONSTRAINT uq_alloc_rule_cc_base UNIQUE (cost_centre_id, allocation_base)
 );
 
@@ -38,7 +42,12 @@ CREATE TABLE ims.cost_allocation_runs (
     run_by              BIGINT NOT NULL,
     journal_header_id   BIGINT REFERENCES ims.journal_headers(id),
     total_allocated     NUMERIC(18,4) NOT NULL DEFAULT 0,
-    company_id          BIGINT NOT NULL DEFAULT 1
+    company_id          BIGINT NOT NULL DEFAULT 1,
+    created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
+    created_by          BIGINT,
+    updated_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_by          BIGINT,
+    version             BIGINT NOT NULL DEFAULT 0
 );
 
 CREATE TABLE ims.cost_allocation_lines (

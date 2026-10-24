@@ -29,9 +29,6 @@ public class CostAllocationRun extends BaseEntity {
     @Column(name = "total_allocated", nullable = false, precision = 18, scale = 4)
     private BigDecimal totalAllocated = BigDecimal.ZERO;
 
-    @Column(name = "company_id", nullable = false)
-    private Long companyId = 1L;
-
     public CostAllocationRun() {}
 
     public Long getPeriodId() { return periodId; }
@@ -51,7 +48,4 @@ public class CostAllocationRun extends BaseEntity {
 
     public BigDecimal getTotalAllocated() { return totalAllocated; }
     public void setTotalAllocated(BigDecimal v) { this.totalAllocated = v; }
-
-    public Long getCompanyId() { return companyId; }
-    public void setCompanyId(Long v) { this.companyId = v; }
 }

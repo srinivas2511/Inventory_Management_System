@@ -18,9 +18,6 @@ public class CostAllocationRule extends BaseEntity {
     @Column(name = "active", nullable = false)
     private boolean active = true;
 
-    @Column(name = "company_id", nullable = false)
-    private Long companyId = 1L;
-
     public CostAllocationRule() {}
 
     public Long getCostCentreId() { return costCentreId; }
@@ -31,7 +28,4 @@ public class CostAllocationRule extends BaseEntity {
 
     public boolean isActive() { return active; }
     public void setActive(boolean v) { this.active = v; }
-
-    public Long getCompanyId() { return companyId; }
-    public void setCompanyId(Long v) { this.companyId = v; }
 }

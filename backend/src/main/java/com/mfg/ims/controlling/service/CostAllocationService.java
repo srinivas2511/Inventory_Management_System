@@ -65,13 +65,14 @@ public class CostAllocationService {
 
     @Transactional
     public CostAllocationRuleDto createRule(SaveAllocationRuleRequest req) {
-        CostAllocationRule rule = new CostAllocationRule();
-        rule.setCostCentreId(req.costCentreId());
-        rule.setAllocationBase(req.allocationBase());
-        rule = ruleRepo.save(rule);
-        auditService.record("CREATED", "COST_ALLOCATION_RULE", String.valueOf(rule.getId()),
+        CostAllocationRule newRule = new CostAllocationRule();
+        newRule.setCostCentreId(req.costCentreId());
+        newRule.setAllocationBase(req.allocationBase());
+        CostAllocationRule saved = ruleRepo.save(newRule);
+        Long savedId = saved.getId();
+        auditService.record("CREATED", "COST_ALLOCATION_RULE", String.valueOf(savedId),
                 null, req.costCentreId() + "/" + req.allocationBase(), null);
-        return findAllRules().stream().filter(r -> r.id().equals(rule.getId())).findFirst()
+        return findAllRules().stream().filter(r -> r.id().equals(savedId)).findFirst()
                 .orElseThrow();
     }
 
