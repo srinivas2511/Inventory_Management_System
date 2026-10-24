@@ -705,6 +705,13 @@ export const NAV_GROUPS: NavGroup[] = [
         permission: 'SPARE_PART_VIEW',
         enabled: true,
       },
+      {
+        label: $localize`:@@nav.item-predictive-maintenance:Predictive Maintenance`,
+        icon: 'insights',
+        route: '/maintenance/predictive',
+        permission: 'PREDICTIVE_MAINT_VIEW',
+        enabled: true,
+      },
     ],
   },
   {
@@ -767,6 +774,14 @@ export const NAV_GROUPS: NavGroup[] = [
         route: '/admin/data',
         companyLevel: true,
         permission: 'DATA_EXPORT',
+        enabled: true,
+      },
+      {
+        label: $localize`:@@nav.item-gst-einvoice:GST E-Invoice`,
+        icon: 'receipt_long',
+        route: '/integration/gst-einvoice',
+        companyLevel: true,
+        permission: 'GST_EINVOICE_VIEW',
         enabled: true,
       },
       {

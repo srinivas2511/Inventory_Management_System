@@ -414,6 +414,10 @@
         <source>Spare Parts</source>
         <target>ಬಿಡಿ ಭಾಗಗಳು</target>
       </trans-unit>
+      <trans-unit id="nav.item-predictive-maintenance" datatype="html">
+        <source>Predictive Maintenance</source>
+        <target>ಭವಿಷ್ಯಸೂಚಕ ನಿರ್ವಹಣೆ</target>
+      </trans-unit>
       <trans-unit id="nav.group-administration" datatype="html">
         <source>Administration</source>
         <target>ಆಡಳಿತ</target>
@@ -451,7 +455,7 @@
         <target>ಡೇಟಾ ಆಮದು / ರಫ್ತು</target>
       </trans-unit>
       <trans-unit id="nav.item-gst-einvoice" datatype="html">
-        <source>GST e-Invoice</source>
+        <source>GST E-Invoice</source>
         <target>ಜಿಎಸ್‌ಟಿ ಇ-ಇನ್‌ವಾಯ್ಸ್</target>
       </trans-unit>
       <trans-unit id="nav.item-system-settings" datatype="html">

@@ -295,6 +295,22 @@ export const routes: Routes = [
         loadComponent: () => import('./features/maintenance/spare-parts.component').then((m) => m.SparePartsComponent),
       },
       {
+        path: 'maintenance/predictive',
+        title: 'Predictive Maintenance',
+        canActivate: [permissionGuard('PREDICTIVE_MAINT_VIEW')],
+        loadComponent: () =>
+          import('./features/maintenance/predictive-maintenance.component').then(
+            (m) => m.PredictiveMaintenanceComponent,
+          ),
+      },
+      {
+        path: 'integration/gst-einvoice',
+        title: 'GST E-Invoice',
+        canActivate: [permissionGuard('GST_EINVOICE_VIEW')],
+        loadComponent: () =>
+          import('./features/integration/gst-einvoice.component').then((m) => m.GstEInvoiceComponent),
+      },
+      {
         path: 'production/oee',
         title: 'OEE',
         canActivate: [permissionGuard('OEE_VIEW')],

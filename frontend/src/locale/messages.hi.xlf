@@ -414,6 +414,10 @@
         <source>Spare Parts</source>
         <target>स्पेयर पार्ट्स</target>
       </trans-unit>
+      <trans-unit id="nav.item-predictive-maintenance" datatype="html">
+        <source>Predictive Maintenance</source>
+        <target>भविष्यसूचक रखरखाव</target>
+      </trans-unit>
       <trans-unit id="nav.group-administration" datatype="html">
         <source>Administration</source>
         <target>प्रशासन</target>
@@ -449,6 +453,10 @@
       <trans-unit id="nav.item-data-import-export" datatype="html">
         <source>Data Import / Export</source>
         <target>डेटा आयात / निर्यात</target>
+      </trans-unit>
+      <trans-unit id="nav.item-gst-einvoice" datatype="html">
+        <source>GST E-Invoice</source>
+        <target>जीएसटी ई-चालान</target>
       </trans-unit>
       <trans-unit id="nav.item-system-settings" datatype="html">
         <source>System Settings</source>
