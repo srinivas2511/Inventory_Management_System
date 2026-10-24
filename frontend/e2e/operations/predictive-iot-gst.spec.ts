@@ -19,7 +19,7 @@ import { U } from '../support/users';
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function firstMachine(): Promise<{ id: number; machineNumber: string }> {
-  const machines = await admin().list<any>('/api/maintenance/machines');
+  const machines = await admin().list<any>('/api/masterdata/machines');
   if (!machines.length) throw new Error('No machines seeded — cannot run predictive-maintenance E2E.');
   return machines[0];
 }

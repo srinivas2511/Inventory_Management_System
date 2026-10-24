@@ -17,6 +17,7 @@ import com.mfg.ims.common.exception.BusinessRuleException;
 import com.mfg.ims.common.exception.ConflictException;
 import com.mfg.ims.common.exception.ErrorCode;
 import com.mfg.ims.common.exception.NotFoundException;
+import com.mfg.ims.common.settings.SystemSettingService;
 import com.mfg.ims.iam.domain.Role;
 import com.mfg.ims.iam.domain.User;
 import com.mfg.ims.iam.dto.AdminResetPasswordRequest;
@@ -24,11 +25,14 @@ import com.mfg.ims.iam.dto.AdminResetPasswordResponse;
 import com.mfg.ims.iam.dto.CreateUserRequest;
 import com.mfg.ims.iam.dto.UpdateUserRequest;
 import com.mfg.ims.iam.dto.UserDto;
+import com.mfg.ims.iam.dto.UserCapacityDto;
 import com.mfg.ims.iam.repository.RoleRepository;
 import com.mfg.ims.iam.repository.UserRepository;
 
 @Service
 public class UserAdminService {
+
+    private static final String MAX_USERS_KEY = "iam.max_users";
 
     private final UserRepository userRepo;
     private final RoleRepository roleRepo;
@@ -37,13 +41,15 @@ public class UserAdminService {
     private final AuditService auditService;
     private final AuthService authService;
     private final AdminGuard adminGuard;
+    private final SystemSettingService settings;
 
     public UserAdminService(UserRepository userRepo, RoleRepository roleRepo,
                             PasswordEncoder passwordEncoder,
                             UserPermissionCache permissionCache,
                             AuditService auditService,
                             AuthService authService,
-                            AdminGuard adminGuard) {
+                            AdminGuard adminGuard,
+                            SystemSettingService settings) {
         this.userRepo = userRepo;
         this.roleRepo = roleRepo;
         this.passwordEncoder = passwordEncoder;
@@ -51,6 +57,14 @@ public class UserAdminService {
         this.auditService = auditService;
         this.authService = authService;
         this.adminGuard = adminGuard;
+        this.settings = settings;
+    }
+
+    @Transactional(readOnly = true)
+    public UserCapacityDto capacity() {
+        long total = userRepo.count();
+        int limit = settings.getInt(MAX_USERS_KEY, 0);
+        return new UserCapacityDto(total, limit);
     }
 
     @Transactional(readOnly = true)
@@ -65,6 +79,11 @@ public class UserAdminService {
 
     @Transactional
     public UserDto create(CreateUserRequest req) {
+        int limit = settings.getInt(MAX_USERS_KEY, 0);
+        if (limit > 0 && userRepo.count() >= limit) {
+            throw new BusinessRuleException(ErrorCode.LIMIT_EXCEEDED,
+                "User limit reached (" + limit + "). Increase iam.max_users in system settings.");
+        }
         authService.validateComplexity(req.password(), req.username());
         if (userRepo.existsByUsername(req.username())) {
             throw new ConflictException(ErrorCode.DUPLICATE_KEY, "Username already taken: " + req.username());

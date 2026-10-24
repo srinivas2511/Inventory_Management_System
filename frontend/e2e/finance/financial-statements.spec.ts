@@ -40,7 +40,7 @@ test.describe.serial('Financial statements — P&L, Balance Sheet, Cash Flow (R9
     // Verify the API returns a valid payload before checking the screen.
     const stmt = await admin().must('GET', `/api/gl/profit-loss?periodId=${period.id}`);
     expect(stmt, 'P&L statement body').toBeTruthy();
-    expect(Array.isArray(stmt.revenueLines) || Array.isArray(stmt.revenues), 'P&L has revenue lines').toBe(true);
+    expect(Array.isArray(stmt.revenue), 'P&L has revenue lines').toBe(true);
 
     const a = await openAs(browser, guard, U.finance, '/finance/financial-statements');
     const p = a.page;
@@ -117,7 +117,7 @@ test.describe.serial('Internal orders (R10-6.1)', () => {
   }) => {
     const a = await openAs(browser, guard, U.admin, '/controlling/internal-orders');
     const p = a.page;
-    await p.getByRole('button', { name: /new internal order|add/i }).click();
+    await p.getByRole('button', { name: /new order/i }).click();
     const d = dialog(p);
     await fill(d, /order number/i, orderNumber);
     await fill(d, /description/i, 'E2E IT infrastructure project');
@@ -179,16 +179,19 @@ test.describe.serial('Overhead cost allocation (R10-6.3)', () => {
   }) => {
     const a = await openAs(browser, guard, U.admin, '/controlling/overhead-allocation');
     const p = a.page;
-    await p.getByRole('button', { name: /new rule|add rule/i }).click();
-    const d = dialog(p);
-    await fill(d, /rule name|name/i, `E2E-OH-${Date.now().toString(36).toUpperCase()}`);
-    await fill(d, /source.*account|account/i, '5302'); // Overhead Expense
-    await pick(d, /basis|allocation basis/i, 0);
+    // The overhead-allocation component uses an inline form (no dialog).
+    // Wait for page and cost-centre options to load.
+    await expect(p.getByRole('heading', { name: /overhead allocation/i })).toBeVisible();
+    // Use the first section (Allocation Rules) as scope to avoid matching the Period select below.
+    const rulesSection = p.locator('section').first();
+    await pick(rulesSection, /cost centre/i, 0);
+    await pick(rulesSection, /allocation base/i, 0);
     const saved = p.waitForResponse((r) => /\/api\/controlling\/overhead-allocation\/rules$/.test(r.url()) && r.request().method() === 'POST');
-    await d.getByRole('button', { name: /save|create/i }).last().click();
+    await p.getByRole('button', { name: /add rule/i }).click();
     const res = await saved;
     expect(res.status(), (await res.text()).slice(0, 300)).toBeLessThan(300);
-    await expect(d).toBeHidden();
+    // New rule appears in the rules table.
+    await expect(p.locator('mat-row, tr').first()).toBeVisible({ timeout: 10_000 });
     await a.close();
   });
 

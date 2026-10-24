@@ -109,6 +109,11 @@ public class GstEInvoiceService {
         return rows.isEmpty() ? Map.of("name", "Unknown", "gst_number", "") : rows.get(0);
     }
 
+    private static String str(Map<String, Object> map, String key, String fallback) {
+        Object v = map.get(key);
+        return (v != null) ? v.toString() : fallback;
+    }
+
     private String buildPayload(
         Map<String, Object> dispatch,
         List<Map<String, Object>> items,
@@ -123,7 +128,7 @@ public class GstEInvoiceService {
             // Transaction details
             var txn = new LinkedHashMap<String, Object>();
             txn.put("TaxSch", "GST");
-            txn.put("SupTyp", dispatch.getOrDefault("supply_type", "B2B").toString());
+            txn.put("SupTyp", str(dispatch, "supply_type", "B2B"));
             txn.put("RegRev", "N");
             txn.put("EcmGstin", (Object) null);
             txn.put("IgstOnIntra", "N");
@@ -139,8 +144,8 @@ public class GstEInvoiceService {
 
             // Seller (supplier) details
             var seller = new LinkedHashMap<String, Object>();
-            seller.put("Gstin", company.getOrDefault("gst_number", "").toString());
-            seller.put("LglNm", company.get("name"));
+            seller.put("Gstin", str(company, "gst_number", ""));
+            seller.put("LglNm", str(company, "name", ""));
             seller.put("Addr1", "1 Main Street");
             seller.put("Loc", "Bengaluru");
             seller.put("Pin", "560001");
@@ -149,10 +154,10 @@ public class GstEInvoiceService {
 
             // Buyer details
             var buyer = new LinkedHashMap<String, Object>();
-            buyer.put("Gstin", dispatch.getOrDefault("buyer_gstin", "URP").toString());
-            buyer.put("LglNm", dispatch.getOrDefault("customer_name", "").toString());
+            buyer.put("Gstin", str(dispatch, "buyer_gstin", "URP"));
+            buyer.put("LglNm", str(dispatch, "customer_name", ""));
             buyer.put("Pos", "29");
-            buyer.put("Addr1", dispatch.getOrDefault("delivery_address", "").toString());
+            buyer.put("Addr1", str(dispatch, "delivery_address", ""));
             buyer.put("Loc", "");
             buyer.put("Pin", "560001");
             buyer.put("Stcd", "29");

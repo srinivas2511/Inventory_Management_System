@@ -56,6 +56,7 @@ public enum ErrorCode {
     OPERATION_QTY_EXCEEDS_INPUT(HttpStatus.UNPROCESSABLE_ENTITY, "Operation quantities exceed input"),
 
     // 422 - other business rules
+    LIMIT_EXCEEDED(HttpStatus.UNPROCESSABLE_ENTITY, "Configured limit has been reached"),
     FG_NOT_APPROVED(HttpStatus.UNPROCESSABLE_ENTITY, "Finished goods not approved"),
     DISPATCH_EXCEEDS_STOCK(HttpStatus.UNPROCESSABLE_ENTITY, "Dispatch exceeds available stock"),
     ORDER_LOCKED(HttpStatus.UNPROCESSABLE_ENTITY, "Order is locked"),

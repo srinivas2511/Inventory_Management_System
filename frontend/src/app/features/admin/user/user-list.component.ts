@@ -18,7 +18,7 @@ import { problemMessage } from '../../../core/models/problem.model';
 import { ToastService } from '../../../core/notification/toast.service';
 import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog.component';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge.component';
-import { AdminApi, UserDto } from '../admin.api';
+import { AdminApi, UserCapacityDto, UserDto } from '../admin.api';
 import { UserFormDialogComponent } from './user-form-dialog.component';
 import { UserResetPasswordDialogComponent } from './user-reset-password-dialog.component';
 import { UserPlantsDialogComponent } from './user-plants-dialog.component';
@@ -43,9 +43,21 @@ import { UserRolesDialogComponent } from './user-roles-dialog.component';
   ],
   template: `
     <div class="page-header">
-      <h2 class="mat-h2">Users</h2>
+      <div class="title-row">
+        <h2 class="mat-h2">Users</h2>
+        @if (capacity()) {
+          <span
+            class="capacity-badge"
+            [class.capacity-badge--warn]="isNearLimit()"
+            [class.capacity-badge--full]="isAtLimit()"
+            [attr.data-testid]="'capacity-badge'"
+          >
+            {{ capacity()!.total }}{{ capacity()!.limit ? ' / ' + capacity()!.limit : '' }} users
+          </span>
+        }
+      </div>
       @if (session.hasPermission('USER_CREATE')) {
-        <button mat-flat-button color="primary" (click)="create()" data-testid="new-user">
+        <button mat-flat-button color="primary" (click)="create()" [disabled]="isAtLimit()" data-testid="new-user">
           <mat-icon>person_add</mat-icon> New user
         </button>
       }
@@ -213,6 +225,27 @@ import { UserRolesDialogComponent } from './user-roles-dialog.component';
         align-items: center;
         padding: 16px 16px 0;
       }
+      .title-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .capacity-badge {
+        font-size: 12px;
+        font-weight: 500;
+        padding: 2px 10px;
+        border-radius: 12px;
+        background: var(--mat-sys-surface-container, rgba(0, 0, 0, 0.06));
+        color: var(--mat-sys-on-surface-variant, rgba(0, 0, 0, 0.6));
+      }
+      .capacity-badge--warn {
+        background: #fff3e0;
+        color: #e65100;
+      }
+      .capacity-badge--full {
+        background: #ffebee;
+        color: #c62828;
+      }
       .filter-bar {
         display: flex;
         gap: 12px;
@@ -251,6 +284,7 @@ export class UserListComponent implements OnInit {
   protected readonly loading = signal(false);
   protected readonly pageIndex = signal(0);
   protected readonly pageSize = 20;
+  protected readonly capacity = signal<UserCapacityDto | null>(null);
   protected readonly searchCtrl = new FormControl('');
   protected readonly activeCtrl = new FormControl<boolean | null>(true);
   protected readonly session = inject(SessionStore);
@@ -259,6 +293,7 @@ export class UserListComponent implements OnInit {
   private readonly toast = inject(ToastService);
 
   ngOnInit(): void {
+    this.loadCapacity();
     this.load();
     this.searchCtrl.valueChanges.pipe(debounceTime(300), distinctUntilChanged()).subscribe(() => {
       this.pageIndex.set(0);
@@ -268,6 +303,23 @@ export class UserListComponent implements OnInit {
       this.pageIndex.set(0);
       this.load();
     });
+  }
+
+  private loadCapacity(): void {
+    this.api.getUserCapacity().subscribe({
+      next: (c) => this.capacity.set(c),
+      error: () => { /* non-critical; hide badge on error */ },
+    });
+  }
+
+  protected isNearLimit(): boolean {
+    const c = this.capacity();
+    return !!c && c.limit > 0 && c.total >= c.limit * 0.8 && c.total < c.limit;
+  }
+
+  protected isAtLimit(): boolean {
+    const c = this.capacity();
+    return !!c && c.limit > 0 && c.total >= c.limit;
   }
 
   protected load(): void {
@@ -298,6 +350,7 @@ export class UserListComponent implements OnInit {
       .subscribe((saved?: UserDto) => {
         if (saved) {
           this.toast.success(`${saved.username} created. They choose a new password at first sign-in.`);
+          this.loadCapacity();
           this.load();
         }
       });
@@ -317,7 +370,7 @@ export class UserListComponent implements OnInit {
 
   protected assignRoles(user: UserDto): void {
     this.dialog
-      .open(UserRolesDialogComponent, { data: { user }, width: '480px' })
+      .open(UserRolesDialogComponent, { data: { user }, width: '600px', maxHeight: '80vh' })
       .afterClosed()
       .subscribe((saved?: UserDto) => {
         if (saved) {

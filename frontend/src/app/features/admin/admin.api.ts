@@ -77,6 +77,11 @@ export interface AssignRolesRequest {
   roleCodes: string[];
 }
 
+export interface UserCapacityDto {
+  total: number;
+  limit: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AdminApi {
   private http = inject(HttpClient);
@@ -115,6 +120,10 @@ export class AdminApi {
 
   unlockUser(id: number): Observable<UserDto> {
     return this.http.post<UserDto>(`${this.base}/users/${id}/unlock`, {});
+  }
+
+  getUserCapacity(): Observable<UserCapacityDto> {
+    return this.http.get<UserCapacityDto>(`${this.base}/users/capacity`);
   }
 
   getRoles(): Observable<RoleDto[]> {

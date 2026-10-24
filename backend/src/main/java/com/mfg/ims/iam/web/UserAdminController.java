@@ -25,6 +25,7 @@ import com.mfg.ims.iam.dto.AdminResetPasswordResponse;
 import com.mfg.ims.iam.dto.AssignRolesRequest;
 import com.mfg.ims.iam.dto.CreateUserRequest;
 import com.mfg.ims.iam.dto.UpdateUserRequest;
+import com.mfg.ims.iam.dto.UserCapacityDto;
 import com.mfg.ims.iam.dto.UserDto;
 import com.mfg.ims.iam.service.UserAdminService;
 
@@ -36,6 +37,12 @@ public class UserAdminController {
 
     public UserAdminController(UserAdminService service) {
         this.service = service;
+    }
+
+    @GetMapping("/capacity")
+    @PreAuthorize("hasAuthority('USER_VIEW')")
+    public UserCapacityDto capacity() {
+        return service.capacity();
     }
 
     @GetMapping

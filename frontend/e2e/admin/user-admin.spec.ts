@@ -39,8 +39,8 @@ test.describe('User and role administration through the UI', () => {
     const r = await userRow(p, u.username);
     await r.getByTestId('roles-user').click();
     const d = dialog(p);
-    await expect(d.getByTestId('roles-list')).toBeVisible();
-    await d.getByRole('option').filter({ hasText: 'QUALITY_MANAGER' }).click();
+    await expect(d.getByTestId('role-QUALITY_MANAGER')).toBeVisible();
+    await d.getByTestId('role-QUALITY_MANAGER').click();
     await d.getByTestId('roles-save').click();
     await expect(d).toBeHidden();
     await expect
