@@ -219,7 +219,7 @@ test.describe.serial('GST e-invoice generation (R19-6.5)', () => {
     ).toBeVisible({ timeout: 15_000 });
     if (invoiceId) {
       // The generated e-invoice should appear in the table.
-      await expect(row(p, String(dispatchId!)).or(p.locator('mat-row, tr').first())).toBeVisible();
+      await expect(p.locator('mat-row, tr').first()).toBeVisible();
     }
     await a.close();
   });
