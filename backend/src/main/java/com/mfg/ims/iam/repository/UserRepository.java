@@ -5,8 +5,10 @@ import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.mfg.ims.common.search.SearchText;
 import com.mfg.ims.iam.domain.User;
@@ -49,4 +51,25 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("SELECT DISTINCT u.id FROM User u JOIN u.roles r JOIN r.permissions p "
             + "WHERE u.active = true AND p.code = :code")
     java.util.List<Long> findActiveIdsByPermission(@org.springframework.data.repository.query.Param("code") String code);
+
+    /**
+     * Increments failed-attempt counter and sets lock expiry without touching the @Version column,
+     * preventing optimistic-locking conflicts when the browser and test helper log in concurrently.
+     */
+    @Modifying
+    @Transactional
+    @Query(value = "UPDATE users SET failed_attempts = :attempts, locked_until = :lockedUntil WHERE id = :id",
+           nativeQuery = true)
+    void recordFailedAttempt(@Param("id") Long id,
+                              @Param("attempts") int attempts,
+                              @Param("lockedUntil") java.time.Instant lockedUntil);
+
+    /**
+     * Clears failed-attempt counter and records successful login timestamp without touching @Version.
+     */
+    @Modifying
+    @Transactional
+    @Query(value = "UPDATE users SET failed_attempts = 0, locked_until = NULL, last_login_at = NOW() WHERE id = :id",
+           nativeQuery = true)
+    void recordSuccessfulLogin(@Param("id") Long id);
 }

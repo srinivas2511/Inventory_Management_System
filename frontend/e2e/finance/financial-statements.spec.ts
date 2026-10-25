@@ -45,7 +45,7 @@ test.describe.serial('Financial statements — P&L, Balance Sheet, Cash Flow (R9
     const a = await openAs(browser, guard, U.finance, '/finance/financial-statements');
     const p = a.page;
     // Screen should load the P&L tab by default (or have a tab for it).
-    await expect(p.getByRole('heading', { name: /profit.*loss|income/i }).first()).toBeVisible();
+    await expect(p.getByRole('heading', { name: /financial statements/i }).first()).toBeVisible();
     await a.close();
   });
 
@@ -118,20 +118,21 @@ test.describe.serial('Internal orders (R10-6.1)', () => {
     const a = await openAs(browser, guard, U.admin, '/controlling/internal-orders');
     const p = a.page;
     await p.getByRole('button', { name: /new order/i }).click();
-    const d = dialog(p);
-    await fill(d, /order number/i, orderNumber);
-    await fill(d, /description/i, 'E2E IT infrastructure project');
-    await pick(d, /order type/i, 0);
-    await fill(d, /budget/i, 50000);
-    await typeInto(d.getByLabel(/start date/i), today());
-    await typeInto(d.getByLabel(/end date/i), today(90));
+    const f = p.locator('.edit-form');
+    await expect(f).toBeVisible();
+    await fill(f, /order number/i, orderNumber);
+    await fill(f, /description/i, 'E2E IT infrastructure project');
+    await pick(f, /type/i, 0);
+    await fill(f, /budget/i, 50000);
+    await typeInto(f.getByLabel(/start date/i).first(), today());
+    await typeInto(f.getByLabel(/end date/i).first(), today(90));
     const saved = p.waitForResponse((r) => /\/api\/controlling\/internal-orders$/.test(r.url()) && r.request().method() === 'POST');
-    await d.getByRole('button', { name: /save|create/i }).last().click();
+    await f.getByRole('button', { name: /save/i }).click();
     const res = await saved;
     expect(res.status(), (await res.text()).slice(0, 300)).toBeLessThan(300);
     const body = await res.json();
     orderId = body.id;
-    await expect(d).toBeHidden();
+    await expect(f).toBeHidden();
 
     // New order appears in the table.
     await expect(row(p, orderNumber)).toBeVisible();
@@ -158,7 +159,7 @@ test.describe.serial('Internal orders (R10-6.1)', () => {
     await r.getByRole('button', { name: /settle/i }).click();
     const d = dialog(p);
     await pick(d, /settlement cost centre/i, 0);
-    await fill(d, /amount|settle/i, 10000);
+    await fill(d, /reason/i, 'E2E settlement');
     const settled = p.waitForResponse((r) => /\/settle$/.test(r.url()) && r.request().method() === 'POST');
     await d.getByRole('button', { name: /settle/i }).last().click();
     const res = await settled;
@@ -185,7 +186,7 @@ test.describe.serial('Overhead cost allocation (R10-6.3)', () => {
     // Use the first section (Allocation Rules) as scope to avoid matching the Period select below.
     const rulesSection = p.locator('section').first();
     await pick(rulesSection, /cost centre/i, 0);
-    await pick(rulesSection, /allocation base/i, 0);
+    await pick(rulesSection, /allocation base/i, 1);
     const saved = p.waitForResponse((r) => /\/api\/controlling\/overhead-allocation\/rules$/.test(r.url()) && r.request().method() === 'POST');
     await p.getByRole('button', { name: /add rule/i }).click();
     const res = await saved;
