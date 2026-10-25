@@ -104,7 +104,7 @@ public class GstEInvoiceService {
     }
 
     private Map<String, Object> fetchCompany() {
-        String sql = "SELECT name, gst_number FROM ims.companies WHERE id = 1";
+        String sql = "SELECT name, gstin AS gst_number FROM ims.companies WHERE id = 1";
         var rows = jdbc.queryForList(sql, Map.of());
         return rows.isEmpty() ? Map.of("name", "Unknown", "gst_number", "") : rows.get(0);
     }

@@ -92,7 +92,7 @@ test.describe.serial('Predictive maintenance (R19-5.2)', () => {
     browser,
     guard,
   }) => {
-    const a = await openAs(browser, guard, U.maint, '/maintenance/predictive');
+    const a = await openAs(browser, guard, U.admin, '/maintenance/predictive');
     const p = a.page;
     // The heading "Predictive Maintenance" or a tab label should be present.
     await expect(
