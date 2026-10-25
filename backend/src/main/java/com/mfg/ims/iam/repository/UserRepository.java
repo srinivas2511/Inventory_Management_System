@@ -58,7 +58,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
      */
     @Modifying
     @Transactional
-    @Query(value = "UPDATE users SET failed_attempts = :attempts, locked_until = :lockedUntil WHERE id = :id",
+    @Query(value = "UPDATE ims.users SET failed_attempts = :attempts, locked_until = :lockedUntil WHERE id = :id",
            nativeQuery = true)
     void recordFailedAttempt(@Param("id") Long id,
                               @Param("attempts") int attempts,
@@ -69,7 +69,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
      */
     @Modifying
     @Transactional
-    @Query(value = "UPDATE users SET failed_attempts = 0, locked_until = NULL, last_login_at = NOW() WHERE id = :id",
+    @Query(value = "UPDATE ims.users SET failed_attempts = 0, locked_until = NULL, last_login_at = NOW() WHERE id = :id",
            nativeQuery = true)
     void recordSuccessfulLogin(@Param("id") Long id);
 }

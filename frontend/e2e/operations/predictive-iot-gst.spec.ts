@@ -18,10 +18,16 @@ import { U } from '../support/users';
 // Helpers
 // ─────────────────────────────────────────────────────────────────────────────
 
-async function firstMachine(): Promise<{ id: number; machineNumber: string }> {
+async function firstMachine(): Promise<{ id: number; code: string }> {
   const machines = await admin().list<any>('/api/machines');
-  if (!machines.length) throw new Error('No machines seeded — cannot run predictive-maintenance E2E.');
-  return machines[0];
+  if (machines.length) return machines[0];
+  // Seed a machine for this test run (demo data loader does not seed machines).
+  return admin().must('POST', '/api/machines', {
+    code: 'MCH-E2E-01',
+    name: 'E2E Test Machine',
+    machineType: 'PRESS',
+    status: 'RUNNING',
+  });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -35,11 +41,9 @@ test.describe.serial('Predictive maintenance (R19-5.2)', () => {
     const machine = await firstMachine();
     const body = await admin().must('POST', '/api/maintenance/predictive/sensor-readings', {
       machineId: machine.id,
-      sensorType: 'VIBRATION',
-      value: 2.4,
+      readingType: 'VIBRATION',
+      readingValue: 2.4,
       unit: 'mm/s',
-      recordedAt: new Date().toISOString(),
-      source: 'MANUAL',
     });
     expect(body.id, 'sensor reading persisted with an ID').toBeTruthy();
     expect(body.machineId).toBe(machine.id);
@@ -117,18 +121,17 @@ test.describe.serial('IoT machine data ingestion (R19-6.3)', () => {
     const beforeReadings = await admin().must('GET', `/api/maintenance/predictive/sensor-readings?machineId=${machine.id}`);
     const beforeCount = (beforeReadings as any[]).length;
 
-    const event = {
-      machineId: machine.id,
-      eventType: 'SENSOR_READING',
-      timestamp: new Date().toISOString(),
-      payload: {
-        sensorType: 'TEMPERATURE',
+    const result = await admin().must('POST', '/api/integration/iot/events', {
+      events: [{
+        machineId: machine.id,
+        eventType: 'SENSOR_READING',
+        readingType: 'TEMPERATURE',
         value: 74.5,
         unit: 'C',
-      },
-    };
-    const result = await admin().must('POST', '/api/integration/iot/events', event);
-    expect(result.processed ?? result.status, 'IoT event acknowledged').toBeTruthy();
+        timestamp: new Date().toISOString(),
+      }],
+    });
+    expect(result.accepted, 'IoT event acknowledged').toBeGreaterThan(0);
 
     // The reading should now appear in the sensor readings list.
     const afterReadings = await admin().must('GET', `/api/maintenance/predictive/sensor-readings?machineId=${machine.id}`);
@@ -137,14 +140,14 @@ test.describe.serial('IoT machine data ingestion (R19-6.3)', () => {
 
   test('IOT-2 a MAINTENANCE_ALERT event type is accepted without error', async () => {
     const machine = await firstMachine();
-    const event = {
-      machineId: machine.id,
-      eventType: 'MAINTENANCE_ALERT',
-      timestamp: new Date().toISOString(),
-      payload: { message: 'Bearing wear detected' },
-    };
     // The server should accept any event type it recognises (or silently ignore unknown ones).
-    const r = await admin().call('POST', '/api/integration/iot/events', event);
+    const r = await admin().call('POST', '/api/integration/iot/events', {
+      events: [{
+        machineId: machine.id,
+        eventType: 'MAINTENANCE_ALERT',
+        timestamp: new Date().toISOString(),
+      }],
+    });
     expect(r.status, 'maintenance alert event accepted').toBeLessThan(300);
   });
 

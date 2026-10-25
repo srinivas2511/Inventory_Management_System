@@ -94,7 +94,7 @@ public class GstEInvoiceService {
         String sql = """
             SELECT di.quantity, di.unit_price,
                    p.product_code, p.name AS product_name,
-                   COALESCE(p.hsn_code, '9999') AS hsn_sac,
+                   '9999' AS hsn_sac,
                    ROUND(di.quantity * di.unit_price, 2) AS taxable_value
             FROM ims.dispatch_items di
             JOIN ims.products p ON p.id = di.product_id
