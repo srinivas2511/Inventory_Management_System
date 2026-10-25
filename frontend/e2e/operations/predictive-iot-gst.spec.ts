@@ -205,7 +205,7 @@ test.describe.serial('GST e-invoice generation (R19-6.5)', () => {
     // GSTN schema requires at least a BuyerDtls or SellerDtls section at the top level,
     // or the envelope key used by the service.
     const hasContent = payload && (payload.BuyerDtls || payload.SellerDtls || payload.DocDtls || Object.keys(payload).length > 0);
-    expect(hasContent, 'payload contains GSTN schema content').toBe(true);
+    expect(hasContent, 'payload contains GSTN schema content').toBeTruthy();
   });
 
   test('GST-EI-4 GST e-invoice screen renders for a user with GST_EINVOICE_VIEW', async ({

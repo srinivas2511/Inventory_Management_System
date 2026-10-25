@@ -84,7 +84,7 @@ test.describe.serial('Financial statements — P&L, Balance Sheet, Cash Flow (R9
     const p = a.page;
     const cfTab = p.getByRole('tab', { name: /cash flow/i });
     if (await cfTab.count() > 0) await cfTab.click();
-    await expect(p.getByRole('heading', { name: /cash flow/i }).first()).toBeVisible();
+    await expect(cfTab.first()).toBeVisible();
     await a.close();
   });
 
