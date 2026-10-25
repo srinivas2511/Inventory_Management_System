@@ -125,21 +125,18 @@ public class AuthService {
 
         if (!passwordEncoder.matches(req.password(), user.getPasswordHash())) {
             int attempts = user.getFailedAttempts() + 1;
-            user.setFailedAttempts(attempts);
-            if (attempts >= maxAttempts) {
-                user.setLockedUntil(Instant.now().plus(lockoutMinutes, ChronoUnit.MINUTES));
-            }
-            userRepository.save(user);
+            Instant lockedUntil = attempts >= maxAttempts
+                ? Instant.now().plus(lockoutMinutes, ChronoUnit.MINUTES)
+                : null;
+            userRepository.recordFailedAttempt(user.getId(), attempts, lockedUntil);
             auditService.record("LOGIN_FAILURE", "USER", String.valueOf(user.getId()),
                 null, null, null);
             throw new BusinessRuleException(ErrorCode.INVALID_CREDENTIALS, "Invalid username or password");
         }
 
-        // Successful login
-        user.setFailedAttempts(0);
-        user.setLockedUntil(null);
-        user.setLastLoginAt(Instant.now());
-        userRepository.save(user);
+        // Successful login — use a native UPDATE to avoid touching @Version and causing optimistic-lock
+        // conflicts when the browser and the test API helper log in concurrently for the same user.
+        userRepository.recordSuccessfulLogin(user.getId());
 
         String accessToken = jwtService.generateAccessToken(
             user.getId(), user.getUsername(), user.getRoleCodes(), user.getPermissionVersion());
