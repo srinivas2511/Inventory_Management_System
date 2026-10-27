@@ -117,9 +117,9 @@ test.describe('CRM-F: Opportunities board', () => {
 
     await expect(p.getByRole('heading', { name: 'Opportunities' })).toBeVisible();
 
-    // View toggle
-    const boardBtn = p.getByRole('button', { name: 'Board' });
-    const listBtn = p.getByRole('button', { name: 'List' });
+    // View toggle (mat-button-toggle renders with role="radio" inside the group)
+    const boardBtn = p.getByRole('radio', { name: 'Board' });
+    const listBtn = p.getByRole('radio', { name: 'List' });
     await expect(boardBtn).toBeVisible();
     await expect(listBtn).toBeVisible();
 

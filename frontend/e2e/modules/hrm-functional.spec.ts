@@ -56,8 +56,8 @@ test.describe('HRM-F: Employee list', () => {
 
     await p.getByRole('button', { name: /New employee/i }).click();
 
-    // Row with the new employee name should appear
-    await expect(row(p, firstName)).toBeVisible({ timeout: 15_000 });
+    // create() navigates to the employee detail page on success
+    await expect(p).toHaveURL(/\/hrm\/employees\/\d+/, { timeout: 15_000 });
 
     await a.close();
   });
@@ -90,7 +90,7 @@ test.describe('HRM-F: Employee list', () => {
     // Pick "Active" status
     const statusSelect = p.getByLabel('Status');
     await statusSelect.click();
-    await p.getByRole('option', { name: /Active/i }).click();
+    await p.getByRole('option', { name: 'Active', exact: true }).click();
     await p.waitForLoadState('networkidle');
     await expect(p.locator('mat-spinner')).toHaveCount(0, { timeout: 15_000 });
 

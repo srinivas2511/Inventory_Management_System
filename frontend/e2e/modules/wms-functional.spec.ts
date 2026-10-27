@@ -129,7 +129,7 @@ test.describe('WMS-F: Cycle counts', () => {
     await expect(p.locator('[data-test="count-type"]')).toBeVisible();
 
     // Table columns
-    await expect(p.getByRole('columnheader', { name: 'Count' })).toBeVisible();
+    await expect(p.getByRole('columnheader', { name: 'Count', exact: true })).toBeVisible();
     await expect(p.getByRole('columnheader', { name: 'Type' })).toBeVisible();
     await expect(p.getByRole('columnheader', { name: 'Status' })).toBeVisible();
 
@@ -193,7 +193,8 @@ test.describe('WMS-F: Picking tasks', () => {
     await expect(heading).toBeVisible();
 
     await expect(p.locator('[data-test="status"]')).toBeVisible();
-    await expect(p.getByLabel('Sales order id').or(p.getByLabel('Order number'))).toBeVisible();
+    // filter bar always shows "Order number"; the PICKING_MANAGE form shows "Sales order id" additionally
+    await expect(p.getByLabel('Order number')).toBeVisible();
 
     await a.close();
   });
