@@ -47,10 +47,14 @@ test.describe('UAT QCF-05: HOLD finished goods cannot be reserved', () => {
     await iconButton(row(p, so.orderNumber), 'inventory').click();
     let d = dialog(p);
     await pick(d, 'Order item', 0);
-    await d.getByRole('combobox', { name: /Batch and location/i }).click();
+    const batchCombobox = d.getByRole('combobox', { name: /Batch and location/i });
+    await batchCombobox.click();
     const offered = (await p.getByRole('option').allInnerTexts()).join(' | ');
     expect(offered, `the held batch ${made.fgBatchNumber} must not be offered for reservation (options: ${offered})`).not.toContain(made.fgBatchNumber);
-    await p.keyboard.press('Escape');
+    // Press Escape on the combobox element itself — mat-select calls stopPropagation so only the dropdown closes
+    await batchCombobox.press('Escape');
+    // Wait for the dropdown panel to disappear before clicking Cancel
+    await p.getByRole('option').first().waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {});
     await d.getByRole('button', { name: 'Cancel' }).click();
     await expect(d).toBeHidden();
     const refused = await apiFor(U.sales).call('POST', '/api/sales/reservations', {
