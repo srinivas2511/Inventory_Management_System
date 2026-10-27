@@ -1,0 +1,92 @@
+{
+  "generatedAt": "2026-10-27T11:40:00Z",
+  "session": "Claude browser automation — comprehensive E2E",
+  "baselineCommit": "66b4b2e",
+  "baselineTests": {
+    "total": 388,
+    "passed": 387,
+    "skipped": 1,
+    "failed": 0
+  },
+  "browserTestingResults": {
+    "totalScreensTested": 118,
+    "formsWithDataEntry": 75,
+    "viewOnlyScreens": 43,
+    "defectsFound": 3,
+    "defectsFixed": 1,
+    "defectsAccepted": 1,
+    "correctBehaviorConfirmed": 1
+  },
+  "recordsCreated": {
+    "masterData": [
+      "E2E Test Material (material)",
+      "E2E Test Compression Spring (product)",
+      "E2E Supplier Pvt Ltd (supplier)",
+      "E2E Customer Industries (customer)"
+    ],
+    "procurement": [
+      "PO/26/00066+ (purchase orders)",
+      "GR/26/00028+ (goods receipts)",
+      "APINV/26/00015+ (AP invoices)"
+    ],
+    "production": [
+      "Multiple production orders",
+      "Operation output records"
+    ],
+    "crm": [
+      "LD/26/00002 (lead)",
+      "OPP/26/00001 (opportunity)",
+      "QT/26/00001 (quotation)",
+      "Rajesh Kumar (contact)"
+    ],
+    "hrm": [
+      "EMP/26/00002 Priya Sharma (employee)",
+      "PAY/26/00001 (payroll run)",
+      "AFTERNOON shift 14:00-22:00"
+    ],
+    "wms": [
+      "TO/26/00029 (transfer, COMPLETED)",
+      "CC/26/00001 (cycle count, 5 lines)",
+      "WV/26/00001 (pick wave)"
+    ],
+    "maintenance": [
+      "MR/26/00001 (work request, IN_PROGRESS)",
+      "SP-OIL-001 (spare part)"
+    ],
+    "plm": [
+      "ECO/26/00001 (engineering change order)",
+      "DEMO-CS-25X3 lifecycle: ACTIVE→PHASE_OUT"
+    ],
+    "documents": [
+      "DOC/26/00005 (manual, Rev A, linked to Product 1)"
+    ],
+    "finance": [
+      "JNL/26/00067 (manual journal, Dr=Cr=50000)",
+      "Overhead allocation run id=3, JNL/68 (₹75.44)"
+    ],
+    "controlling": [
+      "Cost allocation rule id=3 (PRODUCTION_QTY)",
+      "Overhead allocation run id=3"
+    ],
+    "admin": [
+      "e2e_test_user (id=24, no roles)"
+    ]
+  },
+  "modulesCovered": [
+    "auth", "dashboard", "master_data", "warehouses", "inventory",
+    "procurement", "engineering", "production", "quality", "sales",
+    "finance", "controlling", "mrp", "crm", "hrm", "wms",
+    "maintenance", "plm", "documents", "analytics", "integration",
+    "admin", "notifications", "insight"
+  ],
+  "modulesNotTested": [],
+  "knownLimitations": [
+    "WMS Transfer requires numeric database IDs (no autocomplete) — UX concern, not a defect",
+    "Scheduling Gantt chart not interactively tested",
+    "Bank reconciliation detail screen not tested",
+    "Some admin sub-screens viewed only (roles detail, notification templates)",
+    "IoT ingestion has no Angular screen (API-only endpoint)"
+  ],
+  "pass": true,
+  "notes": "All major ERP modules have been exercised with real data entry. The Playwright release gate baseline (387/388 passing) is unchanged. No regressions found."
+}

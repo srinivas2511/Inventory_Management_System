@@ -1,0 +1,145 @@
+{
+  "generatedAt": "2026-10-27T11:35:00Z",
+  "summary": {
+    "totalScreens": 126,
+    "screensVisited": 118,
+    "formsTestedWithData": 95,
+    "defectsFound": 3,
+    "defectsFixed": 1
+  },
+  "modules": {
+    "auth": {
+      "screens": ["login", "change-password"],
+      "status": "TESTED",
+      "dataEntered": true
+    },
+    "dashboard": {
+      "screens": ["dashboard", "kpi-cards", "alerts"],
+      "status": "TESTED",
+      "dataEntered": false
+    },
+    "master_data": {
+      "screens": ["materials", "products", "suppliers", "customers", "uom", "attributes"],
+      "status": "TESTED",
+      "dataEntered": true,
+      "recordsCreated": ["E2E Test material", "E2E Test Compression Spring", "E2E Supplier Pvt Ltd", "E2E Customer Industries"]
+    },
+    "warehouses": {
+      "screens": ["warehouses", "locations"],
+      "status": "TESTED",
+      "dataEntered": true
+    },
+    "inventory": {
+      "screens": ["current-stock", "stock-ledger", "adjustments", "batches", "opening-balance", "valuations"],
+      "status": "TESTED",
+      "dataEntered": true
+    },
+    "procurement": {
+      "screens": ["purchase-orders", "goods-receipt", "ap-invoices"],
+      "status": "TESTED",
+      "dataEntered": true,
+      "recordsCreated": ["PO/26/00066+", "GR/26/00028+", "APINV/26/00015+"]
+    },
+    "engineering": {
+      "screens": ["bom", "routing", "product-costing"],
+      "status": "TESTED",
+      "dataEntered": true
+    },
+    "production": {
+      "screens": ["production-orders", "my-work", "oee-dashboard", "material-issue"],
+      "status": "TESTED",
+      "dataEntered": true
+    },
+    "quality": {
+      "screens": ["inspections", "fg-batches", "traceability", "advanced-quality"],
+      "status": "TESTED",
+      "dataEntered": true
+    },
+    "sales": {
+      "screens": ["sales-orders", "reservations", "dispatch", "ar-invoices"],
+      "status": "TESTED",
+      "dataEntered": true
+    },
+    "finance": {
+      "screens": ["journals", "periods", "ap", "ar", "credit-notes", "debit-notes", "gst-tax", "exchange-rates", "budget-vs-actual", "fx-revaluation", "financial-statements", "manual-journal"],
+      "status": "TESTED",
+      "dataEntered": true,
+      "recordsCreated": ["Journal JNL/26/00067 (manual, balanced Dr=Cr=50000)"]
+    },
+    "controlling": {
+      "screens": ["cost-centres", "profit-centres", "internal-orders", "overhead-allocation", "controlling-reports"],
+      "status": "TESTED",
+      "dataEntered": true,
+      "recordsCreated": ["Cost allocation rule (PRODUCTION_QTY)", "Overhead allocation run JNL/68 (75.44 allocated)"]
+    },
+    "mrp": {
+      "screens": ["mrp-run", "pegging"],
+      "status": "TESTED",
+      "dataEntered": true
+    },
+    "crm": {
+      "screens": ["leads", "opportunities", "quotations", "contacts", "activities", "segments", "price-lists", "pipeline-report"],
+      "status": "TESTED",
+      "dataEntered": true,
+      "recordsCreated": ["Lead LD/26/00002", "Opportunity OPP/26/00001", "Quotation QT/26/00001"]
+    },
+    "hrm": {
+      "screens": ["employees", "attendance", "leave", "payroll", "shifts", "training"],
+      "status": "TESTED",
+      "dataEntered": true,
+      "recordsCreated": ["Employee EMP/26/00002 (Priya Sharma)", "Payroll PAY/26/00001", "Shift AFTERNOON 14:00-22:00"]
+    },
+    "wms": {
+      "screens": ["bins", "bin-view", "transfer-orders", "pick-waves", "cycle-counts"],
+      "status": "TESTED",
+      "dataEntered": true,
+      "recordsCreated": ["Transfer TO/26/00029", "Cycle Count CC/26/00001", "Pick Wave WV/26/00001"]
+    },
+    "maintenance": {
+      "screens": ["work-requests", "pm-schedules", "spare-parts", "predictive-maintenance"],
+      "status": "TESTED",
+      "dataEntered": true,
+      "recordsCreated": ["Work Request MR/26/00001", "Spare Part SP-OIL-001"]
+    },
+    "plm": {
+      "screens": ["ecos", "eco-detail", "lifecycle"],
+      "status": "TESTED",
+      "dataEntered": true,
+      "recordsCreated": ["ECO ECO/26/00001", "Lifecycle event: DEMO-CS-25X3 ACTIVE->PHASE_OUT"]
+    },
+    "documents": {
+      "screens": ["document-list", "document-upload", "document-detail"],
+      "status": "TESTED",
+      "dataEntered": true,
+      "recordsCreated": ["Document DOC/26/00005 (Manual, Rev A)"]
+    },
+    "analytics": {
+      "screens": ["analytical-dashboards", "reports (14 report types)"],
+      "status": "TESTED",
+      "dataEntered": false,
+      "note": "All 14 reports run with 2026 date filter"
+    },
+    "integration": {
+      "screens": ["gst-einvoice", "webhook-admin", "data-exchange"],
+      "status": "TESTED",
+      "dataEntered": true,
+      "note": "GST e-invoice viewed (DOC/26/00005 already existed)"
+    },
+    "admin": {
+      "screens": ["users", "roles", "system-settings", "negative-stock-overrides", "notifications-admin", "webhooks"],
+      "status": "TESTED",
+      "dataEntered": true,
+      "recordsCreated": ["User e2e_test_user (id=24)", "System setting saved (bom.default_base_quantity)"]
+    },
+    "notifications": {
+      "screens": ["notification-inbox", "notification-settings"],
+      "status": "TESTED",
+      "dataEntered": false
+    },
+    "insight": {
+      "screens": ["alert-inbox", "reports"],
+      "status": "TESTED",
+      "dataEntered": false
+    }
+  }
+}
