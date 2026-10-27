@@ -2,6 +2,7 @@ import { DecimalPipe } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
@@ -22,6 +23,7 @@ import {
     DecimalPipe,
     MatButtonModule,
     MatFormFieldModule,
+    MatProgressSpinnerModule,
     MatSelectModule,
     MatSnackBarModule,
     MatTableModule,
@@ -71,6 +73,16 @@ import {
       .num {
         text-align: right;
       }
+      .hidden {
+        visibility: hidden;
+        height: 0;
+        overflow: hidden;
+      }
+      .empty-state {
+        padding: 32px 0;
+        color: rgba(0, 0, 0, 0.45);
+        text-align: center;
+      }
     `,
   ],
   template: `
@@ -88,7 +100,7 @@ import {
         </mat-select>
       </mat-form-field>
       <button mat-flat-button color="primary" [disabled]="!selectedPeriodId() || loading()" (click)="load()">
-        Generate
+        @if (loading()) { Generating… } @else { Generate }
       </button>
     </div>
 
@@ -96,9 +108,16 @@ import {
       <p class="error" role="alert">{{ errorMessage() }}</p>
     }
 
-    <mat-tab-group>
+    @if (loading()) {
+      <div style="display:flex;justify-content:center;padding:48px"><mat-spinner diameter="40" /></div>
+    }
+
+    <mat-tab-group [class.hidden]="loading()">
       <!-- ── Profit & Loss ─────────────────────────────────── -->
       <mat-tab label="Profit & Loss">
+        @if (!pl() && !loading()) {
+          <p class="empty-state">Select a period and click <strong>Generate</strong> to view the Profit &amp; Loss statement.</p>
+        }
         @if (pl(); as r) {
           <div style="padding: 16px 0">
             <p class="mat-body-2">Fiscal year {{ r.fiscalYear }} · YTD through {{ r.periodName }}</p>
@@ -201,6 +220,9 @@ import {
 
       <!-- ── Balance Sheet ─────────────────────────────────── -->
       <mat-tab label="Balance Sheet">
+        @if (!bs() && !loading()) {
+          <p class="empty-state">Select a period and click <strong>Generate</strong> to view the Balance Sheet.</p>
+        }
         @if (bs(); as r) {
           <div style="padding: 16px 0">
             <p class="mat-body-2">As at end of {{ r.periodName }}</p>
@@ -295,6 +317,9 @@ import {
 
       <!-- ── Cash Flow ─────────────────────────────────────── -->
       <mat-tab label="Cash Flow">
+        @if (!cf() && !loading()) {
+          <p class="empty-state">Select a period and click <strong>Generate</strong> to view the Cash Flow statement.</p>
+        }
         @if (cf(); as r) {
           <div style="padding: 16px 0">
             <p class="mat-body-2">Cash movements in {{ r.periodName }} · main bank account (1201)</p>
@@ -378,7 +403,10 @@ export class FinancialStatementsComponent implements OnInit {
       next: (ps) => {
         this.periods.set(ps);
         const open = ps.find((p) => p.status === 'OPEN') ?? ps[ps.length - 1];
-        if (open) this.selectedPeriodId.set(open.id);
+        if (open) {
+          this.selectedPeriodId.set(open.id);
+          this.load();
+        }
       },
       error: (err) => this.snackBar.open(problemMessage(err, 'Failed to load periods'), 'Close', { duration: 4000 }),
     });

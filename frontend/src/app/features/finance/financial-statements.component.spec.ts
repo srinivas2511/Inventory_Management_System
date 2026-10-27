@@ -88,23 +88,33 @@ describe('FinancialStatementsComponent', () => {
     fixture.detectChanges();
   });
 
-  it('should create and load periods on init (FS-1)', () => {
+  it('should create, load periods, and auto-generate statements on init (FS-1)', () => {
     expect(fixture.componentInstance).toBeTruthy();
     expect(api.getPeriods).toHaveBeenCalledOnceWith();
     expect(fixture.componentInstance.periods().length).toBe(1);
     expect(fixture.componentInstance.selectedPeriodId()).toBe(1);
+    // auto-load fires immediately after period selection
+    expect(api.getProfitLoss).toHaveBeenCalledOnceWith(1);
+    expect(api.getBalanceSheet).toHaveBeenCalledOnceWith(1);
+    expect(api.getCashFlow).toHaveBeenCalledOnceWith(1);
+    expect(fixture.componentInstance.pl()).toBeTruthy();
   });
 
   it('should load all three statements on generate (FS-2)', () => {
-    fixture.componentInstance.load();
-    fixture.detectChanges();
-
-    expect(api.getProfitLoss).toHaveBeenCalledWith(1);
-    expect(api.getBalanceSheet).toHaveBeenCalledWith(1);
-    expect(api.getCashFlow).toHaveBeenCalledWith(1);
+    // auto-load already ran on init; verify data is present and re-generate works
     expect(fixture.componentInstance.pl()?.netIncome).toBe(20000);
     expect(fixture.componentInstance.bs()?.totalAssets).toBe(50000);
     expect(fixture.componentInstance.cf()?.netCashChange).toBe(80000);
+
+    api.getProfitLoss.calls.reset();
+    api.getBalanceSheet.calls.reset();
+    api.getCashFlow.calls.reset();
+    fixture.componentInstance.load();
+    fixture.detectChanges();
+
+    expect(api.getProfitLoss).toHaveBeenCalledOnceWith(1);
+    expect(api.getBalanceSheet).toHaveBeenCalledOnceWith(1);
+    expect(api.getCashFlow).toHaveBeenCalledOnceWith(1);
   });
 
   it('should reset statements when period changes (FS-3)', () => {
@@ -118,10 +128,16 @@ describe('FinancialStatementsComponent', () => {
     expect(fixture.componentInstance.selectedPeriodId()).toBe(2);
   });
 
-  it('should not call generate when no period selected (FS-4)', () => {
+  it('should not make API calls when load() is called with no period selected (FS-4)', () => {
+    // auto-load ran during init; reset counts to isolate this call
+    api.getProfitLoss.calls.reset();
+    api.getBalanceSheet.calls.reset();
+    api.getCashFlow.calls.reset();
     fixture.componentInstance.selectedPeriodId.set(null);
     fixture.componentInstance.load();
     expect(api.getProfitLoss).not.toHaveBeenCalled();
+    expect(api.getBalanceSheet).not.toHaveBeenCalled();
+    expect(api.getCashFlow).not.toHaveBeenCalled();
   });
 
   it('should show error message when API fails (FS-5)', () => {
