@@ -273,7 +273,9 @@ test.describe.serial('22-step demonstration workflow', () => {
     await fill(card, 'Scrap Qty', scrap);
     await card.getByRole('button', { name: /record output/i }).last().click();
     await card.getByRole('button', { name: /^\s*complete\s*$/i }).click();
+    const completeDone = p.waitForResponse((r) => /\/api\/production\/operations\/\d+/.test(r.url()) && r.request().method() === 'POST');
     await card.getByRole('button', { name: /complete operation/i }).click();
+    await completeDone;
     await a.close();
   }
 

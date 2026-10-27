@@ -19,8 +19,8 @@ export default defineConfig({
   reporter: [['list'], ['html', { open: 'never' }]],
   use: {
     baseURL: process.env['E2E_BASE_URL'] || 'http://localhost:4200',
-    trace: 'retain-on-failure',
-    screenshot: 'only-on-failure',
+    trace: 'off',
+    screenshot: 'off',
     video: 'off',
     actionTimeout: 15_000,
     navigationTimeout: 30_000,
