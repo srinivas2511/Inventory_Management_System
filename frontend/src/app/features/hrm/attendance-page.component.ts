@@ -2,6 +2,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -13,6 +14,7 @@ import { IstDatePipe } from '../../shared/pipes/ist-date.pipe';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
 import { AttendanceDto, AttendanceStatus, AttendanceSummaryDto, HrmApi, MONTH_NAMES } from './hrm.api';
+import { AttendanceTimeDialogComponent, AttendanceTimeDialogResult } from './attendance-time-dialog.component';
 
 function today(): string {
   return new Date().toLocaleDateString('en-CA');
@@ -33,6 +35,7 @@ function today(): string {
     MatSelectModule,
     MatSnackBarModule,
     MatTableModule,
+    MatDialogModule,
     StatusBadgeComponent,
     HasPermissionDirective,
   ],
@@ -202,6 +205,7 @@ export class AttendancePageComponent implements OnInit {
   private api = inject(HrmApi);
   private fb = inject(FormBuilder);
   private snack = inject(MatSnackBar);
+  private dialog = inject(MatDialog);
 
   monthNames = MONTH_NAMES;
   marks: AttendanceStatus[] = ['PRESENT', 'ABSENT', 'HALF_DAY', 'HOLIDAY'];
@@ -248,15 +252,43 @@ export class AttendancePageComponent implements OnInit {
 
   mark(row: AttendanceDto, status: AttendanceStatus): void {
     const timed = status === 'PRESENT' || status === 'HALF_DAY';
+    if (timed) {
+      const ref = this.dialog.open<AttendanceTimeDialogComponent, unknown, AttendanceTimeDialogResult>(
+        AttendanceTimeDialogComponent,
+        {
+          data: {
+            employeeName: `${row.employeeCode} ${row.employeeName}`,
+            attendanceDate: row.attendanceDate,
+            status,
+          },
+          width: '380px',
+        },
+      );
+      ref.afterClosed().subscribe((result) => {
+        if (!result) return;
+        this.doRecord(row, status, result.checkIn, result.checkOut, result.remarks);
+      });
+    } else {
+      this.doRecord(row, status, null, null, null);
+    }
+  }
+
+  private doRecord(
+    row: AttendanceDto,
+    status: AttendanceStatus,
+    checkIn: string | null,
+    checkOut: string | null,
+    remarks: string | null,
+  ): void {
     this.api
       .recordAttendance({
         employeeId: row.employeeId,
         attendanceDate: row.attendanceDate,
         shift: row.shift,
-        checkIn: timed ? row.checkIn : null,
-        checkOut: timed ? row.checkOut : null,
+        checkIn,
+        checkOut,
         status,
-        remarks: row.remarks,
+        remarks,
       })
       .subscribe({
         next: () => {
