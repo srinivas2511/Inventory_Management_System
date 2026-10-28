@@ -122,6 +122,14 @@
         <source>OEE</source>
         <target>ಒಇಇ</target>
       </trans-unit>
+      <trans-unit id="nav.item-barcodes" datatype="html">
+        <source>Barcode Labels</source>
+        <target>ಬಾರ್‌ಕೋಡ್ ಲೇಬಲ್‌ಗಳು</target>
+      </trans-unit>
+      <trans-unit id="nav.item-cost-rollup" datatype="html">
+        <source>Cost Roll-up</source>
+        <target>ವೆಚ್ಚ ರೋಲಪ್</target>
+      </trans-unit>
       <trans-unit id="nav.group-quality" datatype="html">
         <source>Quality</source>
         <target>ಗುಣಮಟ್ಟ</target>

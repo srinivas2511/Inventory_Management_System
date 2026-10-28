@@ -372,6 +372,18 @@ export const routes: Routes = [
           import('./features/production/schedule-gantt.component').then((m) => m.ScheduleGanttComponent),
       },
       {
+        path: 'production/barcodes',
+        title: 'Barcode Labels',
+        canActivate: [permissionGuard('BARCODE_VIEW')],
+        loadComponent: () => import('./features/production/barcode-list.component').then((m) => m.BarcodeListComponent),
+      },
+      {
+        path: 'production/cost-rollup',
+        title: 'Cost Roll-up',
+        canActivate: [permissionGuard('COST_ROLLUP_VIEW')],
+        loadComponent: () => import('./features/production/cost-rollup.component').then((m) => m.CostRollupComponent),
+      },
+      {
         path: 'finance/dashboard',
         title: 'Finance Dashboard',
         canActivate: [permissionGuard('FINANCE_REPORT')],

@@ -122,6 +122,14 @@
         <source>OEE</source>
         <target>ओईई</target>
       </trans-unit>
+      <trans-unit id="nav.item-barcodes" datatype="html">
+        <source>Barcode Labels</source>
+        <target>बारकोड लेबल</target>
+      </trans-unit>
+      <trans-unit id="nav.item-cost-rollup" datatype="html">
+        <source>Cost Roll-up</source>
+        <target>लागत रोलअप</target>
+      </trans-unit>
       <trans-unit id="nav.group-quality" datatype="html">
         <source>Quality</source>
         <target>गुणवत्ता</target>

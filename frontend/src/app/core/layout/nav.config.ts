@@ -214,6 +214,20 @@ export const NAV_GROUPS: NavGroup[] = [
         permission: 'OEE_VIEW',
         enabled: true,
       },
+      {
+        label: $localize`:@@nav.item-barcodes:Barcode Labels`,
+        icon: 'qr_code',
+        route: '/production/barcodes',
+        permission: 'BARCODE_VIEW',
+        enabled: true,
+      },
+      {
+        label: $localize`:@@nav.item-cost-rollup:Cost Roll-up`,
+        icon: 'calculate',
+        route: '/production/cost-rollup',
+        permission: 'COST_ROLLUP_VIEW',
+        enabled: true,
+      },
     ],
   },
   {

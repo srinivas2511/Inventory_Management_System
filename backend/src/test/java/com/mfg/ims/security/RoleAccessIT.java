@@ -118,6 +118,10 @@ class RoleAccessIT extends AbstractIntegrationTest {
     private static final Set<String> PHASE12_FINANCE_ALLOWED = Set.of("ADMIN", "FINANCE_MANAGER");
     private static final Set<String> PHASE12_FINANCE_FORBIDDEN = Set.of("OPERATOR", "SALES", "DISPATCH",
             "ENGINEER", "PURCHASE_MANAGER", "SALES_MANAGER");
+    // Phase 13: Barcodes and cost rollup — ADMIN + PRODUCTION_MANAGER + STORE_MANAGER
+    private static final Set<String> PHASE13_BARCODE_ALLOWED = Set.of("ADMIN", "PRODUCTION_MANAGER", "STORE_MANAGER");
+    private static final Set<String> PHASE13_BARCODE_FORBIDDEN = Set.of("OPERATOR", "SALES", "DISPATCH",
+            "ENGINEER", "FINANCE_MANAGER", "PURCHASE_MANAGER", "SALES_MANAGER");
     /** Inactive on purpose: the permitted caller creates a subscription that never receives an event. */
     private static final String WEBHOOK_BODY =
             "{\"name\":\"rbac probe\",\"targetUrl\":\"https://example.com/hook\",\"events\":[\"StockPosted\"],\"active\":false}";
@@ -625,7 +629,12 @@ class RoleAccessIT extends AbstractIntegrationTest {
             Probe.of(HttpMethod.GET, "/api/finance/payments", PHASE12_FINANCE_ALLOWED, PHASE12_FINANCE_FORBIDDEN),
             Probe.of(HttpMethod.GET, "/api/finance/payments/" + MISSING, PHASE12_FINANCE_ALLOWED, PHASE12_FINANCE_FORBIDDEN),
             // Phase 12: Open items / ageing — ADMIN + FINANCE_MANAGER (OPEN_ITEM_VIEW)
-            Probe.of(HttpMethod.GET, "/api/finance/open-items", PHASE12_FINANCE_ALLOWED, PHASE12_FINANCE_FORBIDDEN));
+            Probe.of(HttpMethod.GET, "/api/finance/open-items", PHASE12_FINANCE_ALLOWED, PHASE12_FINANCE_FORBIDDEN),
+            // Phase 13: Barcodes — ADMIN + PRODUCTION_MANAGER + STORE_MANAGER (BARCODE_VIEW)
+            Probe.of(HttpMethod.GET, "/api/production/barcodes", PHASE13_BARCODE_ALLOWED, PHASE13_BARCODE_FORBIDDEN),
+            Probe.of(HttpMethod.GET, "/api/production/barcodes/" + MISSING, PHASE13_BARCODE_ALLOWED, PHASE13_BARCODE_FORBIDDEN),
+            // Phase 13: Cost rollup — ADMIN + PRODUCTION_MANAGER + STORE_MANAGER (COST_ROLLUP_VIEW)
+            Probe.of(HttpMethod.GET, "/api/production/cost-rollup", PHASE13_BARCODE_ALLOWED, PHASE13_BARCODE_FORBIDDEN));
 
     /**
      * What a permitted caller gets when it is not a 2xx. Every other permitted probe must answer 2xx. These probes
@@ -738,7 +747,9 @@ class RoleAccessIT extends AbstractIntegrationTest {
             Map.entry("GET /api/sales/delivery-challans/999999", 404),
             // Phase 12: GET by missing id answers 404
             Map.entry("GET /api/finance/sales-invoices/999999", 404),
-            Map.entry("GET /api/finance/payments/999999", 404));
+            Map.entry("GET /api/finance/payments/999999", 404),
+            // Phase 13: GET by missing id answers 404
+            Map.entry("GET /api/production/barcodes/999999", 404));
 
     @Autowired UserAdminService userAdminService;
     @Autowired @Qualifier("requestMappingHandlerMapping") RequestMappingHandlerMapping handlerMapping;
