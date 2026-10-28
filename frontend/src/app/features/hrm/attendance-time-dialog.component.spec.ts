@@ -13,7 +13,10 @@ describe('AttendanceTimeDialogComponent', () => {
     await TestBed.configureTestingModule({
       imports: [AttendanceTimeDialogComponent, NoopAnimationsModule],
       providers: [
-        { provide: MAT_DIALOG_DATA, useValue: { employeeName: 'EMP/26/00001 Test User', attendanceDate: '2026-10-27', status: 'PRESENT' } },
+        {
+          provide: MAT_DIALOG_DATA,
+          useValue: { employeeName: 'EMP/26/00001 Test User', attendanceDate: '2026-10-27', status: 'PRESENT' },
+        },
         { provide: MatDialogRef, useValue: { close: closeSpy } },
       ],
     }).compileComponents();

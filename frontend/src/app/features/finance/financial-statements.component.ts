@@ -100,7 +100,11 @@ import {
         </mat-select>
       </mat-form-field>
       <button mat-flat-button color="primary" [disabled]="!selectedPeriodId() || loading()" (click)="load()">
-        @if (loading()) { Generating… } @else { Generate }
+        @if (loading()) {
+          Generating…
+        } @else {
+          Generate
+        }
       </button>
     </div>
 
@@ -116,7 +120,9 @@ import {
       <!-- ── Profit & Loss ─────────────────────────────────── -->
       <mat-tab label="Profit & Loss">
         @if (!pl() && !loading()) {
-          <p class="empty-state">Select a period and click <strong>Generate</strong> to view the Profit &amp; Loss statement.</p>
+          <p class="empty-state">
+            Select a period and click <strong>Generate</strong> to view the Profit &amp; Loss statement.
+          </p>
         }
         @if (pl(); as r) {
           <div style="padding: 16px 0">
@@ -318,7 +324,9 @@ import {
       <!-- ── Cash Flow ─────────────────────────────────────── -->
       <mat-tab label="Cash Flow">
         @if (!cf() && !loading()) {
-          <p class="empty-state">Select a period and click <strong>Generate</strong> to view the Cash Flow statement.</p>
+          <p class="empty-state">
+            Select a period and click <strong>Generate</strong> to view the Cash Flow statement.
+          </p>
         }
         @if (cf(); as r) {
           <div style="padding: 16px 0">
