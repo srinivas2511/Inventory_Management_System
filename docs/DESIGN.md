@@ -1964,6 +1964,7 @@ Built as `V24__hrm_core.sql` and `V25__payroll.sql`. Additions to the tables abo
 - Payroll states: DRAFT -> COMPLETED -> PAID (PROCESSING unused). Statutory rates and slabs are `system_settings` rows named `hrm.payroll.*`.
 - Payroll journal accounts: Dr 5201, 5205, 5206 (per cost centre); Cr 2501-2505; payment Dr 2501 / Cr 1201.
 - Attendance auto-capture is driven by `OperationStartedEvent` / `OperationCompletedEvent` from the production module.
+- **Attendance time dialog (2026-10-28):** clicking PRESENT or HALF_DAY in `AttendancePageComponent` opens `AttendanceTimeDialogComponent`, which captures check-in time (required, `HH:mm`) and check-out time (optional, `HH:mm`) and converts both to IST ISO 8601 (`+05:30` offset) before calling `PUT /api/hrm/attendance`. ABSENT and HOLIDAY call the endpoint directly without a dialog. The `attendance.check_in` / `check_out` columns (both `TIMESTAMPTZ`) have been present in the schema since V24; this change surfaces them in the UI.
 - Unrecorded workdays (`V26`): setting `hrm.payroll.unrecorded_day_policy` = `ABSENT` (default) counts a working day with no attendance row and no approved leave as loss of pay in `PayrollCalculator`; `PRESENT` pays it. Weekly offs, holidays, approved paid leave and days from today onward are never penalised. The applied policy is recorded in the PAYROLL_CALCULATE audit entry.
 
 ## 20. WMS Module Design (R14)
