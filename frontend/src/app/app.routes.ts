@@ -476,6 +476,25 @@ export const routes: Routes = [
           import('./features/finance/financial-statements.component').then((m) => m.FinancialStatementsComponent),
       },
       {
+        path: 'finance/sales-invoices',
+        title: 'Sales Invoices',
+        canActivate: [permissionGuard('SALES_INVOICE_VIEW')],
+        loadComponent: () =>
+          import('./features/finance/sales-invoice-list.component').then((m) => m.SalesInvoiceListComponent),
+      },
+      {
+        path: 'finance/payments',
+        title: 'Payments',
+        canActivate: [permissionGuard('PAYMENT_VIEW')],
+        loadComponent: () => import('./features/finance/payment-list.component').then((m) => m.PaymentListComponent),
+      },
+      {
+        path: 'finance/open-items',
+        title: 'Open Items',
+        canActivate: [permissionGuard('OPEN_ITEM_VIEW')],
+        loadComponent: () => import('./features/finance/open-item-list.component').then((m) => m.OpenItemListComponent),
+      },
+      {
         path: 'controlling/cost-centres',
         title: 'Cost Centres',
         canActivate: [permissionGuard('CONTROLLING_VIEW')],

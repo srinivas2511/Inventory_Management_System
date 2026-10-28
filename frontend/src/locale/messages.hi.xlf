@@ -262,6 +262,18 @@
         <source>Financial Statements</source>
         <target>वित्तीय विवरण</target>
       </trans-unit>
+      <trans-unit id="nav.item-sales-invoices" datatype="html">
+        <source>Sales Invoices</source>
+        <target>बिक्री चालान</target>
+      </trans-unit>
+      <trans-unit id="nav.item-payments" datatype="html">
+        <source>Payments</source>
+        <target>भुगतान</target>
+      </trans-unit>
+      <trans-unit id="nav.item-open-items" datatype="html">
+        <source>Open Items</source>
+        <target>खुली मदें</target>
+      </trans-unit>
       <trans-unit id="nav.group-controlling" datatype="html">
         <source>Controlling</source>
         <target>नियंत्रण</target>

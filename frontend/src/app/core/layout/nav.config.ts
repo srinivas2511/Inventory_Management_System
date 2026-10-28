@@ -453,6 +453,27 @@ export const NAV_GROUPS: NavGroup[] = [
         permission: 'FINANCE_REPORT',
         enabled: true,
       },
+      {
+        label: $localize`:@@nav.item-sales-invoices:Sales Invoices`,
+        icon: 'receipt',
+        route: '/finance/sales-invoices',
+        permission: 'SALES_INVOICE_VIEW',
+        enabled: true,
+      },
+      {
+        label: $localize`:@@nav.item-payments:Payments`,
+        icon: 'payments',
+        route: '/finance/payments',
+        permission: 'PAYMENT_VIEW',
+        enabled: true,
+      },
+      {
+        label: $localize`:@@nav.item-open-items:Open Items`,
+        icon: 'pending_actions',
+        route: '/finance/open-items',
+        permission: 'OPEN_ITEM_VIEW',
+        enabled: true,
+      },
     ],
   },
   {

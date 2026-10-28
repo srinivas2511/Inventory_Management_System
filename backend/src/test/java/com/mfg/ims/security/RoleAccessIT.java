@@ -114,6 +114,10 @@ class RoleAccessIT extends AbstractIntegrationTest {
     private static final Set<String> PHASE11_SALES_ALLOWED = Set.of("ADMIN", "SALES_MANAGER");
     private static final Set<String> PHASE11_SALES_FORBIDDEN = Set.of("OPERATOR", "SALES", "DISPATCH",
             "ENGINEER", "FINANCE_MANAGER", "PURCHASE_MANAGER");
+    // Phase 12: Sales invoices, payments, open items — ADMIN + FINANCE_MANAGER only
+    private static final Set<String> PHASE12_FINANCE_ALLOWED = Set.of("ADMIN", "FINANCE_MANAGER");
+    private static final Set<String> PHASE12_FINANCE_FORBIDDEN = Set.of("OPERATOR", "SALES", "DISPATCH",
+            "ENGINEER", "PURCHASE_MANAGER", "SALES_MANAGER");
     /** Inactive on purpose: the permitted caller creates a subscription that never receives an event. */
     private static final String WEBHOOK_BODY =
             "{\"name\":\"rbac probe\",\"targetUrl\":\"https://example.com/hook\",\"events\":[\"StockPosted\"],\"active\":false}";
@@ -613,7 +617,15 @@ class RoleAccessIT extends AbstractIntegrationTest {
             Probe.of(HttpMethod.GET, "/api/sales/order-confirmations/" + MISSING, PHASE11_SALES_ALLOWED, PHASE11_SALES_FORBIDDEN),
             // Phase 11: Delivery challans — ADMIN + SALES_MANAGER (CHALLAN_VIEW)
             Probe.of(HttpMethod.GET, "/api/sales/delivery-challans", PHASE11_SALES_ALLOWED, PHASE11_SALES_FORBIDDEN),
-            Probe.of(HttpMethod.GET, "/api/sales/delivery-challans/" + MISSING, PHASE11_SALES_ALLOWED, PHASE11_SALES_FORBIDDEN));
+            Probe.of(HttpMethod.GET, "/api/sales/delivery-challans/" + MISSING, PHASE11_SALES_ALLOWED, PHASE11_SALES_FORBIDDEN),
+            // Phase 12: Sales invoices — ADMIN + FINANCE_MANAGER (SALES_INVOICE_VIEW)
+            Probe.of(HttpMethod.GET, "/api/finance/sales-invoices", PHASE12_FINANCE_ALLOWED, PHASE12_FINANCE_FORBIDDEN),
+            Probe.of(HttpMethod.GET, "/api/finance/sales-invoices/" + MISSING, PHASE12_FINANCE_ALLOWED, PHASE12_FINANCE_FORBIDDEN),
+            // Phase 12: Payments — ADMIN + FINANCE_MANAGER (PAYMENT_VIEW)
+            Probe.of(HttpMethod.GET, "/api/finance/payments", PHASE12_FINANCE_ALLOWED, PHASE12_FINANCE_FORBIDDEN),
+            Probe.of(HttpMethod.GET, "/api/finance/payments/" + MISSING, PHASE12_FINANCE_ALLOWED, PHASE12_FINANCE_FORBIDDEN),
+            // Phase 12: Open items / ageing — ADMIN + FINANCE_MANAGER (OPEN_ITEM_VIEW)
+            Probe.of(HttpMethod.GET, "/api/finance/open-items", PHASE12_FINANCE_ALLOWED, PHASE12_FINANCE_FORBIDDEN));
 
     /**
      * What a permitted caller gets when it is not a 2xx. Every other permitted probe must answer 2xx. These probes
@@ -723,7 +735,10 @@ class RoleAccessIT extends AbstractIntegrationTest {
             // Phase 11: GET by missing id answers 404
             Map.entry("GET /api/sales/quotations/999999", 404),
             Map.entry("GET /api/sales/order-confirmations/999999", 404),
-            Map.entry("GET /api/sales/delivery-challans/999999", 404));
+            Map.entry("GET /api/sales/delivery-challans/999999", 404),
+            // Phase 12: GET by missing id answers 404
+            Map.entry("GET /api/finance/sales-invoices/999999", 404),
+            Map.entry("GET /api/finance/payments/999999", 404));
 
     @Autowired UserAdminService userAdminService;
     @Autowired @Qualifier("requestMappingHandlerMapping") RequestMappingHandlerMapping handlerMapping;

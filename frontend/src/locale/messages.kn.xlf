@@ -262,6 +262,18 @@
         <source>Financial Statements</source>
         <target>ಹಣಕಾಸು ಹೇಳಿಕೆಗಳು</target>
       </trans-unit>
+      <trans-unit id="nav.item-sales-invoices" datatype="html">
+        <source>Sales Invoices</source>
+        <target>ಮಾರಾಟ ಇನ್‌ವಾಯ್ಸ್‌ಗಳು</target>
+      </trans-unit>
+      <trans-unit id="nav.item-payments" datatype="html">
+        <source>Payments</source>
+        <target>ಪಾವತಿಗಳು</target>
+      </trans-unit>
+      <trans-unit id="nav.item-open-items" datatype="html">
+        <source>Open Items</source>
+        <target>ತೆರೆದ ಮದ್ದುಗಳು</target>
+      </trans-unit>
       <trans-unit id="nav.group-controlling" datatype="html">
         <source>Controlling</source>
         <target>ನಿಯಂತ್ರಣ</target>
