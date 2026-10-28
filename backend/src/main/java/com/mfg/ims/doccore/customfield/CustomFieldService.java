@@ -20,6 +20,10 @@ public class CustomFieldService {
 
     @Transactional(readOnly = true)
     public List<CustomFieldDto> list(String entityType) {
+        if (entityType == null || entityType.isBlank()) {
+            return repo.findByCompanyIdAndActiveTrueOrderBySortOrder(1L)
+                    .stream().map(CustomFieldDto::from).toList();
+        }
         return repo.findByCompanyIdAndEntityTypeAndActiveTrueOrderBySortOrder(1L, entityType)
                 .stream().map(CustomFieldDto::from).toList();
     }

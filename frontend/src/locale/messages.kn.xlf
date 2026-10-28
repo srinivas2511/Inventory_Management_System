@@ -78,6 +78,18 @@
         <source>Goods Receipts</source>
         <target>ಸರಕು ರಸೀದಿಗಳು</target>
       </trans-unit>
+      <trans-unit id="nav.item-rfqs" datatype="html">
+        <source>RFQs</source>
+        <target>ಆರ್‌ಎಫ್‌ಕ್ಯೂಗಳು</target>
+      </trans-unit>
+      <trans-unit id="nav.item-purchase-invoices" datatype="html">
+        <source>Purchase Invoices</source>
+        <target>ಖರೀದಿ ಇನ್ವಾಯ್ಸ್‌ಗಳು</target>
+      </trans-unit>
+      <trans-unit id="nav.item-purchase-returns" datatype="html">
+        <source>Purchase Returns</source>
+        <target>ಖರೀದಿ ವಾಪಸಾತಿ</target>
+      </trans-unit>
       <trans-unit id="nav.group-engineering" datatype="html">
         <source>Engineering</source>
         <target>ಎಂಜಿನಿಯರಿಂಗ್</target>
@@ -473,6 +485,38 @@
       <trans-unit id="nav.item-negative-stock" datatype="html">
         <source>Negative Stock</source>
         <target>ಋಣಾತ್ಮಕ ಸ್ಟಾಕ್</target>
+      </trans-unit>
+      <trans-unit id="nav.item-item-categories" datatype="html">
+        <source>Item Categories</source>
+        <target>ಐಟಂ ವರ್ಗಗಳು</target>
+      </trans-unit>
+      <trans-unit id="nav.item-document-series" datatype="html">
+        <source>Document Series</source>
+        <target>ದಾಖಲೆ ಸರಣಿ</target>
+      </trans-unit>
+      <trans-unit id="nav.item-company-profile" datatype="html">
+        <source>Company Profile</source>
+        <target>ಕಂಪನಿ ಪ್ರೊಫೈಲ್</target>
+      </trans-unit>
+      <trans-unit id="nav.item-payment-terms" datatype="html">
+        <source>Payment Terms</source>
+        <target>ಪಾವತಿ ನಿಯಮಗಳು</target>
+      </trans-unit>
+      <trans-unit id="nav.item-transporters" datatype="html">
+        <source>Transporters</source>
+        <target>ಸಾರಿಗೆದಾರರು</target>
+      </trans-unit>
+      <trans-unit id="nav.item-teams" datatype="html">
+        <source>Teams</source>
+        <target>ತಂಡಗಳು</target>
+      </trans-unit>
+      <trans-unit id="nav.item-approval-rules" datatype="html">
+        <source>Approval Rules</source>
+        <target>ಅನುಮೋದನೆ ನಿಯಮಗಳು</target>
+      </trans-unit>
+      <trans-unit id="nav.item-imports" datatype="html">
+        <source>Data Imports</source>
+        <target>ಡೇಟಾ ಆಮದು</target>
       </trans-unit>
       <trans-unit id="shell.toggleNav" datatype="html">
         <source>Toggle navigation</source>

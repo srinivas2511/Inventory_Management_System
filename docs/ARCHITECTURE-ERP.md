@@ -453,6 +453,25 @@ flowchart LR
 
 ---
 
+## 21A. Additions from the video-title review (2026-10-28)
+
+Design detail is in `DESIGN-ERP.md` §13. Architectural consequences:
+
+| Topic | Decision |
+|---|---|
+| **Explainability as a platform feature** | State machines already know why an action is refused; they now return `blockedActions[]` with stable codes. Lookups expose an `explain` mode that evaluates the same predicates used for listing. Empty reports echo their scope. This replaces the idea of per-screen help text and keeps explanations accurate (ADR-31). |
+| **Direct invoice stock effect via auto-dispatch** | A direct sales invoice never writes stock itself. It creates a system dispatch and posts through `InventoryPostingService`, so the single-writer rule (E-1, ADR-02) holds and traceability/FEFO/quarantine rules apply unchanged (ADR-32). |
+| **Amendment guard** | One component (`AmendmentGuard`) decides whether an amendment is allowed from the downstream document graph in `document_links`, and flags downstream drafts. The previous approved revision stays effective until the new one is approved, so inward/dispatch against a document under amendment remains well-defined (ADR-33). |
+| **Price history as an append-only read model** | Rates are copied to `price_history` when documents are approved/posted; last-price insight and vendor mapping read it; no joins across document tables at request time. |
+| **All Documents directory** | A SQL view over all document tables with common columns plus per-kind permission filtering, sharing the mechanism of global search (§5.3). |
+| **Item–vendor mapping** | A small master that MRP, RFQ and PO use to choose suppliers; it never blocks a purchase unless the setting `purchase.require_vendor_mapping` is on. |
+| **Production convenience flows** | Quick complete, direct FG from BOM and bulk create are orchestration services over the existing production, issue, consumption and receipt services in a single transaction; they add no new stock mechanism. |
+| **Scrap as stock + finance events** | Scrap entries link to ledger `SCRAP` movements and journal entries; dispositions (sell, reuse, dispose) are documents with approvals, not edits. |
+| **Team module access** | An additional filter (AND) on top of role permissions; never grants rights. Evaluated in the permission cache and exposed as `/api/me/modules`. |
+| **Reminders and mentions** | A scheduler job plus the existing notification table; mention targets are permission-checked so a mention cannot leak a document. |
+| **Tally additions** | Voucher numbering, combining and readiness checks live in the Tally connector and `accounting_vouchers`; the core journal is unaffected. |
+| **Onboarding and demo reset** | Setup progress is data (`setup_steps`); demo reset exists only under the demo profile and is guarded twice (profile and setting). |
+
 ## 22. Architecture Decision Records (ERP)
 
 | ADR | Decision | Rationale | Alternatives rejected |
@@ -471,6 +490,9 @@ flowchart LR
 | 28 | **Custom fields as JSONB + definition catalogue** | Reuses ADR-06 pattern; no EAV | EAV tables; schema change per field |
 | 29 | **MRP outputs suggestions only (immutable runs)** | Auditable, reviewable planning; no silent document creation | Auto-creating POs/orders |
 | 30 | **GST e-invoice/e-way bill through a provider interface, JSON export always available** | Works before provider decision; no vendor lock-in | Direct integration with one GSP |
+| 31 | **Blocked-action reasons and lookup `explain` mode** | Accurate, testable explanations for "why can't I…/why isn't X shown" | Static help text per screen |
+| 32 | **Direct invoices create a system dispatch to move stock** | Keeps one stock writer and all stock rules | Letting invoices write the ledger |
+| 33 | **Central `AmendmentGuard` with effective-revision semantics** | Safe amendment after downstream documents exist | Blocking all amendments; editing in place |
 
 ---
 
@@ -489,3 +511,4 @@ flowchart LR
 | ERP-F-1, F-2 | §13 |
 | ERP-G-1…3 | §14 |
 | ERP-H-1…4 | §15 |
+| ERP-A-10…15, B-5, C-5, D-10, E-6, G-4, H-5 | §21A, DESIGN-ERP §13 |

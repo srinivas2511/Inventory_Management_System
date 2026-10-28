@@ -132,6 +132,26 @@ export const routes: Routes = [
           import('./features/procurement/goods-receipt-list.component').then((m) => m.GoodsReceiptListComponent),
       },
       {
+        path: 'procurement/rfqs',
+        title: 'RFQs',
+        canActivate: [permissionGuard('RFQ_VIEW')],
+        loadComponent: () => import('./features/procurement/rfq-list.component').then((m) => m.RfqListComponent),
+      },
+      {
+        path: 'procurement/purchase-invoices',
+        title: 'Purchase Invoices',
+        canActivate: [permissionGuard('PURCHASE_INVOICE_VIEW')],
+        loadComponent: () =>
+          import('./features/procurement/purchase-invoice-list.component').then((m) => m.PurchaseInvoiceListComponent),
+      },
+      {
+        path: 'procurement/purchase-returns',
+        title: 'Purchase Returns',
+        canActivate: [permissionGuard('PURCHASE_RETURN_VIEW')],
+        loadComponent: () =>
+          import('./features/procurement/purchase-return-list.component').then((m) => m.PurchaseReturnListComponent),
+      },
+      {
         path: 'engineering/bom',
         title: 'Bill of Materials',
         canActivate: [permissionGuard('BOM_VIEW')],

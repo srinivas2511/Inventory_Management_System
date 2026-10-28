@@ -31,7 +31,8 @@ public record PostingCommand(
     public boolean isOutLeg() {
         return switch (transactionType) {
             case "MATERIAL_ISSUE", "MATERIAL_CONSUMPTION", "SALES_DISPATCH",
-                 "SCRAP", "STOCK_ADJUSTMENT_OUT", "MAINTENANCE_ISSUE" -> true;
+                 "SCRAP", "STOCK_ADJUSTMENT_OUT", "MAINTENANCE_ISSUE",
+                 "PURCHASE_RETURN" -> true;
             default -> false;
         };
     }

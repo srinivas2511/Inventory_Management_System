@@ -29,7 +29,7 @@ public class CustomFieldController {
 
     @GetMapping
     @PreAuthorize("hasAnyAuthority('CUSTOM_FIELD_MANAGE','SETTINGS_MANAGE')")
-    public List<CustomFieldDto> list(@RequestParam String entityType) {
+    public List<CustomFieldDto> list(@RequestParam(required = false) String entityType) {
         return service.list(entityType);
     }
 

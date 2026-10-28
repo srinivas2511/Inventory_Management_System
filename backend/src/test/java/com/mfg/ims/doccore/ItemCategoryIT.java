@@ -60,7 +60,9 @@ class ItemCategoryIT extends AbstractIntegrationTest {
     @AfterAll
     void tearDown() {
         // Nullify FK references before deleting — parallel ITs (e.g. OperatorAssignmentIT,
-        // HrmIT) may link our ADMIN test user to production operations or employees.
+        // HrmIT, SparePartAndMaintenanceCostIT) may link our ADMIN test user to production
+        // operations, employees, or spare-part issue lines.
+        jdbc.update("DELETE FROM ims.spare_part_issue_lines WHERE issued_by IN (SELECT id FROM ims.users WHERE email LIKE ?)", "%@it.test");
         jdbc.update("UPDATE ims.employees SET user_id = NULL WHERE user_id IN (SELECT id FROM ims.users WHERE email LIKE ?)", "%@it.test");
         jdbc.update("UPDATE ims.production_operations SET assigned_operator_id = NULL WHERE assigned_operator_id IN (SELECT id FROM ims.users WHERE email LIKE ?)", "%@it.test");
         jdbc.update("UPDATE ims.documents SET approved_by = NULL WHERE approved_by IN (SELECT id FROM ims.users WHERE email LIKE ?)", "%@it.test");

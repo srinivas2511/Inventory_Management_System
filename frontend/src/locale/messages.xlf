@@ -135,6 +135,27 @@
           <context context-type="linenumber">114</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="nav.item-rfqs" datatype="html">
+        <source>RFQs</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/layout/nav.config.ts</context>
+          <context context-type="linenumber">145</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="nav.item-purchase-invoices" datatype="html">
+        <source>Purchase Invoices</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/layout/nav.config.ts</context>
+          <context context-type="linenumber">151</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="nav.item-purchase-returns" datatype="html">
+        <source>Purchase Returns</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/layout/nav.config.ts</context>
+          <context context-type="linenumber">157</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="nav.group-engineering" datatype="html">
         <source>Engineering</source>
         <context-group purpose="location">
@@ -826,6 +847,62 @@
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/core/layout/nav.config.ts</context>
           <context context-type="linenumber">519</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="nav.item-item-categories" datatype="html">
+        <source>Item Categories</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/layout/nav.config.ts</context>
+          <context context-type="linenumber">837</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="nav.item-document-series" datatype="html">
+        <source>Document Series</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/layout/nav.config.ts</context>
+          <context context-type="linenumber">844</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="nav.item-company-profile" datatype="html">
+        <source>Company Profile</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/layout/nav.config.ts</context>
+          <context context-type="linenumber">851</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="nav.item-payment-terms" datatype="html">
+        <source>Payment Terms</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/layout/nav.config.ts</context>
+          <context context-type="linenumber">858</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="nav.item-transporters" datatype="html">
+        <source>Transporters</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/layout/nav.config.ts</context>
+          <context context-type="linenumber">865</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="nav.item-teams" datatype="html">
+        <source>Teams</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/layout/nav.config.ts</context>
+          <context context-type="linenumber">872</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="nav.item-approval-rules" datatype="html">
+        <source>Approval Rules</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/layout/nav.config.ts</context>
+          <context context-type="linenumber">879</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="nav.item-imports" datatype="html">
+        <source>Data Imports</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/layout/nav.config.ts</context>
+          <context context-type="linenumber">886</context>
         </context-group>
       </trans-unit>
       <trans-unit id="shell.toggleNav" datatype="html">

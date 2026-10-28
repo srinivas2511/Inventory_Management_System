@@ -78,6 +78,18 @@
         <source>Goods Receipts</source>
         <target>माल रसीदें</target>
       </trans-unit>
+      <trans-unit id="nav.item-rfqs" datatype="html">
+        <source>RFQs</source>
+        <target>आरएफक्यू</target>
+      </trans-unit>
+      <trans-unit id="nav.item-purchase-invoices" datatype="html">
+        <source>Purchase Invoices</source>
+        <target>खरीद चालान</target>
+      </trans-unit>
+      <trans-unit id="nav.item-purchase-returns" datatype="html">
+        <source>Purchase Returns</source>
+        <target>खरीद वापसी</target>
+      </trans-unit>
       <trans-unit id="nav.group-engineering" datatype="html">
         <source>Engineering</source>
         <target>इंजीनियरिंग</target>
@@ -473,6 +485,38 @@
       <trans-unit id="nav.item-negative-stock" datatype="html">
         <source>Negative Stock</source>
         <target>ऋणात्मक स्टॉक</target>
+      </trans-unit>
+      <trans-unit id="nav.item-item-categories" datatype="html">
+        <source>Item Categories</source>
+        <target>आइटम श्रेणियां</target>
+      </trans-unit>
+      <trans-unit id="nav.item-document-series" datatype="html">
+        <source>Document Series</source>
+        <target>दस्तावेज़ श्रृंखला</target>
+      </trans-unit>
+      <trans-unit id="nav.item-company-profile" datatype="html">
+        <source>Company Profile</source>
+        <target>कंपनी प्रोफ़ाइल</target>
+      </trans-unit>
+      <trans-unit id="nav.item-payment-terms" datatype="html">
+        <source>Payment Terms</source>
+        <target>भुगतान शर्तें</target>
+      </trans-unit>
+      <trans-unit id="nav.item-transporters" datatype="html">
+        <source>Transporters</source>
+        <target>ट्रांसपोर्टर</target>
+      </trans-unit>
+      <trans-unit id="nav.item-teams" datatype="html">
+        <source>Teams</source>
+        <target>टीमें</target>
+      </trans-unit>
+      <trans-unit id="nav.item-approval-rules" datatype="html">
+        <source>Approval Rules</source>
+        <target>अनुमोदन नियम</target>
+      </trans-unit>
+      <trans-unit id="nav.item-imports" datatype="html">
+        <source>Data Imports</source>
+        <target>डेटा आयात</target>
       </trans-unit>
       <trans-unit id="shell.toggleNav" datatype="html">
         <source>Toggle navigation</source>

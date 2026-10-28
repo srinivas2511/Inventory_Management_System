@@ -141,6 +141,27 @@ export const NAV_GROUPS: NavGroup[] = [
         permission: 'INVENTORY_RECEIVE',
         enabled: true,
       },
+      {
+        label: $localize`:@@nav.item-rfqs:RFQs`,
+        icon: 'request_quote',
+        route: '/procurement/rfqs',
+        permission: 'RFQ_VIEW',
+        enabled: true,
+      },
+      {
+        label: $localize`:@@nav.item-purchase-invoices:Purchase Invoices`,
+        icon: 'receipt_long',
+        route: '/procurement/purchase-invoices',
+        permission: 'PURCHASE_INVOICE_VIEW',
+        enabled: true,
+      },
+      {
+        label: $localize`:@@nav.item-purchase-returns:Purchase Returns`,
+        icon: 'assignment_return',
+        route: '/procurement/purchase-returns',
+        permission: 'PURCHASE_RETURN_VIEW',
+        enabled: true,
+      },
     ],
   },
   {

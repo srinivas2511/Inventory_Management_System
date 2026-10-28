@@ -73,7 +73,6 @@ class ApprovalRuleIT extends AbstractIntegrationTest {
         String req = mapper.writeValueAsString(Map.of(
                 "documentType", "PURCHASE_ORDER",
                 "ruleName", "PO Approval " + runId,
-                "conditionExpr", null,
                 "priority", 10,
                 "steps", List.of(
                         Map.of("stepNo", 1, "stepGroup", 1, "approverType", "ROLE",
@@ -99,7 +98,6 @@ class ApprovalRuleIT extends AbstractIntegrationTest {
         String createReq = mapper.writeValueAsString(Map.of(
                 "documentType", "SALES_ORDER",
                 "ruleName", "SO Rule " + runId,
-                "conditionExpr", null,
                 "priority", 5,
                 "steps", List.of(
                         Map.of("stepNo", 1, "stepGroup", 1, "approverType", "ROLE",
@@ -118,7 +116,6 @@ class ApprovalRuleIT extends AbstractIntegrationTest {
         String updateReq = mapper.writeValueAsString(Map.of(
                 "documentType", "SALES_ORDER",
                 "ruleName", "SO Rule Updated " + runId,
-                "conditionExpr", null,
                 "priority", 5,
                 "steps", List.of(
                         Map.of("stepNo", 1, "stepGroup", 1, "approverType", "ROLE",
@@ -142,7 +139,6 @@ class ApprovalRuleIT extends AbstractIntegrationTest {
         String createReq = mapper.writeValueAsString(Map.of(
                 "documentType", "JOURNAL",
                 "ruleName", "Journal Rule " + runId,
-                "conditionExpr", null,
                 "priority", 1,
                 "steps", List.of(
                         Map.of("stepNo", 1, "stepGroup", 1, "approverType", "ROLE",
@@ -179,7 +175,6 @@ class ApprovalRuleIT extends AbstractIntegrationTest {
         String createReq = mapper.writeValueAsString(Map.of(
                 "documentType", docType,
                 "ruleName", "GR Rule " + runId,
-                "conditionExpr", null,
                 "priority", 0,
                 "steps", List.of(
                         Map.of("stepNo", 1, "stepGroup", 1, "approverType", "ROLE",

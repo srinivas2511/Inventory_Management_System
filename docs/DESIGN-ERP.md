@@ -574,18 +574,20 @@ Flow: event → `accounting_vouchers` row `PENDING_APPROVAL` (if rule `requires_
 - **Payment gateway:** invoice → `payment_links`; webhook (signature-verified, de-duplicated by `inbox_events`) → creates RECEIPT with `mode = GATEWAY`, allocates to the invoice, posts via finance; daily settlement file reconciliation report.
 
 ### 4.13.1 Tally TDL extension and browser helper
-**Connection modes** (`integration_connections.config.mode` for `TALLY`): `SERVER_HTTP` (IMS server reaches Tally's HTTP port directly — only when network allows), `BROWSER_HELPER` (default for cloud-hosted IMS and Tally on a user PC), `FILE` (download XML for manual import).
+**Decision E5 (2026-10-28):** Tally **Prime**, on a PC separate from IMS. Therefore `BROWSER_HELPER` is the default mode and the one to build and test first.
+**Connection modes** (`integration_connections.config.mode` for `TALLY`): `BROWSER_HELPER` (default), `FILE` (download XML for manual import; fallback), `SERVER_HTTP` (IMS server reaches Tally's HTTP port directly — only if a network path such as a VPN is later provided; not built in the first pass).
+**Tally Prime set-up required (once, on the Tally PC):** enable Tally's HTTP server (connectivity setting, default port 9000) and allow the browser PC to reach it **[VERIFY exact Prime menu path and port]**. Helper config holds the Tally host (default `localhost`, or the Tally PC's LAN address if the browser runs on another PC), port, and company name.
 
 **TDL extension** (`integrations/tally/ims.tdl`, versioned `IMS_TDL_VERSION`):
 - Adds user-defined fields on vouchers: *IMS Document No*, *IMS Document Id*, *IMS Status*; filled from the incoming XML so every IMS-originated voucher is traceable from Tally.
 - Adds a report/menu *IMS Vouchers* (list with IMS number, status, party, amount) and a *Pull IMS status* action only if the customer's Tally edition supports it **[VERIFY]**.
 - Optional setting to warn or block edits/deletes of IMS-originated vouchers (default: warn).
-- Loaded through Tally's TDL configuration; install and rollback steps documented; no change to Tally company data structure beyond the UDFs. Compatibility matrix (Prime, ERP 9) recorded in the install guide **[VERIFY]**.
+- Loaded through Tally's TDL configuration; install and rollback steps documented; no change to Tally company data structure beyond the UDFs. Target is **Tally Prime** only (release number recorded in the install guide **[VERIFY]**); ERP 9 is not supported.
 
 **Browser helper** (Chrome extension, Manifest V3, in `integrations/tally-helper/`):
 1. User opens IMS *Accounting Vouchers → Approved* in Chrome and clicks **Sync to Tally** (extension popup or page button).
 2. Helper calls `GET /api/accounting-vouchers/pending-sync` using the user's IMS session (short-lived token with permission `ACCOUNTING_VOUCHER_SYNC`); gets APPROVED vouchers for the configured Tally company with their XML.
-3. User confirms the batch (count and total shown). Helper POSTs each XML to Tally's HTTP port on the same PC (default `http://localhost:9000`, configurable) and parses the response.
+3. User confirms the batch (count and total shown). Helper POSTs each XML to Tally's HTTP port on the same PC (default `http://localhost:9000` by default; host, port and company configurable) and parses the response.
 4. Helper reports each result: `POST /api/accounting-vouchers/{id}/sync-result` `{status: POSTED|EXCEPTION, externalRef, errorCode, errorMessage}`; `LEDGER_MISSING` results show the ledger name and a link to the mapping screen.
 5. Safety: host permissions limited to the IMS origin and the configured localhost port; no credentials stored; no remote code; requests carry the voucher id as idempotency key so a retry cannot create a second voucher (Tally duplicate check via the *IMS Document Id* UDF); the helper logs only counts and ids; version check against the server (`/api/integrations/tally-helper/min-version`).
 6. Distribution: signed package or enterprise policy install; Chrome Web Store listing optional.
@@ -958,3 +960,158 @@ Invoice post p95 < 300 ms (50 lines); payment allocation to 20 invoices < 400 ms
 7. Estimates in `PLAN-ERP.md` assume the design here; any scope change (for example full financial statements, payroll, fixed assets, multi-company) is outside this document.
 8. Items from the supplied list deliberately not built: free vs paid plans, Knowledge Centre, product-support features, the "Why…" video topics (their behaviours are covered by validation messages and empty states).
 9. Verification limits: backend and integration code cannot be compiled or exercised against vendor sandboxes in the cloud build environment; the owner runs `mvn verify`, the frontend checks and sandbox tests locally at each gate.
+
+
+---
+
+## 13. Additions from the video-title review (2026-10-28)
+
+Additive to §1–§12. Requirement IDs refer to `REQUIREMENTS-ERP.md`. Migrations: items for Phase 9 go into V13 (or a V13a file if V13 is already applied), and so on per phase — never edit an applied file.
+
+### 13.1 Schema additions
+```sql
+-- Phase 9 (ERP-A-10…A-15)
+CREATE TABLE item_vendor_map (id, material_id BIGINT, product_id BIGINT, supplier_id BIGINT NOT NULL REFERENCES suppliers, supplier_item_code VARCHAR(40), supplier_item_name VARCHAR(150),
+  last_price NUMERIC(18,4), last_price_date DATE, currency CHAR(3) DEFAULT 'INR', moq NUMERIC(18,3), multiple_of NUMERIC(18,3), lead_time_days INT, is_preferred BOOLEAN DEFAULT FALSE, active BOOLEAN DEFAULT TRUE,
+  CHECK ((material_id IS NOT NULL)::int + (product_id IS NOT NULL)::int = 1), UNIQUE NULLS NOT DISTINCT (material_id, product_id, supplier_id));
+CREATE TABLE document_reminders (id, entity_type VARCHAR(40) NOT NULL, entity_id BIGINT NOT NULL, remind_at TIMESTAMPTZ NOT NULL, message VARCHAR(300), user_id BIGINT, team_id BIGINT, created_by BIGINT, done_at TIMESTAMPTZ);
+CREATE INDEX ix_doc_rem_due ON document_reminders(remind_at) WHERE done_at IS NULL;
+CREATE TABLE comment_mentions (comment_id BIGINT NOT NULL REFERENCES comments, user_id BIGINT, team_id BIGINT, notified_at TIMESTAMPTZ);
+CREATE TABLE team_notification_defaults (team_id BIGINT, event_type VARCHAR(50), channel VARCHAR(10), enabled BOOLEAN NOT NULL DEFAULT TRUE, PRIMARY KEY (team_id, event_type, channel));
+CREATE TABLE team_module_access (team_id BIGINT, module_code VARCHAR(30), enabled BOOLEAN NOT NULL DEFAULT TRUE, PRIMARY KEY (team_id, module_code));  -- SALES, PURCHASE, INVENTORY, PRODUCTION, SERVICE, ACCOUNTS, REPORTS, SETTINGS
+CREATE TABLE setup_steps (step_code VARCHAR(30) PRIMARY KEY, done_at TIMESTAMPTZ, done_by BIGINT, skipped BOOLEAN DEFAULT FALSE);
+CREATE TABLE company_locations (id, branch_id BIGINT, location_name VARCHAR(100), kind VARCHAR(10) CHECK (kind IN ('BILLING','DELIVERY','BOTH')), line1 VARCHAR(150), city VARCHAR(80), state_code CHAR(2), pincode VARCHAR(10), is_default BOOLEAN);
+CREATE TABLE document_packages (id, entity_type VARCHAR(40) NOT NULL, entity_id BIGINT NOT NULL, package_no VARCHAR(20), package_type VARCHAR(30), pieces NUMERIC(18,3), gross_weight_kg NUMERIC(12,3), net_weight_kg NUMERIC(12,3), dimensions VARCHAR(60), marks VARCHAR(100));
+ALTER TABLE custom_field_definitions ADD COLUMN copy_on_convert BOOLEAN NOT NULL DEFAULT FALSE, ADD COLUMN show_on_lines BOOLEAN NOT NULL DEFAULT FALSE, ADD COLUMN reportable BOOLEAN NOT NULL DEFAULT FALSE;
+-- document-level party override (snapshot), added to quotations, order_confirmations, sales_orders, sales_invoices, adjustment_notes, purchase_orders, purchase_invoices, delivery_challans, rfqs:
+--   ADD COLUMN party_name_override VARCHAR(150), ADD COLUMN bill_to_snapshot JSONB, ADD COLUMN ship_to_snapshot JSONB, ADD COLUMN party_gstin_override VARCHAR(15), ADD COLUMN customer_email_sent_to VARCHAR(160)
+ALTER TABLE customers ALTER COLUMN email DROP NOT NULL;  ALTER TABLE suppliers ALTER COLUMN email DROP NOT NULL;   -- only if currently NOT NULL
+
+-- Phase 10 (ERP-B-5)
+ALTER TABLE goods_receipts ADD COLUMN challan_id BIGINT, ADD COLUMN service_order_id BIGINT, ADD COLUMN service_confirmation_id BIGINT, ADD COLUMN po_revision_no INT;
+ALTER TABLE goods_receipts DROP CONSTRAINT IF EXISTS goods_receipts_inward_kind_check;
+ALTER TABLE goods_receipts ADD CONSTRAINT goods_receipts_inward_kind_check CHECK (inward_kind IN ('PO','NO_PO','JOB_WORK','SERVICE','RETURN','CHALLAN','SERVICE_ORDER','SERVICE_CONFIRMATION'));
+ALTER TABLE po_items ADD COLUMN open_qty NUMERIC(18,3) GENERATED ALWAYS AS (qty - COALESCE(received_qty,0)) STORED;     -- "undelivered quantity" (column names per existing po_items)
+CREATE TABLE price_history (id, party_type VARCHAR(10) NOT NULL, party_id BIGINT NOT NULL, material_id BIGINT, product_id BIGINT, source_type VARCHAR(40) NOT NULL, source_id BIGINT NOT NULL,
+  doc_date DATE NOT NULL, rate NUMERIC(18,4) NOT NULL, currency CHAR(3) DEFAULT 'INR', qty NUMERIC(18,3), uom VARCHAR(10));   -- appended when PO/purchase invoice/OC/sales invoice is APPROVED/POSTED
+CREATE INDEX ix_price_hist ON price_history(party_type, party_id, material_id, product_id, doc_date DESC);
+
+-- Phase 11 (ERP-C-5)
+ALTER TABLE delivery_challans DROP CONSTRAINT IF EXISTS delivery_challans_challan_type_check;
+ALTER TABLE delivery_challans ADD CONSTRAINT delivery_challans_challan_type_check CHECK (challan_type IN ('RETURNABLE','NON_RETURNABLE','SERVICE','PURCHASE_RETURN','SERVICE_OUT'));
+ALTER TABLE delivery_challans ADD COLUMN service_order_id BIGINT, ADD COLUMN service_confirmation_id BIGINT, ADD COLUMN purchase_return_id BIGINT;
+
+-- Phase 12 (ERP-D-10)
+ALTER TABLE sales_invoices ADD COLUMN service_confirmation_id BIGINT, ADD COLUMN auto_dispatch_id BIGINT, ADD COLUMN stock_effect VARCHAR(10) NOT NULL DEFAULT 'FROM_DISPATCH' CHECK (stock_effect IN ('NONE','FROM_DISPATCH','AUTO_DISPATCH'));
+ALTER TABLE purchase_invoices ADD COLUMN service_confirmation_id BIGINT;
+ALTER TABLE opening_balances ADD COLUMN status VARCHAR(10) NOT NULL DEFAULT 'ACTIVE' CHECK (status IN ('ACTIVE','DELETED','SETTLED')), ADD COLUMN deleted_by BIGINT, ADD COLUMN deleted_at TIMESTAMPTZ, ADD COLUMN delete_reason VARCHAR(300);
+
+-- Phase 13 (ERP-E-6)
+ALTER TABLE production_orders ADD COLUMN completion_mode VARCHAR(10) NOT NULL DEFAULT 'STANDARD' CHECK (completion_mode IN ('STANDARD','QUICK','DIRECT')), ADD COLUMN skip_child_production BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE production_order_materials ADD COLUMN skip_child BOOLEAN NOT NULL DEFAULT FALSE;
+CREATE TABLE routing_change_log (id, production_order_id BIGINT NOT NULL, change JSONB NOT NULL, reason VARCHAR(300) NOT NULL, changed_by BIGINT NOT NULL, changed_at TIMESTAMPTZ NOT NULL DEFAULT now());
+CREATE TABLE scrap_entries (id, source_type VARCHAR(40), source_id BIGINT, material_id BIGINT, product_id BIGINT, batch_id BIGINT, qty NUMERIC(18,3) NOT NULL CHECK (qty > 0), uom VARCHAR(10),
+  reason_id BIGINT, valuation NUMERIC(18,4), disposition VARCHAR(10) NOT NULL DEFAULT 'HELD' CHECK (disposition IN ('HELD','SOLD','REUSED','DISPOSED')), disposed_qty NUMERIC(18,3) DEFAULT 0,
+  sale_invoice_id BIGINT, ledger_txn_id BIGINT, recorded_by BIGINT, recorded_at TIMESTAMPTZ DEFAULT now());
+CREATE VIEW v_shop_floor_material AS /* open production orders' issued − consumed − returned − scrap per material, by order and operation */ SELECT … ;
+CREATE VIEW v_production_plan AS /* planned/approved/released orders by needed_by with component availability flags */ SELECT … ;
+INSERT INTO system_settings(key,value,value_type,description) VALUES … -- see §13.4
+
+-- Phase 16 (ERP-H-5)
+ALTER TABLE accounting_vouchers ADD COLUMN external_voucher_no VARCHAR(40), ADD COLUMN combine_key VARCHAR(120), ADD COLUMN combined_into_id BIGINT;
+CREATE TABLE tally_readiness_checks (id, connection_id BIGINT, run_at TIMESTAMPTZ DEFAULT now(), run_by BIGINT, ok BOOLEAN, results JSONB);
+```
+
+### 13.2 Rules and algorithms
+1. **Item–vendor mapping (ERP-A-10).** *Interpretation (to be confirmed):* "Vendor Mapping" = linking items to the suppliers who can supply them, with the supplier's own code/name and terms. Effects: PO and RFQ pickers can filter to mapped suppliers; PO line pre-fills supplier item code, last price, MOQ and lead time; MRP picks the preferred active mapping first (replaces the "preferred_supplier_id" fallback order in §4.6); price history updates `last_price`. Unmapped suppliers can still be used when the setting `purchase.require_vendor_mapping` is false (default).
+2. **Item delete/deactivate.** Delete is allowed only if the item has no document lines, ledger rows, BOM links or batches; otherwise `ITEM_IN_USE` (409) and the UI offers Deactivate. Inactive items are excluded from pickers (with the explainability hint, rule 6) but remain in history, stock card and reports (filter "include inactive"). Bulk edit uses the import definition with `UPSERT` plus a multi-select "set field" action (permission `ITEM_MASTER_MANAGE`).
+3. **Document reminders.** Daily/5-minute job turns due rows into notifications (in-app and e-mail per preferences); reminders are never silently dropped — an unsent reminder after 24 h raises an alert. **@mentions**: `@name` or `@team` in a comment resolves to `comment_mentions`; mentioned users get a notification only if they hold view permission on the entity (no leakage). **Team defaults**: user preference > team default > system default.
+4. **Module access per team.** Menu and API access = (role permission) AND (module enabled for at least one of the user's teams, when the user belongs to any team with explicit module rows). Admin bypass. `GET /api/me/modules` returns the effective list. Report access combines with `team_report_access` (§2.1).
+5. **All Documents.** `GET /api/documents?types=&status=&partyId=&from=&to=&tag=&owner=&q=` is a union view over the document tables (a `document_directory` SQL view with common columns: kind, id, number, date, party, status, total, owner, branch), permission-filtered per kind (same technique as search, ARCH-ERP §5.3). It also serves "check the status of a transaction" (status chip plus link chain) and "find any document".
+6. **Explainability.** (a) Document API adds `blockedActions: [{ action, code, message }]` next to `allowedActions` (for example `{ "action":"CONVERT_TO_OC", "code":"QUOTATION_NOT_APPROVED", "message":"Approve the quotation first" }`); the state machine already knows the reason. (b) Pickers call `GET /api/{lookup}/explain?id=` or send `explain=true` on search; the response lists failed predicates (`INACTIVE`, `WRONG_KIND`, `NOT_MAPPED_TO_SUPPLIER`, `OUTSIDE_BRANCH`, `NO_ACTIVE_BOM`, `NO_HSN_OR_TAX_CODE`, `NO_PERMISSION`). (c) Empty reports/BI show the applied filters, the data scope and the date range, and name missing prerequisites ("no invoices posted in this period"). (d) Documents with lines lacking tax code produce a warning (or error when `tax.require_tax_code=true`) naming the lines — this is the "tax not calculating on PO" case. (e) Ledger-missing and BOM-not-active conditions use the same mechanism.
+7. **Custom-field propagation.** On conversion (`DocumentConverter`) every field with `copy_on_convert=true` and an identical `field_code` in the target entity is copied; if the code differs, an explicit mapping row in `custom_field_maps(source_entity, source_code, target_entity, target_code)` is used. Item-master custom fields with `show_on_lines=true` are fetched into line `custom` at line creation and are read-only there; they print and can be reported when `reportable`.
+8. **Party override.** At document creation the user may edit party name, addresses and GSTIN for that document only; the values are stored in the snapshot columns and used for printing, tax place-of-supply (if GSTIN/state is overridden the tax calculation uses the override), and e-invoice payloads; masters are untouched. Changing GSTIN state on a posted document is impossible (F-04).
+9. **Email optional.** Sending steps (`send`, dispatch mail, reminder) are skipped with a warning when no recipient e-mail exists; the user may enter an ad-hoc address, stored in `customer_email_sent_to`. Document creation never requires an e-mail.
+10. **Packaging.** `document_packages` rows on invoice/challan/dispatch; totals (packages, gross, net weight) print and feed e-way bill/e-invoice dispatch fields where applicable **[VERIFY]**.
+11. **Total quantity footer.** Computed per UOM (sums only same-UOM lines; mixed UOMs show a per-UOM list) by the server and returned in `totals.qtyByUom`.
+12. **Last-price insight.** `GET /api/price-insight?partyType=&partyId=&itemId=&limit=` returns the last N rates for that party and item from `price_history` plus best/worst recent price across parties (permission `PRICE_VIEW`); the line grid shows the last rate beside the rate field with a one-click "use". Price history is appended in the same transaction that approves/posts the document and is not edited afterwards.
+13. **PO balance / undelivered quantity.** `open_qty` per PO line (generated column) and `po_balance` register: PO, supplier, item, ordered, received, accepted, rejected, invoiced, open, due date, days late. PO list shows a balance badge. Cancelled/closed lines show open 0.
+14. **Amendment impact rules** (`AmendmentGuard`), applied by `POST /{docs}/{id}/amend` for PO, OC, quotation, service order, service confirmation:
+    - quantity may not go below downstream-consumed quantity (received for PO, dispatched/invoiced for OC, confirmed for service order); price changes are allowed but create a repricing note on downstream invoices not yet posted;
+    - removing a line with downstream documents is blocked (`AMEND_BLOCKED_BY_DOWNSTREAM`) with the list of blocking documents;
+    - after amendment, downstream draft documents are flagged "source amended" for review; posted documents are unchanged;
+    - the amended revision goes through the approval rule again; the previous approved revision remains the effective one until the new revision is APPROVED.
+15. **Inward while amendment pending.** A GRN can be created against a PO whose latest revision is DRAFT/SUBMITTED; it references `po_revision_no` of the last APPROVED revision, and quantities are validated against that revision. After approval of the new revision, remaining open quantity follows the new revision. GRNs never block an amendment unless rule 14 forbids it.
+16. **Inward kinds.** `CHALLAN` (against a supplier delivery challan or our returnable challan return), `SERVICE_ORDER` and `SERVICE_CONFIRMATION` (receipt of goods tied to a service flow, e.g. goods returned from a service vendor) use the same GRN service and the same stock posting; kind decides which source document's open quantities are validated and updated.
+17. **Inventory approval mode.** Document types `INWARD`, `STOCK_ENTRY`, `STOCK_TRANSFER`, `STOCK_ADJUSTMENT` are registered with the approval engine. Setting `inventory.approval.mode` per type: AUTO (default for inward/transfer) or MANUAL (default for adjustment, as today). In MANUAL mode the stock is posted only after approval (document stays DRAFT/SUBMITTED, no ledger rows).
+18. **Change a posted stock entry.** `POST /stock-entries/{id}/amend` performs, in one transaction: reverse the original ledger rows via `InventoryPostingService.reverse`, create a new revision with the corrected values and post it; both revisions stay visible, the audit row carries old/new/reason. Not allowed when reversal would make any downstream balance negative (`NEGATIVE_STOCK_NOT_ALLOWED`) — the message lists the affected documents.
+19. **Quotation cancel cascade.** Cancelling a CONVERTED quotation: if its OC/SO has no downstream dispatch/production/invoice, offer "cancel quotation and its OC/SO" (single confirmation, audited as one action); otherwise `CANCEL_BLOCKED_BY_DOWNSTREAM` listing the blockers. Cancelling an OC cancels its auto-created SO and releases reservations; production orders created from it become "unlinked" (user decides).
+20. **Challan kinds and price.** `PURCHASE_RETURN` challan is created from a purchase return (carries return reason and debit-note link); `SERVICE_OUT` covers goods sent out for service/repair (stock to the vendor party location, expected return date, links to a service order; on return via inward `SERVICE_CONFIRMATION`); challans can reference a service order/confirmation. `challan.price_required.<kind>` settings decide if rate is mandatory (default: required for NON_RETURNABLE and PURCHASE_RETURN because tax/e-way need value; optional for RETURNABLE/SERVICE_OUT; the UI states the reason when a price is demanded).
+21. **Direct invoice stock effect.** When a TAX/EXPORT/BILL_OF_SUPPLY invoice has STOCK lines and no `dispatch_id`/`so_item_id`, posting it (setting `invoice.direct.stock_effect=AUTO_DISPATCH`, default) creates a system dispatch (`DSP-…`, flagged `auto_created`) with batch allocation by `BatchAllocator`, posts `SALES_DISPATCH` through `InventoryPostingService`, then the finance journal — one transaction; failure (insufficient stock, quarantine) rejects the invoice post with the standard stock error and nothing is posted. `NONE` (service-only or customer-owned goods) skips stock. Invoices created from a dispatch use `FROM_DISPATCH` (as designed).
+22. **Invoice from service confirmation.** `fromServiceConfirmationId` fills lines from confirmed service quantities; sales or purchase side; prevents invoicing more than confirmed minus already invoiced (`INVOICE_EXCEEDS_CONFIRMED`).
+23. **Cancel invoice and payments.** Cancelling a posted invoice with allocations is blocked (`INVOICE_HAS_PAYMENTS`) with a link to the payments; the guided order is: reverse/unallocate payments → cancel or credit-note the invoice (cancel only within policy; otherwise credit note). Payment reversal is the "delete logged payment voucher" case: it never deletes; it creates the reversal entry and marks the payment REVERSED.
+24. **Opening balances delete/settle.** Delete (`OPENING_BALANCE_DELETE`) is allowed while unallocated and no later documents depend on it: reversing journal entry, `status=DELETED`, reason, audit. Settle = ordinary payment allocation against the opening-balance open item (`item_type = INVOICE`, `source_type = OPENING`).
+25. **Quick complete / direct production / bulk.**
+    - *Quick complete* (`POST /production-orders/{id}/quick-complete`, permission `PRODUCTION_QUICK_COMPLETE`): for a RELEASED order with a snapshot BOM and no started operations, in one transaction issues all planned materials by `BatchAllocator`, marks all operations completed with planned quantities (editable good/rejected/scrap inputs), backflushes consumption, receives FG (to QUALITY_PENDING if final inspection is required), and completes the order; any shortage stops the whole action.
+    - *Direct FG from BOM* (`POST /production/direct`): body `{productId, bomId?, qty, warehouseId, batchNo?}`; creates a production order in mode DIRECT, snapshots the active BOM, then runs quick complete; used for simple conversions without routing.
+    - *Bulk create* (`POST /production-orders/bulk` or import code `production_orders`): list of {product, qty, needed_by, oc/so ref}; each row validated like a normal create; result per row; optional "release and quick-complete" is not offered in bulk (too risky).
+26. **Skip child production.** On order creation/release for a multi-level BOM, each SUB_ASSEMBLY line has `skip_child`: when true, the sub-assembly is treated as a stocked component (issued from stock, no child order); allowed only if on-hand AVAILABLE ≥ required at release time or the user accepts a shortage warning; the snapshot records the choice. Default from `make_or_buy`.
+27. **Routing update on an order.** `PUT /production-orders/{id}/routing` allowed in DRAFT/APPROVED/RELEASED while the changed operations are still PENDING; can add/remove/reorder operations, change machines and standard times; writes `routing_change_log` (old/new JSON, reason) and re-snapshots only the routing part; BOM snapshot untouched (ADR-10). Permission `PRODUCTION_ROUTING_EDIT`; audit action `ROUTING_CHANGED`.
+28. **BOM edit restriction.** Editing an ACTIVE BOM is impossible by design (new revision); creating/editing DRAFT BOMs needs `BOM_UPDATE`; additionally `bom.edit_users_only_team` (setting, optional) limits BOM editing to a team (default off) — answers "restrict user from editing BOM" without a new permission model.
+29. **Scrap management.** Production rejection or line scrap creates `scrap_entries` (valued at the cost of the rejected quantity); the scrap screen lists HELD scrap by item/reason/age. Dispositions: SELL (creates a sales invoice draft/ad-hoc line against a scrap customer and posts `SCRAP` stock out through the posting service), REUSE (transfer back to RM with approval and a costing note), DISPOSE (write-off with approval, journal to scrap loss). Reports: scrap by reason/machine/product, scrap value, ageing.
+30. **Shop-floor material.** `v_shop_floor_material` = Σ issued − consumed − returned − scrap per open order/operation/material (and the WIP location balance for non-order stock); screen groups by order, machine and operation; mismatches against the WIP location balance raise `SHOPFLOOR_MISMATCH` alert via the reconciliation job.
+31. **Production planning board.** `GET /api/production/plan?from&to` lists DRAFT/APPROVED/RELEASED orders by `needed_by` with per-order readiness (materials available/short, BOM active, routing present, machine assigned), allows reprioritising and bulk approve/release (each through normal permissions). It does **not** schedule by machine capacity (REQUIREMENTS §16 future).
+32. **Tally details.** (a) Voucher number: `external_voucher_no = IMS document number` by default (setting `tally.voucher_no_source = IMS_NUMBER | TALLY_AUTO`); duplicates are detected by Tally voucher number + IMS Document Id UDF before sending. (b) Combine: when `tally.combine_purchase_vouchers=true`, purchase documents with the same supplier and supplier invoice number are merged into one voucher (lines concatenated, taxes summed) with `combine_key = supplierId|supplierInvoiceNo|voucherType`; splitting back on cancel is not supported — cancel is blocked once combined (`VOUCHER_COMBINED`). (c) Readiness check (`POST /api/integrations/tally/readiness`): verifies Tally reachable, company present, GST enabled where required, voucher types exist, all mapped ledgers exist, duplicate-ledger names, financial-year dates match; results stored in `tally_readiness_checks` and shown as a checklist; first sync is blocked until ok (override with reason). (d) Flow sections in UI: *Completed* (posted in IMS, no voucher yet) → *Pending approval* → *Approved* → *Sent/Posted* → *Exceptions*; voucher type is chosen by `tally_rules` (invoice kind, export, note type).
+33. **Onboarding and help.** Setup wizard steps (`setup_steps`): COMPANY, BRANCHES, BANK, USERS_TEAMS, TAX, SERIES, ITEMS (import), PARTIES (import), OPENING_STOCK, OPENING_BALANCES, INTEGRATIONS; progress bar on the dashboard until done/skipped. Help menu: links to docs, shortcut list, support contact (`settings help.support_email`). Version banner: `GET /api/system/version` polled on focus; when it differs from the loaded build a "New version available — reload" banner appears (replaces "clear cache" instructions). **Remove demo data** (`POST /api/admin/demo-data/reset`): enabled only when profile is dev/demo (`ims.demo.enabled=true`), requires `ADMIN_DEMO_RESET`, deletes only rows tagged `demo=true` through services where possible and a documented SQL script otherwise; never runs in production (hard check on profile + setting).
+
+### 13.3 API additions (extends §5)
+| Endpoint | Purpose | Permission |
+|---|---|---|
+| `GET/POST/PUT /api/item-vendor-map` · `GET /api/items/{id}/suppliers` | vendor mapping | `ITEM_MASTER_MANAGE` / view |
+| `POST /api/items/bulk-update` | set field on selection | `ITEM_MASTER_MANAGE` |
+| `GET/POST /api/reminders` · `POST /api/reminders/{id}/done` | document reminders | authenticated (own) / `TEAM_MANAGE` |
+| `GET/PUT /api/teams/{id}/modules` · `/notification-defaults` · `GET /api/me/modules` | team module access, defaults | `TEAM_MANAGE` |
+| `GET /api/documents` | All Documents | per-kind view |
+| `GET /api/{lookup}/explain` · `blockedActions[]` in document responses | explainability | view of the entity |
+| `GET /api/price-insight` | last price | `PRICE_VIEW` |
+| `GET/PUT /api/{docs}/{id}/packages` | packaging | `<DOC>_UPDATE` |
+| `GET /api/reports/po-balance` | undelivered qty | `REPORT_PURCHASE` |
+| `POST /api/stock-entries/{id}/amend` | reverse and repost | `STOCK_ENTRY_AMEND` |
+| `POST /api/production-orders/{id}/quick-complete` · `POST /api/production/direct` · `POST /api/production-orders/bulk` · `PUT /api/production-orders/{id}/routing` | production convenience | `PRODUCTION_QUICK_COMPLETE`, `PRODUCTION_CREATE`, `PRODUCTION_ROUTING_EDIT` |
+| `GET /api/production/plan` · `GET /api/production/shop-floor-material` | planning, shop floor | `PRODUCTION_VIEW` |
+| `GET/POST /api/scrap` · `POST /api/scrap/{id}/dispose` | scrap management | `SCRAP_VIEW`, `SCRAP_DISPOSE` |
+| `POST /api/opening-balances/{id}/delete` | delete opening balance | `OPENING_BALANCE_DELETE` |
+| `POST /api/integrations/tally/readiness` | Tally checklist | `INTEGRATION_MANAGE` |
+| `GET /api/setup/steps` · `PUT /api/setup/steps/{code}` · `GET /api/system/version` · `POST /api/admin/demo-data/reset` | onboarding, version, demo reset | `COMPANY_MANAGE`; authenticated; `ADMIN_DEMO_RESET` |
+New permissions: `STOCK_ENTRY_AMEND, PRODUCTION_QUICK_COMPLETE, PRODUCTION_ROUTING_EDIT, SCRAP_VIEW, SCRAP_DISPOSE, OPENING_BALANCE_DELETE, ADMIN_DEMO_RESET`. New error codes: `ITEM_IN_USE`, `AMEND_BLOCKED_BY_DOWNSTREAM`, `CANCEL_BLOCKED_BY_DOWNSTREAM`, `INVOICE_HAS_PAYMENTS`, `INVOICE_EXCEEDS_CONFIRMED`, `VOUCHER_COMBINED`, `TALLY_NOT_READY`, `DEMO_RESET_DISABLED`, `ROUTING_LOCKED`, `QUICK_COMPLETE_NOT_ALLOWED`.
+
+### 13.4 Settings added
+`purchase.require_vendor_mapping=false`, `tax.require_tax_code=false`, `inventory.approval.mode.INWARD=AUTO`, `.STOCK_TRANSFER=AUTO`, `.STOCK_ENTRY=AUTO`, `.STOCK_ADJUSTMENT=MANUAL`, `challan.price_required.NON_RETURNABLE=true`, `.PURCHASE_RETURN=true`, `.RETURNABLE=false`, `.SERVICE_OUT=false`, `invoice.direct.stock_effect=AUTO_DISPATCH`, `bom.edit_users_only_team=` (empty), `tally.voucher_no_source=IMS_NUMBER`, `tally.combine_purchase_vouchers=false`, `reminder.document.enabled=true`, `help.support_email=`, `ims.demo.enabled=false`.
+
+### 13.5 Tests added (extends §11.1)
+| ID | Case |
+|---|---|
+| G-T01 | Item used in a document cannot be deleted (`ITEM_IN_USE`) but can be deactivated; inactive item hidden in pickers with explanation, visible in history |
+| G-T02 | `blockedActions` returns the right code for each state-machine refusal (quotation not approved, PO under amendment, invoice with payments) |
+| G-T03 | Custom field copy-on-convert and show-on-lines; mapping by `custom_field_maps` |
+| G-T04 | Party override changes place of supply and tax split on a draft; master unchanged; posted doc immutable |
+| G-T05 | Invoice and challan create/send without customer e-mail; send skipped with warning |
+| G-T06 | Price history appended once per posted document; last-price insight order and permission |
+| G-T07 | Amendment guard: qty below received blocked; downstream draft flagged; previous revision effective until approval; inward during pending amendment uses last approved revision |
+| G-T08 | Inward kinds CHALLAN/SERVICE_ORDER/SERVICE_CONFIRMATION update the correct source quantities |
+| G-T09 | Inventory approval MANUAL: no ledger rows until approved; AUTO posts immediately |
+| G-T10 | Stock entry amend reverses and reposts atomically; blocked when it would drive a downstream balance negative |
+| G-T11 | Cancel converted quotation: cascade success and blocked cases |
+| G-T12 | Direct invoice auto-dispatch posts one `SALES_DISPATCH` and one journal in one transaction; insufficient stock rejects both; idempotent replay |
+| G-T13 | Invoice from service confirmation cannot exceed confirmed − invoiced |
+| G-T14 | Cancel invoice with payments blocked; after reversal, credit note path works; opening balance delete/settle |
+| G-T15 | Quick complete: success path totals; any shortage rolls back everything; not allowed when operations started |
+| G-T16 | Direct FG from BOM creates mode DIRECT order and correct ledger rows; bulk create row-level results |
+| G-T17 | Skip child production: sub-assembly issued from stock; shortage warning; snapshot records choice |
+| G-T18 | Routing update on PENDING operations logs change; refused after start (`ROUTING_LOCKED`) |
+| G-T19 | Scrap dispositions post correct stock/journal; scrap value = cost of rejected quantity |
+| G-T20 | Shop-floor material equals ledger-derived WIP; mismatch alert |
+| G-T21 | Document reminders fire once; mentions notify only users with view permission; team module access limits menu and API |
+| G-T22 | All Documents never returns a document the caller cannot view |
+| G-T23 | Tally: voucher number = IMS number; duplicate guard; combine rule; readiness check blocks first sync; exception states |
+| G-T24 | Demo reset refuses in production profile; removes only tagged rows elsewhere |
