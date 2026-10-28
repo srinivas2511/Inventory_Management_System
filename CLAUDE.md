@@ -10,6 +10,10 @@ Stack: Java 17+ / Spring Boot 3 / PostgreSQL / Angular 18+ (Angular Material) / 
 - `ARCHITECTURE.md` v2.0 — structure, workflows, security, ADRs
 - `DESIGN.md` v2.0 — schemas, algorithms, API contracts, screens, seed data, tests
 - `PLAN.md` v2.0 — releases R1–R20, task IDs, estimates, exit gates
+- `REQUIREMENTS-ERP.md` — ERP extension requirements (Phases 9–17, post-R20)
+- `ARCHITECTURE-ERP.md` — ERP extension architecture, module boundaries, integration patterns
+- `DESIGN-ERP.md` — ERP extension schemas, APIs, screen specs (Phases 9–17)
+- `PLAN-ERP.md` — ERP extension release plan, task IDs, migration numbers (V64+)
 
 Before any task: read the DESIGN/ARCHITECTURE sections the PLAN task references. If code and docs disagree, stop and flag it rather than guessing.
 
