@@ -640,6 +640,19 @@ Each row was checked against the code before any change. Result per row (satisfi
 - **Proof.** New `e2e/ui/dialog-typing.spec.ts` delays the focus trap's own `focus()` call by 800 ms and asserts that once `fill` has returned no pending initial-focus move can take focus from the filled field. It fails on the old helper (`focus stays on the field that was filled: Received: inactive`) and passes 5 of 5 and 8 of 8 on the new one. After the change: QCF-05 20 of 20, the duplicate-customer spec 20 of 20, STK-04 8 of 8, the whole suite 328 passed (20.8 min, exit 0) on a fresh database.
 - **Not fixed, recorded.** (1) `fg-batch-list.component.ts` `openFinalDecision()` still uses native `prompt()` calls (the D-39 pattern, a different screen). (2) The helper-using specs are not repeat-safe on a used database: with `--repeat-each` QCI-01 fails once accumulated data pushes the new inspection off the first page of the quality worklist (the failing snapshot lists 50 rows and not the new `QI/...` number), which also suggests that worklist is not ordered newest-first like the lists fixed under D-13; FIN-JNL-2 failed once in an earlier repeated run ("a mirror journal exists") and has not been investigated. A fresh database per run, as the validation uses, is unaffected.
 
+## R10-6.4: STANDARD vs MOVING_AVERAGE costing method wired in InventoryPostingService (2026-10-28)
+
+- **Gap.** `InventoryPostingService` always computed the balance's `avgUnitCost` via the weighted moving-average formula, and always issued stock at the current average. The system setting `enterprise.costing_method` (seeded in V54, default `MOVING_AVERAGE`) was validated by `PlantSettingService` but never read by the posting logic, so STANDARD costing had no effect.
+- **Fix.** Two private helpers added to `InventoryPostingService`:
+  - `isStandardCosting()` — reads `enterprise.costing_method` via `SystemSettingService`.
+  - `resolveStandardCostForItem(cmd, fallback)` — returns `material.standard_cost` or `product.standard_cost` when > 0; falls back to `fallback` (the actual receipt cost) when the standard cost is unset (0). This prevents items with no standard cost from landing at 0.
+- **IN-leg (receipt):** under STANDARD, `bal.avgUnitCost` is set to `resolveStandardCostForItem` instead of the weighted average. The balance always carries the standard cost; actual purchase price variance is captured by `ProductionOrderVarianceService`.
+- **OUT-leg (issue):** under STANDARD, issue cost = `resolveStandardCostForItem` instead of `bal.getAvgUnitCost()`.
+- **Transfer:** under STANDARD, both legs use the item's standard cost instead of the balance average.
+- **New IT.** `CostingMethodIT` (3 tests, `com.mfg.ims.inventory`): CMIT-1 MOVING_AVERAGE two receipts yield weighted average; CMIT-2 STANDARD two receipts at different prices leave balance avg = standard_cost; CMIT-3 STANDARD issue unitCost equals standard_cost. `@AfterEach` restores `MOVING_AVERAGE` and evicts the cache.
+- **No migration.** `enterprise.costing_method` was already seeded in V54. No schema change.
+- **Open.** Setting the costing method is company-wide (single `system_settings` row). Per-plant override via `PlantSettingService` is validated but not yet surfaced in the UI or read here; that is a future task. FG costing under STANDARD uses `product.standard_cost` as the fallback in `FinishedGoodsCostService` (which already does this via `releasedUnitCost`); no change needed there.
+
 ## HRM: attendance check-in / check-out time dialog (2026-10-28)
 
 - **Gap.** The `AttendancePageComponent` let HR mark a day as PRESENT or HALF_DAY but provided no way to record the actual check-in and check-out times: those columns (`attendance.check_in`, `attendance.check_out`) existed in the schema since V24 but the mark endpoint only received the status.

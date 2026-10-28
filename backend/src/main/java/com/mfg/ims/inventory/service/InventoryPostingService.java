@@ -100,10 +100,16 @@ public class InventoryPostingService {
         if (signedQty.compareTo(BigDecimal.ZERO) < 0) {
             // OUT leg — enforce stock rules
             enforceOutRules(cmd, bal);
-            unitCost = bal.getAvgUnitCost(); // issue at current average
+            unitCost = isStandardCosting()
+                    ? resolveStandardCostForItem(cmd, bal.getAvgUnitCost())
+                    : bal.getAvgUnitCost();
         } else {
-            // IN leg — update moving average
-            bal.setAvgUnitCost(movingAverage(bal, signedQty, unitCost));
+            // IN leg — update cost basis
+            if (isStandardCosting()) {
+                bal.setAvgUnitCost(resolveStandardCostForItem(cmd, unitCost));
+            } else {
+                bal.setAvgUnitCost(movingAverage(bal, signedQty, unitCost));
+            }
         }
 
         bal.setQtyOnHand(bal.getQtyOnHand().add(signedQty));
@@ -165,11 +171,17 @@ public class InventoryPostingService {
 
         // Enforce the out-leg rules
         enforceOutRules(outCmd, outBal);
-        BigDecimal unitCost = outBal.getAvgUnitCost();
+        BigDecimal unitCost;
+        if (isStandardCosting()) {
+            unitCost = resolveStandardCostForItem(outCmd, outBal.getAvgUnitCost());
+            inBal.setAvgUnitCost(resolveStandardCostForItem(inCmd, unitCost));
+        } else {
+            unitCost = outBal.getAvgUnitCost();
+            inBal.setAvgUnitCost(movingAverage(inBal, cmd.quantity(), unitCost));
+        }
 
         // Update balances
         outBal.setQtyOnHand(outBal.getQtyOnHand().subtract(cmd.quantity()));
-        inBal.setAvgUnitCost(movingAverage(inBal, cmd.quantity(), unitCost));
         inBal.setQtyOnHand(inBal.getQtyOnHand().add(cmd.quantity()));
 
         // Shared group id (use outTx.id which we'll set after save — use a sequence instead)
@@ -369,6 +381,26 @@ public class InventoryPostingService {
                     .orElse(BigDecimal.ZERO);
         }
         return bal.getAvgUnitCost();
+    }
+
+    private boolean isStandardCosting() {
+        return "STANDARD".equalsIgnoreCase(
+                settingService.get("enterprise.costing_method", "MOVING_AVERAGE"));
+    }
+
+    /** Returns the item's standard_cost when > 0, otherwise falls back to {@code fallback}. */
+    private BigDecimal resolveStandardCostForItem(PostingCommand cmd, BigDecimal fallback) {
+        if (cmd.materialId() != null) {
+            BigDecimal sc = materialRepo.findById(cmd.materialId())
+                    .map(m -> m.getStandardCost()).orElse(BigDecimal.ZERO);
+            if (sc != null && sc.compareTo(BigDecimal.ZERO) > 0) return sc;
+        }
+        if (cmd.productId() != null) {
+            BigDecimal sc = productRepo.findById(cmd.productId())
+                    .map(p -> p.getStandardCost()).orElse(BigDecimal.ZERO);
+            if (sc != null && sc.compareTo(BigDecimal.ZERO) > 0) return sc;
+        }
+        return fallback != null ? fallback : BigDecimal.ZERO;
     }
 
     private BigDecimal movingAverage(InventoryBalance bal, BigDecimal inQty, BigDecimal inCost) {
