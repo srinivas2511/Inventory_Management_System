@@ -673,3 +673,41 @@ Each row was checked against the code before any change. Result per row (satisfi
 - **FIN-JNL-2: not reproduced, no change.** Run alone ten times with traces on (the whole manual-journal group, 20 tests) it passed 10 of 10. The earlier failure came from a broad repeat run (D-41) whose log ends `broad-exit=127`, truncated at test 113, so the run itself was cut short and the failure text was lost; STK-04 failed in the same run. Two unrelated specs failing in one interrupted run points at the run, not at the journal screen, but that is an inference, not a proof. If FIN-JNL-2 fails again, keep the trace.
 - **Proof.** One clean `mvn clean verify` (Maven exit 0): 1,262 unit and 2,421 integration tests in 72 classes, 0 failed, 0 skipped. Frontend: lint, format, 667 unit tests, production build. Whole Playwright suite on a fresh database: 331 passed (20.5 min), exit 0. Ten repeats on a used database, without a reset: the final-decision dialog, the cancel dialog, QCI-01, QCI-03, QCI-03b and QCI-06, 70 of 70.
 
+---
+
+## ERP Extension Phase 9 — Design review (task 9.0, 2026-10-28)
+
+Sections reviewed: DESIGN-ERP §1–2.1, §4.1–4.2; ARCHITECTURE-ERP §1–5. Codebase HEAD: `ade10c9`.
+
+### Confirmed items (design is correct as written)
+
+- All of the brand-new Phase 9 tables in DESIGN-ERP §2.1 (V13 block) are absent from the codebase and can be created as written: `item_categories`, `item_series`, `company_profile`, `company_branches`, `bank_accounts`, `transporters`, `payment_terms`, `terms_templates`, `user_branch_access`, `teams`, `team_members`, `team_report_access`, `custom_field_definitions`, `tags`, `entity_tags`, `comments`, `attachments`, `search_index`, `approval_rules`, `approval_rule_steps`, `import_jobs`, `jobs`.
+- ALTER TABLE `materials` / `products` / `suppliers` / `customers` additions from DESIGN-ERP §2.1 are all absent; they must use `ADD COLUMN IF NOT EXISTS` since V55 already added `currency_code` to customers and a different shape of `uom_conversions`.
+- ARCH-ERP §4: `approval_requests` (V1) has a fixed-step schema; Phase 9 must ALTER it to add `rule_id, cycle_no, step_group, withdrawn_at, approver_type, approver_ref` (all nullable for backward compat).
+- `notification_subscriptions` (V31, DMS email outbox) and DESIGN-ERP's `notification_preferences` (ERP event channel prefs) are different tables serving different purposes; both are needed; no conflict.
+- `customer_tags` (V23, CRM-specific) and DESIGN-ERP's generic `tags`/`entity_tags` are separate; the CRM table stays; new generic tags are additive.
+- `DocumentNumberService` / `number_sequences` (V1) must be kept fully functional throughout Phase 9. The new `document_series` / `document_series_counters` tables are added alongside it. A post-migration backfill job copies existing `number_sequences` prefixes into default series rows while keeping `last_value` aligned. Existing callers (`DocumentNumberService`) continue to work until each is migrated to `DocumentSeriesService` in Phase 10–12. **No DROP of `number_sequences` in Phase 9.**
+- `FinancePostingService` (ARCH-ERP E-1, F-12) is a Phase 12 prerequisite, not Phase 9. Not needed here.
+
+### Gaps requiring resolution before coding
+
+**G1 — Migration numbering:** PLAN-ERP.md §1.3 lists V12 and V13 for Phase 9, but the current last applied migration is V63. Phase 9 migrations must be numbered **V64** (DESIGN-ERP §2.1 V12-content: UOM, item series/categories, company profile, branches, banks, transporters, payment terms, T&C, teams, notification prefs, document series) and **V65** (§2.1 V13-content: custom fields, tags, comments, attachments, document links, search index, approval engine tables, import jobs). **Resolution: V64/V65; update PLAN-ERP.md accordingly.**
+
+**G2 — `uom_conversions` schema conflict:** V55 created `uom_conversions(material_id BIGINT NOT NULL, alt_uom VARCHAR(10), factor_to_base NUMERIC(18,6))` — material-scoped only, with a base-UOM implicit model. DESIGN-ERP §2.1 requires `(from_uom, to_uom, factor, material_id nullable, product_id nullable)` — bidirectional, global (both NULL) or item-specific. The two models are incompatible. **Resolution: V64 replaces the V55 `uom_conversions` table with the DESIGN-ERP shape. Existing data (if any) maps: `from_uom = alt_uom, to_uom = base_uom(material), factor = factor_to_base`. The V55 column `factor_to_base` is retained as an alias during the migration, then dropped.** Confirmed acceptable because `uom_conversions` was added in V55 (R20) with no production data in dev; a clean migration is safe.
+
+**G3 — `document_links` name collision:** V31's `document_links` table is a DMS concept (links a `documents` record to entities like PRODUCT, BOM, ECO). DESIGN-ERP §2.1's `document_links` is a cross-entity commercial traceability table (`source_type, source_id, target_type, target_id, link_kind`). Same name, fundamentally different semantics. **Resolution: the new ERP cross-entity table is named `transaction_links` in V65 (not `document_links`). All DESIGN-ERP references to `document_links` for commercial traceability mean `transaction_links`. The DMS `document_links` table stays unchanged.** Update DESIGN-ERP §2.1 and §4 to use `transaction_links`.
+
+**G4 — `document` package is DMS, not commercial kernel:** `com.mfg.ims.document` is the existing DMS file-management module (categories, versions, local storage). ARCH-ERP §3 defines a "document kernel" for commercial documents (status machines, approval, series, lines). **Resolution: the commercial document kernel package is `com.mfg.ims.doccore` (interfaces `Document`, `DocumentLine`, `DocumentTotals`; `DocumentSeriesService`; `DocumentConverter` base). The DMS module stays at `com.mfg.ims.document` unchanged.** ARCH-ERP §2 module map uses `doccore` (not `document`) for the new kernel.
+
+**G5 — `notification_preferences` vs existing `notification_subscriptions`:** V31's `notification_subscriptions(id, user_id, template_code, channel, active)` stores per-template subscription preferences. DESIGN-ERP wants `notification_preferences(user_id, event_type, channel IN_APP|EMAIL, enabled)` keyed by `(user_id, event_type, channel)`. They serve overlapping but different purposes. **Resolution: create both; `notification_subscriptions` keeps DMS-email behaviour unchanged; `notification_preferences` is new for ERP event routing (IN_APP / EMAIL per event type).** No conflict.
+
+### Open items (need product owner / accountant sign-off before Phase 12+)
+
+- **E1** (ARCH-ERP §8.1): sub-ledger vs external books only — deferred to Phase 12 start.
+- **E2** (ARCH-ERP §10): GSP provider selection for e-invoice — deferred to Phase 12/16.
+- **E3** (ARCH-ERP §9): FX rate mode (manual / daily / per-transaction) — deferred to Phase 12.
+- **E5** (ARCH-ERP §15): Tally connection mode (server-HTTP vs browser helper vs file) — deferred to Phase 16.
+- **E7** (ARCH-ERP §17): multi-company — out of scope for all current phases.
+- **E8** (ARCH-ERP §3): PDF template engine selection — deferred to Phase 11.
+- All **[VERIFY]** items in DESIGN-ERP are statutory and must be checked by a chartered accountant before Phase 12 coding begins.
+

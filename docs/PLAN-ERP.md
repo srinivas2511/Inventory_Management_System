@@ -1,6 +1,7 @@
 # PLAN-ERP.md — Full ERP Extension Plan (Addendum to PLAN.md)
 
-**Status:** additive. Phases 0–8 in `PLAN.md` are unchanged and finish first. These phases follow, one at a time, under the same rules: `PLAN.md` §3 (Definition of Done, exit gate), `CLAUDE.md` rules, additive Flyway migrations (continue numbering after V11), real PostgreSQL in tests.
+**Status:** additive. All R1–R20 phases in `PLAN.md` are complete (Gate M20 passed 2026-10-23). These phases follow, one at a time, under the same rules: `PLAN.md` §3 (Definition of Done, exit gate), `CLAUDE.md` rules, additive Flyway migrations (continue numbering after **V63** — the last applied migration as of 2026-10-28; DESIGN-ERP §1.3's V12/V13 mapping means V64/V65 here), real PostgreSQL in tests.
+**Migration mapping (DESIGN-ERP §1.3 → actual):** V12→V64, V13→V65, V14→V66, V15→V67, V16→V68, V17→V69, V18→V70, V19→V71, V20→V72, V21→V73, V22+→V74+.
 **Reference key:** in each task's Ref column, `DESIGN-ERP §x` = `DESIGN-ERP.md`, `ARCH-ERP §x` = `ARCHITECTURE-ERP.md`, `REQ ERP-x` = `REQUIREMENTS-ERP.md`. Read those sections before starting the task.
 **Requirement IDs:** see `REQUIREMENTS-ERP.md`. Design detail: `ARCHITECTURE-ERP.md` and `DESIGN-ERP.md`. Each phase's first task is to review its sections there and flag gaps before coding (see "Design first" below).
 **Total:** about 293 pd on top of 204 pd (≈ 497 pd). At ~12 pd/week that is roughly 24 more weeks. Estimates ±40%; re-baseline after Phase 9.
@@ -25,7 +26,8 @@ Order rationale: platform pieces (approvals, series, attachments, bulk upload) a
 
 ## Phase 9 — Platform extensions (39 pd)
 Design: DESIGN-ERP §2.1, §4.1–4.2, §4.15 · ARCH-ERP §3–5.
-Covers ERP-A-1…9. Migrations: V12+.
+Covers ERP-A-1…9. Migrations: **V64** (UOM/item/company/series/teams) + **V65** (custom fields/tags/comments/attachments/search/approval engine/jobs).
+**Design review (9.0) complete 2026-10-28.** 5 gaps recorded in `docs/decisions.md` (ERP Phase 9 section): G1 migration numbers V64/V65; G2 `uom_conversions` shape conflict resolved by V64 replace; G3 `document_links` name collision → ERP table renamed `transaction_links`; G4 `document` package is DMS → ERP commercial kernel is `com.mfg.ims.doccore`; G5 `notification_preferences` is new (coexists with V31 `notification_subscriptions`). Open decisions E1–E8 deferred (see decisions.md).
 | ID | Task | pd | Ref |
 |---|---|---|---|
 | 9.0 | Review Phase 9 design sections against the code; record gaps | 1 (inside estimates below) | DESIGN-ERP §1.3; REQ ERP-A |
