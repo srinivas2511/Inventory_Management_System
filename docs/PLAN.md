@@ -726,6 +726,8 @@ REQUIREMENTS clauses tagged *[Implemented R1–R8]* whose PLAN tasks do not expl
 
 **Gate M10:** variance journal posted on order close; product cost estimate matches BOM; controlling reports show actuals by cost centre.
 
+**Status: complete, Gate M10 passed 2026-10-28.** All tasks done across V19–V21 and R10-6.x: cost/profit centres (V19), product costing (V20), production order variance (V21), internal orders R10-6.1 (`32811e9`), period-end overhead allocation R10-6.3 (`669c4ad`), costing method STANDARD/MOVING_AVERAGE R10-6.4 (`efff938`). `ControllingIT` 13 tests, `CostingMethodIT` 3 tests (CMIT-1..3), `mvn verify` green. Cost-centre dimension added to `budgets` in V19 (R10-1.3); cost-centre absorption via LABOUR_HOURS/MACHINE_HOURS derived from production operations in the allocation query (R10-6.2). See docs/decisions.md for as-built details.
+
 ---
 
 ## 15. Release 11 — MRP
