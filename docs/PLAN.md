@@ -782,6 +782,8 @@ REQUIREMENTS clauses tagged *[Implemented R1–R8]* whose PLAN tasks do not expl
 
 **Gate M12:** quotation converts to sales order; opportunity pipeline UI shows stages; activity log recorded per customer.
 
+**Status: complete, Gate M12 passed 2026-10-03.** All R12-1.x–R12-4.x tasks done (`fc79de7`). V23 migration: `crm_leads`, `crm_opportunities`, `crm_quotations`, `crm_quotation_items`, `crm_activities`, `price_lists`, `customer_prices`, `customer_tags`. `CrmIT` 23 tests: lead/opportunity state machines, quotation→SO conversion, activity log, customer segmentation, price list application.
+
 ---
 
 ## 17. Release 13 — HR Management (HRM)
@@ -805,6 +807,8 @@ REQUIREMENTS clauses tagged *[Implemented R1–R8]* whose PLAN tasks do not expl
 | R13-5.2 | Permissions `EMPLOYEE_MANAGE`, `PAYROLL_RUN`, `ATTENDANCE_MANAGE`, `LEAVE_APPROVE`; seed `HR_MANAGER` role + demo user; 403 matrix for HR endpoints | | 1 pd |
 
 **Gate M13:** monthly payroll run calculates net pay and creates finance journal; leave approval workflow; attendance linked to production operations.
+
+**Status: complete, Gate M13 passed 2026-10-03.** All R13-1.x–R13-5.x tasks done (`e981dc3`, `dae7171`). V24 (employees, shifts, attendance, leave, training, skill matrix) + V25 (payroll runs/slips, GL accounts) + V26 (unrecorded-day policy). `HrmIT` 19 tests: payroll net-pay calculation, leave approval workflow, attendance auto-capture from production operations, payroll→finance journal, statutory rate data.
 
 ---
 
@@ -855,6 +859,8 @@ REQUIREMENTS clauses tagged *[Implemented R1–R8]* whose PLAN tasks do not expl
 
 **Gate M15:** ECO implementation (`EcoService.implement`) creates a new DRAFT BOM revision per affected product (approval alone does not); product lifecycle state transitions audited; PLM endpoints secured.
 
+**Status: complete, Gate M15 passed 2026-10-04.** All R15-1.x–R15-3.x tasks done (`b233e70`). V28 migration: `ecos`, `eco_affected_items`, `product_lifecycle_events`, `products.lifecycle_status`. `PlmIT` 11 tests: ECO state machine, `EcoService.implement` creates DRAFT BOM revision (approval alone does not), product lifecycle transitions audited, PLM permission matrix.
+
 ---
 
 ## 20. Release 16 — Advanced Quality (QMS+)
@@ -878,6 +884,8 @@ REQUIREMENTS clauses tagged *[Implemented R1–R8]* whose PLAN tasks do not expl
 
 **Gate M16:** SPC chart shows real-time control limits with out-of-control detection; CAPA created from rejection event; customer complaint linked to FG batch trace.
 
+**Status: complete, Gate M16 passed 2026-10-04.** All R16-1.x–R16-4.x tasks done (`8e5f4f3`). V30 migration: `spc_control_charts`, `spc_data_points`, `capa_records`, `customer_complaints`, FAI link. `AdvancedQualityIT` 21 tests: X-bar/R chart control limits, Nelson rule R1/R2 out-of-control detection, P/C attribute charts, CAPA state machine, complaint→FG batch traceability, FAI auto-triggered by ECO implementation.
+
 ---
 
 ## 21. Release 17 — Document Management and Notifications
@@ -898,6 +906,8 @@ REQUIREMENTS clauses tagged *[Implemented R1–R8]* whose PLAN tasks do not expl
 | R17-3.2 | Attach documents to products, BOMs and ECOs; drawing revision records and specification-change documents (permissions `DRAWING_MANAGE`, `SPECIFICATION_MANAGE`); file references only, content stored externally | DESIGN §23.1 | 3 pd |
 
 **Gate M17:** in-app notifications appear in bell menu; email notifications sent on key events; documents attachable to products and BOMs.
+
+**Status: complete, Gate M17 passed 2026-10-04.** All R17-1.x–R17-3.x tasks done (`2dc1a34`). V31 migration: `document_categories`, `documents`, `document_versions`, `document_links`, `notification_templates`, `notification_subscriptions`, `notifications`. `NotificationIT` 20 tests: in-app bell delivery, email outbox via `NotificationService`, PO approved→notification, low-stock→in-app, documents attached to products/BOMs/ECOs, drawing revision audit.
 
 ---
 
@@ -920,6 +930,8 @@ REQUIREMENTS clauses tagged *[Implemented R1–R8]* whose PLAN tasks do not expl
 | R18-5.1 | Maintenance cost tracking per machine (spare parts consumed + labour hours × rate), posted to the machine's cost centre via the R10 cost-centre model; maintenance cost report | DESIGN §24.2 | 3 pd |
 
 **Gate M18:** OEE displayed per machine with breakdown; spare parts tracked through inventory; production Gantt chart operational.
+
+**Status: complete, Gate M18 passed 2026-10-05.** All R18-1.x–R18-5.x tasks done (`7a5948f`). V32 migration: `spare_parts`, `spare_part_issue_lines`, `mv_oee_daily`, scheduling tables. `OeeIT` 13 tests, `SchedulingIT` 12 tests, `SparePartAndMaintenanceCostIT` 12 tests: OEE Availability×Performance×Quality, loss-category breakdown, spare part issue→maintenance cost→cost centre journal, Gantt sequencing by priority and machine availability respecting operator skill matrix and leave.
 
 ---
 
