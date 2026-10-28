@@ -95,6 +95,11 @@ class RoleAccessIT extends AbstractIntegrationTest {
     private static final Set<String> TALLY_EXPORTERS = Set.of("ADMIN", "FINANCE_MANAGER");
     private static final Set<String> TALLY_NON_EXPORTERS = Set.of("MANAGEMENT", "CONTROLLER", "ACCOUNTANT",
             "PRODUCTION_MANAGER", "PURCHASE_MANAGER", "OPERATOR", "SALES");
+    // Phase 9: managers who were granted COMMENT_ADD / GLOBAL_SEARCH / IMPORT_VIEW / APPROVAL_RULE_VIEW in V64–V65
+    private static final Set<String> PHASE9_MGRS_ALLOWED = Set.of("ADMIN", "PURCHASE_MANAGER", "PRODUCTION_MANAGER",
+            "FINANCE_MANAGER", "QUALITY_MANAGER", "STORE_MANAGER");
+    private static final Set<String> PHASE9_MGRS_FORBIDDEN = Set.of("OPERATOR", "SALES", "DISPATCH", "ENGINEER",
+            "SUPERVISOR", "ACCOUNTANT");
     /** Inactive on purpose: the permitted caller creates a subscription that never receives an event. */
     private static final String WEBHOOK_BODY =
             "{\"name\":\"rbac probe\",\"targetUrl\":\"https://example.com/hook\",\"events\":[\"StockPosted\"],\"active\":false}";
@@ -548,7 +553,36 @@ class RoleAccessIT extends AbstractIntegrationTest {
             Probe.of(HttpMethod.GET, "/api/integration/export", ADMIN_ONLY, NOT_ADMIN),
             Probe.of(HttpMethod.GET, "/api/integration/export/customers", ADMIN_ONLY, NOT_ADMIN),
             Probe.of(HttpMethod.GET, "/api/integration/tally/ledgers", TALLY_EXPORTERS, TALLY_NON_EXPORTERS),
-            Probe.of(HttpMethod.GET, "/api/integration/tally/vouchers", TALLY_EXPORTERS, TALLY_NON_EXPORTERS));
+            Probe.of(HttpMethod.GET, "/api/integration/tally/vouchers", TALLY_EXPORTERS, TALLY_NON_EXPORTERS),
+
+            // Phase 9: admin master-data settings (each guarded by its own permission + SETTINGS_MANAGE — ADMIN only)
+            Probe.of(HttpMethod.GET, "/api/admin/item-categories", ADMIN_ONLY,
+                    Set.of("ENGINEER", "PURCHASE_MANAGER", "PRODUCTION_MANAGER", "MANAGEMENT")),
+            Probe.of(HttpMethod.GET, "/api/admin/payment-terms", ADMIN_ONLY,
+                    Set.of("ENGINEER", "FINANCE_MANAGER", "PRODUCTION_MANAGER", "OPERATOR")),
+            Probe.of(HttpMethod.GET, "/api/admin/transporters", ADMIN_ONLY,
+                    Set.of("ENGINEER", "PURCHASE_MANAGER", "DISPATCH", "OPERATOR")),
+            Probe.of(HttpMethod.GET, "/api/admin/document-series", ADMIN_ONLY,
+                    Set.of("ENGINEER", "FINANCE_MANAGER", "PRODUCTION_MANAGER", "OPERATOR")),
+            Probe.of(HttpMethod.GET, "/api/admin/teams", ADMIN_ONLY,
+                    Set.of("ENGINEER", "FINANCE_MANAGER", "PRODUCTION_MANAGER", "OPERATOR")),
+            Probe.of(HttpMethod.GET, "/api/admin/custom-fields", ADMIN_ONLY,
+                    Set.of("ENGINEER", "FINANCE_MANAGER", "PRODUCTION_MANAGER", "OPERATOR")),
+            Probe.of(HttpMethod.GET, "/api/admin/company-profile", ADMIN_ONLY,
+                    Set.of("ENGINEER", "FINANCE_MANAGER", "PRODUCTION_MANAGER", "OPERATOR")),
+            // approval rules: list visible to managers who have APPROVAL_RULE_VIEW (V65)
+            Probe.of(HttpMethod.GET, "/api/admin/approval-rules", PHASE9_MGRS_ALLOWED,
+                    Set.of("OPERATOR", "SALES", "ENGINEER", "DISPATCH")),
+            // Phase 9: lookups accessible to any authenticated user (isAuthenticated())
+            Probe.of(HttpMethod.GET, "/api/lookups/payment-terms", Set.copyOf(ROLES), Set.of()),
+            Probe.of(HttpMethod.GET, "/api/lookups/transporters", Set.copyOf(ROLES), Set.of()),
+            // Phase 9: tags list — authenticated; global search and comments require GLOBAL_SEARCH / COMMENT_ADD
+            Probe.of(HttpMethod.GET, "/api/tags", Set.copyOf(ROLES), Set.of()),
+            Probe.of(HttpMethod.GET, "/api/search?q=test", PHASE9_MGRS_ALLOWED, PHASE9_MGRS_FORBIDDEN),
+            Probe.of(HttpMethod.GET, "/api/comments?entityType=PRODUCT&entityId=1",
+                    PHASE9_MGRS_ALLOWED, PHASE9_MGRS_FORBIDDEN),
+            // Phase 9: import jobs list (IMPORT_VIEW or IMPORT_RUN — ADMIN + managers)
+            Probe.of(HttpMethod.GET, "/api/import", PHASE9_MGRS_ALLOWED, PHASE9_MGRS_FORBIDDEN));
 
     /**
      * What a permitted caller gets when it is not a 2xx. Every other permitted probe must answer 2xx. These probes
@@ -654,7 +688,9 @@ class RoleAccessIT extends AbstractIntegrationTest {
             Map.entry("PUT /api/production-orders/999999/operator-assignment", 404),
             Map.entry("PUT /api/production/operations/999999/assignment", 404),
             Map.entry("PUT /api/scheduling/operations/999999/schedule", 404),
-            Map.entry("PUT /api/spare-parts/999999", 404));
+            Map.entry("PUT /api/spare-parts/999999", 404),
+            // Phase 9: company profile — no profile seeded in the test DB, service returns 404
+            Map.entry("GET /api/admin/company-profile", 404));
 
     @Autowired UserAdminService userAdminService;
     @Autowired @Qualifier("requestMappingHandlerMapping") RequestMappingHandlerMapping handlerMapping;

@@ -90,6 +90,8 @@ ims:
   frontend-url: ${FRONTEND_URL:http://localhost:4200}
   documents:
     storage-root: ${DOCUMENTS_STORAGE_ROOT:./data/documents}
+  attachments:
+    storage-path: ${ATTACHMENTS_STORAGE_PATH:./data/attachments}
   notification:
     from: ${NOTIFICATION_FROM:noreply@ims.local}
     outbox-delay-ms: 30000

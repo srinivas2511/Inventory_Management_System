@@ -856,6 +856,60 @@ export const routes: Routes = [
             (m) => m.NegativeStockOverridesComponent,
           ),
       },
+      {
+        path: 'admin/item-categories',
+        title: 'Item Categories',
+        canActivate: [permissionGuard('SETTINGS_MANAGE')],
+        loadComponent: () =>
+          import('./features/admin/item-categories/item-categories.component').then((m) => m.ItemCategoriesComponent),
+      },
+      {
+        path: 'admin/document-series',
+        title: 'Document Series',
+        canActivate: [permissionGuard('SETTINGS_MANAGE')],
+        loadComponent: () =>
+          import('./features/admin/document-series/document-series.component').then((m) => m.DocumentSeriesComponent),
+      },
+      {
+        path: 'admin/company-profile',
+        title: 'Company Profile',
+        canActivate: [permissionGuard('SETTINGS_MANAGE')],
+        loadComponent: () =>
+          import('./features/admin/company-profile/company-profile.component').then((m) => m.CompanyProfileComponent),
+      },
+      {
+        path: 'admin/payment-terms',
+        title: 'Payment Terms',
+        canActivate: [permissionGuard('SETTINGS_MANAGE')],
+        loadComponent: () =>
+          import('./features/admin/payment-terms/payment-terms.component').then((m) => m.PaymentTermsComponent),
+      },
+      {
+        path: 'admin/transporters',
+        title: 'Transporters',
+        canActivate: [permissionGuard('SETTINGS_MANAGE')],
+        loadComponent: () =>
+          import('./features/admin/transporters/transporters.component').then((m) => m.TransportersComponent),
+      },
+      {
+        path: 'admin/teams',
+        title: 'Teams',
+        canActivate: [permissionGuard('SETTINGS_MANAGE')],
+        loadComponent: () => import('./features/admin/teams/teams.component').then((m) => m.TeamsComponent),
+      },
+      {
+        path: 'admin/approval-rules',
+        title: 'Approval Rules',
+        canActivate: [permissionGuard('APPROVAL_RULE_VIEW')],
+        loadComponent: () =>
+          import('./features/admin/approval-rules/approval-rules.component').then((m) => m.ApprovalRulesComponent),
+      },
+      {
+        path: 'admin/imports',
+        title: 'Data Imports',
+        canActivate: [permissionGuard('IMPORT_VIEW')],
+        loadComponent: () => import('./features/admin/imports/imports.component').then((m) => m.ImportsComponent),
+      },
     ],
   },
   { path: '**', redirectTo: '' },

@@ -47,7 +47,7 @@ import { LookupApi, LookupOption } from '../../shared/lookup.api';
             <mat-select [(ngModel)]="selectedWarehouseId" (ngModelChange)="load()">
               <mat-option [value]="null">All Warehouses</mat-option>
               @for (w of warehouses(); track w.id) {
-                <mat-option [value]="w.id">{{ w.label }}</mat-option>
+                <mat-option [value]="w.id">{{ w.name }}</mat-option>
               }
             </mat-select>
           </mat-form-field>
