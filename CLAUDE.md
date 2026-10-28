@@ -14,6 +14,7 @@ Stack: Java 17+ / Spring Boot 3 / PostgreSQL / Angular 18+ (Angular Material) / 
 Before any task: read the DESIGN/ARCHITECTURE sections the PLAN task references. If code and docs disagree, stop and flag it rather than guessing.
 
 ## Current status
+- **E2E PASS re-validated (2026-10-28), HEAD `6317282`:** 387/388 (18.6 min, 0 failed, 1 skipped=PRED-4, exit 0). All three suites green on this HEAD: Playwright 387/388, backend 1262/1262, frontend 747/747.
 - **Frontend verified (2026-10-28), HEAD `3ec152a`:** lint clean, format clean (2 Prettier fixes applied to `financial-statements.component.ts` and `attendance-time-dialog.component.spec.ts`), 747/747 unit tests passed.
 - **Backend verified (2026-10-28), HEAD `8c61a53`:** `mvn verify` — 1262 unit/ArchUnit tests, 0 failed, 0 skipped. BUILD SUCCESS.
 - **E2E PASS re-validated (2026-10-28), HEAD `4327d5e`:** 388 tests × 1 fresh-database Playwright run — Run 5: 387/388 (18.6 min, 0 failed, 1 skipped, exit 0). The 1 skipped is PRED-4 (expected). Confirms baseline holds after docs-only commits.
