@@ -88,6 +88,13 @@ public class InventoryController {
         return queryService.valuation(warehouseId);
     }
 
+    @GetMapping("/valuation-report")
+    @PreAuthorize("hasAuthority('VALUATION_VIEW')")
+    public com.mfg.ims.inventory.dto.ValuationReportDto valuationReport(
+            @RequestParam(required = false) Long warehouseId) {
+        return queryService.valuationReport(warehouseId);
+    }
+
     // ── Ledger ────────────────────────────────────────────────────────────────
 
     @GetMapping("/ledger")

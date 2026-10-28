@@ -58,6 +58,10 @@
         <source>Adjustments</source>
         <target>ಹೊಂದಾಣಿಕೆಗಳು</target>
       </trans-unit>
+      <trans-unit id="nav.item-valuation-report" datatype="html">
+        <source>Valuation Report</source>
+        <target>ಮೌಲ್ಯಮಾಪನ ವರದಿ</target>
+      </trans-unit>
       <trans-unit id="nav.group-procurement" datatype="html">
         <source>Procurement</source>
         <target>ಖರೀದಿ</target>

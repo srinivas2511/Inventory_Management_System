@@ -2,8 +2,10 @@ package com.mfg.ims.inventory.service;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
@@ -12,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.mfg.ims.common.exception.NotFoundException;
+import com.mfg.ims.common.settings.SystemSettingService;
 import com.mfg.ims.enterprise.scope.PlantScope;
 import com.mfg.ims.inventory.domain.InventoryBalance;
 import com.mfg.ims.inventory.domain.InventoryTransaction;
@@ -20,8 +23,14 @@ import com.mfg.ims.inventory.dto.InventoryTransactionDto;
 import com.mfg.ims.inventory.dto.PostingResult;
 import com.mfg.ims.inventory.dto.TransferCommand;
 import com.mfg.ims.inventory.dto.TransferRequest;
+import com.mfg.ims.inventory.dto.ValuationLineDto;
+import com.mfg.ims.inventory.dto.ValuationReportDto;
 import com.mfg.ims.inventory.repository.InventoryBalanceRepository;
 import com.mfg.ims.inventory.repository.InventoryTransactionRepository;
+import com.mfg.ims.material.domain.Material;
+import com.mfg.ims.material.repository.MaterialRepository;
+import com.mfg.ims.product.domain.Product;
+import com.mfg.ims.product.repository.ProductRepository;
 import com.mfg.ims.warehouse.repository.WarehouseLocationRepository;
 import com.mfg.ims.warehouse.repository.WarehouseRepository;
 
@@ -33,20 +42,29 @@ public class InventoryQueryService {
     private final InventoryPostingService postingService;
     private final WarehouseRepository warehouseRepo;
     private final WarehouseLocationRepository locationRepo;
-    private final com.mfg.ims.enterprise.scope.PlantScope plantScope;
+    private final PlantScope plantScope;
+    private final MaterialRepository materialRepo;
+    private final ProductRepository productRepo;
+    private final SystemSettingService settingService;
 
     public InventoryQueryService(InventoryBalanceRepository balanceRepo,
                                   InventoryTransactionRepository txRepo,
                                   InventoryPostingService postingService,
                                   WarehouseRepository warehouseRepo,
                                   WarehouseLocationRepository locationRepo,
-                                  com.mfg.ims.enterprise.scope.PlantScope plantScope) {
+                                  PlantScope plantScope,
+                                  MaterialRepository materialRepo,
+                                  ProductRepository productRepo,
+                                  SystemSettingService settingService) {
         this.plantScope = plantScope;
         this.balanceRepo = balanceRepo;
         this.txRepo = txRepo;
         this.postingService = postingService;
         this.warehouseRepo = warehouseRepo;
         this.locationRepo = locationRepo;
+        this.materialRepo = materialRepo;
+        this.productRepo = productRepo;
+        this.settingService = settingService;
     }
 
     @Transactional(readOnly = true)
@@ -79,6 +97,61 @@ public class InventoryQueryService {
                         warehouseNames.getOrDefault(b.getWarehouseId(), String.valueOf(b.getWarehouseId())),
                         locationNames.getOrDefault(b.getLocationId(), String.valueOf(b.getLocationId()))))
                 .toList();
+    }
+
+    /** Per-item valuation report with cost method context (INV-010, RPT-002). */
+    @Transactional(readOnly = true)
+    public ValuationReportDto valuationReport(Long warehouseId) {
+        String costMethod = settingService.get("enterprise.costing_method", "MOVING_AVERAGE").toUpperCase();
+        PlantScope.Filter wh = plantScope.warehouseFilter();
+
+        List<InventoryBalance> balances = (warehouseId != null
+                ? balanceRepo.findByWarehouseId(warehouseId)
+                : balanceRepo.findAll()).stream()
+                .filter(b -> !wh.scoped() || wh.plantIds().contains(b.getWarehouseId()))
+                .filter(b -> b.getQtyOnHand().compareTo(BigDecimal.ZERO) > 0)
+                .toList();
+
+        Set<Long> matIds = balances.stream()
+                .filter(b -> "MATERIAL".equals(b.getItemType()) && b.getMaterialId() != null)
+                .map(InventoryBalance::getMaterialId).collect(Collectors.toSet());
+        Set<Long> prodIds = balances.stream()
+                .filter(b -> "PRODUCT".equals(b.getItemType()) && b.getProductId() != null)
+                .map(InventoryBalance::getProductId).collect(Collectors.toSet());
+
+        Map<Long, Material> materials = matIds.isEmpty() ? Map.of()
+                : materialRepo.findAllById(matIds).stream().collect(Collectors.toMap(Material::getId, m -> m));
+        Map<Long, Product> products = prodIds.isEmpty() ? Map.of()
+                : productRepo.findAllById(prodIds).stream().collect(Collectors.toMap(Product::getId, p -> p));
+
+        List<ValuationLineDto> lines = balances.stream()
+                .map(b -> {
+                    if ("MATERIAL".equals(b.getItemType())) {
+                        Material m = materials.get(b.getMaterialId());
+                        if (m == null) return null;
+                        return new ValuationLineDto("MATERIAL", m.getId(), m.getMaterialCode(), m.getName(), m.getUom(),
+                                b.getQtyOnHand(), b.getAvgUnitCost(),
+                                m.getStandardCost() != null ? m.getStandardCost() : BigDecimal.ZERO,
+                                b.getQtyOnHand().multiply(b.getAvgUnitCost()));
+                    } else {
+                        Product p = products.get(b.getProductId());
+                        if (p == null) return null;
+                        return new ValuationLineDto("PRODUCT", p.getId(), p.getProductCode(), p.getName(), p.getUom(),
+                                b.getQtyOnHand(), b.getAvgUnitCost(),
+                                p.getStandardCost() != null ? p.getStandardCost() : BigDecimal.ZERO,
+                                b.getQtyOnHand().multiply(b.getAvgUnitCost()));
+                    }
+                })
+                .filter(l -> l != null)
+                .sorted(Comparator.comparing(ValuationLineDto::itemType).thenComparing(ValuationLineDto::itemCode))
+                .toList();
+
+        BigDecimal rmTotal = lines.stream().filter(l -> "MATERIAL".equals(l.itemType()))
+                .map(ValuationLineDto::totalValue).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal fgTotal = lines.stream().filter(l -> "PRODUCT".equals(l.itemType()))
+                .map(ValuationLineDto::totalValue).reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        return new ValuationReportDto(costMethod, lines, rmTotal, fgTotal, rmTotal.add(fgTotal));
     }
 
     /** Available on-hand quantity per material (0 when the material has no available stock). */

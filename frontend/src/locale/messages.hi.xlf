@@ -58,6 +58,10 @@
         <source>Adjustments</source>
         <target>समायोजन</target>
       </trans-unit>
+      <trans-unit id="nav.item-valuation-report" datatype="html">
+        <source>Valuation Report</source>
+        <target>मूल्यांकन रिपोर्ट</target>
+      </trans-unit>
       <trans-unit id="nav.group-procurement" datatype="html">
         <source>Procurement</source>
         <target>खरीद</target>

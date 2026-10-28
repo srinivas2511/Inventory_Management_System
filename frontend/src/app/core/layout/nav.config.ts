@@ -108,6 +108,13 @@ export const NAV_GROUPS: NavGroup[] = [
         permission: 'INVENTORY_VIEW',
         enabled: true,
       },
+      {
+        label: $localize`:@@nav.item-valuation-report:Valuation Report`,
+        icon: 'assessment',
+        route: '/inventory/valuation-report',
+        permission: 'VALUATION_VIEW',
+        enabled: true,
+      },
     ],
   },
   {

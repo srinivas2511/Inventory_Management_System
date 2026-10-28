@@ -89,6 +89,26 @@ export interface ValuationDto {
   fgValue: number;
 }
 
+export interface ValuationLineDto {
+  itemType: string;
+  itemId: number;
+  itemCode: string;
+  itemName: string;
+  uom: string;
+  qtyOnHand: number;
+  avgUnitCost: number;
+  standardCost: number;
+  totalValue: number;
+}
+
+export interface ValuationReportDto {
+  costMethod: string;
+  lines: ValuationLineDto[];
+  rmTotal: number;
+  fgTotal: number;
+  grandTotal: number;
+}
+
 export interface TransferRequest {
   itemType: string;
   materialId?: number;
@@ -163,6 +183,12 @@ export class InventoryApi {
     let params = new HttpParams();
     if (warehouseId) params = params.set('warehouseId', warehouseId);
     return this.http.get<ValuationDto>(`${this.base}/api/inventory/balances/valuation`, { params });
+  }
+
+  getValuationReport(warehouseId?: number): Observable<ValuationReportDto> {
+    let params = new HttpParams();
+    if (warehouseId) params = params.set('warehouseId', warehouseId);
+    return this.http.get<ValuationReportDto>(`${this.base}/api/inventory/valuation-report`, { params });
   }
 
   getLedger(
