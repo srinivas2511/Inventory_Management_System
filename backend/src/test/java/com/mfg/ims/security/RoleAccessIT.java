@@ -52,7 +52,8 @@ class RoleAccessIT extends AbstractIntegrationTest {
 
     private static final List<String> ROLES = List.of("ADMIN", "ENGINEER", "PRODUCTION_MANAGER", "SUPERVISOR",
             "OPERATOR", "QUALITY_MANAGER", "STORE_MANAGER", "PURCHASE_MANAGER", "SALES", "DISPATCH", "MAINTENANCE",
-            "STORE_OPERATOR", "MANAGEMENT", "FINANCE_MANAGER", "ACCOUNTANT", "PLANNER", "CONTROLLER");
+            "STORE_OPERATOR", "MANAGEMENT", "FINANCE_MANAGER", "ACCOUNTANT", "PLANNER", "CONTROLLER",
+            "SALES_MANAGER");
 
     private static final Set<String> DOCUMENT_READERS = Set.of("ADMIN", "ENGINEER", "PRODUCTION_MANAGER", "SUPERVISOR",
             "QUALITY_MANAGER", "STORE_MANAGER", "PURCHASE_MANAGER", "MAINTENANCE", "MANAGEMENT");
@@ -109,6 +110,10 @@ class RoleAccessIT extends AbstractIntegrationTest {
     private static final Set<String> PHASE10_PURCHASE_ALLOWED = Set.of("ADMIN", "PURCHASE_MANAGER");
     private static final Set<String> PHASE10_PURCHASE_FORBIDDEN = Set.of("OPERATOR", "SALES", "DISPATCH",
             "ENGINEER", "FINANCE_MANAGER", "PRODUCTION_MANAGER");
+    // Phase 11: Quotations, OC, Delivery challans — ADMIN + SALES_MANAGER only
+    private static final Set<String> PHASE11_SALES_ALLOWED = Set.of("ADMIN", "SALES_MANAGER");
+    private static final Set<String> PHASE11_SALES_FORBIDDEN = Set.of("OPERATOR", "SALES", "DISPATCH",
+            "ENGINEER", "FINANCE_MANAGER", "PURCHASE_MANAGER");
     /** Inactive on purpose: the permitted caller creates a subscription that never receives an event. */
     private static final String WEBHOOK_BODY =
             "{\"name\":\"rbac probe\",\"targetUrl\":\"https://example.com/hook\",\"events\":[\"StockPosted\"],\"active\":false}";
@@ -599,7 +604,16 @@ class RoleAccessIT extends AbstractIntegrationTest {
             // Phase 10: Purchase returns — ADMIN + PURCHASE_MANAGER (PURCHASE_RETURN_VIEW)
             Probe.of(HttpMethod.GET, "/api/purchase-returns", PHASE10_PURCHASE_ALLOWED, PHASE10_PURCHASE_FORBIDDEN),
             // Phase 10: Supplier quotes — ADMIN + PURCHASE_MANAGER (RFQ_VIEW)
-            Probe.of(HttpMethod.GET, "/api/supplier-quotes", PHASE10_PURCHASE_ALLOWED, PHASE10_PURCHASE_FORBIDDEN));
+            Probe.of(HttpMethod.GET, "/api/supplier-quotes", PHASE10_PURCHASE_ALLOWED, PHASE10_PURCHASE_FORBIDDEN),
+            // Phase 11: Quotations — ADMIN + SALES_MANAGER (QUOTATION_VIEW)
+            Probe.of(HttpMethod.GET, "/api/sales/quotations", PHASE11_SALES_ALLOWED, PHASE11_SALES_FORBIDDEN),
+            Probe.of(HttpMethod.GET, "/api/sales/quotations/" + MISSING, PHASE11_SALES_ALLOWED, PHASE11_SALES_FORBIDDEN),
+            // Phase 11: Order confirmations — ADMIN + SALES_MANAGER (OC_VIEW)
+            Probe.of(HttpMethod.GET, "/api/sales/order-confirmations", PHASE11_SALES_ALLOWED, PHASE11_SALES_FORBIDDEN),
+            Probe.of(HttpMethod.GET, "/api/sales/order-confirmations/" + MISSING, PHASE11_SALES_ALLOWED, PHASE11_SALES_FORBIDDEN),
+            // Phase 11: Delivery challans — ADMIN + SALES_MANAGER (CHALLAN_VIEW)
+            Probe.of(HttpMethod.GET, "/api/sales/delivery-challans", PHASE11_SALES_ALLOWED, PHASE11_SALES_FORBIDDEN),
+            Probe.of(HttpMethod.GET, "/api/sales/delivery-challans/" + MISSING, PHASE11_SALES_ALLOWED, PHASE11_SALES_FORBIDDEN));
 
     /**
      * What a permitted caller gets when it is not a 2xx. Every other permitted probe must answer 2xx. These probes
@@ -705,7 +719,11 @@ class RoleAccessIT extends AbstractIntegrationTest {
             Map.entry("PUT /api/production-orders/999999/operator-assignment", 404),
             Map.entry("PUT /api/production/operations/999999/assignment", 404),
             Map.entry("PUT /api/scheduling/operations/999999/schedule", 404),
-            Map.entry("PUT /api/spare-parts/999999", 404));
+            Map.entry("PUT /api/spare-parts/999999", 404),
+            // Phase 11: GET by missing id answers 404
+            Map.entry("GET /api/sales/quotations/999999", 404),
+            Map.entry("GET /api/sales/order-confirmations/999999", 404),
+            Map.entry("GET /api/sales/delivery-challans/999999", 404));
 
     @Autowired UserAdminService userAdminService;
     @Autowired @Qualifier("requestMappingHandlerMapping") RequestMappingHandlerMapping handlerMapping;

@@ -289,11 +289,32 @@
           <context context-type="linenumber">203</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="nav.item-quotations" datatype="html">
+        <source>Quotations</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/layout/nav.config.ts</context>
+          <context context-type="linenumber">209</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="nav.item-order-confirmations" datatype="html">
+        <source>Order Confirmations</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/layout/nav.config.ts</context>
+          <context context-type="linenumber">215</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="nav.item-delivery-challans" datatype="html">
+        <source>Delivery Challans</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/layout/nav.config.ts</context>
+          <context context-type="linenumber">221</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="nav.group-insight" datatype="html">
         <source>Insight</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/core/layout/nav.config.ts</context>
-          <context context-type="linenumber">212</context>
+          <context context-type="linenumber">228</context>
         </context-group>
       </trans-unit>
       <trans-unit id="nav.item-alerts" datatype="html">

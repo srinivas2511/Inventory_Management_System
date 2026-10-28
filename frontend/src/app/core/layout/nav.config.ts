@@ -287,6 +287,27 @@ export const NAV_GROUPS: NavGroup[] = [
         permission: 'DISPATCH_VIEW',
         enabled: true,
       },
+      {
+        label: $localize`:@@nav.item-quotations:Quotations`,
+        icon: 'request_quote',
+        route: '/sales/quotations',
+        permission: 'QUOTATION_VIEW',
+        enabled: true,
+      },
+      {
+        label: $localize`:@@nav.item-order-confirmations:Order Confirmations`,
+        icon: 'task_alt',
+        route: '/sales/order-confirmations',
+        permission: 'OC_VIEW',
+        enabled: true,
+      },
+      {
+        label: $localize`:@@nav.item-delivery-challans:Delivery Challans`,
+        icon: 'description',
+        route: '/sales/delivery-challans',
+        permission: 'CHALLAN_VIEW',
+        enabled: true,
+      },
     ],
   },
   {

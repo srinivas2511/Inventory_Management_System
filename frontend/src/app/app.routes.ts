@@ -282,6 +282,26 @@ export const routes: Routes = [
         loadComponent: () => import('./features/sales/dispatch-list.component').then((m) => m.DispatchListComponent),
       },
       {
+        path: 'sales/quotations',
+        title: 'Quotations',
+        canActivate: [permissionGuard('QUOTATION_VIEW')],
+        loadComponent: () => import('./features/sales/quotation-list.component').then((m) => m.QuotationListComponent),
+      },
+      {
+        path: 'sales/order-confirmations',
+        title: 'Order Confirmations',
+        canActivate: [permissionGuard('OC_VIEW')],
+        loadComponent: () =>
+          import('./features/sales/order-confirmation-list.component').then((m) => m.OrderConfirmationListComponent),
+      },
+      {
+        path: 'sales/delivery-challans',
+        title: 'Delivery Challans',
+        canActivate: [permissionGuard('CHALLAN_VIEW')],
+        loadComponent: () =>
+          import('./features/sales/delivery-challan-list.component').then((m) => m.DeliveryChallanListComponent),
+      },
+      {
         path: 'insight/alerts',
         title: 'Alerts',
         canActivate: [permissionGuard('ALERT_VIEW')],

@@ -166,6 +166,18 @@
         <source>Dispatches</source>
         <target>प्रेषण</target>
       </trans-unit>
+      <trans-unit id="nav.item-quotations" datatype="html">
+        <source>Quotations</source>
+        <target>कोटेशन</target>
+      </trans-unit>
+      <trans-unit id="nav.item-order-confirmations" datatype="html">
+        <source>Order Confirmations</source>
+        <target>आर्डर पुष्टि</target>
+      </trans-unit>
+      <trans-unit id="nav.item-delivery-challans" datatype="html">
+        <source>Delivery Challans</source>
+        <target>डिलीवरी चालान</target>
+      </trans-unit>
       <trans-unit id="nav.group-insight" datatype="html">
         <source>Insight</source>
         <target>अंतर्दृष्टि</target>

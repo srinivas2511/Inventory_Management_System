@@ -27,3 +27,7 @@ Thumbs.db
 # Playwright output
 **/test-results/
 **/playwright-report/
+
+# Runtime document/attachment storage
+data/
+backend/data/
