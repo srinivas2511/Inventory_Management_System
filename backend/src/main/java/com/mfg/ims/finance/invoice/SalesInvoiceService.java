@@ -1,6 +1,9 @@
 package com.mfg.ims.finance.invoice;
 
 import com.mfg.ims.common.numbering.DocumentNumberService;
+import com.mfg.ims.sales.domain.Dispatch;
+import com.mfg.ims.sales.repository.DispatchRepository;
+import com.mfg.ims.sales.repository.SalesOrderRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,10 +21,15 @@ public class SalesInvoiceService {
 
     private final SalesInvoiceRepository repo;
     private final DocumentNumberService numberService;
+    private final DispatchRepository dispatchRepo;
+    private final SalesOrderRepository salesOrderRepo;
 
-    public SalesInvoiceService(SalesInvoiceRepository repo, DocumentNumberService numberService) {
+    public SalesInvoiceService(SalesInvoiceRepository repo, DocumentNumberService numberService,
+                               DispatchRepository dispatchRepo, SalesOrderRepository salesOrderRepo) {
         this.repo = repo;
         this.numberService = numberService;
+        this.dispatchRepo = dispatchRepo;
+        this.salesOrderRepo = salesOrderRepo;
     }
 
     @Transactional(readOnly = true)
@@ -90,6 +98,22 @@ public class SalesInvoiceService {
             throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
                     "Only DRAFT invoices can be posted");
         }
+        // Auto-create a direct dispatch when no dispatch is linked but a sales order is
+        if (inv.getDispatchId() == null && inv.getSalesOrderId() != null) {
+            salesOrderRepo.findById(inv.getSalesOrderId()).ifPresent(so -> {
+                var dispatch = new Dispatch();
+                dispatch.setDispatchNumber(numberService.next("DC"));
+                dispatch.setSalesOrderId(so.getId());
+                dispatch.setCustomerId(so.getCustomerId());
+                dispatch.setDispatchDate(inv.getDocDate() != null ? inv.getDocDate() : LocalDate.now());
+                String addr = so.getDeliveryAddress();
+                dispatch.setDeliveryAddress(addr != null && !addr.isBlank() ? addr : "Direct dispatch");
+                dispatch.setDispatchedBy(userId);
+                dispatch.setStatus("DISPATCHED");
+                var saved = dispatchRepo.save(dispatch);
+                inv.setDispatchId(saved.getId());
+            });
+        }
         inv.setStatus("POSTED");
         inv.setPostedAt(Instant.now());
         inv.setPostedBy(userId);
@@ -100,6 +124,14 @@ public class SalesInvoiceService {
         var inv = find(id);
         if ("CANCELLED".equals(inv.getStatus())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Invoice is already cancelled");
+        }
+        // Block cancellation if payments have been partially applied
+        BigDecimal balance = inv.getBalanceInr();
+        BigDecimal total = inv.getGrandTotal();
+        if (total != null && total.compareTo(BigDecimal.ZERO) > 0
+                && balance != null && balance.compareTo(total) < 0) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Cannot cancel invoice with applied payments");
         }
         inv.setStatus("CANCELLED");
         inv.setCancelledReason(reason);
