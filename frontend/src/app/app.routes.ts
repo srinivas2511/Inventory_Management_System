@@ -358,6 +358,20 @@ export const routes: Routes = [
           import('./features/integration/gst-einvoice.component').then((m) => m.GstEInvoiceComponent),
       },
       {
+        path: 'integration/call-log',
+        title: 'Integration Call Log',
+        canActivate: [permissionGuard('INTEGRATION_MANAGE')],
+        loadComponent: () =>
+          import('./features/integration/integration-call-log.component').then((m) => m.IntegrationCallLogComponent),
+      },
+      {
+        path: 'integration/tally-ledger-mappings',
+        title: 'Tally Ledger Mappings',
+        canActivate: [permissionGuard('INTEGRATION_MANAGE')],
+        loadComponent: () =>
+          import('./features/integration/tally-ledger-mapping.component').then((m) => m.TallyLedgerMappingComponent),
+      },
+      {
         path: 'production/oee',
         title: 'OEE',
         canActivate: [permissionGuard('OEE_VIEW')],
@@ -645,6 +659,25 @@ export const routes: Routes = [
         canActivate: [permissionGuard('ANALYTICS_VIEW')],
         loadComponent: () =>
           import('./features/analytics/analytics-explorer.component').then((m) => m.AnalyticsExplorerComponent),
+      },
+      {
+        path: 'analytics/bi',
+        title: 'Business Intelligence',
+        canActivate: [permissionGuard('BI_VIEW')],
+        loadComponent: () => import('./features/analytics/bi-dashboard.component').then((m) => m.BiDashboardComponent),
+      },
+      {
+        path: 'analytics/registers',
+        title: 'Registers',
+        canActivate: [permissionGuard('REGISTER_VIEW')],
+        loadComponent: () => import('./features/analytics/registers.component').then((m) => m.RegistersComponent),
+      },
+      {
+        path: 'analytics/report-builder',
+        title: 'Report Builder',
+        canActivate: [permissionGuard('REPORT_BUILD')],
+        loadComponent: () =>
+          import('./features/analytics/report-builder.component').then((m) => m.ReportBuilderComponent),
       },
       {
         path: 'admin/webhooks',

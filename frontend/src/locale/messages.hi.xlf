@@ -222,6 +222,18 @@
         <source>Analytics Explorer</source>
         <target>विश्लेषण एक्सप्लोरर</target>
       </trans-unit>
+      <trans-unit id="nav.item-bi-dashboard" datatype="html">
+        <source>Business Intelligence</source>
+        <target>व्यापार बुद्धिमत्ता</target>
+      </trans-unit>
+      <trans-unit id="nav.item-registers" datatype="html">
+        <source>Registers</source>
+        <target>रजिस्टर</target>
+      </trans-unit>
+      <trans-unit id="nav.item-report-builder" datatype="html">
+        <source>Report Builder</source>
+        <target>रिपोर्ट बिल्डर</target>
+      </trans-unit>
       <trans-unit id="nav.item-traceability" datatype="html">
         <source>Traceability</source>
         <target>ट्रेसेबिलिटी</target>
@@ -521,6 +533,14 @@
       <trans-unit id="nav.item-gst-einvoice" datatype="html">
         <source>GST E-Invoice</source>
         <target>जीएसटी ई-चालान</target>
+      </trans-unit>
+      <trans-unit id="nav.item-integration-call-log" datatype="html">
+        <source>Integration Call Log</source>
+        <target>एकीकरण कॉल लॉग</target>
+      </trans-unit>
+      <trans-unit id="nav.item-tally-ledger-mappings" datatype="html">
+        <source>Tally Ledger Mappings</source>
+        <target>टैली लेजर मैपिंग</target>
       </trans-unit>
       <trans-unit id="nav.item-system-settings" datatype="html">
         <source>System Settings</source>

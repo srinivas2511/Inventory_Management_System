@@ -126,6 +126,18 @@ class RoleAccessIT extends AbstractIntegrationTest {
     private static final Set<String> PHASE14_JWO_ALLOWED = Set.of("ADMIN", "PRODUCTION_MANAGER");
     private static final Set<String> PHASE14_JWO_FORBIDDEN = Set.of("OPERATOR", "SALES", "DISPATCH",
             "ENGINEER", "FINANCE_MANAGER", "PURCHASE_MANAGER", "SALES_MANAGER", "STORE_MANAGER");
+    // Phase 15: BI and report builder — ADMIN + FINANCE_MANAGER + MANAGEMENT + CONTROLLER
+    private static final Set<String> PHASE15_BI_ALLOWED = Set.of("ADMIN", "FINANCE_MANAGER", "MANAGEMENT", "CONTROLLER");
+    private static final Set<String> PHASE15_BI_FORBIDDEN = Set.of("OPERATOR", "SALES", "DISPATCH",
+            "ENGINEER", "PURCHASE_MANAGER", "SALES_MANAGER", "STORE_MANAGER", "PRODUCTION_MANAGER");
+    // Phase 16: Integration management — ADMIN only (INTEGRATION_MANAGE)
+    private static final Set<String> PHASE16_INTEG_ALLOWED = Set.of("ADMIN");
+    private static final Set<String> PHASE16_INTEG_FORBIDDEN = Set.of("OPERATOR", "SALES", "DISPATCH",
+            "ENGINEER", "FINANCE_MANAGER", "PURCHASE_MANAGER", "SALES_MANAGER", "STORE_MANAGER", "PRODUCTION_MANAGER");
+    // Phase 16: Accounting vouchers — ADMIN + FINANCE_MANAGER + CONTROLLER (ACCOUNTING_VOUCHER_VIEW/APPROVE)
+    private static final Set<String> PHASE16_VOUCHER_ALLOWED = Set.of("ADMIN", "FINANCE_MANAGER", "CONTROLLER");
+    private static final Set<String> PHASE16_VOUCHER_FORBIDDEN = Set.of("OPERATOR", "SALES", "DISPATCH",
+            "ENGINEER", "PURCHASE_MANAGER", "SALES_MANAGER", "STORE_MANAGER", "PRODUCTION_MANAGER");
     /** Inactive on purpose: the permitted caller creates a subscription that never receives an event. */
     private static final String WEBHOOK_BODY =
             "{\"name\":\"rbac probe\",\"targetUrl\":\"https://example.com/hook\",\"events\":[\"StockPosted\"],\"active\":false}";
@@ -644,7 +656,31 @@ class RoleAccessIT extends AbstractIntegrationTest {
             Probe.of(HttpMethod.GET, "/api/production/job-work-orders/" + MISSING, PHASE14_JWO_ALLOWED, PHASE14_JWO_FORBIDDEN),
             // Phase 14: Service orders — ADMIN + PRODUCTION_MANAGER (SERVICE_ORDER_VIEW)
             Probe.of(HttpMethod.GET, "/api/production/service-orders", PHASE14_JWO_ALLOWED, PHASE14_JWO_FORBIDDEN),
-            Probe.of(HttpMethod.GET, "/api/production/service-orders/" + MISSING, PHASE14_JWO_ALLOWED, PHASE14_JWO_FORBIDDEN));
+            Probe.of(HttpMethod.GET, "/api/production/service-orders/" + MISSING, PHASE14_JWO_ALLOWED, PHASE14_JWO_FORBIDDEN),
+            // Phase 15: BI — ADMIN + FINANCE_MANAGER + MANAGEMENT + CONTROLLER (BI_VIEW)
+            Probe.of(HttpMethod.GET, "/api/bi", PHASE15_BI_ALLOWED, PHASE15_BI_FORBIDDEN),
+            Probe.of(HttpMethod.GET, "/api/bi/sales", PHASE15_BI_ALLOWED, PHASE15_BI_FORBIDDEN),
+            // Phase 15: Registers — ADMIN + FINANCE_MANAGER + MANAGEMENT + CONTROLLER (REGISTER_VIEW)
+            Probe.of(HttpMethod.GET, "/api/registers", PHASE15_BI_ALLOWED, PHASE15_BI_FORBIDDEN),
+            // Phase 15: Report builder catalogue — ADMIN + FINANCE_MANAGER + MANAGEMENT + CONTROLLER (REPORT_BUILD)
+            Probe.of(HttpMethod.GET, "/api/report-builder/catalogue", PHASE15_BI_ALLOWED, PHASE15_BI_FORBIDDEN),
+            Probe.of(HttpMethod.GET, "/api/report-builder/saved", PHASE15_BI_ALLOWED, PHASE15_BI_FORBIDDEN),
+            Probe.of(HttpMethod.GET, "/api/report-builder/saved/" + MISSING, PHASE15_BI_ALLOWED, PHASE15_BI_FORBIDDEN),
+            // Phase 15: Register by code — returns 404 for an unknown code
+            Probe.of(HttpMethod.GET, "/api/registers/UNKNOWN_CODE", PHASE15_BI_ALLOWED, PHASE15_BI_FORBIDDEN),
+            // Phase 16: Integration call log — ADMIN only (INTEGRATION_MANAGE)
+            Probe.of(HttpMethod.GET, "/api/integration/calls", PHASE16_INTEG_ALLOWED, PHASE16_INTEG_FORBIDDEN),
+            // Phase 16: Tally ledger mappings — ADMIN only (INTEGRATION_MANAGE)
+            Probe.of(HttpMethod.GET, "/api/integration/tally/ledger-mappings", PHASE16_INTEG_ALLOWED, PHASE16_INTEG_FORBIDDEN),
+            // Phase 16: Tally voucher queue — ADMIN + FINANCE_MANAGER + CONTROLLER (ACCOUNTING_VOUCHER_VIEW)
+            Probe.of(HttpMethod.GET, "/api/integration/tally/voucher-queue", PHASE16_VOUCHER_ALLOWED, PHASE16_VOUCHER_FORBIDDEN),
+            // Phase 16: Tally ledger mapping write operations — ADMIN only (INTEGRATION_MANAGE)
+            Probe.withBody(HttpMethod.PUT, "/api/integration/tally/ledger-mappings/" + MISSING, "{}",
+                    PHASE16_INTEG_ALLOWED, PHASE16_INTEG_FORBIDDEN),
+            Probe.of(HttpMethod.DELETE, "/api/integration/tally/ledger-mappings/" + MISSING, PHASE16_INTEG_ALLOWED, PHASE16_INTEG_FORBIDDEN),
+            // Phase 16: Tally voucher queue approve/reject — ADMIN + FINANCE_MANAGER + CONTROLLER (ACCOUNTING_VOUCHER_APPROVE)
+            Probe.of(HttpMethod.POST, "/api/integration/tally/voucher-queue/" + MISSING + "/approve", PHASE16_VOUCHER_ALLOWED, PHASE16_VOUCHER_FORBIDDEN),
+            Probe.of(HttpMethod.POST, "/api/integration/tally/voucher-queue/" + MISSING + "/reject", PHASE16_VOUCHER_ALLOWED, PHASE16_VOUCHER_FORBIDDEN));
 
     /**
      * What a permitted caller gets when it is not a 2xx. Every other permitted probe must answer 2xx. These probes
@@ -762,7 +798,15 @@ class RoleAccessIT extends AbstractIntegrationTest {
             Map.entry("GET /api/production/barcodes/999999", 404),
             // Phase 14: GET by missing id answers 404
             Map.entry("GET /api/production/job-work-orders/999999", 404),
-            Map.entry("GET /api/production/service-orders/999999", 404));
+            Map.entry("GET /api/production/service-orders/999999", 404),
+            // Phase 15: register with unknown code answers 404; saved report with missing id answers 404
+            Map.entry("GET /api/registers/UNKNOWN_CODE", 404),
+            Map.entry("GET /api/report-builder/saved/999999", 404),
+            // Phase 16: Tally ledger mapping and voucher queue by missing id answer 404
+            Map.entry("PUT /api/integration/tally/ledger-mappings/999999", 404),
+            Map.entry("DELETE /api/integration/tally/ledger-mappings/999999", 404),
+            Map.entry("POST /api/integration/tally/voucher-queue/999999/approve", 404),
+            Map.entry("POST /api/integration/tally/voucher-queue/999999/reject", 404));
 
     @Autowired UserAdminService userAdminService;
     @Autowired @Qualifier("requestMappingHandlerMapping") RequestMappingHandlerMapping handlerMapping;

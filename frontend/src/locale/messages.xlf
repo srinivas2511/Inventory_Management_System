@@ -387,11 +387,32 @@
           <context context-type="linenumber">231</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="nav.item-bi-dashboard" datatype="html">
+        <source>Business Intelligence</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/layout/nav.config.ts</context>
+          <context context-type="linenumber">238</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="nav.item-registers" datatype="html">
+        <source>Registers</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/layout/nav.config.ts</context>
+          <context context-type="linenumber">244</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="nav.item-report-builder" datatype="html">
+        <source>Report Builder</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/layout/nav.config.ts</context>
+          <context context-type="linenumber">250</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="nav.item-traceability" datatype="html">
         <source>Traceability</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/core/layout/nav.config.ts</context>
-          <context context-type="linenumber">238</context>
+          <context context-type="linenumber">256</context>
         </context-group>
       </trans-unit>
       <trans-unit id="nav.group-finance" datatype="html">
@@ -910,6 +931,20 @@
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/core/layout/nav.config.ts</context>
           <context context-type="linenumber">505</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="nav.item-integration-call-log" datatype="html">
+        <source>Integration Call Log</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/layout/nav.config.ts</context>
+          <context context-type="linenumber">512</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="nav.item-tally-ledger-mappings" datatype="html">
+        <source>Tally Ledger Mappings</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/layout/nav.config.ts</context>
+          <context context-type="linenumber">519</context>
         </context-group>
       </trans-unit>
       <trans-unit id="nav.item-system-settings" datatype="html">

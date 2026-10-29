@@ -108,6 +108,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (context != null && !context.isEmpty() && path.startsWith(context)) {
             path = path.substring(context.length());
         }
-        return path.startsWith("/api/") && !path.startsWith("/api/auth/") && !path.equals("/api/system/ping");
+        return path.startsWith("/api/") && !path.startsWith("/api/auth/")
+                && !path.equals("/api/system/ping")
+                && !path.equals("/api/system/version")
+                && !path.equals("/api/system/settings/public");
     }
 }
