@@ -90,6 +90,10 @@
         <source>Purchase Returns</source>
         <target>खरीद वापसी</target>
       </trans-unit>
+      <trans-unit id="nav.item-prc-challans" datatype="html">
+        <source>Purchase Return Challans</source>
+        <target>खरीद वापसी चालान</target>
+      </trans-unit>
       <trans-unit id="nav.group-engineering" datatype="html">
         <source>Engineering</source>
         <target>इंजीनियरिंग</target>
@@ -137,6 +141,14 @@
       <trans-unit id="nav.item-service-orders" datatype="html">
         <source>Service Orders</source>
         <target>सेवा ऑर्डर</target>
+      </trans-unit>
+      <trans-unit id="nav.item-plan-board" datatype="html">
+        <source>Plan Board</source>
+        <target>प्लान बोर्ड</target>
+      </trans-unit>
+      <trans-unit id="nav.item-prod-templates" datatype="html">
+        <source>Order Templates</source>
+        <target>ऑर्डर टेम्पलेट</target>
       </trans-unit>
       <trans-unit id="nav.job_work_orders" datatype="html">
         <source>Job Work Orders</source>

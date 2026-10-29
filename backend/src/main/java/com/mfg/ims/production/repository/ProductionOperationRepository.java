@@ -26,6 +26,12 @@ public interface ProductionOperationRepository extends JpaRepository<ProductionO
     @Query("SELECT COALESCE(MAX(o.entryNo), 0) FROM ProductionOutput o WHERE o.productionOperationId = :opId")
     int findMaxEntryNo(@Param("opId") Long opId);
 
+    @Query("SELECT op FROM ProductionOperation op WHERE op.status NOT IN ('COMPLETED','CANCELLED') ORDER BY op.plannedStart ASC NULLS LAST, op.scheduledStart ASC NULLS LAST")
+    List<ProductionOperation> findPlanBoard();
+
+    @Query("SELECT op FROM ProductionOperation op WHERE op.status = 'IN_PROGRESS' ORDER BY op.startedAt ASC")
+    List<ProductionOperation> findShopFloor();
+
     Optional<ProductionOperation> findByProductionOrderIdAndSequenceNo(Long productionOrderId, int sequenceNo);
 
     Optional<ProductionOperation> findFirstByProductionOrderIdAndSequenceNoLessThanOrderBySequenceNoDesc(

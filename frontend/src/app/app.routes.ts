@@ -152,6 +152,15 @@ export const routes: Routes = [
           import('./features/procurement/purchase-return-list.component').then((m) => m.PurchaseReturnListComponent),
       },
       {
+        path: 'procurement/purchase-return-challans',
+        title: 'Purchase Return Challans',
+        canActivate: [permissionGuard('PRC_CHALLAN_VIEW')],
+        loadComponent: () =>
+          import('./features/procurement/purchase-return-challan-list.component').then(
+            (m) => m.PurchaseReturnChallanListComponent,
+          ),
+      },
+      {
         path: 'engineering/bom',
         title: 'Bill of Materials',
         canActivate: [permissionGuard('BOM_VIEW')],
@@ -410,6 +419,21 @@ export const routes: Routes = [
         canActivate: [permissionGuard('SERVICE_ORDER_VIEW')],
         loadComponent: () =>
           import('./features/production/service-order-list.component').then((m) => m.ServiceOrderListComponent),
+      },
+      {
+        path: 'production/plan-board',
+        title: 'Production Plan Board',
+        canActivate: [permissionGuard('PLAN_BOARD_VIEW')],
+        loadComponent: () => import('./features/production/plan-board.component').then((m) => m.PlanBoardComponent),
+      },
+      {
+        path: 'production/templates',
+        title: 'Production Order Templates',
+        canActivate: [permissionGuard('PROD_TEMPLATE_VIEW')],
+        loadComponent: () =>
+          import('./features/production/production-order-templates.component').then(
+            (m) => m.ProductionOrderTemplatesComponent,
+          ),
       },
       {
         path: 'finance/dashboard',

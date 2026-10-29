@@ -221,6 +221,29 @@ class RoleAccessIT extends AbstractIntegrationTest {
                     Set.of("ADMIN", "PRODUCTION_MANAGER", "SUPERVISOR"), Set.of("OPERATOR", "SALES", "QUALITY_MANAGER")),
             Probe.of(HttpMethod.GET, "/api/production/assignable-operators",
                     Set.of("ADMIN", "PRODUCTION_MANAGER", "SUPERVISOR"), Set.of("OPERATOR", "SALES", "QUALITY_MANAGER")),
+            Probe.of(HttpMethod.GET, "/api/production/plan-board",
+                    Set.of("ADMIN", "PRODUCTION_MANAGER", "SUPERVISOR", "MANAGEMENT"),
+                    Set.of("OPERATOR", "SALES", "QUALITY_MANAGER", "PURCHASE_MANAGER")),
+            Probe.of(HttpMethod.GET, "/api/production/shop-floor",
+                    Set.of("ADMIN", "PRODUCTION_MANAGER", "SUPERVISOR", "MANAGEMENT"),
+                    Set.of("OPERATOR", "SALES", "QUALITY_MANAGER", "PURCHASE_MANAGER")),
+            Probe.of(HttpMethod.GET, "/api/production/templates",
+                    Set.of("ADMIN", "PRODUCTION_MANAGER", "SUPERVISOR", "MANAGEMENT"),
+                    Set.of("OPERATOR", "SALES", "QUALITY_MANAGER", "PURCHASE_MANAGER")),
+            Probe.of(HttpMethod.GET, "/api/production/templates/" + MISSING,
+                    Set.of("ADMIN", "PRODUCTION_MANAGER", "SUPERVISOR", "MANAGEMENT"),
+                    Set.of("OPERATOR", "SALES", "QUALITY_MANAGER", "PURCHASE_MANAGER")),
+            Probe.withBody(HttpMethod.POST, "/api/production/templates",
+                    "{\"code\":\"T001\",\"name\":\"Template 1\",\"productId\":1}",
+                    Set.of("ADMIN", "PRODUCTION_MANAGER", "SUPERVISOR"),
+                    Set.of("OPERATOR", "MANAGEMENT", "SALES", "QUALITY_MANAGER")),
+            Probe.withBody(HttpMethod.PUT, "/api/production/templates/" + MISSING,
+                    "{\"code\":\"T001\",\"name\":\"Template 1\",\"productId\":1}",
+                    Set.of("ADMIN", "PRODUCTION_MANAGER", "SUPERVISOR"),
+                    Set.of("OPERATOR", "MANAGEMENT", "SALES", "QUALITY_MANAGER")),
+            Probe.of(HttpMethod.DELETE, "/api/production/templates/" + MISSING,
+                    Set.of("ADMIN", "PRODUCTION_MANAGER", "SUPERVISOR"),
+                    Set.of("OPERATOR", "MANAGEMENT", "SALES", "QUALITY_MANAGER")),
             // the issue dialog's batch picker needs INVENTORY_ISSUE (store staff), not the production permissions
             Probe.of(HttpMethod.GET, "/api/lookups/material-stock?materialId=" + MISSING + "&warehouseId=" + MISSING,
                     Set.of("ADMIN", "STORE_MANAGER"), Set.of("OPERATOR", "PRODUCTION_MANAGER", "SALES")),
@@ -627,6 +650,20 @@ class RoleAccessIT extends AbstractIntegrationTest {
             Probe.of(HttpMethod.GET, "/api/purchase-invoices", PHASE10_PURCHASE_ALLOWED, PHASE10_PURCHASE_FORBIDDEN),
             // Phase 10: Purchase returns — ADMIN + PURCHASE_MANAGER (PURCHASE_RETURN_VIEW)
             Probe.of(HttpMethod.GET, "/api/purchase-returns", PHASE10_PURCHASE_ALLOWED, PHASE10_PURCHASE_FORBIDDEN),
+            // Item 4: Purchase-return challans — ADMIN + PURCHASE_MANAGER + STORE_MANAGER (PRC_CHALLAN_VIEW)
+            Probe.of(HttpMethod.GET, "/api/procurement/purchase-return-challans",
+                    Set.of("ADMIN", "PURCHASE_MANAGER", "STORE_MANAGER", "MANAGEMENT", "ACCOUNTANT", "FINANCE_MANAGER"),
+                    Set.of("OPERATOR", "SALES", "QUALITY_MANAGER", "ENGINEER")),
+            Probe.of(HttpMethod.GET, "/api/procurement/purchase-return-challans/" + MISSING,
+                    Set.of("ADMIN", "PURCHASE_MANAGER", "STORE_MANAGER", "MANAGEMENT", "ACCOUNTANT", "FINANCE_MANAGER"),
+                    Set.of("OPERATOR", "SALES", "QUALITY_MANAGER", "ENGINEER")),
+            Probe.withBody(HttpMethod.POST, "/api/procurement/purchase-return-challans",
+                    "{\"supplierId\":1,\"items\":[{\"materialId\":1,\"qty\":1}]}",
+                    Set.of("ADMIN", "PURCHASE_MANAGER", "STORE_MANAGER"),
+                    Set.of("OPERATOR", "MANAGEMENT", "SALES", "QUALITY_MANAGER")),
+            Probe.of(HttpMethod.POST, "/api/procurement/purchase-return-challans/" + MISSING + "/dispatch",
+                    Set.of("ADMIN", "PURCHASE_MANAGER", "STORE_MANAGER"),
+                    Set.of("OPERATOR", "MANAGEMENT", "SALES", "QUALITY_MANAGER", "FINANCE_MANAGER", "ACCOUNTANT", "ENGINEER")),
             // Phase 10: Supplier quotes — ADMIN + PURCHASE_MANAGER (RFQ_VIEW)
             Probe.of(HttpMethod.GET, "/api/supplier-quotes", PHASE10_PURCHASE_ALLOWED, PHASE10_PURCHASE_FORBIDDEN),
             // Phase 11: Quotations — ADMIN + SALES_MANAGER (QUOTATION_VIEW)
@@ -806,7 +843,14 @@ class RoleAccessIT extends AbstractIntegrationTest {
             Map.entry("PUT /api/integration/tally/ledger-mappings/999999", 404),
             Map.entry("DELETE /api/integration/tally/ledger-mappings/999999", 404),
             Map.entry("POST /api/integration/tally/voucher-queue/999999/approve", 404),
-            Map.entry("POST /api/integration/tally/voucher-queue/999999/reject", 404));
+            Map.entry("POST /api/integration/tally/voucher-queue/999999/reject", 404),
+            // Item 3: production template update/deactivate by missing id answers 404
+            Map.entry("GET /api/production/templates/999999", 404),
+            Map.entry("PUT /api/production/templates/999999", 404),
+            Map.entry("DELETE /api/production/templates/999999", 404),
+            // Item 4: purchase-return challan endpoints with missing id answer 404
+            Map.entry("GET /api/procurement/purchase-return-challans/999999", 404),
+            Map.entry("POST /api/procurement/purchase-return-challans/999999/dispatch", 404));
 
     @Autowired UserAdminService userAdminService;
     @Autowired @Qualifier("requestMappingHandlerMapping") RequestMappingHandlerMapping handlerMapping;

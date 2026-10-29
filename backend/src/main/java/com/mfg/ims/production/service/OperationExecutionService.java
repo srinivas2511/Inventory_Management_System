@@ -276,6 +276,16 @@ public class OperationExecutionService {
         return opRepo.findMyWork(operatorId).stream().map(this::toDto).toList();
     }
 
+    @Transactional(readOnly = true)
+    public List<ProductionOperationDto> getPlanBoard() {
+        return opRepo.findPlanBoard().stream().map(this::toDto).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<ProductionOperationDto> getShopFloor() {
+        return opRepo.findShopFloor().stream().map(this::toDto).toList();
+    }
+
     // ── helpers ───────────────────────────────────────────────────────────────
 
     private void checkAndCompleteOrder(Long orderId, ProductionOperation lastOp) {
@@ -383,7 +393,8 @@ public class OperationExecutionService {
                 owner != null ? owner.getOrderNumber() : null,
                 owner != null ? owner.getProductId() : null,
                 !opRepo.existsByProductionOrderIdAndSequenceNoGreaterThan(op.getProductionOrderId(), op.getSequenceNo()),
-                opRepo.startBlockedReason(op));
+                opRepo.startBlockedReason(op),
+                op.getPlannedStart(), op.getPlannedEnd());
     }
 
     private Long currentUserId() {

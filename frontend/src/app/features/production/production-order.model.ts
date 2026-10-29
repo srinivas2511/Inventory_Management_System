@@ -33,6 +33,34 @@ export interface ProductionOperationDto {
   scrapQty: number;
   finalOperation: boolean;
   startBlockedReason?: string | null;
+  productionOrderId?: number | null;
+  productionOrderNumber?: string | null;
+  plannedStart?: string | null;
+  plannedEnd?: string | null;
+}
+
+/** Mirrors ProductionOrderTemplateDto on the backend. */
+export interface ProductionOrderTemplateDto {
+  id: number;
+  code: string;
+  name: string;
+  productId: number;
+  bomId: number | null;
+  plannedQty: number;
+  leadTimeDays: number;
+  notes: string | null;
+  active: boolean;
+}
+
+/** Mirrors SaveTemplateRequest on the backend. */
+export interface SaveTemplateRequest {
+  code: string;
+  name: string;
+  productId: number;
+  bomId: number | null;
+  plannedQty: number | null;
+  leadTimeDays: number | null;
+  notes: string | null;
 }
 
 /** Mirrors ProductionOrderDto on the backend. */
