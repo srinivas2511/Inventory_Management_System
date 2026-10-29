@@ -130,6 +130,22 @@
         <source>Cost Roll-up</source>
         <target>ವೆಚ್ಚ ರೋಲಪ್</target>
       </trans-unit>
+      <trans-unit id="nav.item-job-work-orders" datatype="html">
+        <source>Job Work Orders</source>
+        <target>ಜಾಬ್ ವರ್ಕ್ ಆರ್ಡರ್‌ಗಳು</target>
+      </trans-unit>
+      <trans-unit id="nav.item-service-orders" datatype="html">
+        <source>Service Orders</source>
+        <target>ಸೇವಾ ಆರ್ಡರ್‌ಗಳು</target>
+      </trans-unit>
+      <trans-unit id="nav.job_work_orders" datatype="html">
+        <source>Job Work Orders</source>
+        <target>ಜಾಬ್ ವರ್ಕ್ ಆರ್ಡರ್‌ಗಳು</target>
+      </trans-unit>
+      <trans-unit id="nav.service_orders" datatype="html">
+        <source>Service Orders</source>
+        <target>ಸೇವಾ ಆರ್ಡರ್‌ಗಳು</target>
+      </trans-unit>
       <trans-unit id="nav.group-quality" datatype="html">
         <source>Quality</source>
         <target>ಗುಣಮಟ್ಟ</target>

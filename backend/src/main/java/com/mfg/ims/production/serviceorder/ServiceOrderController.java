@@ -1,0 +1,47 @@
+package com.mfg.ims.production.serviceorder;
+
+import com.mfg.ims.auth.service.UserPermissionCache.CachedUser;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/production/service-orders")
+public class ServiceOrderController {
+
+    private final ServiceOrderService service;
+
+    public ServiceOrderController(ServiceOrderService service) {
+        this.service = service;
+    }
+
+    @GetMapping
+    @PreAuthorize("hasAuthority('SERVICE_ORDER_VIEW')")
+    public List<ServiceOrderDto> list() {
+        return service.list();
+    }
+
+    @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('SERVICE_ORDER_VIEW')")
+    public ServiceOrderDto get(@PathVariable Long id) {
+        return service.get(id);
+    }
+
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAuthority('SERVICE_ORDER_CREATE')")
+    public ServiceOrderDto create(@RequestBody CreateServiceOrderRequest req,
+                                   @AuthenticationPrincipal CachedUser actor) {
+        return service.create(req, actor.id());
+    }
+
+    @PostMapping("/{id}/complete")
+    @PreAuthorize("hasAuthority('SERVICE_ORDER_CREATE')")
+    public ServiceOrderDto complete(@PathVariable Long id,
+                                     @AuthenticationPrincipal CachedUser actor) {
+        return service.complete(id, actor.id());
+    }
+}

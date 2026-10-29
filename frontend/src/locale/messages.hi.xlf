@@ -130,6 +130,22 @@
         <source>Cost Roll-up</source>
         <target>लागत रोलअप</target>
       </trans-unit>
+      <trans-unit id="nav.item-job-work-orders" datatype="html">
+        <source>Job Work Orders</source>
+        <target>जॉब वर्क ऑर्डर</target>
+      </trans-unit>
+      <trans-unit id="nav.item-service-orders" datatype="html">
+        <source>Service Orders</source>
+        <target>सेवा ऑर्डर</target>
+      </trans-unit>
+      <trans-unit id="nav.job_work_orders" datatype="html">
+        <source>Job Work Orders</source>
+        <target>जॉब वर्क ऑर्डर</target>
+      </trans-unit>
+      <trans-unit id="nav.service_orders" datatype="html">
+        <source>Service Orders</source>
+        <target>सेवा ऑर्डर</target>
+      </trans-unit>
       <trans-unit id="nav.group-quality" datatype="html">
         <source>Quality</source>
         <target>गुणवत्ता</target>

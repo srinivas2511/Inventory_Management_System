@@ -384,6 +384,20 @@ export const routes: Routes = [
         loadComponent: () => import('./features/production/cost-rollup.component').then((m) => m.CostRollupComponent),
       },
       {
+        path: 'production/job-work-orders',
+        title: 'Job Work Orders',
+        canActivate: [permissionGuard('JWO_VIEW')],
+        loadComponent: () =>
+          import('./features/production/job-work-order-list.component').then((m) => m.JobWorkOrderListComponent),
+      },
+      {
+        path: 'production/service-orders',
+        title: 'Service Orders',
+        canActivate: [permissionGuard('SERVICE_ORDER_VIEW')],
+        loadComponent: () =>
+          import('./features/production/service-order-list.component').then((m) => m.ServiceOrderListComponent),
+      },
+      {
         path: 'finance/dashboard',
         title: 'Finance Dashboard',
         canActivate: [permissionGuard('FINANCE_REPORT')],

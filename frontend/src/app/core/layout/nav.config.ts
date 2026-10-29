@@ -228,6 +228,20 @@ export const NAV_GROUPS: NavGroup[] = [
         permission: 'COST_ROLLUP_VIEW',
         enabled: true,
       },
+      {
+        label: $localize`:@@nav.item-job-work-orders:Job Work Orders`,
+        icon: 'build',
+        route: '/production/job-work-orders',
+        permission: 'JWO_VIEW',
+        enabled: true,
+      },
+      {
+        label: $localize`:@@nav.item-service-orders:Service Orders`,
+        icon: 'handyman',
+        route: '/production/service-orders',
+        permission: 'SERVICE_ORDER_VIEW',
+        enabled: true,
+      },
     ],
   },
   {
