@@ -83,6 +83,27 @@ class Phase15BiReportsIT extends AbstractIntegrationTest {
     }
 
     @Test
+    void p15_6_additional_registers_present() {
+        var codes = registerService.listCodes();
+        assertThat(codes).contains(
+                "REG_QUOTATION", "REG_PO_ITEMS", "REG_SO_ITEMS",
+                "REG_INVOICE_ITEMS", "REG_ADJUSTMENT_NOTES",
+                "REG_LAST_PRICE", "REG_PRODUCTION_SUMMARY", "REG_PO_BALANCE");
+    }
+
+    @Test
+    void p15_7_additional_registers_return_rows() {
+        for (var code : List.of("REG_QUOTATION", "REG_PO_ITEMS", "REG_SO_ITEMS",
+                "REG_INVOICE_ITEMS", "REG_ADJUSTMENT_NOTES",
+                "REG_LAST_PRICE", "REG_PRODUCTION_SUMMARY", "REG_PO_BALANCE")) {
+            var reg = registerService.get(code);
+            assertThat(reg.code()).isEqualTo(code);
+            assertThat(reg.name()).isNotBlank();
+            assertThat(reg.rows()).isNotNull();
+        }
+    }
+
+    @Test
     void p15_5_save_and_list_report() {
         var req = new CreateSavedReportRequest("Test Sales Report", "bi_sales",
                 Map.of("fields", List.of("doc_no", "grand_total")), "PRIVATE");
