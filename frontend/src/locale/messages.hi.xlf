@@ -146,6 +146,10 @@
         <source>Plan Board</source>
         <target>प्लान बोर्ड</target>
       </trans-unit>
+      <trans-unit id="nav.item-capacity-board" datatype="html">
+        <source>Capacity Board</source>
+        <target>क्षमता बोर्ड</target>
+      </trans-unit>
       <trans-unit id="nav.item-prod-templates" datatype="html">
         <source>Order Templates</source>
         <target>ऑर्डर टेम्पलेट</target>
@@ -305,6 +309,14 @@
       <trans-unit id="nav.item-fx-revaluation" datatype="html">
         <source>FX Revaluation</source>
         <target>विदेशी मुद्रा पुनर्मूल्यांकन</target>
+      </trans-unit>
+      <trans-unit id="nav.item-gst-filing" datatype="html">
+        <source>GST Filing</source>
+        <target>जीएसटी दाखिल करना</target>
+      </trans-unit>
+      <trans-unit id="nav.item-consolidation" datatype="html">
+        <source>Consolidation</source>
+        <target>समेकन</target>
       </trans-unit>
       <trans-unit id="nav.item-financial-statements" datatype="html">
         <source>Financial Statements</source>
@@ -641,6 +653,26 @@
       <trans-unit id="login.signIn" datatype="html">
         <source>Sign in</source>
         <target>साइन इन</target>
+      </trans-unit>
+      <trans-unit id="nav.item-shipment-tracking" datatype="html">
+        <source>Shipment Tracking</source>
+        <target>शिपमेंट ट्रैकिंग</target>
+      </trans-unit>
+      <trans-unit id="nav.item-busy-export" datatype="html">
+        <source>Busy Export</source>
+        <target>बिज़ी एक्सपोर्ट</target>
+      </trans-unit>
+      <trans-unit id="nav.item-scrap-lots" datatype="html">
+        <source>Scrap Lots</source>
+        <target>स्क्रैप लॉट</target>
+      </trans-unit>
+      <trans-unit id="nav.item-onboarding" datatype="html">
+        <source>Setup Wizard</source>
+        <target>सेटअप विज़ार्ड</target>
+      </trans-unit>
+      <trans-unit id="nav.item-all-documents" datatype="html">
+        <source>All Documents</source>
+        <target>सभी दस्तावेज़</target>
       </trans-unit>
     </body>
   </file>

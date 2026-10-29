@@ -254,6 +254,13 @@
           <context context-type="linenumber">193</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="nav.item-capacity-board" datatype="html">
+        <source>Capacity Board</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/layout/nav.config.ts</context>
+          <context context-type="linenumber">200</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="nav.item-prod-templates" datatype="html">
         <source>Order Templates</source>
         <context-group purpose="location">
@@ -534,11 +541,25 @@
           <context context-type="linenumber">316</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="nav.item-gst-filing" datatype="html">
+        <source>GST Filing</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/layout/nav.config.ts</context>
+          <context context-type="linenumber">320</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="nav.item-consolidation" datatype="html">
+        <source>Consolidation</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/layout/nav.config.ts</context>
+          <context context-type="linenumber">326</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="nav.item-financial-statements" datatype="html">
         <source>Financial Statements</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/core/layout/nav.config.ts</context>
-          <context context-type="linenumber">325</context>
+          <context context-type="linenumber">332</context>
         </context-group>
       </trans-unit>
       <trans-unit id="nav.item-sales-invoices" datatype="html">
@@ -1120,6 +1141,41 @@
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/auth/login.component.ts</context>
           <context context-type="linenumber">83,85</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="nav.item-shipment-tracking" datatype="html">
+        <source>Shipment Tracking</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/layout/nav.config.ts</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="nav.item-busy-export" datatype="html">
+        <source>Busy Export</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/layout/nav.config.ts</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="nav.item-scrap-lots" datatype="html">
+        <source>Scrap Lots</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/layout/nav.config.ts</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="nav.item-onboarding" datatype="html">
+        <source>Setup Wizard</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/layout/nav.config.ts</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="nav.item-all-documents" datatype="html">
+        <source>All Documents</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/layout/nav.config.ts</context>
+          <context context-type="linenumber">1</context>
         </context-group>
       </trans-unit>
     </body>

@@ -84,6 +84,18 @@ export interface SalesInvoiceItemDto {
           <th mat-header-cell *matHeaderCellDef>Balance (INR)</th>
           <td mat-cell *matCellDef="let row">{{ row.balanceInr | number: '1.2-2' }}</td>
         </ng-container>
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef></th>
+          <td mat-cell *matCellDef="let row">
+            <a
+              mat-icon-button
+              [href]="'/api/finance/sales-invoices/' + row.id + '/pdf'"
+              target="_blank"
+              aria-label="Download PDF"
+              ><mat-icon aria-hidden="true">picture_as_pdf</mat-icon></a
+            >
+          </td>
+        </ng-container>
         <tr mat-header-row *matHeaderRowDef="columns"></tr>
         <tr mat-row *matRowDef="let row; columns: columns"></tr>
       </table>
@@ -94,7 +106,7 @@ export class SalesInvoiceListComponent implements OnInit {
   private http = inject(HttpClient);
   private snackBar = inject(MatSnackBar);
 
-  columns = ['docNo', 'docDate', 'status', 'invoiceKind', 'currency', 'grandTotal', 'balanceInr'];
+  columns = ['docNo', 'docDate', 'status', 'invoiceKind', 'currency', 'grandTotal', 'balanceInr', 'actions'];
   invoices = signal<SalesInvoiceDto[]>([]);
   loading = signal(true);
 

@@ -35,6 +35,8 @@ import com.mfg.ims.integration.importer.ImportDtos.ImportResult;
 import com.mfg.ims.integration.importer.ImportDtos.RowResult;
 import com.mfg.ims.integration.importer.RowReader.SourceRow;
 import com.mfg.ims.integration.importer.RowReader.Table;
+import com.mfg.ims.inventory.dto.OpeningBalanceLine;
+import com.mfg.ims.inventory.dto.OpeningStockPostingPort;
 import com.mfg.ims.material.dto.SaveMaterialRequest;
 import com.mfg.ims.material.repository.MaterialRepository;
 import com.mfg.ims.material.service.MaterialService;
@@ -47,6 +49,8 @@ import com.mfg.ims.partner.service.SupplierService;
 import com.mfg.ims.product.dto.SaveProductRequest;
 import com.mfg.ims.product.repository.ProductRepository;
 import com.mfg.ims.product.service.ProductService;
+import com.mfg.ims.warehouse.repository.WarehouseLocationRepository;
+import com.mfg.ims.warehouse.repository.WarehouseRepository;
 
 /**
  * Bulk import of master data from CSV or XLSX (INT-003). Rows go through the same services, validation and audit as
@@ -67,6 +71,19 @@ public class BulkImportService {
                           Consumer<Object> create, Map<String, String> codeColumns, List<String> example) {
     }
 
+    /** Flat import row for opening-stock; codes are resolved to IDs in the create consumer. */
+    public record OpeningStockRow(
+            @jakarta.validation.constraints.NotBlank String itemType,
+            String itemCode,
+            @jakarta.validation.constraints.NotBlank String warehouseCode,
+            @jakarta.validation.constraints.NotBlank String locationCode,
+            @jakarta.validation.constraints.NotBlank String stockStatus,
+            @jakarta.validation.constraints.NotNull @jakarta.validation.constraints.Positive java.math.BigDecimal quantity,
+            @jakarta.validation.constraints.NotBlank String uom,
+            java.math.BigDecimal unitCost,
+            String remarks) {
+    }
+
     private final Map<String, Target> targets = new LinkedHashMap<>();
     private final Validator validator;
     private final ObjectMapper mapper;
@@ -76,13 +93,19 @@ public class BulkImportService {
     private final MaterialRepository materials;
     private final SupplierRepository suppliers;
     private final CustomerRepository customers;
+    private final ProductRepository products;
+    private final WarehouseRepository warehouses;
+    private final WarehouseLocationRepository locations;
+    private final OpeningStockPostingPort openingStockPort;
 
     public BulkImportService(Validator validator, ObjectMapper mapper, SystemSettingService settings,
                              AuditService audit, PlatformTransactionManager transactionManager,
                              MaterialService materialService, SupplierService supplierService,
                              CustomerService customerService, ProductService productService,
                              MaterialRepository materials, SupplierRepository suppliers,
-                             CustomerRepository customers, ProductRepository products) {
+                             CustomerRepository customers, ProductRepository products,
+                             WarehouseRepository warehouses, WarehouseLocationRepository locations,
+                             OpeningStockPostingPort openingStockPort) {
         this.validator = validator;
         this.mapper = mapper;
         this.settings = settings;
@@ -90,6 +113,10 @@ public class BulkImportService {
         this.materials = materials;
         this.suppliers = suppliers;
         this.customers = customers;
+        this.products = products;
+        this.warehouses = warehouses;
+        this.locations = locations;
+        this.openingStockPort = openingStockPort;
         this.perRow = new TransactionTemplate(transactionManager);
         this.perRow.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
 
@@ -116,6 +143,34 @@ public class BulkImportService {
                 r -> supplierService.create((SaveSupplierRequest) r), Map.of(),
                 List.of("supplierCode", "name", "contactPerson", "phone", "email", "address", "gstNumber",
                         "paymentTerms", "leadTimeDays")));
+        targets.put("opening-stock", new Target("opening-stock", OpeningStockRow.class,
+                r -> {
+                    OpeningStockRow row = (OpeningStockRow) r;
+                    return row.warehouseCode() + "/" + row.locationCode() + "/" + (row.itemCode() != null ? row.itemCode() : "?");
+                },
+                code -> false, // allow re-import; opening balance service is idempotent per location
+                r -> {
+                    OpeningStockRow row = (OpeningStockRow) r;
+                    Long materialId = null, productId = null;
+                    if ("MATERIAL".equalsIgnoreCase(row.itemType())) {
+                        materialId = materials.findByMaterialCode(row.itemCode())
+                                .orElseThrow(() -> unknownCode("material", row.itemCode())).getId();
+                    } else {
+                        productId = products.findByProductCode(row.itemCode())
+                                .orElseThrow(() -> unknownCode("product", row.itemCode())).getId();
+                    }
+                    Long warehouseId = warehouses.findByWarehouseCode(row.warehouseCode())
+                            .orElseThrow(() -> unknownCode("warehouse", row.warehouseCode())).getId();
+                    Long locationId = locations.findByWarehouseIdAndLocationCode(warehouseId, row.locationCode())
+                            .orElseThrow(() -> unknownCode("location", row.locationCode())).getId();
+                    openingStockPort.post(List.of(new OpeningBalanceLine(
+                            row.itemType().toUpperCase(Locale.ROOT), materialId, productId, null,
+                            warehouseId, locationId, row.stockStatus().toUpperCase(Locale.ROOT),
+                            row.quantity(), row.uom(), row.unitCost(), row.remarks())));
+                },
+                Map.of(),
+                List.of("itemType", "itemCode", "warehouseCode", "locationCode", "stockStatus",
+                        "quantity", "uom", "unitCost", "remarks")));
     }
 
     public List<String> entities() {

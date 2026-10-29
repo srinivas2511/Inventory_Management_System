@@ -2,7 +2,10 @@ package com.mfg.ims.finance.invoice;
 
 import com.mfg.ims.auth.service.UserPermissionCache.CachedUser;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -15,9 +18,11 @@ import java.util.Map;
 public class SalesInvoiceController {
 
     private final SalesInvoiceService service;
+    private final SalesInvoiceRenderer renderer;
 
-    public SalesInvoiceController(SalesInvoiceService service) {
+    public SalesInvoiceController(SalesInvoiceService service, SalesInvoiceRenderer renderer) {
         this.service = service;
+        this.renderer = renderer;
     }
 
     @GetMapping
@@ -54,5 +59,17 @@ public class SalesInvoiceController {
                                   @AuthenticationPrincipal CachedUser actor) {
         String reason = body != null ? body.get("reason") : null;
         return service.cancel(id, reason, actor.id());
+    }
+
+    @GetMapping(value = "/{id}/pdf", produces = "application/pdf")
+    @PreAuthorize("hasAuthority('SALES_INVOICE_VIEW')")
+    public ResponseEntity<byte[]> pdf(@PathVariable Long id) {
+        SalesInvoiceDto inv = service.get(id);
+        byte[] bytes = renderer.render(inv);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "inline; filename=\"invoice-" + inv.docNo() + ".pdf\"")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(bytes);
     }
 }

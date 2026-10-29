@@ -130,10 +130,22 @@ class RoleAccessIT extends AbstractIntegrationTest {
     private static final Set<String> PHASE15_BI_ALLOWED = Set.of("ADMIN", "FINANCE_MANAGER", "MANAGEMENT", "CONTROLLER");
     private static final Set<String> PHASE15_BI_FORBIDDEN = Set.of("OPERATOR", "SALES", "DISPATCH",
             "ENGINEER", "PURCHASE_MANAGER", "SALES_MANAGER", "STORE_MANAGER", "PRODUCTION_MANAGER");
+    // REPORT_VIEW is broadly granted from V1 onward to many roles
+    private static final Set<String> REPORT_VIEW_WIDE_ALLOWED = Set.of("ADMIN", "FINANCE_MANAGER", "MANAGEMENT",
+            "CONTROLLER", "PRODUCTION_MANAGER", "STORE_MANAGER", "PURCHASE_MANAGER", "SALES", "SALES_MANAGER");
+    private static final Set<String> REPORT_VIEW_WIDE_FORBIDDEN = Set.of("OPERATOR", "DISPATCH", "ENGINEER");
     // Phase 16: Integration management — ADMIN only (INTEGRATION_MANAGE)
     private static final Set<String> PHASE16_INTEG_ALLOWED = Set.of("ADMIN");
     private static final Set<String> PHASE16_INTEG_FORBIDDEN = Set.of("OPERATOR", "SALES", "DISPATCH",
             "ENGINEER", "FINANCE_MANAGER", "PURCHASE_MANAGER", "SALES_MANAGER", "STORE_MANAGER", "PRODUCTION_MANAGER");
+    // V84: Shipment tracking — ADMIN + SALES_MANAGER + STORE_MANAGER (SHIPMENT_TRACK_VIEW/MANAGE)
+    private static final Set<String> PHASE16_SHIP_TRACK_ALLOWED = Set.of("ADMIN", "SALES_MANAGER", "STORE_MANAGER");
+    private static final Set<String> PHASE16_SHIP_TRACK_FORBIDDEN = Set.of("OPERATOR", "SALES", "DISPATCH",
+            "ENGINEER", "FINANCE_MANAGER", "PURCHASE_MANAGER", "PRODUCTION_MANAGER");
+    // V84: Busy accounting export — ADMIN + FINANCE_MANAGER (BUSY_EXPORT_VIEW/RUN)
+    private static final Set<String> PHASE16_BUSY_ALLOWED = Set.of("ADMIN", "FINANCE_MANAGER");
+    private static final Set<String> PHASE16_BUSY_FORBIDDEN = Set.of("OPERATOR", "SALES", "DISPATCH",
+            "ENGINEER", "PURCHASE_MANAGER", "SALES_MANAGER", "STORE_MANAGER", "PRODUCTION_MANAGER");
     // Phase 16: Accounting vouchers — ADMIN + FINANCE_MANAGER + CONTROLLER (ACCOUNTING_VOUCHER_VIEW/APPROVE)
     private static final Set<String> PHASE16_VOUCHER_ALLOWED = Set.of("ADMIN", "FINANCE_MANAGER", "CONTROLLER");
     private static final Set<String> PHASE16_VOUCHER_FORBIDDEN = Set.of("OPERATOR", "SALES", "DISPATCH",
@@ -417,6 +429,9 @@ class RoleAccessIT extends AbstractIntegrationTest {
                     Set.of("ADMIN", "DISPATCH"), Set.of("OPERATOR")),
             Probe.of(HttpMethod.GET, "/api/sales/dispatches/" + MISSING + "/packing-list.pdf",
                     Set.of("ADMIN", "DISPATCH"), Set.of("OPERATOR")),
+            // V80: Purchase order PDF — PURCHASE_VIEW/CREATE/APPROVE
+            Probe.of(HttpMethod.GET, "/api/procurement/purchase-orders/" + MISSING + "/pdf",
+                    Set.of("ADMIN", "PURCHASE_MANAGER"), Set.of("OPERATOR", "SALES")),
             // GC-3: per-item negative-stock override (administrator only)
             Probe.of(HttpMethod.GET, "/api/inventory/negative-stock-overrides", Set.of("ADMIN"),
                     Set.of("STORE_MANAGER", "MANAGEMENT")),
@@ -678,9 +693,17 @@ class RoleAccessIT extends AbstractIntegrationTest {
             // Phase 12: Sales invoices — ADMIN + FINANCE_MANAGER (SALES_INVOICE_VIEW)
             Probe.of(HttpMethod.GET, "/api/finance/sales-invoices", PHASE12_FINANCE_ALLOWED, PHASE12_FINANCE_FORBIDDEN),
             Probe.of(HttpMethod.GET, "/api/finance/sales-invoices/" + MISSING, PHASE12_FINANCE_ALLOWED, PHASE12_FINANCE_FORBIDDEN),
+            // V80: Sales invoice PDF — SALES_INVOICE_VIEW
+            Probe.of(HttpMethod.GET, "/api/finance/sales-invoices/" + MISSING + "/pdf", PHASE12_FINANCE_ALLOWED, PHASE12_FINANCE_FORBIDDEN),
             // Phase 12: Payments — ADMIN + FINANCE_MANAGER (PAYMENT_VIEW)
             Probe.of(HttpMethod.GET, "/api/finance/payments", PHASE12_FINANCE_ALLOWED, PHASE12_FINANCE_FORBIDDEN),
             Probe.of(HttpMethod.GET, "/api/finance/payments/" + MISSING, PHASE12_FINANCE_ALLOWED, PHASE12_FINANCE_FORBIDDEN),
+            // V79: Razorpay — ADMIN + FINANCE_MANAGER + ACCOUNTANT (PAYMENT_GATEWAY_USE)
+            Probe.withBody(HttpMethod.POST, "/api/finance/payments/razorpay/create-order",
+                    "{\"arInvoiceId\":999999}", PHASE12_FINANCE_ALLOWED, PHASE12_FINANCE_FORBIDDEN),
+            Probe.withBody(HttpMethod.POST, "/api/finance/payments/razorpay/verify-signature",
+                    "{\"dbId\":1,\"razorpayOrderId\":\"x\",\"razorpayPaymentId\":\"y\",\"razorpaySignature\":\"z\"}",
+                    PHASE12_FINANCE_ALLOWED, PHASE12_FINANCE_FORBIDDEN),
             // Phase 12: Open items / ageing — ADMIN + FINANCE_MANAGER (OPEN_ITEM_VIEW)
             Probe.of(HttpMethod.GET, "/api/finance/open-items", PHASE12_FINANCE_ALLOWED, PHASE12_FINANCE_FORBIDDEN),
             // Phase 13: Barcodes — ADMIN + PRODUCTION_MANAGER + STORE_MANAGER (BARCODE_VIEW)
@@ -717,7 +740,52 @@ class RoleAccessIT extends AbstractIntegrationTest {
             Probe.of(HttpMethod.DELETE, "/api/integration/tally/ledger-mappings/" + MISSING, PHASE16_INTEG_ALLOWED, PHASE16_INTEG_FORBIDDEN),
             // Phase 16: Tally voucher queue approve/reject — ADMIN + FINANCE_MANAGER + CONTROLLER (ACCOUNTING_VOUCHER_APPROVE)
             Probe.of(HttpMethod.POST, "/api/integration/tally/voucher-queue/" + MISSING + "/approve", PHASE16_VOUCHER_ALLOWED, PHASE16_VOUCHER_FORBIDDEN),
-            Probe.of(HttpMethod.POST, "/api/integration/tally/voucher-queue/" + MISSING + "/reject", PHASE16_VOUCHER_ALLOWED, PHASE16_VOUCHER_FORBIDDEN));
+            Probe.of(HttpMethod.POST, "/api/integration/tally/voucher-queue/" + MISSING + "/reject", PHASE16_VOUCHER_ALLOWED, PHASE16_VOUCHER_FORBIDDEN),
+            // V78: GST filing reports — ADMIN + FINANCE_MANAGER (GST_REPORT_VIEW)
+            Probe.of(HttpMethod.GET, "/api/finance/gst/gstr1?from=2026-04-01&to=2026-04-30", PHASE12_FINANCE_ALLOWED, PHASE12_FINANCE_FORBIDDEN),
+            Probe.of(HttpMethod.GET, "/api/finance/gst/gstr3b?from=2026-04-01&to=2026-04-30", PHASE12_FINANCE_ALLOWED, PHASE12_FINANCE_FORBIDDEN),
+            Probe.of(HttpMethod.GET, "/api/finance/gst/filing-history", PHASE12_FINANCE_ALLOWED, PHASE12_FINANCE_FORBIDDEN),
+            Probe.withBody(HttpMethod.POST, "/api/finance/gst/eway-bill", "{\"salesInvoiceId\":999999}", PHASE12_FINANCE_ALLOWED, PHASE12_FINANCE_FORBIDDEN),
+            Probe.of(HttpMethod.POST, "/api/finance/gst/gstr1/file?from=2026-04-01&to=2026-04-30", PHASE12_FINANCE_ALLOWED, PHASE12_FINANCE_FORBIDDEN),
+            Probe.of(HttpMethod.POST, "/api/finance/gst/gstr3b/file?from=2026-04-01&to=2026-04-30", PHASE12_FINANCE_ALLOWED, PHASE12_FINANCE_FORBIDDEN),
+            // V85: Finite-capacity scheduling — ADMIN + PRODUCTION_MANAGER (CAPACITY_VIEW / CAPACITY_MANAGE)
+            Probe.of(HttpMethod.GET, "/api/production/capacity-board?from=2026-11-01&to=2026-11-30", PHASE14_JWO_ALLOWED, PHASE14_JWO_FORBIDDEN),
+            Probe.withBody(HttpMethod.POST, "/api/production/schedule-operation",
+                    "{\"productionOperationId\":999999,\"machineId\":1,\"targetDate\":\"2026-11-01\",\"plannedHours\":8}",
+                    PHASE14_JWO_ALLOWED, PHASE14_JWO_FORBIDDEN),
+            // V86: Multi-company consolidation — ADMIN + FINANCE_MANAGER (CONSOLIDATION_VIEW / CONSOLIDATION_MANAGE)
+            Probe.of(HttpMethod.GET, "/api/finance/consolidation/report?from=2026-04-01&to=2026-04-30", PHASE12_FINANCE_ALLOWED, PHASE12_FINANCE_FORBIDDEN),
+            Probe.withBody(HttpMethod.POST, "/api/finance/consolidation/eliminations",
+                    "{\"periodId\":999999,\"description\":\"test\",\"amount\":100,\"debitAccountCode\":\"5001\",\"creditAccountCode\":\"4001\"}",
+                    PHASE12_FINANCE_ALLOWED, PHASE12_FINANCE_FORBIDDEN),
+            // V83: Scrap lots — ADMIN + STORE_MANAGER (SCRAP_VIEW / SCRAP_MANAGE)
+            Probe.of(HttpMethod.GET, "/api/inventory/scrap-lots", PHASE13_BARCODE_ALLOWED, PHASE13_BARCODE_FORBIDDEN),
+            Probe.of(HttpMethod.GET, "/api/inventory/scrap-lots/" + MISSING, PHASE13_BARCODE_ALLOWED, PHASE13_BARCODE_FORBIDDEN),
+            Probe.withBody(HttpMethod.POST, "/api/inventory/scrap-lots/" + MISSING + "/list-for-sale",
+                    "{\"salePrice\":100.0,\"buyerName\":\"Buyer\",\"notes\":\"n\"}", PHASE13_BARCODE_ALLOWED, PHASE13_BARCODE_FORBIDDEN),
+            Probe.withBody(HttpMethod.POST, "/api/inventory/scrap-lots/" + MISSING + "/sell",
+                    "{\"salePrice\":100.0,\"buyerName\":\"Buyer\",\"notes\":\"n\"}", PHASE13_BARCODE_ALLOWED, PHASE13_BARCODE_FORBIDDEN),
+            Probe.withBody(HttpMethod.POST, "/api/inventory/scrap-lots/" + MISSING + "/dispose",
+                    "{\"notes\":\"Destroyed\"}", PHASE13_BARCODE_ALLOWED, PHASE13_BARCODE_FORBIDDEN),
+            Probe.withBody(HttpMethod.POST, "/api/inventory/scrap-lots",
+                    "{\"sourceType\":\"FG_BATCH\",\"sourceId\":1,\"itemName\":\"Test\",\"quantity\":1.0,\"uom\":\"PCS\",\"scrapReason\":\"Test scrap\"}",
+                    PHASE13_BARCODE_ALLOWED, PHASE13_BARCODE_FORBIDDEN),
+            // V84: Shipment tracking — ADMIN + SALES_MANAGER + STORE_MANAGER (SHIPMENT_TRACK_VIEW/MANAGE)
+            Probe.of(HttpMethod.GET, "/api/integration/shipment-tracking", PHASE16_SHIP_TRACK_ALLOWED, PHASE16_SHIP_TRACK_FORBIDDEN),
+            Probe.of(HttpMethod.GET, "/api/integration/shipment-tracking/" + MISSING, PHASE16_SHIP_TRACK_ALLOWED, PHASE16_SHIP_TRACK_FORBIDDEN),
+            Probe.withBody(HttpMethod.POST, "/api/integration/shipment-tracking",
+                    "{\"dispatchId\":null,\"courierCode\":\"DTDC\",\"trackingNumber\":\"DTDC999\"}",
+                    PHASE16_SHIP_TRACK_ALLOWED, PHASE16_SHIP_TRACK_FORBIDDEN),
+            // V84: Busy accounting export — ADMIN + FINANCE_MANAGER (BUSY_EXPORT_VIEW/RUN)
+            Probe.of(HttpMethod.GET, "/api/integration/busy-export/queue", PHASE16_BUSY_ALLOWED, PHASE16_BUSY_FORBIDDEN),
+            Probe.of(HttpMethod.POST, "/api/integration/busy-export/stage", PHASE16_BUSY_ALLOWED, PHASE16_BUSY_FORBIDDEN),
+            Probe.of(HttpMethod.POST, "/api/integration/busy-export/run", PHASE16_BUSY_ALLOWED, PHASE16_BUSY_FORBIDDEN),
+            // V82: Onboarding wizard — ADMIN only (ONBOARDING_VIEW / ONBOARDING_MANAGE)
+            Probe.of(HttpMethod.GET, "/api/settings/onboarding", PHASE16_INTEG_ALLOWED, PHASE16_INTEG_FORBIDDEN),
+            Probe.withBody(HttpMethod.POST, "/api/settings/onboarding/complete", "{\"stepKey\":\"company\"}", PHASE16_INTEG_ALLOWED, PHASE16_INTEG_FORBIDDEN),
+            Probe.of(HttpMethod.DELETE, "/api/settings/onboarding/steps/company", PHASE16_INTEG_ALLOWED, PHASE16_INTEG_FORBIDDEN),
+            // Unified All Documents — REPORT_VIEW (widely granted: V1 PRODUCTION_MANAGER/STORE_MANAGER/PURCHASE_MANAGER/SALES/MANAGEMENT, V45 FINANCE_MANAGER, V67 SALES_MANAGER, V19 CONTROLLER, V37 ADMIN)
+            Probe.of(HttpMethod.GET, "/api/documents/all", REPORT_VIEW_WIDE_ALLOWED, REPORT_VIEW_WIDE_FORBIDDEN));
 
     /**
      * What a permitted caller gets when it is not a 2xx. Every other permitted probe must answer 2xx. These probes
@@ -748,6 +816,10 @@ class RoleAccessIT extends AbstractIntegrationTest {
             Map.entry("DELETE /api/materials/999999", 404),
             Map.entry("GET /api/sales/dispatches/999999/delivery-note.pdf", 404),
             Map.entry("GET /api/sales/dispatches/999999/packing-list.pdf", 404),
+            Map.entry("GET /api/finance/sales-invoices/999999/pdf", 404),
+            Map.entry("GET /api/procurement/purchase-orders/999999/pdf", 404),
+            Map.entry("POST /api/finance/payments/razorpay/create-order", 404),
+            Map.entry("POST /api/finance/payments/razorpay/verify-signature", 404),
             Map.entry("PUT /api/inventory/negative-stock-overrides/materials/999999", 404),
             Map.entry("PUT /api/inventory/negative-stock-overrides/products/999999", 404),
             Map.entry("GET /api/materials/999999/uom-conversions", 404),
@@ -850,7 +922,20 @@ class RoleAccessIT extends AbstractIntegrationTest {
             Map.entry("DELETE /api/production/templates/999999", 404),
             // Item 4: purchase-return challan endpoints with missing id answer 404
             Map.entry("GET /api/procurement/purchase-return-challans/999999", 404),
-            Map.entry("POST /api/procurement/purchase-return-challans/999999/dispatch", 404));
+            Map.entry("POST /api/procurement/purchase-return-challans/999999/dispatch", 404),
+            // V78: GST e-way bill with missing invoice id answers 404
+            Map.entry("POST /api/finance/gst/eway-bill", 404),
+            // V85: schedule-operation with missing production-operation answers 404
+            Map.entry("POST /api/production/schedule-operation", 404),
+            // V86: consolidation eliminations with missing period answers 404
+            Map.entry("POST /api/finance/consolidation/eliminations", 404),
+            // V83: scrap lot by missing id answers 404
+            Map.entry("GET /api/inventory/scrap-lots/999999", 404),
+            Map.entry("POST /api/inventory/scrap-lots/999999/list-for-sale", 404),
+            Map.entry("POST /api/inventory/scrap-lots/999999/sell", 404),
+            Map.entry("POST /api/inventory/scrap-lots/999999/dispose", 404),
+            // V84: shipment tracking by missing id answers 404
+            Map.entry("GET /api/integration/shipment-tracking/999999", 404));
 
     @Autowired UserAdminService userAdminService;
     @Autowired @Qualifier("requestMappingHandlerMapping") RequestMappingHandlerMapping handlerMapping;

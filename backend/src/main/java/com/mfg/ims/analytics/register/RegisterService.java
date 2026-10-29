@@ -24,7 +24,10 @@ public class RegisterService {
             Map.entry("REG_ADJUSTMENT_NOTES", "SELECT * FROM ims.reg_adjustment_notes ORDER BY id DESC LIMIT 500"),
             Map.entry("REG_LAST_PRICE",     "SELECT * FROM ims.reg_last_price ORDER BY last_purchase_date DESC LIMIT 500"),
             Map.entry("REG_PRODUCTION_SUMMARY", "SELECT * FROM ims.reg_production_summary ORDER BY order_id DESC LIMIT 500"),
-            Map.entry("REG_PO_BALANCE",     "SELECT * FROM ims.reg_po_balance ORDER BY po_date DESC LIMIT 500")
+            Map.entry("REG_PO_BALANCE",     "SELECT * FROM ims.reg_po_balance ORDER BY po_date DESC LIMIT 500"),
+            Map.entry("REG_GRN_MISMATCH",   "SELECT * FROM ims.reg_grn_invoice_mismatch ORDER BY received_date DESC LIMIT 500"),
+            Map.entry("REG_PRODUCT_AGEING", "SELECT * FROM ims.reg_product_ageing ORDER BY age_days DESC LIMIT 500"),
+            Map.entry("REG_NEW_PRODUCTS",   "SELECT * FROM ims.reg_new_products ORDER BY created_date DESC LIMIT 200")
     );
 
     private static final Map<String, String> REGISTER_NAMES = Map.ofEntries(
@@ -38,7 +41,10 @@ public class RegisterService {
             Map.entry("REG_ADJUSTMENT_NOTES",   "Adjustment Notes Register"),
             Map.entry("REG_LAST_PRICE",         "Last Purchase Price Register"),
             Map.entry("REG_PRODUCTION_SUMMARY", "Production Summary Register"),
-            Map.entry("REG_PO_BALANCE",         "Purchase Order Balance Register")
+            Map.entry("REG_PO_BALANCE",         "Purchase Order Balance Register"),
+            Map.entry("REG_GRN_MISMATCH",       "GRN-Invoice Mismatch Register"),
+            Map.entry("REG_PRODUCT_AGEING",     "Product Ageing Register"),
+            Map.entry("REG_NEW_PRODUCTS",       "New Product Register")
     );
 
     private final JdbcTemplate jdbc;

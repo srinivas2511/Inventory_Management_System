@@ -85,6 +85,9 @@ public enum ErrorCode {
     FILE_TOO_LARGE(HttpStatus.PAYLOAD_TOO_LARGE, "File is larger than the configured limit"),
     FILE_TYPE_NOT_ALLOWED(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "This file type is not accepted"),
 
+    // 502 - external service errors
+    EXTERNAL_SERVICE_ERROR(HttpStatus.BAD_GATEWAY, "External service error"),
+
     // 500
     INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "Internal error");
 

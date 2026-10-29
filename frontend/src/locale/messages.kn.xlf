@@ -146,6 +146,10 @@
         <source>Plan Board</source>
         <target>ಯೋಜನಾ ಫಲಕ</target>
       </trans-unit>
+      <trans-unit id="nav.item-capacity-board" datatype="html">
+        <source>Capacity Board</source>
+        <target>ಸಾಮರ್ಥ್ಯ ಫಲಕ</target>
+      </trans-unit>
       <trans-unit id="nav.item-prod-templates" datatype="html">
         <source>Order Templates</source>
         <target>ಆರ್ಡರ್ ಟೆಂಪ್ಲೇಟ್‌ಗಳು</target>
@@ -305,6 +309,14 @@
       <trans-unit id="nav.item-fx-revaluation" datatype="html">
         <source>FX Revaluation</source>
         <target>ವಿದೇಶಿ ವಿನಿಮಯ ಮರುಮೌಲ್ಯಮಾಪನ</target>
+      </trans-unit>
+      <trans-unit id="nav.item-gst-filing" datatype="html">
+        <source>GST Filing</source>
+        <target>ಜಿಎಸ್‌ಟಿ ಸಲ್ಲಿಕೆ</target>
+      </trans-unit>
+      <trans-unit id="nav.item-consolidation" datatype="html">
+        <source>Consolidation</source>
+        <target>ಏಕೀಕರಣ</target>
       </trans-unit>
       <trans-unit id="nav.item-financial-statements" datatype="html">
         <source>Financial Statements</source>
@@ -641,6 +653,26 @@
       <trans-unit id="login.signIn" datatype="html">
         <source>Sign in</source>
         <target>ಸೈನ್ ಇನ್</target>
+      </trans-unit>
+      <trans-unit id="nav.item-shipment-tracking" datatype="html">
+        <source>Shipment Tracking</source>
+        <target>ಶಿಪ್‌ಮೆಂಟ್ ಟ್ರ್ಯಾಕಿಂಗ್</target>
+      </trans-unit>
+      <trans-unit id="nav.item-busy-export" datatype="html">
+        <source>Busy Export</source>
+        <target>ಬಿಜ಼ಿ ರಫ್ತು</target>
+      </trans-unit>
+      <trans-unit id="nav.item-scrap-lots" datatype="html">
+        <source>Scrap Lots</source>
+        <target>ಸ್ಕ್ರ್ಯಾಪ್ ಲಾಟ್‌ಗಳು</target>
+      </trans-unit>
+      <trans-unit id="nav.item-onboarding" datatype="html">
+        <source>Setup Wizard</source>
+        <target>ಸೆಟಪ್ ವಿಝಾರ್ಡ್</target>
+      </trans-unit>
+      <trans-unit id="nav.item-all-documents" datatype="html">
+        <source>All Documents</source>
+        <target>ಎಲ್ಲಾ ದಾಖಲೆಗಳು</target>
       </trans-unit>
     </body>
   </file>

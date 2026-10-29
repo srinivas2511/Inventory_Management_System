@@ -203,8 +203,29 @@ class ImportIT extends AbstractIntegrationTest {
                 .isInstanceOf(com.mfg.ims.common.exception.NotFoundException.class);
         assertThatThrownBy(() -> importer.importFile("customers", csv("c.txt", "customerCode\nX\n"), true))
                 .isInstanceOf(BusinessRuleException.class);
-        assertThat(importer.entities()).containsExactly("materials", "products", "customers", "suppliers");
+        assertThat(importer.entities()).containsExactly("materials", "products", "customers", "suppliers", "opening-stock");
         assertThat(importer.template("customers")).startsWith("customerCode,name,");
+    }
+
+    @Test
+    void openingStockImportCreatesInventoryTransactions() throws Exception {
+        Long warehouseId = jdbc.queryForObject("SELECT id FROM ims.warehouses LIMIT 1", Long.class);
+        String whCode = jdbc.queryForObject("SELECT warehouse_code FROM ims.warehouses WHERE id = ?", String.class, warehouseId);
+        String locCode = jdbc.queryForObject(
+                "SELECT location_code FROM ims.warehouse_locations WHERE warehouse_id = ? LIMIT 1", String.class, warehouseId);
+        String matCode = jdbc.queryForObject("SELECT material_code FROM ims.materials LIMIT 1", String.class);
+
+        String content = "itemType,itemCode,warehouseCode,locationCode,stockStatus,quantity,uom,unitCost\n"
+                + "MATERIAL," + matCode + "," + whCode + "," + locCode + ",AVAILABLE,50,KG,120\n";
+        long before = jdbc.queryForObject(
+                "SELECT count(*) FROM ims.inventory_transactions WHERE transaction_type = 'OPENING_BALANCE'",
+                Long.class);
+        ImportResult r = importer.importFile("opening-stock", csv("ob.csv", content), false);
+        assertThat(r.created()).isEqualTo(1);
+        long after = jdbc.queryForObject(
+                "SELECT count(*) FROM ims.inventory_transactions WHERE transaction_type = 'OPENING_BALANCE'",
+                Long.class);
+        assertThat(after).isGreaterThan(before);
     }
 
     @Test

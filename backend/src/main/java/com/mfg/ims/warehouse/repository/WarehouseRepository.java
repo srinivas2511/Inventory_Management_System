@@ -13,6 +13,8 @@ public interface WarehouseRepository extends JpaRepository<Warehouse, Long> {
 
     boolean existsByWarehouseCode(String code);
 
+    java.util.Optional<Warehouse> findByWarehouseCode(String code);
+
     @Query("SELECT w.id FROM Warehouse w WHERE w.plantId IN :plantIds")
     List<Long> findIdsByPlantIdIn(@Param("plantIds") java.util.Collection<Long> plantIds);
 

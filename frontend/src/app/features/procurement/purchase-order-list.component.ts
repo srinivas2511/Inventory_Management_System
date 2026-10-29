@@ -157,6 +157,15 @@ export interface PurchaseOrderDto {
                 <mat-icon>local_shipping</mat-icon>
               </button>
             }
+            <a
+              mat-icon-button
+              [href]="'/api/procurement/purchase-orders/' + r.id + '/pdf'"
+              target="_blank"
+              aria-label="Download PDF"
+              matTooltip="Download PDF"
+            >
+              <mat-icon aria-hidden="true">picture_as_pdf</mat-icon>
+            </a>
           </td>
         </ng-container>
 

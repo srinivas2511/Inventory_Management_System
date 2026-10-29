@@ -2,17 +2,27 @@ package com.mfg.ims.integration.gst;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mfg.ims.common.exception.BusinessRuleException;
+import com.mfg.ims.common.exception.ErrorCode;
 import com.mfg.ims.common.exception.NotFoundException;
 import com.mfg.ims.integration.gst.GstEInvoiceDtos.EInvoiceDto;
 import com.mfg.ims.integration.gst.GstEInvoiceDtos.GenerateRequest;
@@ -26,14 +36,92 @@ import com.mfg.ims.integration.gst.GstEInvoiceDtos.GenerateRequest;
 @Service
 public class GstEInvoiceService {
 
+    private static final Logger log = LoggerFactory.getLogger(GstEInvoiceService.class);
+
     private final NamedParameterJdbcTemplate jdbc;
     private final ObjectMapper mapper;
     private final GstEInvoiceRepository repo;
+    private final RestTemplate rest = new RestTemplate();
 
     public GstEInvoiceService(NamedParameterJdbcTemplate jdbc, ObjectMapper mapper, GstEInvoiceRepository repo) {
         this.jdbc = jdbc;
         this.mapper = mapper;
         this.repo = repo;
+    }
+
+    public record GspSubmitResult(String irn, String ackNo, String status) {}
+
+    /**
+     * Submit a generated e-invoice JSON payload to the configured GSP API.
+     * If gst.gsp.enabled=false or api_url is blank, returns a stub IRN for testing.
+     */
+    @Transactional
+    public GspSubmitResult submitToGsp(Long id) {
+        GstEInvoice entity = repo.findById(id)
+            .orElseThrow(() -> new NotFoundException("GstEInvoice not found: " + id));
+        if (!"GENERATED".equals(entity.getStatus()) && entity.getIrn() == null) {
+            // already submitted — return existing
+            return new GspSubmitResult(entity.getIrn(), entity.getAckNo(), entity.getStatus());
+        }
+
+        String apiUrl = setting("gst.gsp.api_url");
+        String authToken = setting("gst.gsp.auth_token");
+        boolean enabled = Boolean.parseBoolean(setting("gst.gsp.enabled"));
+
+        String irn;
+        String ackNo;
+        if (enabled && apiUrl != null && !apiUrl.isBlank()) {
+            // Live GSP submission
+            GspSubmitResult liveResult = callGspApi(entity.getPayloadJson(), apiUrl, authToken);
+            irn = liveResult.irn();
+            ackNo = liveResult.ackNo();
+        } else {
+            // Stub mode: generate deterministic IRN
+            irn = "stub_irn_" + entity.getId() + "_" + System.currentTimeMillis() % 100000;
+            ackNo = "stub_ack_" + System.currentTimeMillis() % 1000000;
+            log.info("GSP stub: generated mock IRN {} for e-invoice {}", irn, id);
+        }
+
+        entity.setIrn(irn);
+        entity.setAckNo(ackNo);
+        entity.setStatus("SUBMITTED");
+        entity.setAckDate(Instant.now());
+        repo.save(entity);
+
+        return new GspSubmitResult(irn, ackNo, "SUBMITTED");
+    }
+
+    @SuppressWarnings("unchecked")
+    private GspSubmitResult callGspApi(String payload, String apiUrl, String authToken) {
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            if (authToken != null && !authToken.isBlank()) {
+                headers.set("Authorization", "Bearer " + authToken);
+            }
+            var response = rest.postForObject(apiUrl + "/einvoice/generate",
+                new HttpEntity<>(payload, headers), Map.class);
+            if (response == null) throw new BusinessRuleException(ErrorCode.EXTERNAL_SERVICE_ERROR, "GSP returned empty response");
+            Object irn = response.get("Irn");
+            Object ack = response.get("AckNo");
+            return new GspSubmitResult(
+                irn != null ? irn.toString() : "",
+                ack != null ? ack.toString() : "",
+                "SUBMITTED"
+            );
+        } catch (RestClientException e) {
+            throw new BusinessRuleException(ErrorCode.EXTERNAL_SERVICE_ERROR, "GSP API error: " + e.getMessage());
+        }
+    }
+
+    private String setting(String key) {
+        try {
+            return jdbc.queryForObject(
+                "SELECT value FROM ims.system_settings WHERE key = :k",
+                new MapSqlParameterSource("k", key), String.class);
+        } catch (Exception e) {
+            return "";
+        }
     }
 
     public List<EInvoiceDto> findAll() {

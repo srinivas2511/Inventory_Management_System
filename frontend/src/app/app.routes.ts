@@ -427,6 +427,13 @@ export const routes: Routes = [
         loadComponent: () => import('./features/production/plan-board.component').then((m) => m.PlanBoardComponent),
       },
       {
+        path: 'production/capacity-board',
+        title: 'Capacity Board',
+        canActivate: [permissionGuard('CAPACITY_VIEW')],
+        loadComponent: () =>
+          import('./features/production/capacity-board.component').then((m) => m.CapacityBoardComponent),
+      },
+      {
         path: 'production/templates',
         title: 'Production Order Templates',
         canActivate: [permissionGuard('PROD_TEMPLATE_VIEW')],
@@ -531,6 +538,19 @@ export const routes: Routes = [
         canActivate: [permissionGuard('FX_REVALUATION_RUN')],
         loadComponent: () =>
           import('./features/finance/fx-revaluation.component').then((m) => m.FxRevaluationComponent),
+      },
+      {
+        path: 'finance/gst-filing',
+        title: 'GST Filing Reports',
+        canActivate: [permissionGuard('GST_REPORT_VIEW')],
+        loadComponent: () =>
+          import('./features/finance/gst-filing/gst-filing.component').then((m) => m.GstFilingComponent),
+      },
+      {
+        path: 'finance/consolidation',
+        title: 'Consolidation Report',
+        canActivate: [permissionGuard('CONSOLIDATION_VIEW')],
+        loadComponent: () => import('./features/finance/consolidation.component').then((m) => m.ConsolidationComponent),
       },
       {
         path: 'finance/financial-statements',
@@ -1051,6 +1071,40 @@ export const routes: Routes = [
         title: 'Data Imports',
         canActivate: [permissionGuard('IMPORT_VIEW')],
         loadComponent: () => import('./features/admin/imports/imports.component').then((m) => m.ImportsComponent),
+      },
+      {
+        path: 'admin/onboarding',
+        title: 'Setup Wizard',
+        canActivate: [permissionGuard('ONBOARDING_VIEW')],
+        loadComponent: () =>
+          import('./features/settings/onboarding/onboarding-wizard.component').then((m) => m.OnboardingWizardComponent),
+      },
+      {
+        path: 'inventory/scrap-lots',
+        title: 'Scrap Lots',
+        canActivate: [permissionGuard('SCRAP_VIEW')],
+        loadComponent: () =>
+          import('./features/inventory/scrap/scrap-lot-list.component').then((m) => m.ScrapLotListComponent),
+      },
+      {
+        path: 'integration/shipment-tracking',
+        title: 'Shipment Tracking',
+        canActivate: [permissionGuard('SHIPMENT_TRACK_VIEW')],
+        loadComponent: () =>
+          import('./features/integration/shipment-tracking.component').then((m) => m.ShipmentTrackingComponent),
+      },
+      {
+        path: 'integration/busy-export',
+        title: 'Busy Export',
+        canActivate: [permissionGuard('BUSY_EXPORT_VIEW')],
+        loadComponent: () => import('./features/integration/busy-export.component').then((m) => m.BusyExportComponent),
+      },
+      {
+        path: 'documents/all',
+        title: 'All Documents',
+        canActivate: [permissionGuard('REPORT_VIEW')],
+        loadComponent: () =>
+          import('./features/documents/all-documents.component').then((m) => m.AllDocumentsComponent),
       },
     ],
   },
