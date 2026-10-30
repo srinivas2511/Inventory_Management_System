@@ -718,6 +718,11 @@ class RoleAccessIT extends AbstractIntegrationTest {
                     PHASE12_FINANCE_ALLOWED, PHASE12_FINANCE_FORBIDDEN),
             // Phase 12: Open items / ageing — ADMIN + FINANCE_MANAGER (OPEN_ITEM_VIEW)
             Probe.of(HttpMethod.GET, "/api/finance/open-items", PHASE12_FINANCE_ALLOWED, PHASE12_FINANCE_FORBIDDEN),
+            // Phase 12: TDS entries — ADMIN + FINANCE_MANAGER (TDS_MANAGE)
+            Probe.of(HttpMethod.GET, "/api/finance/tds-entries", PHASE12_FINANCE_ALLOWED, PHASE12_FINANCE_FORBIDDEN),
+            Probe.of(HttpMethod.GET, "/api/finance/tds-entries/summary", PHASE12_FINANCE_ALLOWED, PHASE12_FINANCE_FORBIDDEN),
+            // Phase 12: Payment reminders — ADMIN + FINANCE_MANAGER (REMINDER_MANAGE)
+            Probe.of(HttpMethod.GET, "/api/finance/payment-reminders", PHASE12_FINANCE_ALLOWED, PHASE12_FINANCE_FORBIDDEN),
             // Phase 13: Barcodes — ADMIN + PRODUCTION_MANAGER + STORE_MANAGER (BARCODE_VIEW)
             Probe.of(HttpMethod.GET, "/api/production/barcodes", PHASE13_BARCODE_ALLOWED, PHASE13_BARCODE_FORBIDDEN),
             Probe.of(HttpMethod.GET, "/api/production/barcodes/" + MISSING, PHASE13_BARCODE_ALLOWED, PHASE13_BARCODE_FORBIDDEN),

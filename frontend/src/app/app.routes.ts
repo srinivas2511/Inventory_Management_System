@@ -579,6 +579,19 @@ export const routes: Routes = [
         loadComponent: () => import('./features/finance/open-item-list.component').then((m) => m.OpenItemListComponent),
       },
       {
+        path: 'finance/tds-entries',
+        title: 'TDS Entries',
+        canActivate: [permissionGuard('TDS_MANAGE')],
+        loadComponent: () => import('./features/finance/tds-entries.component').then((m) => m.TdsEntriesComponent),
+      },
+      {
+        path: 'finance/payment-reminders',
+        title: 'Payment Reminders',
+        canActivate: [permissionGuard('REMINDER_MANAGE')],
+        loadComponent: () =>
+          import('./features/finance/payment-reminders.component').then((m) => m.PaymentRemindersComponent),
+      },
+      {
         path: 'controlling/cost-centres',
         title: 'Cost Centres',
         canActivate: [permissionGuard('CONTROLLING_VIEW')],

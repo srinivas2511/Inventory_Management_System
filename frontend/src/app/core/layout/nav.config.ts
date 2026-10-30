@@ -579,6 +579,20 @@ export const NAV_GROUPS: NavGroup[] = [
         permission: 'OPEN_ITEM_VIEW',
         enabled: true,
       },
+      {
+        label: $localize`:@@nav.item-tds-entries:TDS Entries`,
+        icon: 'receipt_long',
+        route: '/finance/tds-entries',
+        permission: 'TDS_MANAGE',
+        enabled: true,
+      },
+      {
+        label: $localize`:@@nav.item-payment-reminders:Payment Reminders`,
+        icon: 'notifications_active',
+        route: '/finance/payment-reminders',
+        permission: 'REMINDER_MANAGE',
+        enabled: true,
+      },
     ],
   },
   {
