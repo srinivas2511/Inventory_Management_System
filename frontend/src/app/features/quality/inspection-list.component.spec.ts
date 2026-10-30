@@ -20,6 +20,7 @@ const row: QualityInspectionDto = {
   materialCode: 'SPR-WIRE-200',
   fgBatchId: null,
   productionOrderId: null,
+  productionOrderNumber: null,
   productionOperationId: null,
   inspectedQty: 100,
   sampleSize: null,

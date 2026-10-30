@@ -30,9 +30,12 @@ export interface JournalHeaderDto {
   status: string;
   reversalOfId?: number | null;
   preparedBy?: number;
+  preparedByUsername?: string | null;
   approvedBy?: number;
+  approvedByUsername?: string | null;
   approvedAt?: string | null;
   postedBy?: number;
+  postedByUsername?: string | null;
   postedAt?: string | null;
   lines: JournalLineDto[];
 }

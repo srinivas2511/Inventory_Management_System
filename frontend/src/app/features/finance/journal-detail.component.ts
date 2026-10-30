@@ -74,15 +74,15 @@ import { ReasonDialogComponent } from './reason-dialog.component';
               </p>
             }
             <p class="trail">
-              Prepared by user #{{ j.preparedBy }}
+              Prepared by {{ j.preparedByUsername ?? ('user #' + j.preparedBy) }}
               @if (j.approvedBy) {
-                · approved by user #{{ j.approvedBy }}
+                · approved by {{ j.approvedByUsername ?? ('user #' + j.approvedBy) }}
                 @if (j.approvedAt) {
                   {{ j.approvedAt | istDate: 'medium' }}
                 }
               }
               @if (j.postedBy) {
-                · posted by user #{{ j.postedBy }}
+                · posted by {{ j.postedByUsername ?? ('user #' + j.postedBy) }}
                 @if (j.postedAt) {
                   {{ j.postedAt | istDate: 'medium' }}
                 }

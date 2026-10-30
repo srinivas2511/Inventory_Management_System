@@ -9,11 +9,11 @@
 |--------|-------|
 | Total discovered screens | 165 |
 | Screens tested (cumulative) | 130+ |
-| Defects discovered | 4 |
-| Defects fixed | 4 (DEF-001..DEF-004 all resolved) |
+| Defects discovered | 5 |
+| Defects fixed | 5 (DEF-001..DEF-005 all resolved) |
 | Open defects | 0 |
-| Backend test result | 3592/3592 (2026-10-30) |
-| Frontend test result | 830/830 (2026-10-30) |
+| Backend test result | compiles clean (2026-10-30 session 6) |
+| Frontend test result | 830/830 (2026-10-30 session 6) |
 | Playwright result | 425/426 × 2 runs PASS (2026-10-30) |
 
 ## Screens Tested (cumulative)
@@ -122,6 +122,7 @@
 | DEF-002 | Procurement | PO supplier column + PR material column showed numeric IDs | Added repository lookups in PurchaseOrderService and PurchaseRequisitionService; updated frontend interfaces/templates |
 | DEF-003 | Quality | Inspection detail shows numeric "Production order: 2" instead of order number | Added productionOrderNumber to QualityInspectionDto; added lookup in InspectionService; updated frontend template |
 | DEF-004 | Engineering | BOM list shows "Product ID: 1" (numeric) instead of product name/code | Added productCode/productName to BomDto interface; updated template column header and value |
+| DEF-005 | Finance | Journal detail shows "Prepared by user #1" (raw user ID) instead of display name | Added preparedByUsername/approvedByUsername/postedByUsername to JournalHeaderDto; added usernameOf() helper in JournalService using UserRepository; updated Angular template with fallback |
 
 ## Session 5 — additional confirmed PASS screens
 | Screen | URL | Result | Notes |

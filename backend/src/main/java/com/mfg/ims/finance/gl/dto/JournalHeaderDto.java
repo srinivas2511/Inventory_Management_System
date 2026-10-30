@@ -20,9 +20,12 @@ public record JournalHeaderDto(
         String status,
         Long reversalOfId,
         Long preparedBy,
+        String preparedByUsername,
         Long approvedBy,
+        String approvedByUsername,
         Instant approvedAt,
         Long postedBy,
+        String postedByUsername,
         Instant postedAt,
         List<JournalLineDto> lines
 ) {}

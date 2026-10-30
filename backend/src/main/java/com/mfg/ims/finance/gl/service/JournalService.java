@@ -15,6 +15,7 @@ import com.mfg.ims.finance.gl.repository.FiscalPeriodRepository;
 import com.mfg.ims.finance.gl.repository.GlAccountRepository;
 import com.mfg.ims.finance.gl.repository.JournalHeaderRepository;
 import com.mfg.ims.finance.gl.repository.JournalLineRepository;
+import com.mfg.ims.iam.repository.UserRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -41,19 +42,22 @@ public class JournalService {
     private final GlAccountRepository glAccountRepo;
     private final DocumentNumberService numberService;
     private final AuditService auditService;
+    private final UserRepository userRepo;
 
     public JournalService(JournalHeaderRepository journalHeaderRepo,
                           JournalLineRepository journalLineRepo,
                           FiscalPeriodRepository periodRepo,
                           GlAccountRepository glAccountRepo,
                           DocumentNumberService numberService,
-                          AuditService auditService) {
+                          AuditService auditService,
+                          UserRepository userRepo) {
         this.journalHeaderRepo = journalHeaderRepo;
         this.journalLineRepo = journalLineRepo;
         this.periodRepo = periodRepo;
         this.glAccountRepo = glAccountRepo;
         this.numberService = numberService;
         this.auditService = auditService;
+        this.userRepo = userRepo;
     }
 
     public JournalHeaderDto createDraft(JournalCreateRequest req) {
@@ -304,6 +308,12 @@ public class JournalService {
         }
     }
 
+    private String usernameOf(Long id) {
+        if (id == null) return null;
+        return userRepo.findById(id).map(u -> u.getFullName() != null && !u.getFullName().isBlank()
+                ? u.getFullName() : u.getUsername()).orElse(null);
+    }
+
     private JournalHeaderDto toDto(JournalHeader h) {
         Map<Long, GlAccount> accounts = glAccountRepo.findAll().stream()
                 .collect(Collectors.toMap(GlAccount::getId, Function.identity()));
@@ -319,8 +329,9 @@ public class JournalService {
                 h.getSourceModule(), h.getSourceDocumentType(), h.getSourceDocumentId(),
                 h.getPostingDate(), h.getPeriodId(), h.getDescription(),
                 h.getCurrencyCode(), h.getExchangeRate(), h.getStatus(),
-                h.getReversalOfId(), h.getPreparedBy(), h.getApprovedBy(), h.getApprovedAt(),
-                h.getPostedBy(), h.getPostedAt(), lineDtos);
+                h.getReversalOfId(), h.getPreparedBy(), usernameOf(h.getPreparedBy()),
+                h.getApprovedBy(), usernameOf(h.getApprovedBy()), h.getApprovedAt(),
+                h.getPostedBy(), usernameOf(h.getPostedBy()), h.getPostedAt(), lineDtos);
     }
 
     private JournalHeaderDto toDtoNoLines(JournalHeader h) {
@@ -328,8 +339,9 @@ public class JournalService {
                 h.getSourceModule(), h.getSourceDocumentType(), h.getSourceDocumentId(),
                 h.getPostingDate(), h.getPeriodId(), h.getDescription(),
                 h.getCurrencyCode(), h.getExchangeRate(), h.getStatus(),
-                h.getReversalOfId(), h.getPreparedBy(), h.getApprovedBy(), h.getApprovedAt(),
-                h.getPostedBy(), h.getPostedAt(), List.of());
+                h.getReversalOfId(), h.getPreparedBy(), usernameOf(h.getPreparedBy()),
+                h.getApprovedBy(), usernameOf(h.getApprovedBy()), h.getApprovedAt(),
+                h.getPostedBy(), usernameOf(h.getPostedBy()), h.getPostedAt(), List.of());
     }
 
     private Long currentUserId() {
