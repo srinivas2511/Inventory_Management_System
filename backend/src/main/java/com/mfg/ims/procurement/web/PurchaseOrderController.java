@@ -20,8 +20,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 import com.mfg.ims.procurement.dto.CreatePoRequest;
 import com.mfg.ims.procurement.dto.PurchaseOrderDto;
+import com.mfg.ims.procurement.porevision.PoRevisionDto;
+import com.mfg.ims.procurement.porevision.PoRevisionService;
 import com.mfg.ims.procurement.service.PurchaseOrderService;
 
 @RestController
@@ -30,13 +34,18 @@ public class PurchaseOrderController {
 
     private final PurchaseOrderService service;
     private final PurchaseOrderRenderer renderer;
+    private final PoRevisionService revisionService;
 
-    public PurchaseOrderController(PurchaseOrderService service, PurchaseOrderRenderer renderer) {
+    public PurchaseOrderController(PurchaseOrderService service, PurchaseOrderRenderer renderer,
+            PoRevisionService revisionService) {
         this.service = service;
         this.renderer = renderer;
+        this.revisionService = revisionService;
     }
 
     public record CancelRequest(@NotBlank String reason) {}
+
+    public record AmendRequest(@NotBlank String reason) {}
 
     @GetMapping
     @PreAuthorize("hasAnyAuthority('PURCHASE_VIEW','PURCHASE_CREATE','PURCHASE_APPROVE')")
@@ -82,6 +91,21 @@ public class PurchaseOrderController {
     @PreAuthorize("hasAnyAuthority('PURCHASE_CREATE','PURCHASE_APPROVE')")
     public PurchaseOrderDto cancel(@PathVariable Long id, @Valid @RequestBody CancelRequest req) {
         return service.cancel(id, req.reason());
+    }
+
+    /** Record a revision / amendment reason for an APPROVED or SENT purchase order. */
+    @PostMapping("/{id}/amend")
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAuthority('PURCHASE_AMEND')")
+    public PoRevisionDto amend(@PathVariable Long id, @Valid @RequestBody AmendRequest req) {
+        return revisionService.amend(id, req.reason());
+    }
+
+    /** Return the full amendment history for a purchase order. */
+    @GetMapping("/{id}/revisions")
+    @PreAuthorize("hasAnyAuthority('PURCHASE_VIEW','PURCHASE_CREATE','PURCHASE_APPROVE','PURCHASE_AMEND')")
+    public List<PoRevisionDto> revisions(@PathVariable Long id) {
+        return revisionService.getHistory(id);
     }
 
     @GetMapping(value = "/{id}/pdf", produces = "application/pdf")

@@ -13,7 +13,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.mfg.ims.procurement.dto.CreatePoRequest;
+import com.mfg.ims.procurement.rfq.Rfq;
+import com.mfg.ims.procurement.rfq.RfqItem;
 import com.mfg.ims.procurement.rfq.RfqRepository;
+import com.mfg.ims.procurement.service.PurchaseOrderService;
 
 @Service
 @Transactional
@@ -21,10 +25,13 @@ public class SupplierQuoteService {
 
     private final SupplierQuoteRepository repo;
     private final RfqRepository rfqRepo;
+    private final PurchaseOrderService poService;
 
-    public SupplierQuoteService(SupplierQuoteRepository repo, RfqRepository rfqRepo) {
+    public SupplierQuoteService(SupplierQuoteRepository repo, RfqRepository rfqRepo,
+            PurchaseOrderService poService) {
         this.repo = repo;
         this.rfqRepo = rfqRepo;
+        this.poService = poService;
     }
 
     @Transactional(readOnly = true)
@@ -105,6 +112,62 @@ public class SupplierQuoteService {
         }).toList();
 
         return new ComparisonDto(rfqId, lines);
+    }
+
+    /**
+     * Awards a supplier quote: marks it as AWARDED and creates a PurchaseOrder draft from its lines.
+     * The rfqId path variable is validated to match the quote's rfqId (prevents cross-RFQ award).
+     *
+     * @return the id and document number of the created purchase order
+     */
+    public AwardResultDto award(Long rfqId, Long quoteId) {
+        var quote = find(quoteId);
+        if (!rfqId.equals(quote.getRfqId())) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Quote " + quoteId + " not found for RFQ " + rfqId);
+        }
+        if (quote.isAwarded()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Quote already awarded");
+        }
+
+        // Load RFQ items to resolve materialId per line
+        var rfq = rfqRepo.findById(rfqId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "RFQ not found: " + rfqId));
+        Map<Long, RfqItem> rfqItemsById = rfq.getItems().stream()
+                .collect(java.util.stream.Collectors.toMap(RfqItem::getId, i -> i));
+
+        // Build PO lines from quote items
+        List<CreatePoRequest.PoLineRequest> lines = quote.getItems().stream()
+                .map(qi -> {
+                    RfqItem rfqItem = rfqItemsById.get(qi.getRfqItemId());
+                    if (rfqItem == null || rfqItem.getMaterialId() == null) {
+                        throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
+                                "RFQ item " + qi.getRfqItemId() + " missing or has no material");
+                    }
+                    BigDecimal qty = rfqItem.getQty();
+                    BigDecimal rate = qi.getUnitPrice() != null ? qi.getUnitPrice() : BigDecimal.ZERO;
+                    return new CreatePoRequest.PoLineRequest(rfqItem.getMaterialId(), qty, rate, qi.getTaxPct());
+                })
+                .toList();
+
+        if (lines.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Quote has no line items");
+        }
+
+        var poReq = new CreatePoRequest(
+                quote.getSupplierId(),
+                java.time.LocalDate.now(),
+                null, null,
+                "Awarded from RFQ " + rfq.getDocNo() + " / Quote " + quote.getDocNo(),
+                null,
+                lines);
+        var po = poService.create(poReq);
+
+        // Mark quote as awarded
+        quote.setAwarded(true);
+        quote.setStatus("AWARDED");
+        repo.save(quote);
+
+        return new AwardResultDto(po.id(), po.poNumber());
     }
 
     private BigDecimal computeLandedCost(BigDecimal unitPrice, BigDecimal taxPct, BigDecimal freight) {
