@@ -73,6 +73,24 @@ import { CreateDispatchRequest, SalesApi } from './sales.api';
           </mat-form-field>
         </div>
 
+        <details class="packaging-section">
+          <summary class="mat-body-2">Packaging (optional)</summary>
+          <div class="head-grid" formGroupName="packaging">
+            <mat-form-field appearance="outline">
+              <mat-label>Packages</mat-label>
+              <input matInput type="number" formControlName="packages" />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Gross weight (kg)</mat-label>
+              <input matInput type="number" step="0.001" formControlName="grossWeightKg" />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Net weight (kg)</mat-label>
+              <input matInput type="number" step="0.001" formControlName="netWeightKg" />
+            </mat-form-field>
+          </div>
+        </details>
+
         @if (items().length) {
           <h3 class="mat-h3">Lines (leave the quantity empty to skip a line)</h3>
         }
@@ -148,6 +166,14 @@ import { CreateDispatchRequest, SalesApi } from './sales.api';
       .form-error {
         color: var(--mat-warn-color, #f44336);
       }
+      .packaging-section {
+        margin: 8px 0;
+      }
+      .packaging-section summary {
+        cursor: pointer;
+        padding: 4px 0;
+        color: rgba(0, 0, 0, 0.6);
+      }
     `,
   ],
 })
@@ -172,6 +198,11 @@ export class DispatchFormComponent implements OnInit {
     deliveryAddress: ['', Validators.required],
     invoiceReference: [''],
     notes: [''],
+    packaging: this.fb.group({
+      packages: this.fb.control<number | null>(null),
+      grossWeightKg: this.fb.control<number | null>(null),
+      netWeightKg: this.fb.control<number | null>(null),
+    }),
     lines: this.fb.array([] as FormGroup[]),
   });
 
@@ -229,6 +260,8 @@ export class DispatchFormComponent implements OnInit {
       return;
     }
     const raw = this.form.getRawValue();
+    const pkg = raw.packaging;
+    const hasPackaging = pkg.packages !== null || pkg.grossWeightKg !== null || pkg.netWeightKg !== null;
     const request: CreateDispatchRequest = {
       salesOrderId: raw.salesOrderId as number,
       dispatchDate: raw.dispatchDate,
@@ -238,6 +271,11 @@ export class DispatchFormComponent implements OnInit {
       deliveryAddress: raw.deliveryAddress,
       invoiceReference: raw.invoiceReference || null,
       notes: raw.notes || null,
+      ...(hasPackaging ? { packagingDetails: {
+        packages: pkg.packages,
+        gross_weight_kg: pkg.grossWeightKg,
+        net_weight_kg: pkg.netWeightKg,
+      }} : {}),
       lines: chosen.map((l) => {
         const stock = this.stock().find((s) => this.key(s) === l.value['stockKey'])!;
         return {

@@ -76,4 +76,17 @@ public class TeamService {
     public void removeMember(Long teamId, Long userId) {
         memberRepo.removeByTeamIdAndUserId(teamId, userId);
     }
+
+    @Transactional
+    public TeamDto updateSettings(Long id, String notificationSettings, java.util.List<String> moduleAccess) {
+        Team t = teamRepo.findById(id)
+                .orElseThrow(() -> new NotFoundException("Team not found: " + id));
+        if (notificationSettings != null) {
+            t.setNotificationSettings(notificationSettings);
+        }
+        if (moduleAccess != null) {
+            t.setModuleAccess(moduleAccess.toArray(new String[0]));
+        }
+        return TeamDto.from(teamRepo.save(t));
+    }
 }

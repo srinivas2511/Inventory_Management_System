@@ -32,7 +32,8 @@ public record SalesInvoiceDto(
         String cancelledReason,
         Instant postedAt,
         String remarks,
-        List<ItemDto> items
+        List<ItemDto> items,
+        java.util.Map<String, Object> packagingDetails
 ) {
     public record ItemDto(
             Long id,

@@ -31,19 +31,24 @@ describe('CommentsPanelComponent', () => {
     fixture.detectChanges();
 
     httpMock.expectNone((r) => r.url.includes('/api/comments'));
+    httpMock.expectNone((r) => r.url.includes('/api/reminders'));
 
     const el: HTMLElement = fixture.nativeElement;
     expect(el.textContent).toContain('No comments yet.');
   });
 
-  it('should fetch comments when entityType and entityId are set', () => {
+  it('should fetch comments and reminders when entityType and entityId are set', () => {
     fixture.componentRef.setInput('entityType', 'MATERIAL');
     fixture.componentRef.setInput('entityId', 10);
     fixture.detectChanges();
 
-    const req = httpMock.expectOne('/api/comments?entityType=MATERIAL&entityId=10');
-    expect(req.request.method).toBe('GET');
-    req.flush([]);
+    const commentsReq = httpMock.expectOne('/api/comments?entityType=MATERIAL&entityId=10');
+    expect(commentsReq.request.method).toBe('GET');
+    commentsReq.flush([]);
+
+    const remindersReq = httpMock.expectOne('/api/reminders?entityType=MATERIAL&entityId=10');
+    expect(remindersReq.request.method).toBe('GET');
+    remindersReq.flush([]);
   });
 
   it('should render fetched comments', () => {
@@ -65,6 +70,9 @@ describe('CommentsPanelComponent', () => {
         deleted: false,
       },
     ]);
+
+    const remindersReq = httpMock.expectOne('/api/reminders?entityType=SUPPLIER&entityId=3');
+    remindersReq.flush([]);
 
     fixture.detectChanges();
 

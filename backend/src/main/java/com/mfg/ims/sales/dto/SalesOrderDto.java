@@ -19,7 +19,8 @@ public record SalesOrderDto(
         List<SalesOrderItemDto> items,
         Long createdBy,
         Long submittedBy,
-        List<String> allowedActions) {
+        List<String> allowedActions,
+        List<String> blockedActions) {
 
     public record SalesOrderItemDto(
             Long id,

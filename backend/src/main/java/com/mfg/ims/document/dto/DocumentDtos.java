@@ -60,4 +60,26 @@ public final class DocumentDtos {
 
     public record ReasonRequest(@NotBlank @Size(max = 500) String reason) {
     }
+
+    // 9.12 document reminders
+    public record ReminderDto(Long id, String entityType, Long entityId,
+                               Instant remindAt, Long userId, String note, boolean dismissed, Instant createdAt) {
+    }
+
+    public record CreateReminderRequest(@NotBlank @Size(max = 50) String entityType,
+                                         @NotNull Long entityId,
+                                         @NotNull Instant remindAt,
+                                         @Size(max = 1000) String note) {
+    }
+
+    // 9.12 document mentions
+    public record MentionDto(Long id, String entityType, Long entityId,
+                              Long mentionedUserId, Long mentionedById, String note, Instant createdAt) {
+    }
+
+    public record CreateMentionRequest(@NotBlank @Size(max = 50) String entityType,
+                                        @NotNull Long entityId,
+                                        @NotNull Long mentionedUserId,
+                                        @Size(max = 1000) String note) {
+    }
 }

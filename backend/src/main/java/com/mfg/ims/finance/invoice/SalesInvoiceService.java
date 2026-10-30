@@ -157,6 +157,6 @@ public class SalesInvoiceService {
                 inv.getCustomerPoNo(), inv.getDueDate(), inv.getCurrency(), inv.getExchangeRate(),
                 inv.getTaxableAmount(), inv.getTaxAmount(), inv.getTcsAmount(), inv.getGrandTotal(),
                 inv.getBalanceInr(), inv.getEinvoiceStatus(), inv.getIrn(), inv.getCancelledReason(),
-                inv.getPostedAt(), inv.getRemarks(), items);
+                inv.getPostedAt(), inv.getRemarks(), items, null);
     }
 }

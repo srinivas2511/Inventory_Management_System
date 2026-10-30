@@ -266,13 +266,14 @@ public class PurchaseOrderService {
                 .map(s -> s.getSupplierCode() + " · " + s.getName())
                 .orElse(null);
         List<String> allowed = allowedActions(po.getStatus());
+        List<String> blocked = blockedActions(po.getStatus());
         return new PurchaseOrderDto(
                 po.getId(), po.getPoNumber(), po.getSupplierId(), supplierName,
                 po.getPoDate(), po.getExpectedDeliveryDate(), po.getStatus(),
                 po.getSubtotal(), po.getTaxTotal(), po.getGrandTotal(), po.getCurrency(),
                 po.getPaymentTerms(), po.getRemarks(), po.getRequisitionId(),
                 po.getSubmittedBy(), po.getApprovedBy(), po.getApprovedAt(),
-                itemDtos, allowed);
+                itemDtos, allowed, blocked);
     }
 
     private List<String> allowedActions(String status) {
@@ -284,5 +285,21 @@ public class PurchaseOrderService {
             case "PARTIALLY_RECEIVED" -> List.of("receive");
             default                   -> List.of();
         };
+    }
+
+    private List<String> blockedActions(String status) {
+        java.util.List<String> blocked = new java.util.ArrayList<>();
+        if ("APPROVED".equals(status) || "SENT_TO_SUPPLIER".equals(status)
+                || "PARTIALLY_RECEIVED".equals(status) || "RECEIVED".equals(status)) {
+            blocked.add("APPROVE: already approved");
+        }
+        if ("RECEIVED".equals(status)) {
+            blocked.add("CANCEL: goods already received");
+        }
+        if ("CANCELLED".equals(status)) {
+            blocked.add("APPROVE: order is cancelled");
+            blocked.add("CANCEL: already cancelled");
+        }
+        return java.util.Collections.unmodifiableList(blocked);
     }
 }
