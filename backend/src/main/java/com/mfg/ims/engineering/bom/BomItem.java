@@ -47,6 +47,15 @@ public class BomItem extends BaseEntity {
     @Column(name = "instruction", length = 300)
     private String instruction;
 
+    @Column(name = "alternate_material_id")
+    private Long alternateMaterialId;
+
+    @Column(name = "is_alternate", nullable = false)
+    private boolean isAlternate = false;
+
+    @Column(name = "alternate_factor", precision = 18, scale = 6, nullable = false)
+    private java.math.BigDecimal alternateFactor = java.math.BigDecimal.ONE;
+
     public BomItem() {}
 
     public Bom getBom() { return bom; }
@@ -77,4 +86,13 @@ public class BomItem extends BaseEntity {
 
     public String getInstruction() { return instruction; }
     public void setInstruction(String v) { this.instruction = v; }
+
+    public Long getAlternateMaterialId() { return alternateMaterialId; }
+    public void setAlternateMaterialId(Long v) { this.alternateMaterialId = v; }
+
+    public boolean isAlternate() { return isAlternate; }
+    public void setAlternate(boolean v) { this.isAlternate = v; }
+
+    public java.math.BigDecimal getAlternateFactor() { return alternateFactor; }
+    public void setAlternateFactor(java.math.BigDecimal v) { this.alternateFactor = v; }
 }

@@ -98,7 +98,7 @@ class MrpIT extends AbstractIntegrationTest {
     }
 
     private MrpRunDto run() {
-        return runService.runMrp(new RunMrpRequest(90, false));
+        return runService.runMrp(new RunMrpRequest(90, false, null));
     }
 
     private List<MrpProposalDto> proposals(MrpRunDto run, Long... itemIds) {
@@ -373,10 +373,10 @@ class MrpIT extends AbstractIntegrationTest {
         Material material = td.material();
         jdbc.update("UPDATE ims.materials SET min_stock = 30, reorder_level = 30 WHERE id = ?", material.getId());
 
-        MrpRunDto without = runService.runMrp(new RunMrpRequest(90, false));
+        MrpRunDto without = runService.runMrp(new RunMrpRequest(90, false, null));
         assertThat(proposals(without, material.getId())).isEmpty();
 
-        MrpRunDto with = runService.runMrp(new RunMrpRequest(90, true));
+        MrpRunDto with = runService.runMrp(new RunMrpRequest(90, true, null));
         MrpProposalDto safety = only(proposals(with, material.getId()), "PURCHASE", material.getId());
         assertThat(safety.proposedQty()).isEqualByComparingTo("30");
         assertThat(safety.sourceDemandType()).isEqualTo("SAFETY_STOCK");

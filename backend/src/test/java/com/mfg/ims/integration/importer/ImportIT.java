@@ -203,7 +203,7 @@ class ImportIT extends AbstractIntegrationTest {
                 .isInstanceOf(com.mfg.ims.common.exception.NotFoundException.class);
         assertThatThrownBy(() -> importer.importFile("customers", csv("c.txt", "customerCode\nX\n"), true))
                 .isInstanceOf(BusinessRuleException.class);
-        assertThat(importer.entities()).containsExactly("materials", "products", "customers", "suppliers", "opening-stock");
+        assertThat(importer.entities()).containsExactly("materials", "products", "customers", "suppliers", "opening-stock", "boms");
         assertThat(importer.template("customers")).startsWith("customerCode,name,");
     }
 

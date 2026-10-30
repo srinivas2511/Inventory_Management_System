@@ -256,4 +256,38 @@ public class InventoryQueryService {
                         wh.scoped(), wh.plantIds(), pageable)
                 .map(InventoryTransactionDto::from);
     }
+
+    /** Stock card with running balance for a material, filtered by date range (gap 13.6). */
+    @Transactional(readOnly = true)
+    public com.mfg.ims.inventory.dto.StockCardDto stockCardWithBalance(Long materialId,
+                                                                        java.time.LocalDate fromDate,
+                                                                        java.time.LocalDate toDate) {
+        Material mat = materialRepo.findById(materialId)
+                .orElseThrow(() -> new NotFoundException("Material not found: " + materialId));
+        Instant from = fromDate != null ? fromDate.atStartOfDay(java.time.ZoneOffset.UTC).toInstant() : Instant.EPOCH;
+        Instant to   = toDate   != null ? toDate.plusDays(1).atStartOfDay(java.time.ZoneOffset.UTC).toInstant() : Instant.now().plusSeconds(86400);
+
+        PlantScope.Filter wh = plantScope.warehouseFilter();
+        var txs = txRepo.searchInWarehouses(materialId, null, null, null, from, to,
+                        wh.scoped(), wh.plantIds(),
+                        org.springframework.data.domain.PageRequest.of(0, 2000,
+                                org.springframework.data.domain.Sort.by(
+                                        org.springframework.data.domain.Sort.Direction.ASC, "transactionDate")))
+                .getContent();
+
+        java.util.List<com.mfg.ims.inventory.dto.StockCardDto.StockCardLineDto> lines = new java.util.ArrayList<>();
+        BigDecimal balance = BigDecimal.ZERO;
+        for (InventoryTransaction tx : txs) {
+            String whCode = warehouseRepo.findById(tx.getWarehouseId())
+                    .map(w -> w.getWarehouseCode()).orElse(null);
+            BigDecimal qty = tx.getQuantity();
+            BigDecimal inQty  = qty.compareTo(BigDecimal.ZERO) > 0 ? qty : BigDecimal.ZERO;
+            BigDecimal outQty = qty.compareTo(BigDecimal.ZERO) < 0 ? qty.abs() : BigDecimal.ZERO;
+            balance = balance.add(qty);
+            lines.add(new com.mfg.ims.inventory.dto.StockCardDto.StockCardLineDto(
+                    tx.getTransactionDate(), tx.getReferenceNumber(), tx.getTransactionType(),
+                    inQty, outQty, balance, whCode));
+        }
+        return new com.mfg.ims.inventory.dto.StockCardDto(mat.getId(), mat.getMaterialCode(), mat.getName(), lines);
+    }
 }

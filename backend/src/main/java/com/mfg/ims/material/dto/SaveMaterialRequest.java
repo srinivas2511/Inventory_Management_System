@@ -21,5 +21,6 @@ public record SaveMaterialRequest(
         @NotNull @DecimalMin("0") BigDecimal standardCost,
         Integer shelfLifeDays,
         @Size(max = 500) String description,
+        boolean serviceItem,
         Long version) {
 }
