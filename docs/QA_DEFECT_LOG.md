@@ -1,0 +1,8 @@
+# QA Defect Log
+
+**Last updated:** 2026-10-30
+
+| ID | Module | Screen | Severity | Description | Steps | Root Cause | Files Changed | Fix | Regression Test | Status |
+|----|--------|--------|----------|-------------|-------|------------|---------------|-----|-----------------|--------|
+| DEF-001 | Infrastructure | All | CRITICAL | Backend Docker container (`ims-backend-1`) built on 2026-10-25, missing all endpoints added 2026-10-28 onward (valuation-report, ERP phases V64-V73, ERP gaps V74-V86, approval engine V87). Valuation Report returns 404. | Navigate to /inventory/valuation-report | Docker image stale — `docker compose build backend` needed | N/A | `docker compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml build backend && docker compose up -d backend` | Re-verify valuation-report and all ERP screens after rebuild | RESOLVED |
+| DEF-002 | Procurement | Purchase Orders list + PR list | MEDIUM | Supplier column showed numeric supplier ID; Material column showed numeric material ID in PR list. Backend `toDto()` passed `null` for name fields. | Open /procurement/purchase-orders or /procurement/requisitions | `PurchaseOrderService.toDto()` / `PurchaseRequisitionService.toDto()` hardcoded `null` for name fields; frontend interfaces missing name fields | `PurchaseOrderService.java`, `PurchaseRequisitionService.java`, `purchase-order-list.component.ts`, `purchase-requisition-list.component.ts` | Injected `SupplierRepository` + `MaterialRepository`; added `.findById().map().orElse()` lookups; updated frontend interfaces + templates | Docker rebuild + verify PO list shows supplier names, PR list shows material names | RESOLVED |
