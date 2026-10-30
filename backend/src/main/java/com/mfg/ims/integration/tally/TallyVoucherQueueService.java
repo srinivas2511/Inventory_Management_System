@@ -44,6 +44,20 @@ public class TallyVoucherQueueService {
         return TallyVoucherQueueDto.from(repo.save(q));
     }
 
+    public TallyVoucherQueueDto markSent(Long id, Long actorId) {
+        TallyVoucherQueue q = repo.findById(id)
+                .orElseThrow(() -> new NotFoundException("TallyVoucherQueue", id));
+        q.setStatus("SENT");
+        q.setSentAt(OffsetDateTime.now());
+        q.setUpdatedAt(OffsetDateTime.now());
+        q.setUpdatedBy(actorId);
+        return TallyVoucherQueueDto.from(repo.save(q));
+    }
+
+    public int countByStatus(String status) {
+        return repo.findByCompanyIdAndStatusOrderByCreatedAtDesc(1L, status).size();
+    }
+
     public TallyVoucherQueueDto enqueue(String sourceType, Long sourceId, String voucherType,
                                          String payloadXml, Long actorId) {
         TallyVoucherQueue q = new TallyVoucherQueue();
