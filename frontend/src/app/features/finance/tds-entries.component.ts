@@ -235,7 +235,7 @@ export class TdsEntriesComponent implements OnInit {
   private loadSummary(): void {
     this.http.get<TdsSummaryDto[]>('/api/finance/tds-entries/summary').subscribe({
       next: (data) => this.summary.set(data),
-      error: () => {},
+      error: () => this.snackBar.open('Failed to load TDS summary', 'Close', { duration: 3000 }),
     });
   }
 

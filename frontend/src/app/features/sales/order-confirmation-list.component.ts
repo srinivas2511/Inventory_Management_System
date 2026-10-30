@@ -57,6 +57,7 @@ interface CustomerLookup {
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
+    MatSnackBarModule,
   ],
   template: `
     <h2 mat-dialog-title i18n="@@oc.new_dialog_title">New Order Confirmation</h2>
@@ -93,6 +94,7 @@ export class NewOcDialogComponent implements OnInit {
   private http = inject(HttpClient);
   private dialog = inject(MatDialog);
   private fb = inject(FormBuilder);
+  private snackBar = inject(MatSnackBar);
 
   customers = signal<CustomerLookup[]>([]);
 
@@ -118,8 +120,8 @@ export class NewOcDialogComponent implements OnInit {
       items: [],
     };
     this.http.post('/api/sales/order-confirmations', body).subscribe({
-      next: (oc: any) => this.dialog.closeAll(),
-      error: () => {},
+      next: () => this.dialog.closeAll(),
+      error: () => this.snackBar.open('Failed to submit OC', 'Close', { duration: 3000 }),
     });
   }
 }

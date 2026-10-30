@@ -248,6 +248,6 @@ public class OcService {
                 oc.getOcKind(), oc.getCustomerId(), oc.getQuotationId(),
                 oc.getCustomerPoNo(), oc.getCustomerPoDate(), oc.getDeliveryDate(),
                 oc.getCurrency(), oc.getGrandTotal(), oc.getRemarks(),
-                oc.getSalesOrderId(), items);
+                oc.getSalesOrderId(), oc.getSubmittedBy(), items);
     }
 }

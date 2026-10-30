@@ -3,7 +3,7 @@ import { DecimalPipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
-import { MatDialogModule, MatDialog } from '@angular/material/dialog';
+import { MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -123,8 +123,8 @@ export interface JwoItemDto {
 
     <!-- Issue dialog -->
     @if (issueDialogOpen()) {
-      <div class="dialog-backdrop" (click)="closeIssueDialog()">
-        <div class="dialog-panel" (click)="$event.stopPropagation()" role="dialog" aria-modal="true" aria-label="Issue Materials">
+      <div class="dialog-backdrop" (click)="closeIssueDialog()" (keydown.escape)="closeIssueDialog()" tabindex="-1">
+        <div class="dialog-panel" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()" role="dialog" aria-modal="true" aria-label="Issue Materials" tabindex="-1">
           <h3>Issue Materials — {{ activeOrder()?.docNo }}</h3>
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Material ID</mat-label>
@@ -152,8 +152,8 @@ export interface JwoItemDto {
 
     <!-- Receive dialog -->
     @if (receiveDialogOpen()) {
-      <div class="dialog-backdrop" (click)="closeReceiveDialog()">
-        <div class="dialog-panel" (click)="$event.stopPropagation()" role="dialog" aria-modal="true" aria-label="Receive Job Work">
+      <div class="dialog-backdrop" (click)="closeReceiveDialog()" (keydown.escape)="closeReceiveDialog()" tabindex="-1">
+        <div class="dialog-panel" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()" role="dialog" aria-modal="true" aria-label="Receive Job Work" tabindex="-1">
           <h3>Receive — {{ activeOrder()?.docNo }}</h3>
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Received Qty</mat-label>
@@ -177,8 +177,8 @@ export interface JwoItemDto {
 
     <!-- Charges dialog -->
     @if (chargesDialogOpen()) {
-      <div class="dialog-backdrop" (click)="closeChargesDialog()">
-        <div class="dialog-panel" (click)="$event.stopPropagation()" role="dialog" aria-modal="true" aria-label="Record Charges">
+      <div class="dialog-backdrop" (click)="closeChargesDialog()" (keydown.escape)="closeChargesDialog()" tabindex="-1">
+        <div class="dialog-panel" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()" role="dialog" aria-modal="true" aria-label="Record Charges" tabindex="-1">
           <h3>Record Charges — {{ activeOrder()?.docNo }}</h3>
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Description</mat-label>

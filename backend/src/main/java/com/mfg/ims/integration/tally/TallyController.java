@@ -1,6 +1,5 @@
 package com.mfg.ims.integration.tally;
 
-import com.mfg.ims.enterprise.repository.CompanyRepository;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,16 +20,13 @@ public class TallyController {
     private final TallyExportService service;
     private final TallyLedgerMappingService ledgerMappingService;
     private final TallyVoucherQueueService voucherQueueService;
-    private final CompanyRepository companyRepository;
 
     public TallyController(TallyExportService service,
                             TallyLedgerMappingService ledgerMappingService,
-                            TallyVoucherQueueService voucherQueueService,
-                            CompanyRepository companyRepository) {
+                            TallyVoucherQueueService voucherQueueService) {
         this.service = service;
         this.ledgerMappingService = ledgerMappingService;
         this.voucherQueueService = voucherQueueService;
-        this.companyRepository = companyRepository;
     }
 
     @GetMapping("/ledgers")
@@ -59,8 +55,7 @@ public class TallyController {
         List<TallyReadinessDto.CheckItem> checks = new ArrayList<>();
 
         // Check 1 — Company GSTIN
-        var company = companyRepository.findById(1L).orElse(null);
-        String gstin = (company != null) ? company.getGstin() : null;
+        String gstin = voucherQueueService.companyGstin();
         boolean gstinOk = gstin != null && !gstin.isBlank();
         checks.add(new TallyReadinessDto.CheckItem(
                 "Company GSTIN configured",

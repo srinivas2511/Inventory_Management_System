@@ -98,8 +98,8 @@ export interface ServiceOrderDto {
 
     <!-- Confirm Service dialog -->
     @if (confirmDialogOpen()) {
-      <div class="dialog-backdrop" (click)="closeConfirmDialog()">
-        <div class="dialog-panel" (click)="$event.stopPropagation()" role="dialog" aria-modal="true" aria-label="Confirm Service">
+      <div class="dialog-backdrop" (click)="closeConfirmDialog()" (keydown.escape)="closeConfirmDialog()" tabindex="-1">
+        <div class="dialog-panel" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()" role="dialog" aria-modal="true" aria-label="Confirm Service" tabindex="-1">
           <h3>Confirm Service — {{ activeOrder()?.docNo }}</h3>
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Remarks (optional)</mat-label>

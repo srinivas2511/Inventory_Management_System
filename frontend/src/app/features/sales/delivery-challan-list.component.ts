@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { FormBuilder, FormArray, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -56,6 +56,7 @@ const CHALLAN_KINDS = ['NON_RETURNABLE', 'RETURNABLE', 'SERVICE', 'GOODS_OUT_FOR
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
+    MatSnackBarModule,
   ],
   template: `
     <h2 mat-dialog-title i18n="@@challan.new_dialog_title">New Delivery Challan</h2>
@@ -104,6 +105,7 @@ export class NewChallanDialogComponent implements OnInit {
   private http = inject(HttpClient);
   private dialog = inject(MatDialog);
   private fb = inject(FormBuilder);
+  private snackBar = inject(MatSnackBar);
 
   customers = signal<CustomerLookup[]>([]);
   kinds = CHALLAN_KINDS;
@@ -135,7 +137,7 @@ export class NewChallanDialogComponent implements OnInit {
     };
     this.http.post('/api/sales/delivery-challans', body).subscribe({
       next: () => this.dialog.closeAll(),
-      error: () => {},
+      error: () => this.snackBar.open('Failed to issue challan', 'Close', { duration: 3000 }),
     });
   }
 }

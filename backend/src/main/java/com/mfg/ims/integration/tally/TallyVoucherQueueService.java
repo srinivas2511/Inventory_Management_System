@@ -1,6 +1,7 @@
 package com.mfg.ims.integration.tally;
 
 import com.mfg.ims.common.exception.NotFoundException;
+import com.mfg.ims.enterprise.repository.CompanyRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.OffsetDateTime;
@@ -11,9 +12,17 @@ import java.util.List;
 public class TallyVoucherQueueService {
 
     private final TallyVoucherQueueRepository repo;
+    private final CompanyRepository companyRepo;
 
-    public TallyVoucherQueueService(TallyVoucherQueueRepository repo) {
+    public TallyVoucherQueueService(TallyVoucherQueueRepository repo, CompanyRepository companyRepo) {
         this.repo = repo;
+        this.companyRepo = companyRepo;
+    }
+
+    /** Returns the primary company's GSTIN, or null if not configured. */
+    @Transactional(readOnly = true)
+    public String companyGstin() {
+        return companyRepo.findById(1L).map(c -> c.getGstin()).orElse(null);
     }
 
     @Transactional(readOnly = true)

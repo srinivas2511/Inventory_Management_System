@@ -104,7 +104,7 @@ public class ChallanService {
                 .toList();
         return new ChallanDto(ch.getId(), ch.getDocNo(), ch.getDocDate(), ch.getStatus(),
                 ch.getChallanKind(), ch.getCustomerId(), ch.getOcId(), ch.getSalesOrderId(),
-                ch.getDeliveryAddress(), ch.getVehicleNo(), ch.getLrNo(), ch.getCourier(),
-                ch.getRemarks(), ch.getGrandTotal(), items);
+                ch.getDeliveryAddress(), ch.getVehicleNo(), ch.getDriverName(), ch.getLrNo(),
+                ch.getCourier(), ch.getRemarks(), ch.getGrandTotal(), items);
     }
 }

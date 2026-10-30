@@ -19,6 +19,7 @@ public record OcDto(
         BigDecimal grandTotal,
         String remarks,
         Long salesOrderId,
+        Long submittedBy,
         List<ItemDto> items
 ) {
     public record ItemDto(

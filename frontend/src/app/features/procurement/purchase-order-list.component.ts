@@ -349,7 +349,7 @@ export class PurchaseOrderListComponent implements OnInit {
   }
 
   doAction(id: number, action: string): void {
-    this.http.post<PurchaseOrderDto>(`/api/procurement/purchase-orders/${id}/${action}`, {}).subscribe({
+    this.http.post<unknown>(`/api/procurement/purchase-orders/${id}/${action}`, {}).subscribe({
       next: () => {
         this.snack.open('Action completed', 'OK', { duration: 2000 });
         this.load();

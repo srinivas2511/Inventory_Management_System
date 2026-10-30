@@ -15,6 +15,7 @@ public record ChallanDto(
         Long salesOrderId,
         String deliveryAddress,
         String vehicleNo,
+        String driverName,
         String lrNo,
         String courier,
         String remarks,
