@@ -1,13 +1,18 @@
 package com.mfg.ims.sales.quotation;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mfg.ims.auth.service.UserPermissionCache.CachedUser;
 import com.mfg.ims.common.numbering.DocumentNumberService;
 
 @Service
@@ -15,11 +20,18 @@ import com.mfg.ims.common.numbering.DocumentNumberService;
 public class QuotationService {
 
     private final QuotationRepository repo;
+    private final QuotationRevisionRepository revisionRepo;
     private final DocumentNumberService numberService;
+    private final ObjectMapper objectMapper;
 
-    public QuotationService(QuotationRepository repo, DocumentNumberService numberService) {
+    public QuotationService(QuotationRepository repo,
+                            QuotationRevisionRepository revisionRepo,
+                            DocumentNumberService numberService,
+                            ObjectMapper objectMapper) {
         this.repo = repo;
+        this.revisionRepo = revisionRepo;
         this.numberService = numberService;
+        this.objectMapper = objectMapper;
     }
 
     @Transactional(readOnly = true)
@@ -108,10 +120,52 @@ public class QuotationService {
         return toDto(repo.save(q));
     }
 
+    /**
+     * Amend an APPROVED or SENT quotation: snapshots current state, resets to DRAFT with revision_no incremented.
+     * Requires QUOTATION_AMEND permission.
+     */
+    public QuotationDto amend(Long id, String reason) {
+        var q = find(id);
+        if (!"APPROVED".equals(q.getStatus()) && !"SENT".equals(q.getStatus())) {
+            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
+                    "Only APPROVED or SENT quotations can be amended (current: " + q.getStatus() + ")");
+        }
+        // snapshot the current state before resetting to DRAFT
+        var rev = new QuotationRevision();
+        rev.setQuotation(q);
+        rev.setRevisionNumber(q.getRevisionNo());
+        rev.setRevisedAt(Instant.now());
+        rev.setRevisedBy(currentUserId());
+        rev.setReason(reason);
+        rev.setSnapshot(toJson(toDto(q)));
+        revisionRepo.save(rev);
+
+        // advance revision counter and reset status to DRAFT
+        q.setRevisionNo(q.getRevisionNo() + 1);
+        q.setStatus("DRAFT");
+        return toDto(repo.save(q));
+    }
+
+    /** Return revision history for a quotation (newest revision first). */
+    @Transactional(readOnly = true)
+    public List<QuotationRevisionDto> listRevisions(Long id) {
+        find(id); // 404 if not found
+        return revisionRepo.findByQuotationIdOrderByRevisionNumberDesc(id).stream()
+                .map(r -> new QuotationRevisionDto(r.getId(), id, r.getRevisionNumber(),
+                        r.getRevisedAt(), r.getRevisedBy(), r.getReason(), r.getSnapshot()))
+                .toList();
+    }
+
     public QuotationDto cancel(Long id, String reason) {
         var q = find(id);
         if ("CANCELLED".equals(q.getStatus()) || "CONVERTED".equals(q.getStatus())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Quotation cannot be cancelled in status: " + q.getStatus());
+        }
+        // 11.8 cascade check: block cancel if linked OC or SO exists (downstream documents)
+        long linkedDocs = repo.countLinkedOrderConfirmations(id);
+        if (linkedDocs > 0) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Cancel linked Order Confirmations first");
         }
         q.setStatus("CANCELLED");
         q.setLostReason(reason);
@@ -137,6 +191,24 @@ public class QuotationService {
     private Quotation find(Long id) {
         return repo.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Quotation not found: " + id));
+    }
+
+    private Long currentUserId() {
+        try {
+            var auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.getPrincipal() instanceof CachedUser user) {
+                return user.id();
+            }
+        } catch (Exception ignored) {}
+        return null;
+    }
+
+    private String toJson(Object obj) {
+        try {
+            return objectMapper.writeValueAsString(obj);
+        } catch (JsonProcessingException e) {
+            return "{}";
+        }
     }
 
     private QuotationDto toDto(Quotation q) {

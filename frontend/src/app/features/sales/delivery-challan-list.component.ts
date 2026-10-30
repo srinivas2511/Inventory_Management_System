@@ -3,6 +3,7 @@ import { DecimalPipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -26,6 +27,9 @@ export interface ChallanDto {
   lrNo: string | null;
   courier: string | null;
   grandTotal: number | null;
+  isReturnable: boolean;
+  expectedReturnDate: string | null;
+  returnedAt: string | null;
   items: ChallanItemDto[];
 }
 
@@ -44,7 +48,7 @@ interface CustomerLookup {
   name: string;
 }
 
-const CHALLAN_KINDS = ['NON_RETURNABLE', 'RETURNABLE', 'SERVICE', 'GOODS_OUT_FOR_SERVICE'];
+const CHALLAN_KINDS = ['DELIVERY', 'NON_RETURNABLE', 'RETURNABLE', 'SERVICE_OUT', 'PURCHASE_RETURN'];
 
 @Component({
   selector: 'app-new-challan-dialog',
@@ -52,6 +56,7 @@ const CHALLAN_KINDS = ['NON_RETURNABLE', 'RETURNABLE', 'SERVICE', 'GOODS_OUT_FOR
   imports: [
     ReactiveFormsModule,
     MatButtonModule,
+    MatCheckboxModule,
     MatDialogModule,
     MatFormFieldModule,
     MatInputModule,
@@ -78,6 +83,15 @@ const CHALLAN_KINDS = ['NON_RETURNABLE', 'RETURNABLE', 'SERVICE', 'GOODS_OUT_FOR
             }
           </mat-select>
         </mat-form-field>
+        <mat-checkbox formControlName="isReturnable" i18n="@@challan.field_returnable">
+          Returnable
+        </mat-checkbox>
+        @if (form.value.isReturnable) {
+          <mat-form-field appearance="outline">
+            <mat-label i18n="@@challan.field_expected_return">Expected Return Date</mat-label>
+            <input matInput type="date" formControlName="expectedReturnDate" />
+          </mat-form-field>
+        }
         <mat-form-field appearance="outline">
           <mat-label i18n="@@challan.field_vehicle_no">Vehicle No.</mat-label>
           <input matInput formControlName="vehicleNo" />
@@ -111,8 +125,10 @@ export class NewChallanDialogComponent implements OnInit {
   kinds = CHALLAN_KINDS;
 
   form = this.fb.group({
-    challanKind: ['NON_RETURNABLE', Validators.required],
+    challanKind: ['DELIVERY', Validators.required],
     customerId: [null as number | null, Validators.required],
+    isReturnable: [false],
+    expectedReturnDate: [''],
     vehicleNo: [''],
     driverName: [''],
     remarks: [''],
@@ -127,9 +143,11 @@ export class NewChallanDialogComponent implements OnInit {
   save(): void {
     if (this.form.invalid) return;
     const v = this.form.value;
-    const body = {
+    const body: Record<string, unknown> = {
       customerId: v.customerId,
       challanKind: v.challanKind,
+      isReturnable: v.isReturnable,
+      expectedReturnDate: v.isReturnable && v.expectedReturnDate ? v.expectedReturnDate : null,
       vehicleNo: v.vehicleNo || null,
       driverName: v.driverName || null,
       remarks: v.remarks || null,
@@ -137,7 +155,7 @@ export class NewChallanDialogComponent implements OnInit {
     };
     this.http.post('/api/sales/delivery-challans', body).subscribe({
       next: () => this.dialog.closeAll(),
-      error: () => this.snackBar.open('Failed to issue challan', 'Close', { duration: 3000 }),
+      error: () => this.snackBar.open('Failed to create challan', 'Close', { duration: 3000 }),
     });
   }
 }
@@ -205,6 +223,12 @@ export class NewChallanDialogComponent implements OnInit {
                       aria-label="Issue challan"
                       i18n="@@challan.btn_issue">Issue</button>
             }
+            @if (row.isReturnable && row.status === 'ISSUED' && !row.returnedAt) {
+              <button mat-stroked-button color="warn"
+                      (click)="markReturned(row)"
+                      aria-label="Mark as returned"
+                      i18n="@@challan.btn_mark_returned">Mark Returned</button>
+            }
           </td>
         </ng-container>
         <tr mat-header-row *matHeaderRowDef="columns"></tr>
@@ -252,6 +276,19 @@ export class DeliveryChallanListComponent implements OnInit {
         this.load();
       },
       error: () => this.snackBar.open('Issue failed', 'Close', { duration: 3000 }),
+    });
+  }
+
+  markReturned(challan: ChallanDto): void {
+    this.http.post(`/api/sales/delivery-challans/${challan.id}/mark-returned`, {}).subscribe({
+      next: () => {
+        this.snackBar.open('Challan marked as returned', 'Close', { duration: 2000 });
+        this.load();
+      },
+      error: (err) => {
+        const msg = err?.error?.message ?? 'Mark returned failed';
+        this.snackBar.open(msg, 'Close', { duration: 3000 });
+      },
     });
   }
 }

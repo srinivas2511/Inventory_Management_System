@@ -16,10 +16,12 @@ public record OcDto(
         LocalDate customerPoDate,
         LocalDate deliveryDate,
         String currency,
+        BigDecimal exchangeRate,
         BigDecimal grandTotal,
         String remarks,
         Long salesOrderId,
         Long submittedBy,
+        Long originalOcId,
         List<ItemDto> items
 ) {
     public record ItemDto(

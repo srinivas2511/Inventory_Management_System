@@ -120,6 +120,7 @@ class QuotationOcIT extends AbstractIntegrationTest {
                 customerId, null, "NON_RETURNABLE", null, null,
                 "456 Industrial Park, City", "GJ01CD5678", "Raju Driver",
                 "LR-QOC-001", null, "Fragile items",
+                null, null,
                 List.of(new SaveChallanRequest.ItemLine(
                         null, td.product().getId(), "Widget B",
                         new BigDecimal("3"), "PCS", new BigDecimal("500.00"), null, null)));

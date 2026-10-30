@@ -1,5 +1,6 @@
 package com.mfg.ims.sales.challan;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -47,6 +48,9 @@ public class ChallanService {
         ch.setLrNo(req.lrNo());
         ch.setCourier(req.courier());
         ch.setRemarks(req.remarks());
+        // 11.4: returnable tracking
+        if (req.isReturnable() != null) ch.setReturnable(req.isReturnable());
+        ch.setExpectedReturnDate(req.expectedReturnDate());
         applyItems(ch, req);
         return toDto(repo.save(ch));
     }
@@ -70,8 +74,28 @@ public class ChallanService {
         return toDto(repo.save(ch));
     }
 
+    /**
+     * 11.4: Mark a RETURNABLE challan as returned (sets returned_at = now()).
+     */
+    public ChallanDto markReturned(Long id) {
+        var ch = find(id);
+        if (!ch.isReturnable()) {
+            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
+                    "Challan is not marked as returnable");
+        }
+        if (!"ISSUED".equals(ch.getStatus())) {
+            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
+                    "Only ISSUED challans can be marked as returned");
+        }
+        ch.setReturnedAt(Instant.now());
+        ch.setStatus("RETURNED");
+        return toDto(repo.save(ch));
+    }
+
     private void applyItems(DeliveryChallan ch, SaveChallanRequest req) {
         if (req.items() == null) return;
+        // 11.8: SERVICE_OUT kind does not move stock — just tracking
+        // No inventory posting needed here; items are recorded for document purposes only.
         int lineNo = 1;
         for (var line : req.items()) {
             var item = new DeliveryChallanItem();
@@ -105,6 +129,8 @@ public class ChallanService {
         return new ChallanDto(ch.getId(), ch.getDocNo(), ch.getDocDate(), ch.getStatus(),
                 ch.getChallanKind(), ch.getCustomerId(), ch.getOcId(), ch.getSalesOrderId(),
                 ch.getDeliveryAddress(), ch.getVehicleNo(), ch.getDriverName(), ch.getLrNo(),
-                ch.getCourier(), ch.getRemarks(), ch.getGrandTotal(), items);
+                ch.getCourier(), ch.getRemarks(), ch.getGrandTotal(),
+                ch.isReturnable(), ch.getExpectedReturnDate(), ch.getReturnedAt(),
+                items);
     }
 }

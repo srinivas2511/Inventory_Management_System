@@ -1,6 +1,7 @@
 package com.mfg.ims.sales.challan;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -20,6 +21,9 @@ public record ChallanDto(
         String courier,
         String remarks,
         BigDecimal grandTotal,
+        boolean isReturnable,
+        LocalDate expectedReturnDate,
+        Instant returnedAt,
         List<ItemDto> items
 ) {
     public record ItemDto(
