@@ -10,6 +10,7 @@ function po(id: number, submittedBy: number | null): PurchaseOrderDto {
     id,
     poNumber: `PO/26/0000${id}`,
     supplierId: 1,
+    supplierName: 'Test Supplier',
     poDate: '2026-10-08',
     expectedDeliveryDate: '2026-10-20',
     status: 'SUBMITTED',
