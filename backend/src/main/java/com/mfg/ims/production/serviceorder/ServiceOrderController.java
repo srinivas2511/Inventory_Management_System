@@ -44,4 +44,20 @@ public class ServiceOrderController {
                                      @AuthenticationPrincipal CachedUser actor) {
         return service.complete(id, actor.id());
     }
+
+    /** Confirm service delivery — creates a confirmation record. */
+    @PostMapping("/{id}/confirm")
+    @PreAuthorize("hasAuthority('SERVICE_ORDER_CREATE')")
+    public ServiceConfirmationDto confirm(@PathVariable Long id,
+                                          @RequestBody(required = false) ConfirmServiceRequest req,
+                                          @AuthenticationPrincipal CachedUser actor) {
+        return service.confirm(id, req, actor.id());
+    }
+
+    /** List all service confirmations for an order. */
+    @GetMapping("/{id}/confirmations")
+    @PreAuthorize("hasAuthority('SERVICE_ORDER_VIEW')")
+    public List<ServiceConfirmationDto> confirmations(@PathVariable Long id) {
+        return service.getConfirmations(id);
+    }
 }

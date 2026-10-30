@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
 
+import com.mfg.ims.inventory.dto.BelowMinimumDto;
 import com.mfg.ims.inventory.dto.InventoryBalanceDto;
 import com.mfg.ims.inventory.dto.InventoryTransactionDto;
 import com.mfg.ims.inventory.dto.MaterialBatchDto;
@@ -140,6 +141,22 @@ public class InventoryController {
     @PreAuthorize("hasAuthority('INVENTORY_ADJUST')")
     public List<PostingResult> loadOpeningBalances(@Valid @RequestBody List<OpeningBalanceLine> lines) {
         return openingBalanceService.loadOpeningBalances(lines);
+    }
+
+    // ── Min/max stock alerts ──────────────────────────────────────────────────
+
+    @GetMapping("/below-minimum")
+    @PreAuthorize("hasAuthority('INVENTORY_VIEW')")
+    public List<BelowMinimumDto> belowMinimum() {
+        return queryService.belowMinimum();
+    }
+
+    @GetMapping("/stock-card/{materialId}")
+    @PreAuthorize("hasAuthority('INVENTORY_VIEW')")
+    public Page<InventoryTransactionDto> stockCard(
+            @PathVariable Long materialId,
+            @PageableDefault(size = 50, sort = "id", direction = org.springframework.data.domain.Sort.Direction.DESC) Pageable pageable) {
+        return queryService.stockCard(materialId, pageable);
     }
 
     // ── Stock transfer ────────────────────────────────────────────────────────

@@ -18,6 +18,7 @@ import com.mfg.ims.common.settings.SystemSettingService;
 import com.mfg.ims.enterprise.scope.PlantScope;
 import com.mfg.ims.inventory.domain.InventoryBalance;
 import com.mfg.ims.inventory.domain.InventoryTransaction;
+import com.mfg.ims.inventory.dto.BelowMinimumDto;
 import com.mfg.ims.inventory.dto.InventoryBalanceDto;
 import com.mfg.ims.inventory.dto.InventoryTransactionDto;
 import com.mfg.ims.inventory.dto.PostingResult;
@@ -229,5 +230,30 @@ public class InventoryQueryService {
     @Transactional
     public PostingResult reverse(Long txId, String reason) {
         return postingService.reverse(txId, reason);
+    }
+
+    /** Returns materials whose total AVAILABLE on-hand is below min_stock. */
+    @Transactional(readOnly = true)
+    public List<BelowMinimumDto> belowMinimum() {
+        List<Object[]> rows = balanceRepo.findBelowMinimum();
+        return rows.stream().map(r -> {
+            Long matId = ((Number) r[0]).longValue();
+            String code = (String) r[1];
+            String name = (String) r[2];
+            BigDecimal minStock = r[3] != null ? new BigDecimal(r[3].toString()) : BigDecimal.ZERO;
+            String uom = (String) r[4];
+            BigDecimal onHand = r[5] != null ? new BigDecimal(r[5].toString()) : BigDecimal.ZERO;
+            BigDecimal shortage = minStock.subtract(onHand);
+            return new BelowMinimumDto(matId, code, name, minStock, onHand, uom, shortage);
+        }).collect(Collectors.toList());
+    }
+
+    /** Full movement history (stock card) for one material, newest first. */
+    @Transactional(readOnly = true)
+    public Page<InventoryTransactionDto> stockCard(Long materialId, Pageable pageable) {
+        PlantScope.Filter wh = plantScope.warehouseFilter();
+        return txRepo.searchInWarehouses(materialId, null, null, null, null, null,
+                        wh.scoped(), wh.plantIds(), pageable)
+                .map(InventoryTransactionDto::from);
     }
 }

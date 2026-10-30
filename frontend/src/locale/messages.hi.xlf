@@ -670,6 +670,10 @@
         <source>Scrap Lots</source>
         <target>स्क्रैप लॉट</target>
       </trans-unit>
+      <trans-unit id="nav.item-stock-alerts" datatype="html">
+        <source>Stock Alerts</source>
+        <target>स्टॉक अलर्ट</target>
+      </trans-unit>
       <trans-unit id="nav.item-onboarding" datatype="html">
         <source>Setup Wizard</source>
         <target>सेटअप विज़ार्ड</target>

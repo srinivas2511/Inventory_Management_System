@@ -42,6 +42,29 @@ public class BarcodeService {
         return toDto(label);
     }
 
+    @Transactional(readOnly = true)
+    public String generateLabel(Long id) {
+        BarcodeLabel label = repo.findByIdAndCompanyId(id, 1L)
+                .orElseThrow(() -> new NotFoundException("BarcodeLabel", id));
+        String createdAt = label.getCreatedAt() != null ? label.getCreatedAt().toString() : "";
+        return "<!DOCTYPE html><html><head><title>Barcode Label</title>" +
+               "<style>body{font-family:monospace;text-align:center;padding:20px}" +
+               ".label{border:2px solid #000;padding:16px;display:inline-block;min-width:200px}" +
+               "h3{font-size:2em;letter-spacing:4px;margin:0 0 8px}" +
+               "p{margin:4px 0;font-size:0.9em}</style></head><body>" +
+               "<div class=\"label\">" +
+               "<h3>" + escapeHtml(label.getBarcodeValue()) + "</h3>" +
+               "<p>" + escapeHtml(label.getRefType()) + ": " + label.getRefId() + "</p>" +
+               "<p>" + createdAt + "</p>" +
+               "</div>" +
+               "</body></html>";
+    }
+
+    private String escapeHtml(String s) {
+        if (s == null) return "";
+        return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+    }
+
     public BarcodeLabelDto recordPrint(Long id, Long actorId) {
         BarcodeLabel label = repo.findByIdAndCompanyId(id, 1L)
                 .orElseThrow(() -> new NotFoundException("BarcodeLabel", id));

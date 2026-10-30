@@ -109,6 +109,13 @@ export const routes: Routes = [
           import('./features/inventory/valuation-report.component').then((m) => m.ValuationReportComponent),
       },
       {
+        path: 'inventory/stock-alerts',
+        title: 'Stock Alerts',
+        canActivate: [permissionGuard('INVENTORY_VIEW')],
+        loadComponent: () =>
+          import('./features/inventory/stock-alerts.component').then((m) => m.StockAlertsComponent),
+      },
+      {
         path: 'procurement/purchase-orders',
         title: 'Purchase Orders',
         canActivate: [permissionGuard('PURCHASE_VIEW')],
