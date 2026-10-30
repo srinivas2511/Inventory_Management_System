@@ -34,8 +34,16 @@ export interface TeamDto {
 }
 
 const ALL_MODULES = [
-  'INVENTORY', 'PROCUREMENT', 'MANUFACTURING', 'SALES',
-  'FINANCE', 'QUALITY', 'HR', 'CRM', 'WMS', 'MAINTENANCE',
+  'INVENTORY',
+  'PROCUREMENT',
+  'MANUFACTURING',
+  'SALES',
+  'FINANCE',
+  'QUALITY',
+  'HR',
+  'CRM',
+  'WMS',
+  'MAINTENANCE',
 ];
 
 @Component({
@@ -66,8 +74,12 @@ const ALL_MODULES = [
       <div class="section-label mt-16">Notification Settings (JSON)</div>
       <mat-form-field appearance="outline" class="full-width">
         <mat-label>Notification Settings JSON</mat-label>
-        <textarea matInput [(ngModel)]="notificationSettingsJson" rows="4"
-                  [ngModelOptions]="{standalone: true}"></textarea>
+        <textarea
+          matInput
+          [(ngModel)]="notificationSettingsJson"
+          rows="4"
+          [ngModelOptions]="{ standalone: true }"
+        ></textarea>
       </mat-form-field>
       @if (jsonError()) {
         <p class="form-error">{{ jsonError() }}</p>
@@ -76,17 +88,38 @@ const ALL_MODULES = [
     <mat-dialog-actions align="end">
       <button mat-button mat-dialog-close>Cancel</button>
       <button mat-flat-button color="primary" (click)="save()" [disabled]="saving()">
-        @if (saving()) { <mat-spinner diameter="18" /> } @else { Save }
+        @if (saving()) {
+          <mat-spinner diameter="18" />
+        } @else {
+          Save
+        }
       </button>
     </mat-dialog-actions>
   `,
-  styles: [`
-    .section-label { font-weight: 500; margin-bottom: 8px; }
-    .mt-16 { margin-top: 16px; }
-    .module-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; }
-    .full-width { width: 100%; margin-top: 8px; }
-    .form-error { color: #f44336; font-size: 0.75rem; }
-  `],
+  styles: [
+    `
+      .section-label {
+        font-weight: 500;
+        margin-bottom: 8px;
+      }
+      .mt-16 {
+        margin-top: 16px;
+      }
+      .module-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 4px;
+      }
+      .full-width {
+        width: 100%;
+        margin-top: 8px;
+      }
+      .form-error {
+        color: #f44336;
+        font-size: 0.75rem;
+      }
+    `,
+  ],
 })
 export class TeamSettingsDialogComponent {
   readonly team = inject<TeamDto>(MAT_DIALOG_DATA);
@@ -122,20 +155,22 @@ export class TeamSettingsDialogComponent {
       return;
     }
     this.saving.set(true);
-    this.http.put<TeamDto>(`/api/admin/teams/${this.team.id}/settings`, {
-      notificationSettings: this.notificationSettingsJson,
-      moduleAccess: this.selectedModules(),
-    }).subscribe({
-      next: () => {
-        this.saving.set(false);
-        this.snack.open('Settings saved', 'Close', { duration: 2000 });
-        this.dialogRef.close(true);
-      },
-      error: () => {
-        this.saving.set(false);
-        this.snack.open('Failed to save settings', 'Close', { duration: 3000 });
-      },
-    });
+    this.http
+      .put<TeamDto>(`/api/admin/teams/${this.team.id}/settings`, {
+        notificationSettings: this.notificationSettingsJson,
+        moduleAccess: this.selectedModules(),
+      })
+      .subscribe({
+        next: () => {
+          this.saving.set(false);
+          this.snack.open('Settings saved', 'Close', { duration: 2000 });
+          this.dialogRef.close(true);
+        },
+        error: () => {
+          this.saving.set(false);
+          this.snack.open('Failed to save settings', 'Close', { duration: 3000 });
+        },
+      });
   }
 }
 

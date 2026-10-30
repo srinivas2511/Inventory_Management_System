@@ -112,8 +112,7 @@ export const routes: Routes = [
         path: 'inventory/stock-alerts',
         title: 'Stock Alerts',
         canActivate: [permissionGuard('INVENTORY_VIEW')],
-        loadComponent: () =>
-          import('./features/inventory/stock-alerts.component').then((m) => m.StockAlertsComponent),
+        loadComponent: () => import('./features/inventory/stock-alerts.component').then((m) => m.StockAlertsComponent),
       },
       {
         path: 'procurement/purchase-orders',
@@ -609,15 +608,13 @@ export const routes: Routes = [
         path: 'finance/party-ledger',
         title: 'Party Ledger',
         canActivate: [permissionGuard('AR_MANAGE')],
-        loadComponent: () =>
-          import('./features/finance/party-ledger.component').then((m) => m.PartyLedgerComponent),
+        loadComponent: () => import('./features/finance/party-ledger.component').then((m) => m.PartyLedgerComponent),
       },
       {
         path: 'integration/eway-bill',
         title: 'E-Way Bill',
         canActivate: [permissionGuard('EWAY_BILL_MANAGE')],
-        loadComponent: () =>
-          import('./features/integration/eway-bill.component').then((m) => m.EwayBillComponent),
+        loadComponent: () => import('./features/integration/eway-bill.component').then((m) => m.EwayBillComponent),
       },
       {
         path: 'controlling/cost-centres',

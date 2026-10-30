@@ -90,7 +90,17 @@ export class BarcodeListComponent implements OnInit {
   private http = inject(HttpClient);
   private snack = inject(MatSnackBar);
 
-  readonly columns = ['id', 'labelType', 'refType', 'refId', 'barcodeValue', 'printCount', 'printedAt', 'createdAt', 'actions'];
+  readonly columns = [
+    'id',
+    'labelType',
+    'refType',
+    'refId',
+    'barcodeValue',
+    'printCount',
+    'printedAt',
+    'createdAt',
+    'actions',
+  ];
   readonly labels = signal<BarcodeLabelDto[]>([]);
   readonly loading = signal(true);
 

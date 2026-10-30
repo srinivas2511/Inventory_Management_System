@@ -66,10 +66,15 @@ export interface PaymentReminderDto {
         <ng-container matColumnDef="level">
           <th mat-header-cell *matHeaderCellDef>Level</th>
           <td mat-cell *matCellDef="let row">
-            @if (row.level === 1) { 1st }
-            @else if (row.level === 2) { 2nd }
-            @else if (row.level === 3) { Final }
-            @else { — }
+            @if (row.level === 1) {
+              1st
+            } @else if (row.level === 2) {
+              2nd
+            } @else if (row.level === 3) {
+              Final
+            } @else {
+              —
+            }
           </td>
         </ng-container>
         <ng-container matColumnDef="mode">
@@ -128,8 +133,7 @@ export interface PaymentReminderDto {
           </mat-form-field>
           <div class="form-actions">
             <button mat-button type="button" (click)="showForm.set(false)">Cancel</button>
-            <button mat-flat-button color="primary" type="button"
-                    (click)="saveReminder()" [disabled]="saving()">
+            <button mat-flat-button color="primary" type="button" (click)="saveReminder()" [disabled]="saving()">
               Save
             </button>
           </div>

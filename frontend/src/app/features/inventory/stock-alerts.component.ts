@@ -20,14 +20,7 @@ export interface BelowMinimumDto {
 @Component({
   selector: 'app-stock-alerts',
   standalone: true,
-  imports: [
-    DecimalPipe,
-    MatButtonModule,
-    MatIconModule,
-    MatProgressSpinnerModule,
-    MatTableModule,
-    MatSnackBarModule,
-  ],
+  imports: [DecimalPipe, MatButtonModule, MatIconModule, MatProgressSpinnerModule, MatTableModule, MatSnackBarModule],
   template: `
     <div class="page-header">
       <h2 i18n="@@nav.item-stock-alerts">Stock Alerts — Below Minimum</h2>

@@ -146,8 +146,14 @@ export interface SupplierDto {
 
     <!-- Record Quote Dialog -->
     @if (recordQuoteDialog()) {
-      <div class="dialog-backdrop" role="button" tabindex="0" aria-label="Close dialog"
-           (click)="closeRecordQuoteDialog()" (keydown.escape)="closeRecordQuoteDialog()">
+      <div
+        class="dialog-backdrop"
+        role="button"
+        tabindex="0"
+        aria-label="Close dialog"
+        (click)="closeRecordQuoteDialog()"
+        (keydown.escape)="closeRecordQuoteDialog()"
+      >
         <div class="dialog-panel" role="presentation" (click)="$event.stopPropagation()">
           <h3>Record Supplier Quote — {{ selectedRfq()?.docNo }}</h3>
           <form [formGroup]="quoteForm" (ngSubmit)="submitQuote()">
@@ -206,8 +212,14 @@ export interface SupplierDto {
 
     <!-- Quotes Comparison Dialog -->
     @if (quotesDialog()) {
-      <div class="dialog-backdrop" role="button" tabindex="0" aria-label="Close dialog"
-           (click)="closeQuotesDialog()" (keydown.escape)="closeQuotesDialog()">
+      <div
+        class="dialog-backdrop"
+        role="button"
+        tabindex="0"
+        aria-label="Close dialog"
+        (click)="closeQuotesDialog()"
+        (keydown.escape)="closeQuotesDialog()"
+      >
         <div class="dialog-panel wide" role="presentation" (click)="$event.stopPropagation()">
           <h3>Supplier Quotes — {{ selectedRfq()?.docNo }}</h3>
           <mat-tab-group>
@@ -279,7 +291,7 @@ export interface SupplierDto {
                       <tr>
                         <td>{{ rfqItem.description ?? 'Line ' + rfqItem.lineNo }}</td>
                         @for (q of quotes(); track q.id) {
-                          <td>{{ getQuotePrice(q, rfqItem.id) | number:'1.2-4' }}</td>
+                          <td>{{ getQuotePrice(q, rfqItem.id) | number: '1.2-4' }}</td>
                         }
                       </tr>
                     }
@@ -295,25 +307,73 @@ export interface SupplierDto {
       </div>
     }
   `,
-  styles: [`
-    .dialog-backdrop {
-      position: fixed; inset: 0; background: rgba(0,0,0,.4);
-      display: flex; align-items: center; justify-content: center; z-index: 1000;
-    }
-    .dialog-panel {
-      background: #fff; border-radius: 8px; padding: 24px; width: 520px; max-height: 80vh; overflow-y: auto;
-    }
-    .dialog-panel.wide { width: 720px; }
-    .dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
-    .quote-line { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
-    .line-desc { flex: 1; font-size: 0.9rem; }
-    .full-width { width: 100%; }
-    .empty-msg { padding: 16px; color: #666; }
-    .awarded-badge { color: green; font-size: 0.85rem; font-weight: 500; }
-    .comparison-table { width: 100%; border-collapse: collapse; margin-top: 12px; }
-    .comparison-table th, .comparison-table td { border: 1px solid #ddd; padding: 8px; text-align: right; }
-    .comparison-table th:first-child, .comparison-table td:first-child { text-align: left; }
-  `],
+  styles: [
+    `
+      .dialog-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+      }
+      .dialog-panel {
+        background: #fff;
+        border-radius: 8px;
+        padding: 24px;
+        width: 520px;
+        max-height: 80vh;
+        overflow-y: auto;
+      }
+      .dialog-panel.wide {
+        width: 720px;
+      }
+      .dialog-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        margin-top: 16px;
+      }
+      .quote-line {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 4px;
+      }
+      .line-desc {
+        flex: 1;
+        font-size: 0.9rem;
+      }
+      .full-width {
+        width: 100%;
+      }
+      .empty-msg {
+        padding: 16px;
+        color: #666;
+      }
+      .awarded-badge {
+        color: green;
+        font-size: 0.85rem;
+        font-weight: 500;
+      }
+      .comparison-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 12px;
+      }
+      .comparison-table th,
+      .comparison-table td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: right;
+      }
+      .comparison-table th:first-child,
+      .comparison-table td:first-child {
+        text-align: left;
+      }
+    `,
+  ],
 })
 export class RfqListComponent implements OnInit {
   private http = inject(HttpClient);
@@ -352,7 +412,7 @@ export class RfqListComponent implements OnInit {
   openRecordQuoteDialog(rfq: RfqDto): void {
     this.selectedRfq.set(rfq);
     this.lineControls = (rfq.items ?? []).map(() =>
-      this.fb.group({ unitPrice: [null, Validators.required], taxPct: [0] })
+      this.fb.group({ unitPrice: [null, Validators.required], taxPct: [0] }),
     );
     this.quoteForm = this.fb.group({
       docNo: ['', Validators.required],

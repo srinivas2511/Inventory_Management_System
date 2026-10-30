@@ -83,7 +83,9 @@ export interface PurchaseRequisitionDto {
         </ng-container>
         <ng-container matColumnDef="materialId">
           <th mat-header-cell *matHeaderCellDef>Material</th>
-          <td mat-cell *matCellDef="let r">{{ r.materialCode ? r.materialCode + ' · ' + r.materialName : r.materialId }}</td>
+          <td mat-cell *matCellDef="let r">
+            {{ r.materialCode ? r.materialCode + ' · ' + r.materialName : r.materialId }}
+          </td>
         </ng-container>
         <ng-container matColumnDef="requestedQty">
           <th mat-header-cell *matHeaderCellDef>Qty</th>

@@ -1,11 +1,4 @@
-import {
-  Component,
-  Input,
-  OnChanges,
-  Output,
-  EventEmitter,
-  inject,
-} from '@angular/core';
+import { Component, Input, OnChanges, Output, EventEmitter, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -66,33 +59,22 @@ export interface CustomFieldDef {
             @if (def.fieldType === 'NUMBER') {
               <mat-form-field appearance="outline" class="full-width">
                 <mat-label>{{ def.label }}</mat-label>
-                <input
-                  matInput
-                  type="number"
-                  [formControlName]="def.fieldKey"
-                  (change)="emitChange()"
-                />
+                <input matInput type="number" [formControlName]="def.fieldKey" (change)="emitChange()" />
               </mat-form-field>
             }
             @if (def.fieldType === 'DATE') {
               <mat-form-field appearance="outline" class="full-width">
                 <mat-label>{{ def.label }}</mat-label>
-                <input
-                  matInput
-                  [matDatepicker]="picker"
-                  [formControlName]="def.fieldKey"
-                  (dateChange)="emitChange()"
-                />
+                <input matInput [matDatepicker]="picker" [formControlName]="def.fieldKey" (dateChange)="emitChange()" />
                 <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
                 <mat-datepicker #picker></mat-datepicker>
               </mat-form-field>
             }
             @if (def.fieldType === 'BOOLEAN') {
               <div class="toggle-row">
-                <mat-slide-toggle
-                  [formControlName]="def.fieldKey"
-                  (change)="emitChange()"
-                >{{ def.label }}</mat-slide-toggle>
+                <mat-slide-toggle [formControlName]="def.fieldKey" (change)="emitChange()">{{
+                  def.label
+                }}</mat-slide-toggle>
               </div>
             }
             @if (def.fieldType === 'SELECT') {
@@ -150,16 +132,14 @@ export class CustomFieldsPanelComponent implements OnChanges {
   }
 
   private load(): void {
-    this.http
-      .get<CustomFieldDef[]>(`/api/admin/custom-fields?entityType=${this.entityType}`)
-      .subscribe({
-        next: (defs) => {
-          this.definitions = defs.filter((d) => d.active);
-          this.buildForm(this.definitions);
-        },
-        // eslint-disable-next-line @typescript-eslint/no-empty-function
-        error: () => {},
-      });
+    this.http.get<CustomFieldDef[]>(`/api/admin/custom-fields?entityType=${this.entityType}`).subscribe({
+      next: (defs) => {
+        this.definitions = defs.filter((d) => d.active);
+        this.buildForm(this.definitions);
+      },
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      error: () => {},
+    });
   }
 
   private buildForm(defs: CustomFieldDef[]): void {

@@ -80,12 +80,7 @@ export interface ReminderDto {
             <div class="add-comment">
               <mat-form-field appearance="outline" class="full-width">
                 <mat-label>Add a comment</mat-label>
-                <textarea
-                  matInput
-                  [(ngModel)]="newBody"
-                  rows="2"
-                  data-testid="comment-input"
-                ></textarea>
+                <textarea matInput [(ngModel)]="newBody" rows="2" data-testid="comment-input"></textarea>
               </mat-form-field>
               <div class="comment-actions">
                 <button
@@ -112,7 +107,9 @@ export interface ReminderDto {
                   <div class="comment-block">
                     <span class="comment-meta">
                       {{ r.remindAt | istDate: 'short' }}
-                      @if (r.dismissed) { <span class="dismissed-badge">Dismissed</span> }
+                      @if (r.dismissed) {
+                        <span class="dismissed-badge">Dismissed</span>
+                      }
                     </span>
                     <span class="comment-text">{{ r.note }}</span>
                     @if (!r.dismissed) {
@@ -137,12 +134,7 @@ export interface ReminderDto {
                 <textarea matInput [(ngModel)]="newReminderNote" rows="2"></textarea>
               </mat-form-field>
               <div class="comment-actions">
-                <button
-                  mat-flat-button
-                  color="primary"
-                  (click)="addReminder()"
-                  [disabled]="!newReminderDate"
-                >
+                <button mat-flat-button color="primary" (click)="addReminder()" [disabled]="!newReminderDate">
                   Add Reminder
                 </button>
               </div>
@@ -215,27 +207,19 @@ export class CommentsPanelComponent implements OnInit {
   }
 
   private loadComments(): void {
-    this.http
-      .get<CommentDto[]>(
-        `/api/comments?entityType=${this.entityType}&entityId=${this.entityId}`,
-      )
-      .subscribe({
-        next: (list) => this.comments.set(list),
-        // eslint-disable-next-line @typescript-eslint/no-empty-function
-        error: () => {},
-      });
+    this.http.get<CommentDto[]>(`/api/comments?entityType=${this.entityType}&entityId=${this.entityId}`).subscribe({
+      next: (list) => this.comments.set(list),
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      error: () => {},
+    });
   }
 
   private loadReminders(): void {
-    this.http
-      .get<ReminderDto[]>(
-        `/api/reminders?entityType=${this.entityType}&entityId=${this.entityId}`,
-      )
-      .subscribe({
-        next: (list) => this.reminders.set(list),
-        // eslint-disable-next-line @typescript-eslint/no-empty-function
-        error: () => {},
-      });
+    this.http.get<ReminderDto[]>(`/api/reminders?entityType=${this.entityType}&entityId=${this.entityId}`).subscribe({
+      next: (list) => this.reminders.set(list),
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      error: () => {},
+    });
   }
 
   protected addComment(): void {
@@ -279,12 +263,10 @@ export class CommentsPanelComponent implements OnInit {
   }
 
   protected dismissReminder(reminder: ReminderDto): void {
-    this.http
-      .put<ReminderDto>(`/api/reminders/${reminder.id}/dismiss`, {})
-      .subscribe({
-        next: () => this.loadReminders(),
-        // eslint-disable-next-line @typescript-eslint/no-empty-function
-        error: () => {},
-      });
+    this.http.put<ReminderDto>(`/api/reminders/${reminder.id}/dismiss`, {}).subscribe({
+      next: () => this.loadReminders(),
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      error: () => {},
+    });
   }
 }

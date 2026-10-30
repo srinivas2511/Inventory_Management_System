@@ -117,10 +117,14 @@ export interface GrnMismatchDto {
           <th mat-header-cell *matHeaderCellDef></th>
           <td mat-cell *matCellDef="let r">
             @if (r.status === 'PENDING_APPROVAL') {
-              <button mat-icon-button color="primary" matTooltip="Approve GR"
-                      aria-label="Approve GR"
-                      *appHasPermission="'INVENTORY_RECEIVE'"
-                      (click)="approveGr(r)">
+              <button
+                mat-icon-button
+                color="primary"
+                matTooltip="Approve GR"
+                aria-label="Approve GR"
+                *appHasPermission="'INVENTORY_RECEIVE'"
+                (click)="approveGr(r)"
+              >
                 <mat-icon aria-hidden="true">check_circle</mat-icon>
               </button>
             }
@@ -135,8 +139,14 @@ export interface GrnMismatchDto {
 
     <!-- GRN Reports Dialog -->
     @if (reportsOpen()) {
-      <div class="dialog-backdrop" role="button" tabindex="0" aria-label="Close reports"
-           (click)="reportsOpen.set(false)" (keydown.escape)="reportsOpen.set(false)">
+      <div
+        class="dialog-backdrop"
+        role="button"
+        tabindex="0"
+        aria-label="Close reports"
+        (click)="reportsOpen.set(false)"
+        (keydown.escape)="reportsOpen.set(false)"
+      >
         <div class="dialog-panel wide" role="presentation" (click)="$event.stopPropagation()">
           <h3>GRN Reports</h3>
           <mat-tab-group>
@@ -208,14 +218,29 @@ export interface GrnMismatchDto {
       </div>
     }
   `,
-  styles: [`
-    .dialog-backdrop {
-      position: fixed; inset: 0; background: rgba(0,0,0,.4);
-      display: flex; align-items: center; justify-content: center; z-index: 1000;
-    }
-    .dialog-panel { background: #fff; border-radius: 8px; padding: 24px; min-width: 480px; }
-    .dialog-panel.wide { min-width: 720px; max-width: 95vw; }
-  `],
+  styles: [
+    `
+      .dialog-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+      }
+      .dialog-panel {
+        background: #fff;
+        border-radius: 8px;
+        padding: 24px;
+        min-width: 480px;
+      }
+      .dialog-panel.wide {
+        min-width: 720px;
+        max-width: 95vw;
+      }
+    `,
+  ],
 })
 export class GoodsReceiptListComponent implements OnInit {
   private http = inject(HttpClient);
@@ -272,7 +297,10 @@ export class GoodsReceiptListComponent implements OnInit {
   private loadPending(): void {
     this.pendingLoading.set(true);
     this.http.get<GrnPendingDto[]>('/api/procurement/grn-reports/pending').subscribe({
-      next: (rows) => { this.pendingRows.set(rows); this.pendingLoading.set(false); },
+      next: (rows) => {
+        this.pendingRows.set(rows);
+        this.pendingLoading.set(false);
+      },
       error: () => this.pendingLoading.set(false),
     });
   }
@@ -280,7 +308,10 @@ export class GoodsReceiptListComponent implements OnInit {
   private loadMismatch(): void {
     this.mismatchLoading.set(true);
     this.http.get<GrnMismatchDto[]>('/api/procurement/grn-reports/invoice-mismatch').subscribe({
-      next: (rows) => { this.mismatchRows.set(rows); this.mismatchLoading.set(false); },
+      next: (rows) => {
+        this.mismatchRows.set(rows);
+        this.mismatchLoading.set(false);
+      },
       error: () => this.mismatchLoading.set(false),
     });
   }

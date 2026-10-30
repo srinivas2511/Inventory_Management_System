@@ -102,10 +102,20 @@ export interface JwoItemDto {
           <th mat-header-cell *matHeaderCellDef>Actions</th>
           <td mat-cell *matCellDef="let row">
             @if (row.status === 'DRAFT' || row.status === 'CONFIRMED') {
-              <button mat-icon-button aria-label="Issue materials" title="Issue Materials" (click)="openIssueDialog(row)">
+              <button
+                mat-icon-button
+                aria-label="Issue materials"
+                title="Issue Materials"
+                (click)="openIssueDialog(row)"
+              >
                 <mat-icon aria-hidden="true">send</mat-icon>
               </button>
-              <button mat-icon-button aria-label="Record charges" title="Record Charges" (click)="openChargesDialog(row)">
+              <button
+                mat-icon-button
+                aria-label="Record charges"
+                title="Record Charges"
+                (click)="openChargesDialog(row)"
+              >
                 <mat-icon aria-hidden="true">receipt</mat-icon>
               </button>
             }
@@ -124,7 +134,15 @@ export interface JwoItemDto {
     <!-- Issue dialog -->
     @if (issueDialogOpen()) {
       <div class="dialog-backdrop" (click)="closeIssueDialog()" (keydown.escape)="closeIssueDialog()" tabindex="-1">
-        <div class="dialog-panel" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()" role="dialog" aria-modal="true" aria-label="Issue Materials" tabindex="-1">
+        <div
+          class="dialog-panel"
+          (click)="$event.stopPropagation()"
+          (keydown)="$event.stopPropagation()"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Issue Materials"
+          tabindex="-1"
+        >
           <h3>Issue Materials — {{ activeOrder()?.docNo }}</h3>
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Material ID</mat-label>
@@ -153,7 +171,15 @@ export interface JwoItemDto {
     <!-- Receive dialog -->
     @if (receiveDialogOpen()) {
       <div class="dialog-backdrop" (click)="closeReceiveDialog()" (keydown.escape)="closeReceiveDialog()" tabindex="-1">
-        <div class="dialog-panel" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()" role="dialog" aria-modal="true" aria-label="Receive Job Work" tabindex="-1">
+        <div
+          class="dialog-panel"
+          (click)="$event.stopPropagation()"
+          (keydown)="$event.stopPropagation()"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Receive Job Work"
+          tabindex="-1"
+        >
           <h3>Receive — {{ activeOrder()?.docNo }}</h3>
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Received Qty</mat-label>
@@ -178,7 +204,15 @@ export interface JwoItemDto {
     <!-- Charges dialog -->
     @if (chargesDialogOpen()) {
       <div class="dialog-backdrop" (click)="closeChargesDialog()" (keydown.escape)="closeChargesDialog()" tabindex="-1">
-        <div class="dialog-panel" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()" role="dialog" aria-modal="true" aria-label="Record Charges" tabindex="-1">
+        <div
+          class="dialog-panel"
+          (click)="$event.stopPropagation()"
+          (keydown)="$event.stopPropagation()"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Record Charges"
+          tabindex="-1"
+        >
           <h3>Record Charges — {{ activeOrder()?.docNo }}</h3>
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Description</mat-label>
@@ -196,17 +230,52 @@ export interface JwoItemDto {
       </div>
     }
   `,
-  styles: [`
-    .dialog-backdrop { position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.4);z-index:1000;display:flex;align-items:center;justify-content:center }
-    .dialog-panel { background:#fff;border-radius:8px;padding:24px;min-width:320px;max-width:480px;width:100% }
-    .dialog-actions { display:flex;justify-content:flex-end;gap:8px;margin-top:16px }
-  `],
+  styles: [
+    `
+      .dialog-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.4);
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .dialog-panel {
+        background: #fff;
+        border-radius: 8px;
+        padding: 24px;
+        min-width: 320px;
+        max-width: 480px;
+        width: 100%;
+      }
+      .dialog-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        margin-top: 16px;
+      }
+    `,
+  ],
 })
 export class JobWorkOrderListComponent implements OnInit {
   private http = inject(HttpClient);
   private snackBar = inject(MatSnackBar);
 
-  columns = ['docNo', 'docDate', 'status', 'challanNo', 'issueDate', 'expectedReturn', 'jobCharges', 'items', 'actions'];
+  columns = [
+    'docNo',
+    'docDate',
+    'status',
+    'challanNo',
+    'issueDate',
+    'expectedReturn',
+    'jobCharges',
+    'items',
+    'actions',
+  ];
   orders = signal<JwoDto[]>([]);
   loading = signal(true);
   activeOrder = signal<JwoDto | null>(null);
@@ -215,7 +284,12 @@ export class JobWorkOrderListComponent implements OnInit {
   receiveDialogOpen = signal(false);
   chargesDialogOpen = signal(false);
 
-  issueForm = { materialId: null as number | null, qty: null as number | null, locationId: null as number | null, notes: '' };
+  issueForm = {
+    materialId: null as number | null,
+    qty: null as number | null,
+    locationId: null as number | null,
+    notes: '',
+  };
   receiveForm = { receivedQty: null as number | null, scrapQty: 0, notes: '' };
   chargesForm = { chargeDescription: '', amount: null as number | null };
 
@@ -241,32 +315,40 @@ export class JobWorkOrderListComponent implements OnInit {
     this.issueForm = { materialId: null, qty: null, locationId: null, notes: '' };
     this.issueDialogOpen.set(true);
   }
-  closeIssueDialog(): void { this.issueDialogOpen.set(false); }
+  closeIssueDialog(): void {
+    this.issueDialogOpen.set(false);
+  }
 
   openReceiveDialog(order: JwoDto): void {
     this.activeOrder.set(order);
     this.receiveForm = { receivedQty: null, scrapQty: 0, notes: '' };
     this.receiveDialogOpen.set(true);
   }
-  closeReceiveDialog(): void { this.receiveDialogOpen.set(false); }
+  closeReceiveDialog(): void {
+    this.receiveDialogOpen.set(false);
+  }
 
   openChargesDialog(order: JwoDto): void {
     this.activeOrder.set(order);
     this.chargesForm = { chargeDescription: '', amount: null };
     this.chargesDialogOpen.set(true);
   }
-  closeChargesDialog(): void { this.chargesDialogOpen.set(false); }
+  closeChargesDialog(): void {
+    this.chargesDialogOpen.set(false);
+  }
 
   submitIssue(): void {
     const order = this.activeOrder();
     if (!order) return;
     const body = {
-      lines: [{
-        materialId: this.issueForm.materialId,
-        qty: this.issueForm.qty,
-        locationId: this.issueForm.locationId,
-        notes: this.issueForm.notes,
-      }],
+      lines: [
+        {
+          materialId: this.issueForm.materialId,
+          qty: this.issueForm.qty,
+          locationId: this.issueForm.locationId,
+          notes: this.issueForm.notes,
+        },
+      ],
     };
     this.http.post<JwoDto>(`/api/production/job-work-orders/${order.id}/issue-materials`, body).subscribe({
       next: () => {

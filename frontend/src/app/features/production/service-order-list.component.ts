@@ -106,15 +106,20 @@ interface InvoiceLineItem {
           <th mat-header-cell *matHeaderCellDef>Actions</th>
           <td mat-cell *matCellDef="let row">
             @if (row.status === 'CONFIRMED' || row.status === 'IN_PROGRESS' || row.status === 'DRAFT') {
-              <button mat-icon-button aria-label="Confirm service" title="Confirm Service" (click)="openConfirmDialog(row)">
+              <button
+                mat-icon-button
+                aria-label="Confirm service"
+                title="Confirm Service"
+                (click)="openConfirmDialog(row)"
+              >
                 <mat-icon aria-hidden="true">check_circle</mat-icon>
               </button>
             }
             @if (activeConfirmation() && activeConfirmation()!.soId === row.id) {
-              <button mat-icon-button aria-label="Record inward" title="Record Inward GRN" (click)="openInwardDialog(activeConfirmation()!)">
+              <button mat-icon-button aria-label="Record inward" title="Record Inward GRN" (click)="openInwardDialog()">
                 <mat-icon aria-hidden="true">input</mat-icon>
               </button>
-              <button mat-icon-button aria-label="Create invoice" title="Create Invoice" (click)="openInvoiceDialog(activeConfirmation()!)">
+              <button mat-icon-button aria-label="Create invoice" title="Create Invoice" (click)="openInvoiceDialog()">
                 <mat-icon aria-hidden="true">receipt</mat-icon>
               </button>
             }
@@ -128,7 +133,15 @@ interface InvoiceLineItem {
     <!-- Confirm Service dialog -->
     @if (confirmDialogOpen()) {
       <div class="dialog-backdrop" (click)="closeConfirmDialog()" (keydown.escape)="closeConfirmDialog()" tabindex="-1">
-        <div class="dialog-panel" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()" role="dialog" aria-modal="true" aria-label="Confirm Service" tabindex="-1">
+        <div
+          class="dialog-panel"
+          (click)="$event.stopPropagation()"
+          (keydown)="$event.stopPropagation()"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Confirm Service"
+          tabindex="-1"
+        >
           <h3>Confirm Service — {{ activeOrder()?.docNo }}</h3>
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Remarks (optional)</mat-label>
@@ -145,7 +158,15 @@ interface InvoiceLineItem {
     <!-- Record Inward dialog -->
     @if (inwardDialogOpen()) {
       <div class="dialog-backdrop" (click)="closeInwardDialog()" (keydown.escape)="closeInwardDialog()" tabindex="-1">
-        <div class="dialog-panel dialog-panel--wide" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()" role="dialog" aria-modal="true" aria-label="Record Inward GRN" tabindex="-1">
+        <div
+          class="dialog-panel dialog-panel--wide"
+          (click)="$event.stopPropagation()"
+          (keydown)="$event.stopPropagation()"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Record Inward GRN"
+          tabindex="-1"
+        >
           <h3>Record Inward — Confirmation #{{ activeConfirmation()?.id }}</h3>
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Warehouse ID</mat-label>
@@ -184,7 +205,15 @@ interface InvoiceLineItem {
     <!-- Create Invoice dialog -->
     @if (invoiceDialogOpen()) {
       <div class="dialog-backdrop" (click)="closeInvoiceDialog()" (keydown.escape)="closeInvoiceDialog()" tabindex="-1">
-        <div class="dialog-panel dialog-panel--wide" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()" role="dialog" aria-modal="true" aria-label="Create Invoice" tabindex="-1">
+        <div
+          class="dialog-panel dialog-panel--wide"
+          (click)="$event.stopPropagation()"
+          (keydown)="$event.stopPropagation()"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Create Invoice"
+          tabindex="-1"
+        >
           <h3>Create Invoice — Confirmation #{{ activeConfirmation()?.id }}</h3>
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Customer ID</mat-label>
@@ -224,13 +253,46 @@ interface InvoiceLineItem {
       </div>
     }
   `,
-  styles: [`
-    .dialog-backdrop { position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.4);z-index:1000;display:flex;align-items:center;justify-content:center }
-    .dialog-panel { background:#fff;border-radius:8px;padding:24px;min-width:320px;max-width:440px;width:100%;overflow-y:auto;max-height:90vh }
-    .dialog-panel--wide { max-width:600px }
-    .dialog-actions { display:flex;justify-content:flex-end;gap:8px;margin-top:16px }
-    .item-row { display:flex;gap:8px;flex-wrap:wrap }
-  `],
+  styles: [
+    `
+      .dialog-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.4);
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .dialog-panel {
+        background: #fff;
+        border-radius: 8px;
+        padding: 24px;
+        min-width: 320px;
+        max-width: 440px;
+        width: 100%;
+        overflow-y: auto;
+        max-height: 90vh;
+      }
+      .dialog-panel--wide {
+        max-width: 600px;
+      }
+      .dialog-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        margin-top: 16px;
+      }
+      .item-row {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+    `,
+  ],
 })
 export class ServiceOrderListComponent implements OnInit {
   private http = inject(HttpClient);
@@ -279,7 +341,9 @@ export class ServiceOrderListComponent implements OnInit {
     this.confirmDialogOpen.set(true);
   }
 
-  closeConfirmDialog(): void { this.confirmDialogOpen.set(false); }
+  closeConfirmDialog(): void {
+    this.confirmDialogOpen.set(false);
+  }
 
   submitConfirm(): void {
     const order = this.activeOrder();
@@ -296,14 +360,16 @@ export class ServiceOrderListComponent implements OnInit {
     });
   }
 
-  openInwardDialog(conf: ServiceConfirmationDto): void {
+  openInwardDialog(): void {
     this.inwardItems = [{ materialId: null, receivedQty: null, unitPrice: null }];
     this.inwardWarehouseId = null;
     this.inwardLocationId = null;
     this.inwardDialogOpen.set(true);
   }
 
-  closeInwardDialog(): void { this.inwardDialogOpen.set(false); }
+  closeInwardDialog(): void {
+    this.inwardDialogOpen.set(false);
+  }
 
   addInwardItem(): void {
     this.inwardItems = [...this.inwardItems, { materialId: null, receivedQty: null, unitPrice: null }];
@@ -327,14 +393,16 @@ export class ServiceOrderListComponent implements OnInit {
     });
   }
 
-  openInvoiceDialog(conf: ServiceConfirmationDto): void {
+  openInvoiceDialog(): void {
     this.invoiceLines = [{ description: '', qty: null, unitPrice: null, taxRate: null }];
     this.invoiceCustomerId = null;
     this.invoiceDate = new Date().toISOString().slice(0, 10);
     this.invoiceDialogOpen.set(true);
   }
 
-  closeInvoiceDialog(): void { this.invoiceDialogOpen.set(false); }
+  closeInvoiceDialog(): void {
+    this.invoiceDialogOpen.set(false);
+  }
 
   addInvoiceLine(): void {
     this.invoiceLines = [...this.invoiceLines, { description: '', qty: null, unitPrice: null, taxRate: null }];

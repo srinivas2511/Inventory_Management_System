@@ -35,9 +35,16 @@ describe('ApprovalInboxComponent', () => {
     const histReq = httpMock.expectOne('/api/approvals/history');
 
     const pendingItem: ApprovalRequestDto = {
-      id: 1, documentType: 'STOCK_ADJUSTMENT', documentId: 10, stepNo: 1,
-      requiredPermission: 'ADJUST_APPROVE', status: 'PENDING',
-      requestedBy: 5, decidedBy: null, decidedAt: null, comment: null,
+      id: 1,
+      documentType: 'STOCK_ADJUSTMENT',
+      documentId: 10,
+      stepNo: 1,
+      requiredPermission: 'ADJUST_APPROVE',
+      status: 'PENDING',
+      requestedBy: 5,
+      decidedBy: null,
+      decidedAt: null,
+      comment: null,
       createdAt: '2026-10-30T10:00:00Z',
     };
     pendingReq.flush([pendingItem]);
@@ -52,9 +59,19 @@ describe('ApprovalInboxComponent', () => {
     const comp = fix.componentInstance;
     fix.detectChanges();
     httpMock.expectOne('/api/approvals/pending').flush([
-      { id: 2, documentType: 'TEST', documentId: 1, stepNo: 1, requiredPermission: 'P',
-        status: 'PENDING', requestedBy: 1, decidedBy: null, decidedAt: null, comment: null,
-        createdAt: '2026-10-30T10:00:00Z' } as ApprovalRequestDto,
+      {
+        id: 2,
+        documentType: 'TEST',
+        documentId: 1,
+        stepNo: 1,
+        requiredPermission: 'P',
+        status: 'PENDING',
+        requestedBy: 1,
+        decidedBy: null,
+        decidedAt: null,
+        comment: null,
+        createdAt: '2026-10-30T10:00:00Z',
+      } as ApprovalRequestDto,
     ]);
     httpMock.expectOne('/api/approvals/history').flush([]);
 

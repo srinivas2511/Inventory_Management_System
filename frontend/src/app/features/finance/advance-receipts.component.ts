@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -110,10 +110,22 @@ interface AdvanceReceiptDto {
       }
     </section>
   `,
-  styles: [`
-    .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-    .form-row { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start; }
-  `],
+  styles: [
+    `
+      .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+      }
+      .form-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+        align-items: flex-start;
+      }
+    `,
+  ],
 })
 export class AdvanceReceiptsComponent implements OnInit {
   private http = inject(HttpClient);
@@ -138,7 +150,8 @@ export class AdvanceReceiptsComponent implements OnInit {
   private load(): void {
     this.http.get<AdvanceReceiptDto[]>('/api/finance/advance-receipts').subscribe({
       next: (data) => this.receipts.set(data),
-      error: (err) => this.snackBar.open(problemMessage(err, 'Failed to load advance receipts'), 'Close', { duration: 4000 }),
+      error: (err) =>
+        this.snackBar.open(problemMessage(err, 'Failed to load advance receipts'), 'Close', { duration: 4000 }),
     });
   }
 
@@ -146,23 +159,25 @@ export class AdvanceReceiptsComponent implements OnInit {
     if (this.form.invalid) return;
     this.saving.set(true);
     const v = this.form.value;
-    this.http.post<AdvanceReceiptDto>('/api/finance/advance-receipts', {
-      customerId: v.customerId,
-      receiptDate: v.receiptDate,
-      amount: v.amount,
-      currencyCode: 'INR',
-      reference: v.reference || null,
-    }).subscribe({
-      next: () => {
-        this.saving.set(false);
-        this.form.reset();
-        this.load();
-        this.snackBar.open('Advance receipt created', 'Close', { duration: 3000 });
-      },
-      error: (err) => {
-        this.saving.set(false);
-        this.snackBar.open(problemMessage(err, 'Failed to create advance receipt'), 'Close', { duration: 4000 });
-      },
-    });
+    this.http
+      .post<AdvanceReceiptDto>('/api/finance/advance-receipts', {
+        customerId: v.customerId,
+        receiptDate: v.receiptDate,
+        amount: v.amount,
+        currencyCode: 'INR',
+        reference: v.reference || null,
+      })
+      .subscribe({
+        next: () => {
+          this.saving.set(false);
+          this.form.reset();
+          this.load();
+          this.snackBar.open('Advance receipt created', 'Close', { duration: 3000 });
+        },
+        error: (err) => {
+          this.saving.set(false);
+          this.snackBar.open(problemMessage(err, 'Failed to create advance receipt'), 'Close', { duration: 4000 });
+        },
+      });
   }
 }

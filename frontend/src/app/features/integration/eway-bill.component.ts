@@ -104,7 +104,9 @@ interface EwayBillDto {
           </ng-container>
           <ng-container matColumnDef="validUntil">
             <th mat-header-cell *matHeaderCellDef>Valid Until</th>
-            <td mat-cell *matCellDef="let b">{{ b.validUntil ? (b.validUntil | istDate: 'dd/MM/yyyy HH:mm') : '—' }}</td>
+            <td mat-cell *matCellDef="let b">
+              {{ b.validUntil ? (b.validUntil | istDate: 'dd/MM/yyyy HH:mm') : '—' }}
+            </td>
           </ng-container>
           <ng-container matColumnDef="actions">
             <th mat-header-cell *matHeaderCellDef></th>
@@ -122,10 +124,22 @@ interface EwayBillDto {
       }
     </section>
   `,
-  styles: [`
-    .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-    .form-row { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start; }
-  `],
+  styles: [
+    `
+      .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+      }
+      .form-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+        align-items: flex-start;
+      }
+    `,
+  ],
 })
 export class EwayBillComponent implements OnInit {
   private http = inject(HttpClient);
@@ -150,7 +164,8 @@ export class EwayBillComponent implements OnInit {
   private load(): void {
     this.http.get<EwayBillDto[]>('/api/integration/eway-bill').subscribe({
       next: (data) => this.bills.set(data),
-      error: (err) => this.snackBar.open(problemMessage(err, 'Failed to load e-way bills'), 'Close', { duration: 4000 }),
+      error: (err) =>
+        this.snackBar.open(problemMessage(err, 'Failed to load e-way bills'), 'Close', { duration: 4000 }),
     });
   }
 
@@ -158,23 +173,25 @@ export class EwayBillComponent implements OnInit {
     if (this.generateForm.invalid) return;
     const v = this.generateForm.value;
     this.generating.set(true);
-    this.http.post<EwayBillDto>('/api/integration/eway-bill/generate', {
-      invoiceId: v.invoiceId,
-      transporterId: v.transporterId || null,
-      vehicleNumber: v.vehicleNumber || null,
-      distanceKm: v.distanceKm || null,
-    }).subscribe({
-      next: () => {
-        this.generating.set(false);
-        this.generateForm.reset();
-        this.load();
-        this.snackBar.open('E-way bill generated', 'Close', { duration: 3000 });
-      },
-      error: (err) => {
-        this.generating.set(false);
-        this.snackBar.open(problemMessage(err, 'Generation failed'), 'Close', { duration: 4000 });
-      },
-    });
+    this.http
+      .post<EwayBillDto>('/api/integration/eway-bill/generate', {
+        invoiceId: v.invoiceId,
+        transporterId: v.transporterId || null,
+        vehicleNumber: v.vehicleNumber || null,
+        distanceKm: v.distanceKm || null,
+      })
+      .subscribe({
+        next: () => {
+          this.generating.set(false);
+          this.generateForm.reset();
+          this.load();
+          this.snackBar.open('E-way bill generated', 'Close', { duration: 3000 });
+        },
+        error: (err) => {
+          this.generating.set(false);
+          this.snackBar.open(problemMessage(err, 'Generation failed'), 'Close', { duration: 4000 });
+        },
+      });
   }
 
   submit(bill: EwayBillDto): void {

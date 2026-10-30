@@ -92,7 +92,9 @@ export interface BomDto {
         </ng-container>
         <ng-container matColumnDef="productId">
           <th mat-header-cell *matHeaderCellDef>Product</th>
-          <td mat-cell *matCellDef="let r">{{ r.productCode ? (r.productCode + ' · ' + r.productName) : r.productId }}</td>
+          <td mat-cell *matCellDef="let r">
+            {{ r.productCode ? r.productCode + ' · ' + r.productName : r.productId }}
+          </td>
         </ng-container>
         <ng-container matColumnDef="baseQuantity">
           <th mat-header-cell *matHeaderCellDef>Base Qty</th>

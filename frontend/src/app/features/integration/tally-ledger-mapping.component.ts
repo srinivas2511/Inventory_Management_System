@@ -75,41 +75,70 @@ export interface VoucherQueueCountsDto {
       <button mat-button mat-dialog-close>Close</button>
     </mat-dialog-actions>
   `,
-  styles: [`
-    .loading-msg { color: #616161; padding: 8px 0; }
-    .error-msg   { color: #c62828; padding: 8px 0; }
-    .check-list  { list-style: none; padding: 0; margin: 0 0 12px; }
-    .check-item  {
-      display: grid;
-      grid-template-columns: 24px 1fr;
-      grid-template-rows: auto auto;
-      column-gap: 10px;
-      row-gap: 2px;
-      padding: 8px 0;
-      border-bottom: 1px solid #e0e0e0;
-    }
-    .check-item:last-child { border-bottom: none; }
-    .check-item mat-icon { grid-row: 1 / 3; align-self: center; }
-    .check-name  { font-weight: 500; font-size: 13px; }
-    .check-detail { font-size: 12px; color: #616161; }
-    .overall {
-      margin-top: 12px;
-      font-weight: 600;
-      font-size: 14px;
-      text-align: center;
-      padding: 8px;
-      border-radius: 4px;
-    }
-    .ready     { background: #e8f5e9; color: #2e7d32; }
-    .not-ready { background: #ffebee; color: #c62828; }
-  `],
+  styles: [
+    `
+      .loading-msg {
+        color: #616161;
+        padding: 8px 0;
+      }
+      .error-msg {
+        color: #c62828;
+        padding: 8px 0;
+      }
+      .check-list {
+        list-style: none;
+        padding: 0;
+        margin: 0 0 12px;
+      }
+      .check-item {
+        display: grid;
+        grid-template-columns: 24px 1fr;
+        grid-template-rows: auto auto;
+        column-gap: 10px;
+        row-gap: 2px;
+        padding: 8px 0;
+        border-bottom: 1px solid #e0e0e0;
+      }
+      .check-item:last-child {
+        border-bottom: none;
+      }
+      .check-item mat-icon {
+        grid-row: 1 / 3;
+        align-self: center;
+      }
+      .check-name {
+        font-weight: 500;
+        font-size: 13px;
+      }
+      .check-detail {
+        font-size: 12px;
+        color: #616161;
+      }
+      .overall {
+        margin-top: 12px;
+        font-weight: 600;
+        font-size: 14px;
+        text-align: center;
+        padding: 8px;
+        border-radius: 4px;
+      }
+      .ready {
+        background: #e8f5e9;
+        color: #2e7d32;
+      }
+      .not-ready {
+        background: #ffebee;
+        color: #c62828;
+      }
+    `,
+  ],
 })
 export class TallyReadinessDialogComponent {
   private http = inject(HttpClient);
 
   loading = signal(true);
-  error   = signal<string | null>(null);
-  result  = signal<TallyReadinessDto | null>(null);
+  error = signal<string | null>(null);
+  result = signal<TallyReadinessDto | null>(null);
 
   constructor() {
     this.http.get<TallyReadinessDto>('/api/integration/tally/readiness').subscribe({
@@ -145,7 +174,10 @@ export class TallyReadinessDialogComponent {
     MatSnackBarModule,
   ],
   template: `
-    <div class="page-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+    <div
+      class="page-header"
+      style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;"
+    >
       <h2 i18n="@@nav.tally_ledger_mapping">Tally Ledger Mappings</h2>
       <button mat-stroked-button color="primary" (click)="openReadinessCheck()" aria-label="Run Tally readiness check">
         <mat-icon aria-hidden="true">health_and_safety</mat-icon>
@@ -165,12 +197,18 @@ export class TallyReadinessDialogComponent {
           <mat-chip (click)="setStatusFilter('SENT')" [highlighted]="statusFilter() === 'SENT'">
             Sent: {{ counts()!.sent }}
           </mat-chip>
-          <mat-chip (click)="setStatusFilter('LEDGER_MISSING')" [highlighted]="statusFilter() === 'LEDGER_MISSING'"
-            class="chip-warn">
+          <mat-chip
+            (click)="setStatusFilter('LEDGER_MISSING')"
+            [highlighted]="statusFilter() === 'LEDGER_MISSING'"
+            class="chip-warn"
+          >
             Ledger Missing: {{ counts()!.ledgerMissing }}
           </mat-chip>
-          <mat-chip (click)="setStatusFilter('EXCEPTION')" [highlighted]="statusFilter() === 'EXCEPTION'"
-            class="chip-error">
+          <mat-chip
+            (click)="setStatusFilter('EXCEPTION')"
+            [highlighted]="statusFilter() === 'EXCEPTION'"
+            class="chip-error"
+          >
             Failed: {{ counts()!.failed }}
           </mat-chip>
           @if (statusFilter()) {
@@ -263,7 +301,9 @@ export class TallyLedgerMappingComponent implements OnInit {
   loadCounts(): void {
     this.http.get<VoucherQueueCountsDto>('/api/integration/tally/voucher-queue/counts').subscribe({
       next: (data) => this.counts.set(data),
-      error: () => { /* counts section is optional */ },
+      error: () => {
+        /* counts section is optional */
+      },
     });
   }
 

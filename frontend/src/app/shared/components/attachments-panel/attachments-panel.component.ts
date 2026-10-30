@@ -52,13 +52,7 @@ export interface AttachmentDto {
         </mat-list>
 
         <div class="upload-row">
-          <input
-            #fileInput
-            type="file"
-            hidden
-            (change)="onFileSelected($event)"
-            data-testid="file-input"
-          />
+          <input #fileInput type="file" hidden (change)="onFileSelected($event)" data-testid="file-input" />
           <button
             mat-flat-button
             color="primary"
@@ -118,9 +112,7 @@ export class AttachmentsPanelComponent implements OnInit {
 
   private loadAttachments(): void {
     this.http
-      .get<AttachmentDto[]>(
-        `/api/attachments?entityType=${this.entityType}&entityId=${this.entityId}`,
-      )
+      .get<AttachmentDto[]>(`/api/attachments?entityType=${this.entityType}&entityId=${this.entityId}`)
       .subscribe({
         next: (list) => this.attachments.set(list),
         // eslint-disable-next-line @typescript-eslint/no-empty-function

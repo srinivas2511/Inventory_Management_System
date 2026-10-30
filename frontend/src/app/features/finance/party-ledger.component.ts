@@ -76,8 +76,12 @@ interface PartyLedgerDto {
     @if (ledger()) {
       <div style="margin-top:24px">
         <div class="summary-row">
-          <span>Opening Balance: <strong>{{ ledger()!.openingBalance | number: '1.2-2' }}</strong></span>
-          <span>Closing Balance: <strong>{{ ledger()!.closingBalance | number: '1.2-2' }}</strong></span>
+          <span
+            >Opening Balance: <strong>{{ ledger()!.openingBalance | number: '1.2-2' }}</strong></span
+          >
+          <span
+            >Closing Balance: <strong>{{ ledger()!.closingBalance | number: '1.2-2' }}</strong></span
+          >
         </div>
         @if (ledger()!.lines.length === 0) {
           <p class="mat-body-2">No transactions found for the selected period.</p>
@@ -120,11 +124,28 @@ interface PartyLedgerDto {
       </div>
     }
   `,
-  styles: [`
-    .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-    .form-row { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start; }
-    .summary-row { display: flex; gap: 32px; margin-bottom: 16px; font-size: 16px; }
-  `],
+  styles: [
+    `
+      .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+      }
+      .form-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+        align-items: flex-start;
+      }
+      .summary-row {
+        display: flex;
+        gap: 32px;
+        margin-bottom: 16px;
+        font-size: 16px;
+      }
+    `,
+  ],
 })
 export class PartyLedgerComponent {
   private http = inject(HttpClient);
@@ -145,9 +166,7 @@ export class PartyLedgerComponent {
   load(): void {
     if (this.form.invalid) return;
     const v = this.form.value;
-    let params = new HttpParams()
-      .set('partyType', v.partyType!)
-      .set('partyId', String(v.partyId!));
+    let params = new HttpParams().set('partyType', v.partyType!).set('partyId', String(v.partyId!));
     if (v.fromDate) params = params.set('fromDate', v.fromDate);
     if (v.toDate) params = params.set('toDate', v.toDate);
     this.loading.set(true);

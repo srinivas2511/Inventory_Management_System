@@ -100,10 +100,9 @@ interface CustomerLookup {
     </mat-dialog-content>
     <mat-dialog-actions align="end">
       <button mat-button mat-dialog-close i18n="@@common.cancel">Cancel</button>
-      <button mat-flat-button color="primary"
-              [disabled]="form.invalid"
-              (click)="save()"
-              i18n="@@common.save">Save</button>
+      <button mat-flat-button color="primary" [disabled]="form.invalid" (click)="save()" i18n="@@common.save">
+        Save
+      </button>
     </mat-dialog-actions>
   `,
 })
@@ -210,21 +209,28 @@ export class NewOcDialogComponent implements OnInit {
           <th mat-header-cell *matHeaderCellDef></th>
           <td mat-cell *matCellDef="let row">
             @if (row.status === 'DRAFT') {
-              <button mat-stroked-button color="accent"
-                      (click)="submitOc(row)"
-                      aria-label="Submit OC for approval"
-                      i18n="@@oc.btn_submit">Submit</button>
+              <button
+                mat-stroked-button
+                color="accent"
+                (click)="submitOc(row)"
+                aria-label="Submit OC for approval"
+                i18n="@@oc.btn_submit"
+              >
+                Submit
+              </button>
             }
             @if (row.status === 'SUBMITTED') {
-              <button mat-stroked-button color="primary"
-                      (click)="approveOc(row)"
-                      aria-label="Approve OC"
-                      i18n="@@oc.btn_approve">Approve</button>
+              <button
+                mat-stroked-button
+                color="primary"
+                (click)="approveOc(row)"
+                aria-label="Approve OC"
+                i18n="@@oc.btn_approve"
+              >
+                Approve
+              </button>
             }
-            <button mat-icon-button
-                    (click)="copyOc(row)"
-                    aria-label="Copy OC"
-                    matTooltip="Copy OC">
+            <button mat-icon-button (click)="copyOc(row)" aria-label="Copy OC" matTooltip="Copy OC">
               <mat-icon aria-hidden="true">content_copy</mat-icon>
             </button>
           </td>

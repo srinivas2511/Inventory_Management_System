@@ -50,12 +50,7 @@ export interface QuotationRevisionDto {
 @Component({
   selector: 'app-quotation-revisions-dialog',
   standalone: true,
-  imports: [
-    MatButtonModule,
-    MatDialogModule,
-    MatTableModule,
-    IstDatePipe,
-  ],
+  imports: [MatButtonModule, MatDialogModule, MatTableModule, IstDatePipe],
   template: `
     <h2 mat-dialog-title i18n="@@quotation.revisions_title">Quotation Revision History</h2>
     <mat-dialog-content>
@@ -75,8 +70,8 @@ export interface QuotationRevisionDto {
             <th mat-header-cell *matHeaderCellDef>Reason</th>
             <td mat-cell *matCellDef="let r">{{ r.reason }}</td>
           </ng-container>
-          <tr mat-header-row *matHeaderRowDef="['revisionNumber','revisedAt','reason']"></tr>
-          <tr mat-row *matRowDef="let r; columns: ['revisionNumber','revisedAt','reason']"></tr>
+          <tr mat-header-row *matHeaderRowDef="['revisionNumber', 'revisedAt', 'reason']"></tr>
+          <tr mat-row *matRowDef="let r; columns: ['revisionNumber', 'revisedAt', 'reason']"></tr>
         </table>
       }
     </mat-dialog-content>
@@ -124,10 +119,9 @@ export class QuotationRevisionsDialogComponent implements OnInit {
     </mat-dialog-content>
     <mat-dialog-actions align="end">
       <button mat-button mat-dialog-close i18n="@@common.cancel">Cancel</button>
-      <button mat-flat-button color="warn"
-              [disabled]="form.invalid"
-              (click)="save()"
-              i18n="@@quotation.btn_amend">Amend</button>
+      <button mat-flat-button color="warn" [disabled]="form.invalid" (click)="save()" i18n="@@quotation.btn_amend">
+        Amend
+      </button>
     </mat-dialog-actions>
   `,
 })
@@ -208,15 +202,22 @@ export class AmendQuotationDialogComponent {
           <th mat-header-cell *matHeaderCellDef></th>
           <td mat-cell *matCellDef="let row">
             @if (row.status === 'APPROVED' || row.status === 'SENT') {
-              <button mat-stroked-button color="warn"
-                      (click)="openAmendDialog(row)"
-                      aria-label="Amend quotation"
-                      i18n="@@quotation.btn_amend_short">Amend</button>
+              <button
+                mat-stroked-button
+                color="warn"
+                (click)="openAmendDialog(row)"
+                aria-label="Amend quotation"
+                i18n="@@quotation.btn_amend_short"
+              >
+                Amend
+              </button>
             }
-            <button mat-icon-button
-                    (click)="openRevisionsDialog(row)"
-                    aria-label="View revision history"
-                    matTooltip="Revision History">
+            <button
+              mat-icon-button
+              (click)="openRevisionsDialog(row)"
+              aria-label="View revision history"
+              matTooltip="Revision History"
+            >
               <mat-icon aria-hidden="true">history</mat-icon>
             </button>
           </td>

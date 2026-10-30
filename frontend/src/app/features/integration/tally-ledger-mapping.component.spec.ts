@@ -21,16 +21,19 @@ describe('TallyLedgerMappingComponent', () => {
 
   function flushInit(mappings: unknown[] = []) {
     http.expectOne('/api/integration/tally/ledger-mappings').flush(mappings);
-    http.expectOne('/api/integration/tally/voucher-queue/counts').flush(
-      { draft: 0, approved: 0, sent: 0, ledgerMissing: 0, failed: 0 });
+    http
+      .expectOne('/api/integration/tally/voucher-queue/counts')
+      .flush({ draft: 0, approved: 0, sent: 0, ledgerMissing: 0, failed: 0 });
   }
 
   it('should create and load mappings', () => {
     fixture.detectChanges();
-    http.expectOne('/api/integration/tally/ledger-mappings').flush(
-      [{ id: 1, glAccountCode: '4001', tallyLedger: 'Sales', notes: '', createdAt: new Date().toISOString() }]);
-    http.expectOne('/api/integration/tally/voucher-queue/counts').flush(
-      { draft: 0, approved: 0, sent: 0, ledgerMissing: 0, failed: 0 });
+    http
+      .expectOne('/api/integration/tally/ledger-mappings')
+      .flush([{ id: 1, glAccountCode: '4001', tallyLedger: 'Sales', notes: '', createdAt: new Date().toISOString() }]);
+    http
+      .expectOne('/api/integration/tally/voucher-queue/counts')
+      .flush({ draft: 0, approved: 0, sent: 0, ledgerMissing: 0, failed: 0 });
     fixture.detectChanges();
     expect(fixture.componentInstance.mappings().length).toBe(1);
   });

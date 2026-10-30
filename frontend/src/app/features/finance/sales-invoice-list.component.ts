@@ -126,7 +126,17 @@ export class SalesInvoiceListComponent implements OnInit {
   private http = inject(HttpClient);
   private snackBar = inject(MatSnackBar);
 
-  columns = ['docNo', 'docDate', 'invoiceType', 'status', 'invoiceKind', 'currency', 'grandTotal', 'balanceInr', 'actions'];
+  columns = [
+    'docNo',
+    'docDate',
+    'invoiceType',
+    'status',
+    'invoiceKind',
+    'currency',
+    'grandTotal',
+    'balanceInr',
+    'actions',
+  ];
   invoices = signal<SalesInvoiceDto[]>([]);
   loading = signal(true);
   typeFilter = '';

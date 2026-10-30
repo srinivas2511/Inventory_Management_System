@@ -11,7 +11,14 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatTableModule } from '@angular/material/table';
 import { MatIconModule } from '@angular/material/icon';
 import { applyFieldErrors } from '../../../core/models/problem.model';
-import { MaterialApi, MaterialDto, UomDto, UomConversionDto, SavePurchasingInfoRequest, ItemVendorMappingDto } from './material.api';
+import {
+  MaterialApi,
+  MaterialDto,
+  UomDto,
+  UomConversionDto,
+  SavePurchasingInfoRequest,
+  ItemVendorMappingDto,
+} from './material.api';
 import { LookupApi, LookupOption } from '../../../shared/lookup.api';
 import { CommentsPanelComponent } from '../../../shared/components/comments-panel/comments-panel.component';
 import { AttachmentsPanelComponent } from '../../../shared/components/attachments-panel/attachments-panel.component';
@@ -246,8 +253,12 @@ import { AttachmentsPanelComponent } from '../../../shared/components/attachment
                 <ng-container matColumnDef="vendorActions">
                   <th mat-header-cell *matHeaderCellDef></th>
                   <td mat-cell *matCellDef="let r">
-                    <button mat-icon-button color="warn" aria-label="Remove vendor mapping"
-                            (click)="removeVendorMapping(r)">
+                    <button
+                      mat-icon-button
+                      color="warn"
+                      aria-label="Remove vendor mapping"
+                      (click)="removeVendorMapping(r)"
+                    >
                       <mat-icon>delete</mat-icon>
                     </button>
                   </td>
@@ -293,19 +304,13 @@ import { AttachmentsPanelComponent } from '../../../shared/components/attachment
 
           <mat-tab label="Comments">
             <div class="tab-pad">
-              <app-comments-panel
-                [entityType]="'MATERIAL'"
-                [entityId]="material?.id || 0"
-              ></app-comments-panel>
+              <app-comments-panel [entityType]="'MATERIAL'" [entityId]="material?.id || 0"></app-comments-panel>
             </div>
           </mat-tab>
 
           <mat-tab label="Attachments">
             <div class="tab-pad">
-              <app-attachments-panel
-                [entityType]="'MATERIAL'"
-                [entityId]="material?.id || 0"
-              ></app-attachments-panel>
+              <app-attachments-panel [entityType]="'MATERIAL'" [entityId]="material?.id || 0"></app-attachments-panel>
             </div>
           </mat-tab>
         </mat-tab-group>
@@ -485,7 +490,15 @@ export class MaterialFormComponent implements OnInit {
 
   // 9.11 vendor mappings
   protected readonly vendorMappings = signal<ItemVendorMappingDto[]>([]);
-  protected readonly vendorCols = ['supplier', 'supplierCode', 'lastPrice', 'moq', 'leadTime', 'preferred', 'vendorActions'];
+  protected readonly vendorCols = [
+    'supplier',
+    'supplierCode',
+    'lastPrice',
+    'moq',
+    'leadTime',
+    'preferred',
+    'vendorActions',
+  ];
   protected readonly vendorSaving = signal(false);
   protected readonly vendorError = signal('');
   protected readonly vendorForm = inject(FormBuilder).group({
@@ -577,24 +590,26 @@ export class MaterialFormComponent implements OnInit {
     this.vendorSaving.set(true);
     this.vendorError.set('');
     const v = this.vendorForm.getRawValue();
-    this.api.addVendorMapping(this.material.id, {
-      supplierId: v.supplierId!,
-      supplierItemCode: v.supplierItemCode ?? null,
-      lastPrice: v.lastPrice ?? null,
-      moq: v.moq ?? 0,
-      leadTimeDays: v.leadTimeDays ?? 0,
-      preferred: false,
-    }).subscribe({
-      next: () => {
-        this.vendorSaving.set(false);
-        this.vendorForm.reset({ moq: 0, leadTimeDays: 0 });
-        this.loadVendorMappings();
-      },
-      error: (err) => {
-        this.vendorSaving.set(false);
-        this.vendorError.set(err?.error?.message ?? 'Save failed.');
-      },
-    });
+    this.api
+      .addVendorMapping(this.material.id, {
+        supplierId: v.supplierId!,
+        supplierItemCode: v.supplierItemCode ?? null,
+        lastPrice: v.lastPrice ?? null,
+        moq: v.moq ?? 0,
+        leadTimeDays: v.leadTimeDays ?? 0,
+        preferred: false,
+      })
+      .subscribe({
+        next: () => {
+          this.vendorSaving.set(false);
+          this.vendorForm.reset({ moq: 0, leadTimeDays: 0 });
+          this.loadVendorMappings();
+        },
+        error: (err) => {
+          this.vendorSaving.set(false);
+          this.vendorError.set(err?.error?.message ?? 'Save failed.');
+        },
+      });
   }
 
   removeVendorMapping(mapping: ItemVendorMappingDto): void {

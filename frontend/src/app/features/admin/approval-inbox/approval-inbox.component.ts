@@ -70,17 +70,29 @@ export interface ApprovalRequestDto {
             </ng-container>
             <ng-container matColumnDef="createdAt">
               <th mat-header-cell *matHeaderCellDef i18n="@@approval-inbox.col-created">Requested</th>
-              <td mat-cell *matCellDef="let r">{{ r.createdAt | istDate:'d MMM, HH:mm' }}</td>
+              <td mat-cell *matCellDef="let r">{{ r.createdAt | istDate: 'd MMM, HH:mm' }}</td>
             </ng-container>
             <ng-container matColumnDef="actions">
               <th mat-header-cell *matHeaderCellDef></th>
               <td mat-cell *matCellDef="let r">
-                <button mat-icon-button color="primary" (click)="approve(r)"
-                        aria-label="Approve" matTooltip="Approve" i18n-matTooltip="@@approval-inbox.approve">
+                <button
+                  mat-icon-button
+                  color="primary"
+                  (click)="approve(r)"
+                  aria-label="Approve"
+                  matTooltip="Approve"
+                  i18n-matTooltip="@@approval-inbox.approve"
+                >
                   <mat-icon aria-hidden="true">check_circle</mat-icon>
                 </button>
-                <button mat-icon-button color="warn" (click)="reject(r)"
-                        aria-label="Reject" matTooltip="Reject" i18n-matTooltip="@@approval-inbox.reject">
+                <button
+                  mat-icon-button
+                  color="warn"
+                  (click)="reject(r)"
+                  aria-label="Reject"
+                  matTooltip="Reject"
+                  i18n-matTooltip="@@approval-inbox.reject"
+                >
                   <mat-icon aria-hidden="true">cancel</mat-icon>
                 </button>
               </td>
@@ -110,15 +122,18 @@ export interface ApprovalRequestDto {
             <ng-container matColumnDef="status">
               <th mat-header-cell *matHeaderCellDef i18n="@@approval-inbox.col-status">Decision</th>
               <td mat-cell *matCellDef="let r">
-                <mat-chip-row [color]="r.status === 'APPROVED' ? 'primary' : 'warn'"
-                              [highlighted]="true" aria-label="r.status">
+                <mat-chip-row
+                  [color]="r.status === 'APPROVED' ? 'primary' : 'warn'"
+                  [highlighted]="true"
+                  aria-label="r.status"
+                >
                   {{ r.status }}
                 </mat-chip-row>
               </td>
             </ng-container>
             <ng-container matColumnDef="decidedAt">
               <th mat-header-cell *matHeaderCellDef i18n="@@approval-inbox.col-decided">Decided</th>
-              <td mat-cell *matCellDef="let r">{{ r.decidedAt | istDate:'d MMM, HH:mm' }}</td>
+              <td mat-cell *matCellDef="let r">{{ r.decidedAt | istDate: 'd MMM, HH:mm' }}</td>
             </ng-container>
             <ng-container matColumnDef="comment">
               <th mat-header-cell *matHeaderCellDef i18n="@@approval-inbox.col-comment">Comment</th>
@@ -131,12 +146,28 @@ export interface ApprovalRequestDto {
       </mat-tab>
     </mat-tab-group>
   `,
-  styles: [`
-    .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
-    .full-table { width: 100%; }
-    .spinner-wrap { display: flex; justify-content: center; padding: 32px; }
-    .empty-msg { padding: 24px; color: var(--mat-sys-outline); }
-  `],
+  styles: [
+    `
+      .page-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 16px;
+      }
+      .full-table {
+        width: 100%;
+      }
+      .spinner-wrap {
+        display: flex;
+        justify-content: center;
+        padding: 32px;
+      }
+      .empty-msg {
+        padding: 24px;
+        color: var(--mat-sys-outline);
+      }
+    `,
+  ],
 })
 export class ApprovalInboxComponent implements OnInit {
   private http = inject(HttpClient);
@@ -158,16 +189,27 @@ export class ApprovalInboxComponent implements OnInit {
   loadPending() {
     this.loadingPending.set(true);
     this.http.get<ApprovalRequestDto[]>('/api/approvals/pending').subscribe({
-      next: (data) => { this.pending.set(data); this.loadingPending.set(false); },
-      error: () => { this.loadingPending.set(false); this.snack.open('Failed to load pending approvals', 'Close', { duration: 3000 }); },
+      next: (data) => {
+        this.pending.set(data);
+        this.loadingPending.set(false);
+      },
+      error: () => {
+        this.loadingPending.set(false);
+        this.snack.open('Failed to load pending approvals', 'Close', { duration: 3000 });
+      },
     });
   }
 
   loadHistory() {
     this.loadingHistory.set(true);
     this.http.get<ApprovalRequestDto[]>('/api/approvals/history').subscribe({
-      next: (data) => { this.history.set(data); this.loadingHistory.set(false); },
-      error: () => { this.loadingHistory.set(false); },
+      next: (data) => {
+        this.history.set(data);
+        this.loadingHistory.set(false);
+      },
+      error: () => {
+        this.loadingHistory.set(false);
+      },
     });
   }
 

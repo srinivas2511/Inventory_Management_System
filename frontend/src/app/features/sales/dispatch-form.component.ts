@@ -271,11 +271,15 @@ export class DispatchFormComponent implements OnInit {
       deliveryAddress: raw.deliveryAddress,
       invoiceReference: raw.invoiceReference || null,
       notes: raw.notes || null,
-      ...(hasPackaging ? { packagingDetails: {
-        packages: pkg.packages,
-        gross_weight_kg: pkg.grossWeightKg,
-        net_weight_kg: pkg.netWeightKg,
-      }} : {}),
+      ...(hasPackaging
+        ? {
+            packagingDetails: {
+              packages: pkg.packages,
+              gross_weight_kg: pkg.grossWeightKg,
+              net_weight_kg: pkg.netWeightKg,
+            },
+          }
+        : {}),
       lines: chosen.map((l) => {
         const stock = this.stock().find((s) => this.key(s) === l.value['stockKey'])!;
         return {

@@ -106,7 +106,9 @@ interface SyncLogRow {
           </ng-container>
           <ng-container matColumnDef="status">
             <mat-header-cell *matHeaderCellDef>Status</mat-header-cell>
-            <mat-cell *matCellDef="let r"><mat-chip>{{ r.status }}</mat-chip></mat-cell>
+            <mat-cell *matCellDef="let r"
+              ><mat-chip>{{ r.status }}</mat-chip></mat-cell
+            >
           </ng-container>
           <ng-container matColumnDef="exportAttempt">
             <mat-header-cell *matHeaderCellDef>Attempts</mat-header-cell>
@@ -180,7 +182,9 @@ export class BusyExportComponent implements OnInit {
   loadSyncLog(): void {
     this.http.get<SyncLogRow[]>('/api/integration/busy/sync-log').subscribe({
       next: (d) => this.syncLog.set(d),
-      error: () => { /* sync-log endpoint optional */ },
+      error: () => {
+        /* sync-log endpoint optional */
+      },
     });
   }
 

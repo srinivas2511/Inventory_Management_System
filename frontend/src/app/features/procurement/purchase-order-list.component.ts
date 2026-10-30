@@ -231,8 +231,14 @@ export interface PoRevisionDto {
 
     <!-- Amend Dialog -->
     @if (amendDialogOpen()) {
-      <div class="dialog-backdrop" role="button" tabindex="0" aria-label="Close dialog"
-           (click)="closeAmendDialog()" (keydown.escape)="closeAmendDialog()">
+      <div
+        class="dialog-backdrop"
+        role="button"
+        tabindex="0"
+        aria-label="Close dialog"
+        (click)="closeAmendDialog()"
+        (keydown.escape)="closeAmendDialog()"
+      >
         <div class="dialog-panel" role="presentation" (click)="$event.stopPropagation()">
           <h3>Amend PO — {{ amendTarget()?.poNumber }}</h3>
           <form [formGroup]="amendForm" (ngSubmit)="submitAmend()">
@@ -256,8 +262,14 @@ export interface PoRevisionDto {
 
     <!-- Revisions Dialog -->
     @if (revisionsDialogOpen()) {
-      <div class="dialog-backdrop" role="button" tabindex="0" aria-label="Close dialog"
-           (click)="closeRevisionsDialog()" (keydown.escape)="closeRevisionsDialog()">
+      <div
+        class="dialog-backdrop"
+        role="button"
+        tabindex="0"
+        aria-label="Close dialog"
+        (click)="closeRevisionsDialog()"
+        (keydown.escape)="closeRevisionsDialog()"
+      >
         <div class="dialog-panel wide" role="presentation" (click)="$event.stopPropagation()">
           <h3>Revision History — {{ amendTarget()?.poNumber }}</h3>
           @if (revisionsLoading()) {
@@ -295,8 +307,14 @@ export interface PoRevisionDto {
 
     <!-- PO Balance Dialog -->
     @if (balanceDialogOpen()) {
-      <div class="dialog-backdrop" role="button" tabindex="0" aria-label="Close dialog"
-           (click)="closeBalanceDialog()" (keydown.escape)="closeBalanceDialog()">
+      <div
+        class="dialog-backdrop"
+        role="button"
+        tabindex="0"
+        aria-label="Close dialog"
+        (click)="closeBalanceDialog()"
+        (keydown.escape)="closeBalanceDialog()"
+      >
         <div class="dialog-panel wide" role="presentation" (click)="$event.stopPropagation()">
           <h3>PO Balance — {{ balanceTarget()?.poNumber }}</h3>
           @if (balanceLoading()) {
@@ -336,16 +354,37 @@ export interface PoRevisionDto {
       </div>
     }
   `,
-  styles: [`
-    .dialog-backdrop {
-      position: fixed; inset: 0; background: rgba(0,0,0,.4);
-      display: flex; align-items: center; justify-content: center; z-index: 1000;
-    }
-    .dialog-panel { background: #fff; border-radius: 8px; padding: 24px; width: 480px; }
-    .dialog-panel.wide { width: 680px; }
-    .dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
-    .full-width { width: 100%; }
-  `],
+  styles: [
+    `
+      .dialog-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+      }
+      .dialog-panel {
+        background: #fff;
+        border-radius: 8px;
+        padding: 24px;
+        width: 480px;
+      }
+      .dialog-panel.wide {
+        width: 680px;
+      }
+      .dialog-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        margin-top: 16px;
+      }
+      .full-width {
+        width: 100%;
+      }
+    `,
+  ],
 })
 export class PurchaseOrderListComponent implements OnInit {
   private http = inject(HttpClient);
@@ -446,19 +485,17 @@ export class PurchaseOrderListComponent implements OnInit {
     const po = this.amendTarget();
     if (!po) return;
     this.savingAmend.set(true);
-    this.http
-      .post<PoRevisionDto>(`/api/procurement/purchase-orders/${po.id}/amend`, this.amendForm.value)
-      .subscribe({
-        next: (rev) => {
-          this.snack.open(`Revision ${rev.revisionNo} recorded`, 'OK', { duration: 3000 });
-          this.savingAmend.set(false);
-          this.closeAmendDialog();
-        },
-        error: (e) => {
-          this.snack.open(e.error?.detail ?? 'Error saving revision', 'Close', { duration: 4000 });
-          this.savingAmend.set(false);
-        },
-      });
+    this.http.post<PoRevisionDto>(`/api/procurement/purchase-orders/${po.id}/amend`, this.amendForm.value).subscribe({
+      next: (rev) => {
+        this.snack.open(`Revision ${rev.revisionNo} recorded`, 'OK', { duration: 3000 });
+        this.savingAmend.set(false);
+        this.closeAmendDialog();
+      },
+      error: (e) => {
+        this.snack.open(e.error?.detail ?? 'Error saving revision', 'Close', { duration: 4000 });
+        this.savingAmend.set(false);
+      },
+    });
   }
 
   openRevisionsDialog(po: PurchaseOrderDto): void {
@@ -488,8 +525,14 @@ export class PurchaseOrderListComponent implements OnInit {
     this.balanceDialogOpen.set(true);
     this.balanceLoading.set(true);
     this.http.get<PoBalanceDto[]>('/api/procurement/po-balance', { params: { poId: String(po.id) } }).subscribe({
-      next: (rows) => { this.balanceRows.set(rows); this.balanceLoading.set(false); },
-      error: () => { this.balanceLoading.set(false); this.snack.open('Failed to load PO balance', 'Close', { duration: 3000 }); },
+      next: (rows) => {
+        this.balanceRows.set(rows);
+        this.balanceLoading.set(false);
+      },
+      error: () => {
+        this.balanceLoading.set(false);
+        this.snack.open('Failed to load PO balance', 'Close', { duration: 3000 });
+      },
     });
   }
 

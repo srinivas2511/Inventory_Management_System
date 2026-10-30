@@ -32,25 +32,25 @@ describe('ServiceOrderListComponent', () => {
   });
 
   it('should initialise inward dialog state', () => {
-    component.openInwardDialog({ id: 1, soId: 1, confirmedAt: '', confirmedBy: 1, remarks: null });
+    component.openInwardDialog();
     expect(component.inwardDialogOpen()).toBeTrue();
     expect(component.inwardItems.length).toBe(1);
   });
 
   it('should initialise invoice dialog state', () => {
-    component.openInvoiceDialog({ id: 1, soId: 1, confirmedAt: '', confirmedBy: 1, remarks: null });
+    component.openInvoiceDialog();
     expect(component.invoiceDialogOpen()).toBeTrue();
     expect(component.invoiceLines.length).toBe(1);
   });
 
   it('should add inward item', () => {
-    component.openInwardDialog({ id: 1, soId: 1, confirmedAt: '', confirmedBy: 1, remarks: null });
+    component.openInwardDialog();
     component.addInwardItem();
     expect(component.inwardItems.length).toBe(2);
   });
 
   it('should add invoice line', () => {
-    component.openInvoiceDialog({ id: 1, soId: 1, confirmedAt: '', confirmedBy: 1, remarks: null });
+    component.openInvoiceDialog();
     component.addInvoiceLine();
     expect(component.invoiceLines.length).toBe(2);
   });

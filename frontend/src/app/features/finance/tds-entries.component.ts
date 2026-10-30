@@ -77,8 +77,9 @@ export interface TdsSection {
         @for (s of summary(); track s.tdsSection) {
           <mat-chip-set>
             <mat-chip>
-              {{ s.tdsSection }} — Base: ₹{{ s.totalBaseAmount | number: '1.0-0' }}
-              &nbsp;|&nbsp; TDS: ₹{{ s.totalTdsAmount | number: '1.0-0' }}
+              {{ s.tdsSection }} — Base: ₹{{ s.totalBaseAmount | number: '1.0-0' }} &nbsp;|&nbsp; TDS: ₹{{
+                s.totalTdsAmount | number: '1.0-0'
+              }}
               ({{ s.entryCount }})
             </mat-chip>
           </mat-chip-set>
@@ -178,8 +179,13 @@ export interface TdsSection {
           </mat-form-field>
           <div class="form-actions" style="display:flex;gap:8px;justify-content:flex-end;">
             <button mat-button type="button" (click)="showForm.set(false)">Cancel</button>
-            <button mat-flat-button color="primary" type="button"
-                    (click)="saveEntry()" [disabled]="form.invalid || saving()">
+            <button
+              mat-flat-button
+              color="primary"
+              type="button"
+              (click)="saveEntry()"
+              [disabled]="form.invalid || saving()"
+            >
               Save
             </button>
           </div>

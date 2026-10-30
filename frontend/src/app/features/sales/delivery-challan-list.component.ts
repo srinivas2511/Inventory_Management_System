@@ -83,9 +83,7 @@ const CHALLAN_KINDS = ['DELIVERY', 'NON_RETURNABLE', 'RETURNABLE', 'SERVICE_OUT'
             }
           </mat-select>
         </mat-form-field>
-        <mat-checkbox formControlName="isReturnable" i18n="@@challan.field_returnable">
-          Returnable
-        </mat-checkbox>
+        <mat-checkbox formControlName="isReturnable" i18n="@@challan.field_returnable"> Returnable </mat-checkbox>
         @if (form.value.isReturnable) {
           <mat-form-field appearance="outline">
             <mat-label i18n="@@challan.field_expected_return">Expected Return Date</mat-label>
@@ -108,10 +106,9 @@ const CHALLAN_KINDS = ['DELIVERY', 'NON_RETURNABLE', 'RETURNABLE', 'SERVICE_OUT'
     </mat-dialog-content>
     <mat-dialog-actions align="end">
       <button mat-button mat-dialog-close i18n="@@common.cancel">Cancel</button>
-      <button mat-flat-button color="primary"
-              [disabled]="form.invalid"
-              (click)="save()"
-              i18n="@@common.save">Save</button>
+      <button mat-flat-button color="primary" [disabled]="form.invalid" (click)="save()" i18n="@@common.save">
+        Save
+      </button>
     </mat-dialog-actions>
   `,
 })
@@ -218,16 +215,26 @@ export class NewChallanDialogComponent implements OnInit {
           <th mat-header-cell *matHeaderCellDef></th>
           <td mat-cell *matCellDef="let row">
             @if (row.status === 'DRAFT') {
-              <button mat-stroked-button color="primary"
-                      (click)="issueChallan(row)"
-                      aria-label="Issue challan"
-                      i18n="@@challan.btn_issue">Issue</button>
+              <button
+                mat-stroked-button
+                color="primary"
+                (click)="issueChallan(row)"
+                aria-label="Issue challan"
+                i18n="@@challan.btn_issue"
+              >
+                Issue
+              </button>
             }
             @if (row.isReturnable && row.status === 'ISSUED' && !row.returnedAt) {
-              <button mat-stroked-button color="warn"
-                      (click)="markReturned(row)"
-                      aria-label="Mark as returned"
-                      i18n="@@challan.btn_mark_returned">Mark Returned</button>
+              <button
+                mat-stroked-button
+                color="warn"
+                (click)="markReturned(row)"
+                aria-label="Mark as returned"
+                i18n="@@challan.btn_mark_returned"
+              >
+                Mark Returned
+              </button>
             }
           </td>
         </ng-container>
