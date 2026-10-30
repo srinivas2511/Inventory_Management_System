@@ -12,6 +12,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { applyFieldErrors } from '../../../core/models/problem.model';
 import { SupplierApi, SupplierDto, ApprovedMaterialDto } from './supplier.api';
 import { LookupApi, LookupItem } from '../../../shared/lookup.api';
+import { CommentsPanelComponent } from '../../../shared/components/comments-panel/comments-panel.component';
+import { AttachmentsPanelComponent } from '../../../shared/components/attachments-panel/attachments-panel.component';
 
 const GST_PATTERN = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
 
@@ -29,6 +31,8 @@ const GST_PATTERN = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
     MatSelectModule,
     MatChipsModule,
     MatIconModule,
+    CommentsPanelComponent,
+    AttachmentsPanelComponent,
   ],
   template: `
     <h2 mat-dialog-title>{{ supplier ? 'Edit Supplier' : 'New Supplier' }}</h2>
@@ -130,6 +134,24 @@ const GST_PATTERN = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
               @if (approvedError()) {
                 <p class="form-error mat-body-2">{{ approvedError() }}</p>
               }
+            </div>
+          </mat-tab>
+
+          <mat-tab label="Comments">
+            <div class="tab-pad">
+              <app-comments-panel
+                [entityType]="'SUPPLIER'"
+                [entityId]="supplier?.id || 0"
+              ></app-comments-panel>
+            </div>
+          </mat-tab>
+
+          <mat-tab label="Attachments">
+            <div class="tab-pad">
+              <app-attachments-panel
+                [entityType]="'SUPPLIER'"
+                [entityId]="supplier?.id || 0"
+              ></app-attachments-panel>
             </div>
           </mat-tab>
         </mat-tab-group>

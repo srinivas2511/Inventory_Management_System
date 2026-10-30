@@ -11,6 +11,8 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule } from '@angular/material/table';
 import { applyFieldErrors } from '../../../core/models/problem.model';
+import { CommentsPanelComponent } from '../../../shared/components/comments-panel/comments-panel.component';
+import { AttachmentsPanelComponent } from '../../../shared/components/attachments-panel/attachments-panel.component';
 import {
   CustomerApi,
   CustomerDto,
@@ -37,6 +39,8 @@ const GST_PATTERN = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
     MatChipsModule,
     MatIconModule,
     MatTableModule,
+    CommentsPanelComponent,
+    AttachmentsPanelComponent,
   ],
   template: `
     <h2 mat-dialog-title>{{ customer ? 'Edit Customer' : 'New Customer' }}</h2>
@@ -215,6 +219,24 @@ const GST_PATTERN = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
                   <p class="form-error mat-body-2">{{ specError() }}</p>
                 }
               }
+            </div>
+          </mat-tab>
+
+          <mat-tab label="Comments">
+            <div class="tab-pad">
+              <app-comments-panel
+                [entityType]="'CUSTOMER'"
+                [entityId]="customer?.id || 0"
+              ></app-comments-panel>
+            </div>
+          </mat-tab>
+
+          <mat-tab label="Attachments">
+            <div class="tab-pad">
+              <app-attachments-panel
+                [entityType]="'CUSTOMER'"
+                [entityId]="customer?.id || 0"
+              ></app-attachments-panel>
             </div>
           </mat-tab>
         </mat-tab-group>

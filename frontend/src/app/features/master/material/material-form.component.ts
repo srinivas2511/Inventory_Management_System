@@ -13,6 +13,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { applyFieldErrors } from '../../../core/models/problem.model';
 import { MaterialApi, MaterialDto, UomDto, UomConversionDto, SavePurchasingInfoRequest } from './material.api';
 import { LookupApi, LookupOption } from '../../../shared/lookup.api';
+import { CommentsPanelComponent } from '../../../shared/components/comments-panel/comments-panel.component';
+import { AttachmentsPanelComponent } from '../../../shared/components/attachments-panel/attachments-panel.component';
 
 @Component({
   selector: 'app-material-form',
@@ -29,6 +31,8 @@ import { LookupApi, LookupOption } from '../../../shared/lookup.api';
     MatTabsModule,
     MatTableModule,
     MatIconModule,
+    CommentsPanelComponent,
+    AttachmentsPanelComponent,
   ],
   template: `
     <h2 mat-dialog-title>{{ material ? 'Edit Material' : 'New Material' }}</h2>
@@ -209,6 +213,24 @@ import { LookupApi, LookupOption } from '../../../shared/lookup.api';
                   }
                 </button>
               </div>
+            </div>
+          </mat-tab>
+
+          <mat-tab label="Comments">
+            <div class="tab-pad">
+              <app-comments-panel
+                [entityType]="'MATERIAL'"
+                [entityId]="material?.id || 0"
+              ></app-comments-panel>
+            </div>
+          </mat-tab>
+
+          <mat-tab label="Attachments">
+            <div class="tab-pad">
+              <app-attachments-panel
+                [entityType]="'MATERIAL'"
+                [entityId]="material?.id || 0"
+              ></app-attachments-panel>
             </div>
           </mat-tab>
         </mat-tab-group>
