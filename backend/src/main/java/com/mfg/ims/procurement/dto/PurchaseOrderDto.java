@@ -24,7 +24,8 @@ public record PurchaseOrderDto(
         Long approvedBy,
         Instant approvedAt,
         List<PurchaseOrderItemDto> items,
-        List<String> allowedActions
+        List<String> allowedActions,
+        List<String> blockedActions
 ) {
     public record PurchaseOrderItemDto(
             Long id,

@@ -231,7 +231,8 @@ public class SalesOrderService {
                 order.getDeliveryAddress(), order.getPaymentTerms(), order.getNotes(),
                 order.getStatus(), total, itemDtos,
                 order.getCreatedBy(), order.getSubmittedBy(),
-                allowedActions(order.getStatus()));
+                allowedActions(order.getStatus()),
+                blockedActions(order));
     }
 
     private String computeFulfillment(SalesOrderItem i) {
@@ -249,6 +250,23 @@ public class SalesOrderService {
             case "DISPATCHED", "PARTIALLY_DISPATCHED" -> List.of();
             default -> List.of();
         };
+    }
+
+    private List<String> blockedActions(SalesOrder order) {
+        java.util.List<String> blocked = new java.util.ArrayList<>();
+        String status = order.getStatus();
+        if ("APPROVED".equals(status) || "ALLOCATED".equals(status)
+                || "DISPATCHED".equals(status) || "PARTIALLY_DISPATCHED".equals(status)) {
+            blocked.add("APPROVE: already approved");
+        }
+        if ("DISPATCHED".equals(status) || "PARTIALLY_DISPATCHED".equals(status)) {
+            blocked.add("CANCEL: has dispatches");
+        }
+        if ("CANCELLED".equals(status)) {
+            blocked.add("APPROVE: order is cancelled");
+            blocked.add("CANCEL: already cancelled");
+        }
+        return java.util.Collections.unmodifiableList(blocked);
     }
 
     private void requireTransition(SalesOrder order, String from, String to) {

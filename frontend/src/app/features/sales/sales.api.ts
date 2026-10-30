@@ -112,6 +112,11 @@ export interface CreateDispatchRequest {
   deliveryAddress: string;
   invoiceReference: string | null;
   notes: string | null;
+  packagingDetails?: {
+    packages?: number | null;
+    gross_weight_kg?: number | null;
+    net_weight_kg?: number | null;
+  } | null;
   lines: {
     salesOrderItemId: number;
     fgBatchId: number;

@@ -64,6 +64,29 @@ export interface SavePurchasingInfoRequest {
   preferredSupplierId?: number | null;
 }
 
+export interface ItemVendorMappingDto {
+  id: number;
+  itemId: number;
+  supplierId: number;
+  supplierName: string;
+  supplierItemCode: string | null;
+  supplierItemName: string | null;
+  lastPrice: number | null;
+  moq: number;
+  leadTimeDays: number;
+  preferred: boolean;
+}
+
+export interface SaveVendorMappingRequest {
+  supplierId: number;
+  supplierItemCode?: string | null;
+  supplierItemName?: string | null;
+  lastPrice?: number | null;
+  moq?: number;
+  leadTimeDays?: number;
+  preferred?: boolean;
+}
+
 export interface Page<T> {
   content: T[];
   totalElements: number;
@@ -127,5 +150,17 @@ export class MaterialApi {
 
   savePurchasingInfo(materialId: number, req: SavePurchasingInfoRequest): Observable<PurchasingInfoDto> {
     return this.http.put<PurchasingInfoDto>(`${this.base}/api/materials/${materialId}/purchasing-info`, req);
+  }
+
+  listVendorMappings(materialId: number): Observable<ItemVendorMappingDto[]> {
+    return this.http.get<ItemVendorMappingDto[]>(`${this.base}/api/materials/${materialId}/vendor-mappings`);
+  }
+
+  addVendorMapping(materialId: number, req: SaveVendorMappingRequest): Observable<ItemVendorMappingDto> {
+    return this.http.post<ItemVendorMappingDto>(`${this.base}/api/materials/${materialId}/vendor-mappings`, req);
+  }
+
+  deleteVendorMapping(materialId: number, mappingId: number): Observable<void> {
+    return this.http.delete<void>(`${this.base}/api/materials/${materialId}/vendor-mappings/${mappingId}`);
   }
 }

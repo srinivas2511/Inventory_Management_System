@@ -11,7 +11,7 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatTableModule } from '@angular/material/table';
 import { MatIconModule } from '@angular/material/icon';
 import { applyFieldErrors } from '../../../core/models/problem.model';
-import { MaterialApi, MaterialDto, UomDto, UomConversionDto, SavePurchasingInfoRequest } from './material.api';
+import { MaterialApi, MaterialDto, UomDto, UomConversionDto, SavePurchasingInfoRequest, ItemVendorMappingDto } from './material.api';
 import { LookupApi, LookupOption } from '../../../shared/lookup.api';
 import { CommentsPanelComponent } from '../../../shared/components/comments-panel/comments-panel.component';
 import { AttachmentsPanelComponent } from '../../../shared/components/attachments-panel/attachments-panel.component';
@@ -216,6 +216,81 @@ import { AttachmentsPanelComponent } from '../../../shared/components/attachment
             </div>
           </mat-tab>
 
+          <mat-tab label="Vendors">
+            <div class="tab-pad">
+              <table mat-table [dataSource]="vendorMappings()" class="full-table">
+                <ng-container matColumnDef="supplier">
+                  <th mat-header-cell *matHeaderCellDef>Supplier</th>
+                  <td mat-cell *matCellDef="let r">{{ r.supplierName }}</td>
+                </ng-container>
+                <ng-container matColumnDef="supplierCode">
+                  <th mat-header-cell *matHeaderCellDef>Supplier Item Code</th>
+                  <td mat-cell *matCellDef="let r">{{ r.supplierItemCode }}</td>
+                </ng-container>
+                <ng-container matColumnDef="lastPrice">
+                  <th mat-header-cell *matHeaderCellDef>Last Price</th>
+                  <td mat-cell *matCellDef="let r">{{ r.lastPrice }}</td>
+                </ng-container>
+                <ng-container matColumnDef="moq">
+                  <th mat-header-cell *matHeaderCellDef>MOQ</th>
+                  <td mat-cell *matCellDef="let r">{{ r.moq }}</td>
+                </ng-container>
+                <ng-container matColumnDef="leadTime">
+                  <th mat-header-cell *matHeaderCellDef>Lead Time (days)</th>
+                  <td mat-cell *matCellDef="let r">{{ r.leadTimeDays }}</td>
+                </ng-container>
+                <ng-container matColumnDef="preferred">
+                  <th mat-header-cell *matHeaderCellDef>Preferred</th>
+                  <td mat-cell *matCellDef="let r">{{ r.preferred ? 'Yes' : 'No' }}</td>
+                </ng-container>
+                <ng-container matColumnDef="vendorActions">
+                  <th mat-header-cell *matHeaderCellDef></th>
+                  <td mat-cell *matCellDef="let r">
+                    <button mat-icon-button color="warn" aria-label="Remove vendor mapping"
+                            (click)="removeVendorMapping(r)">
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </td>
+                </ng-container>
+                <tr mat-header-row *matHeaderRowDef="vendorCols"></tr>
+                <tr mat-row *matRowDef="let row; columns: vendorCols"></tr>
+              </table>
+              @if (vendorMappings().length === 0) {
+                <p class="empty-hint mat-body-2">No vendor mappings defined.</p>
+              }
+              <form [formGroup]="vendorForm" (ngSubmit)="addVendorMapping()" novalidate class="inline-add-form">
+                <mat-form-field appearance="outline">
+                  <mat-label>Supplier</mat-label>
+                  <mat-select formControlName="supplierId">
+                    @for (s of suppliers(); track s.id) {
+                      <mat-option [value]="s.id">{{ s.name }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Supplier Item Code</mat-label>
+                  <input matInput formControlName="supplierItemCode" />
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Last Price</mat-label>
+                  <input matInput type="number" formControlName="lastPrice" />
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>MOQ</mat-label>
+                  <input matInput type="number" formControlName="moq" />
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Lead Time (days)</mat-label>
+                  <input matInput type="number" formControlName="leadTimeDays" />
+                </mat-form-field>
+                <button mat-flat-button color="primary" type="submit" [disabled]="vendorSaving()">Add</button>
+              </form>
+              @if (vendorError()) {
+                <p class="form-error mat-body-2">{{ vendorError() }}</p>
+              }
+            </div>
+          </mat-tab>
+
           <mat-tab label="Comments">
             <div class="tab-pad">
               <app-comments-panel
@@ -408,6 +483,19 @@ export class MaterialFormComponent implements OnInit {
     preferredSupplierId: [null as number | null],
   });
 
+  // 9.11 vendor mappings
+  protected readonly vendorMappings = signal<ItemVendorMappingDto[]>([]);
+  protected readonly vendorCols = ['supplier', 'supplierCode', 'lastPrice', 'moq', 'leadTime', 'preferred', 'vendorActions'];
+  protected readonly vendorSaving = signal(false);
+  protected readonly vendorError = signal('');
+  protected readonly vendorForm = inject(FormBuilder).group({
+    supplierId: [null as number | null, Validators.required],
+    supplierItemCode: [null as string | null],
+    lastPrice: [null as number | null],
+    moq: [0],
+    leadTimeDays: [0],
+  });
+
   private readonly api = inject(MaterialApi);
   private readonly lookupApi = inject(LookupApi);
   private readonly dialogRef = inject(MatDialogRef<MaterialFormComponent>);
@@ -419,6 +507,7 @@ export class MaterialFormComponent implements OnInit {
       this.form.controls.materialCode.disable();
       this.loadConversions();
       this.loadPurchasingInfo();
+      this.loadVendorMappings();
       this.lookupApi.suppliers().subscribe((list) => this.suppliers.set(list));
     }
   }
@@ -468,6 +557,51 @@ export class MaterialFormComponent implements OnInit {
     this.api.deleteUomConversion(this.material.id, altUom).subscribe({
       next: () => this.loadConversions(),
       error: (err) => this.convError.set(err?.error?.message ?? 'Delete failed.'),
+    });
+  }
+
+  private loadVendorMappings(): void {
+    if (!this.material) return;
+    this.api.listVendorMappings(this.material.id).subscribe({
+      next: (list) => this.vendorMappings.set(list),
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      error: () => {},
+    });
+  }
+
+  addVendorMapping(): void {
+    if (this.vendorForm.invalid || !this.material) {
+      this.vendorForm.markAllAsTouched();
+      return;
+    }
+    this.vendorSaving.set(true);
+    this.vendorError.set('');
+    const v = this.vendorForm.getRawValue();
+    this.api.addVendorMapping(this.material.id, {
+      supplierId: v.supplierId!,
+      supplierItemCode: v.supplierItemCode ?? null,
+      lastPrice: v.lastPrice ?? null,
+      moq: v.moq ?? 0,
+      leadTimeDays: v.leadTimeDays ?? 0,
+      preferred: false,
+    }).subscribe({
+      next: () => {
+        this.vendorSaving.set(false);
+        this.vendorForm.reset({ moq: 0, leadTimeDays: 0 });
+        this.loadVendorMappings();
+      },
+      error: (err) => {
+        this.vendorSaving.set(false);
+        this.vendorError.set(err?.error?.message ?? 'Save failed.');
+      },
+    });
+  }
+
+  removeVendorMapping(mapping: ItemVendorMappingDto): void {
+    if (!this.material) return;
+    this.api.deleteVendorMapping(this.material.id, mapping.id).subscribe({
+      next: () => this.loadVendorMappings(),
+      error: (err) => this.vendorError.set(err?.error?.message ?? 'Delete failed.'),
     });
   }
 

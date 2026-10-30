@@ -3,6 +3,7 @@ package com.mfg.ims.sales.dto;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 public record DispatchDto(
         Long id,
@@ -19,7 +20,8 @@ public record DispatchDto(
         String invoiceReference,
         String status,
         String notes,
-        List<DispatchItemDto> items) {
+        List<DispatchItemDto> items,
+        Map<String, Object> packagingDetails) {
 
     public record DispatchItemDto(
             Long id,

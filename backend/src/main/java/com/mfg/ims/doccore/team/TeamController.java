@@ -70,4 +70,12 @@ public class TeamController {
     public void removeMember(@PathVariable Long id, @PathVariable Long userId) {
         service.removeMember(id, userId);
     }
+
+    public record TeamSettingsRequest(String notificationSettings, List<String> moduleAccess) {}
+
+    @PutMapping("/{id}/settings")
+    @PreAuthorize("hasAuthority('TEAM_MANAGE')")
+    public TeamDto updateSettings(@PathVariable Long id, @RequestBody TeamSettingsRequest body) {
+        return service.updateSettings(id, body.notificationSettings(), body.moduleAccess());
+    }
 }

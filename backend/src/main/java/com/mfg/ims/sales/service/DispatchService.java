@@ -326,7 +326,7 @@ public class DispatchService {
                 dispatch.getDispatchDate(), dispatch.getTransporter(),
                 dispatch.getVehicleNo(), dispatch.getLrNumber(),
                 dispatch.getDeliveryAddress(), dispatch.getInvoiceReference(),
-                dispatch.getStatus(), dispatch.getNotes(), itemDtos);
+                dispatch.getStatus(), dispatch.getNotes(), itemDtos, null);
     }
 
     private Long currentUserId() {
