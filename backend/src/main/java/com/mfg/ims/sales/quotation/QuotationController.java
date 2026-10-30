@@ -16,14 +16,18 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.mfg.ims.sales.orderconfirmation.OcService;
+
 @RestController
 @RequestMapping("/api/sales/quotations")
 public class QuotationController {
 
     private final QuotationService service;
+    private final OcService ocService;
 
-    public QuotationController(QuotationService service) {
+    public QuotationController(QuotationService service, OcService ocService) {
         this.service = service;
+        this.ocService = ocService;
     }
 
     @GetMapping
@@ -69,5 +73,11 @@ public class QuotationController {
     public QuotationDto markLost(@PathVariable Long id,
             @RequestParam(required = false) String reason) {
         return service.markLost(id, reason != null ? reason : "Lost");
+    }
+
+    @PostMapping("/{id}/convert-to-oc")
+    @PreAuthorize("hasAuthority('QUOTATION_CONVERT')")
+    public QuotationConversionResultDto convertToOc(@PathVariable Long id) {
+        return ocService.convertFromQuotation(id);
     }
 }
