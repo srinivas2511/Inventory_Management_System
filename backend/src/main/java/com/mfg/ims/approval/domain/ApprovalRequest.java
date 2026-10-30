@@ -47,6 +47,25 @@ public class ApprovalRequest {
     @Column(name = "created_at", nullable = false)
     private Instant createdAt = Instant.now();
 
+    // V65: columns added to existing table via ALTER TABLE
+    @Column(name = "rule_id")
+    private Long ruleId;
+
+    @Column(name = "cycle_no", nullable = false)
+    private int cycleNo = 1;
+
+    @Column(name = "step_group", nullable = false)
+    private int stepGroup = 1;
+
+    @Column(name = "withdrawn_at")
+    private Instant withdrawnAt;
+
+    @Column(name = "approver_type", length = 10)
+    private String approverType;
+
+    @Column(name = "approver_ref", length = 40)
+    private String approverRef;
+
     public ApprovalRequest() {}
 
     public Long getId() { return id; }
@@ -60,6 +79,12 @@ public class ApprovalRequest {
     public Instant getDecidedAt() { return decidedAt; }
     public String getComment() { return comment; }
     public Instant getCreatedAt() { return createdAt; }
+    public Long getRuleId() { return ruleId; }
+    public int getCycleNo() { return cycleNo; }
+    public int getStepGroup() { return stepGroup; }
+    public Instant getWithdrawnAt() { return withdrawnAt; }
+    public String getApproverType() { return approverType; }
+    public String getApproverRef() { return approverRef; }
 
     public void setDocumentType(String documentType) { this.documentType = documentType; }
     public void setDocumentId(Long documentId) { this.documentId = documentId; }
@@ -70,6 +95,12 @@ public class ApprovalRequest {
     public void setDecidedBy(Long decidedBy) { this.decidedBy = decidedBy; }
     public void setDecidedAt(Instant decidedAt) { this.decidedAt = decidedAt; }
     public void setComment(String comment) { this.comment = comment; }
+    public void setRuleId(Long ruleId) { this.ruleId = ruleId; }
+    public void setCycleNo(int cycleNo) { this.cycleNo = cycleNo; }
+    public void setStepGroup(int stepGroup) { this.stepGroup = stepGroup; }
+    public void setWithdrawnAt(Instant withdrawnAt) { this.withdrawnAt = withdrawnAt; }
+    public void setApproverType(String approverType) { this.approverType = approverType; }
+    public void setApproverRef(String approverRef) { this.approverRef = approverRef; }
 
     public boolean isPending() { return "PENDING".equals(status); }
     public boolean isApproved() { return "APPROVED".equals(status); }

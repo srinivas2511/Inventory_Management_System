@@ -24,6 +24,10 @@ public class ApprovalRule extends BaseEntity {
     @Column(name = "priority", nullable = false)
     private int priority = 0;
 
+    // V87
+    @Column(name = "execution_mode", nullable = false, length = 10)
+    private String executionMode = "MANUAL";
+
     public ApprovalRule() {}
 
     public String getDocumentType() { return documentType; }
@@ -36,4 +40,6 @@ public class ApprovalRule extends BaseEntity {
     public void setActive(boolean v) { this.active = v; }
     public int getPriority() { return priority; }
     public void setPriority(int v) { this.priority = v; }
+    public String getExecutionMode() { return executionMode; }
+    public void setExecutionMode(String v) { this.executionMode = v; }
 }

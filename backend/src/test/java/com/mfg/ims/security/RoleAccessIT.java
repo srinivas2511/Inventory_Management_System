@@ -106,6 +106,12 @@ class RoleAccessIT extends AbstractIntegrationTest {
             "PRODUCTION_MANAGER", "FINANCE_MANAGER", "QUALITY_MANAGER");
     private static final Set<String> PHASE9_APPROVAL_FORBIDDEN = Set.of("OPERATOR", "SALES", "DISPATCH",
             "ENGINEER", "SUPERVISOR", "ACCOUNTANT", "STORE_MANAGER");
+    // V87: APPROVAL_DECIDE — ADMIN + manager roles in ROLES list (HR_MANAGER is seeded but not in ROLES)
+    private static final Set<String> APPROVAL_DECIDE_ALLOWED = Set.of("ADMIN", "PURCHASE_MANAGER", "SALES_MANAGER",
+            "PRODUCTION_MANAGER", "FINANCE_MANAGER", "QUALITY_MANAGER");
+    private static final Set<String> APPROVAL_DECIDE_FORBIDDEN = Set.of("OPERATOR", "SALES", "DISPATCH",
+            "ENGINEER", "SUPERVISOR", "ACCOUNTANT", "STORE_MANAGER", "STORE_OPERATOR", "MANAGEMENT",
+            "PLANNER", "CONTROLLER", "MAINTENANCE");
     // Phase 10: RFQ and supplier-quote endpoints — ADMIN + PURCHASE_MANAGER only
     private static final Set<String> PHASE10_PURCHASE_ALLOWED = Set.of("ADMIN", "PURCHASE_MANAGER");
     private static final Set<String> PHASE10_PURCHASE_FORBIDDEN = Set.of("OPERATOR", "SALES", "DISPATCH",
@@ -246,7 +252,7 @@ class RoleAccessIT extends AbstractIntegrationTest {
                     Set.of("ADMIN", "PRODUCTION_MANAGER", "SUPERVISOR", "MANAGEMENT"),
                     Set.of("OPERATOR", "SALES", "QUALITY_MANAGER", "PURCHASE_MANAGER")),
             Probe.withBody(HttpMethod.POST, "/api/production/templates",
-                    "{\"code\":\"T001\",\"name\":\"Template 1\",\"productId\":1}",
+                    "{\"code\":\"T001\",\"name\":\"Template 1\",\"productId\":" + MISSING + "}",
                     Set.of("ADMIN", "PRODUCTION_MANAGER", "SUPERVISOR"),
                     Set.of("OPERATOR", "MANAGEMENT", "SALES", "QUALITY_MANAGER")),
             Probe.withBody(HttpMethod.PUT, "/api/production/templates/" + MISSING,
@@ -659,6 +665,12 @@ class RoleAccessIT extends AbstractIntegrationTest {
                     PHASE9_MGRS_ALLOWED, PHASE9_MGRS_FORBIDDEN),
             // Phase 9: import jobs list (IMPORT_VIEW or IMPORT_RUN — ADMIN + managers, not STORE_MANAGER)
             Probe.of(HttpMethod.GET, "/api/import", PHASE9_APPROVAL_ALLOWED, PHASE9_APPROVAL_FORBIDDEN),
+            // V87: approval inbox — APPROVAL_DECIDE
+            Probe.of(HttpMethod.GET, "/api/approvals/pending", APPROVAL_DECIDE_ALLOWED, APPROVAL_DECIDE_FORBIDDEN),
+            Probe.of(HttpMethod.GET, "/api/approvals/history", APPROVAL_DECIDE_ALLOWED, APPROVAL_DECIDE_FORBIDDEN),
+            Probe.of(HttpMethod.POST, "/api/approvals/999999/approve", APPROVAL_DECIDE_ALLOWED, APPROVAL_DECIDE_FORBIDDEN),
+            Probe.of(HttpMethod.POST, "/api/approvals/999999/reject", APPROVAL_DECIDE_ALLOWED, APPROVAL_DECIDE_FORBIDDEN),
+            Probe.of(HttpMethod.POST, "/api/approvals/999999/withdraw", Set.copyOf(ROLES), Set.of()),
             // Phase 10: RFQ — ADMIN + PURCHASE_MANAGER (RFQ_VIEW)
             Probe.of(HttpMethod.GET, "/api/rfqs", PHASE10_PURCHASE_ALLOWED, PHASE10_PURCHASE_FORBIDDEN),
             // Phase 10: Purchase invoices — ADMIN + PURCHASE_MANAGER (PURCHASE_INVOICE_VIEW)
@@ -673,7 +685,7 @@ class RoleAccessIT extends AbstractIntegrationTest {
                     Set.of("ADMIN", "PURCHASE_MANAGER", "STORE_MANAGER", "MANAGEMENT", "ACCOUNTANT", "FINANCE_MANAGER"),
                     Set.of("OPERATOR", "SALES", "QUALITY_MANAGER", "ENGINEER")),
             Probe.withBody(HttpMethod.POST, "/api/procurement/purchase-return-challans",
-                    "{\"supplierId\":1,\"items\":[{\"materialId\":1,\"qty\":1}]}",
+                    "{\"supplierId\":" + MISSING + ",\"items\":[{\"materialId\":" + MISSING + ",\"qty\":1}]}",
                     Set.of("ADMIN", "PURCHASE_MANAGER", "STORE_MANAGER"),
                     Set.of("OPERATOR", "MANAGEMENT", "SALES", "QUALITY_MANAGER")),
             Probe.of(HttpMethod.POST, "/api/procurement/purchase-return-challans/" + MISSING + "/dispatch",
@@ -916,13 +928,15 @@ class RoleAccessIT extends AbstractIntegrationTest {
             Map.entry("DELETE /api/integration/tally/ledger-mappings/999999", 404),
             Map.entry("POST /api/integration/tally/voucher-queue/999999/approve", 404),
             Map.entry("POST /api/integration/tally/voucher-queue/999999/reject", 404),
-            // Item 3: production template update/deactivate by missing id answers 404
+            // Item 3: production template update/deactivate by missing id answers 404; create references non-existent product → FK violation → 409
             Map.entry("GET /api/production/templates/999999", 404),
             Map.entry("PUT /api/production/templates/999999", 404),
             Map.entry("DELETE /api/production/templates/999999", 404),
-            // Item 4: purchase-return challan endpoints with missing id answer 404
+            Map.entry("POST /api/production/templates", 409),
+            // Item 4: purchase-return challan endpoints with missing id answer 404; create references non-existent supplier → FK violation → 409
             Map.entry("GET /api/procurement/purchase-return-challans/999999", 404),
             Map.entry("POST /api/procurement/purchase-return-challans/999999/dispatch", 404),
+            Map.entry("POST /api/procurement/purchase-return-challans", 409),
             // V78: GST e-way bill with missing invoice id answers 404
             Map.entry("POST /api/finance/gst/eway-bill", 404),
             // V85: schedule-operation with missing production-operation answers 404
@@ -935,7 +949,11 @@ class RoleAccessIT extends AbstractIntegrationTest {
             Map.entry("POST /api/inventory/scrap-lots/999999/sell", 404),
             Map.entry("POST /api/inventory/scrap-lots/999999/dispose", 404),
             // V84: shipment tracking by missing id answers 404
-            Map.entry("GET /api/integration/shipment-tracking/999999", 404));
+            Map.entry("GET /api/integration/shipment-tracking/999999", 404),
+            // V87: approval decide by missing request id answers 404
+            Map.entry("POST /api/approvals/999999/approve", 404),
+            Map.entry("POST /api/approvals/999999/reject", 404),
+            Map.entry("POST /api/approvals/999999/withdraw", 404));
 
     @Autowired UserAdminService userAdminService;
     @Autowired @Qualifier("requestMappingHandlerMapping") RequestMappingHandlerMapping handlerMapping;

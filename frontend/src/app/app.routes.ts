@@ -1067,6 +1067,13 @@ export const routes: Routes = [
         loadComponent: () => import('./features/admin/teams/teams.component').then((m) => m.TeamsComponent),
       },
       {
+        path: 'approvals',
+        title: 'Approval Inbox',
+        canActivate: [permissionGuard('APPROVAL_DECIDE')],
+        loadComponent: () =>
+          import('./features/admin/approval-inbox/approval-inbox.component').then((m) => m.ApprovalInboxComponent),
+      },
+      {
         path: 'admin/approval-rules',
         title: 'Approval Rules',
         canActivate: [permissionGuard('APPROVAL_RULE_VIEW')],

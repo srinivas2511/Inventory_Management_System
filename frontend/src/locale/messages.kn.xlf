@@ -14,6 +14,10 @@
         <source>Notifications</source>
         <target>ಅಧಿಸೂಚನೆಗಳು</target>
       </trans-unit>
+      <trans-unit id="nav.item-approvals" datatype="html">
+        <source>Approvals</source>
+        <target>ಅನುಮೋದನೆಗಳು</target>
+      </trans-unit>
       <trans-unit id="nav.group-master-data" datatype="html">
         <source>Master Data</source>
         <target>ಮಾಸ್ಟರ್ ಡೇಟಾ</target>

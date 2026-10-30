@@ -99,6 +99,6 @@ class AdminSegregationOfDutiesIT extends AbstractIntegrationTest {
                 .extracting("code").isEqualTo(ErrorCode.SEGREGATION_OF_DUTIES);
 
         loginAsAdmin(otherAdminUserId);
-        assertThat(approvalService.approve(requests.get(0).getId(), "ok").getStatus()).isEqualTo("APPROVED");
+        assertThat(approvalService.approve(requests.get(0).getId(), "ok").status()).isEqualTo("APPROVED");
     }
 }

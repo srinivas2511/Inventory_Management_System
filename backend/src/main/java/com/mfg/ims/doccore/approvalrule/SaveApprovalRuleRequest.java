@@ -10,8 +10,9 @@ public record SaveApprovalRuleRequest(
         @NotBlank @Size(max = 100) String ruleName,
         String conditionExpr,
         int priority,
+        String executionMode,
         @NotNull List<StepRequest> steps) {
 
     public record StepRequest(int stepNo, int stepGroup, @NotBlank String approverType,
-                               @NotBlank String approverRef, String requiredPermission) {}
+                               @NotBlank String approverRef, String requiredPermission, String quorum) {}
 }

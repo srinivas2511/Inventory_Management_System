@@ -35,6 +35,13 @@ export const NAV_GROUPS: NavGroup[] = [
         route: '/notifications',
         enabled: true,
       },
+      {
+        label: $localize`:@@nav.item-approvals:Approvals`,
+        icon: 'approval',
+        route: '/approvals',
+        permission: 'APPROVAL_DECIDE',
+        enabled: true,
+      },
     ],
   },
   {

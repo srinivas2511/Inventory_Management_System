@@ -14,6 +14,10 @@
         <source>Notifications</source>
         <target>सूचनाएं</target>
       </trans-unit>
+      <trans-unit id="nav.item-approvals" datatype="html">
+        <source>Approvals</source>
+        <target>अनुमोदन</target>
+      </trans-unit>
       <trans-unit id="nav.group-master-data" datatype="html">
         <source>Master Data</source>
         <target>मास्टर डेटा</target>

@@ -61,6 +61,9 @@ public class ApprovalRuleService {
         r.setRuleName(req.ruleName().trim());
         r.setConditionExpr(req.conditionExpr());
         r.setPriority(req.priority());
+        if (req.executionMode() != null) {
+            r.setExecutionMode(req.executionMode().toUpperCase().trim());
+        }
     }
 
     private List<ApprovalRuleStep> saveSteps(Long ruleId, List<SaveApprovalRuleRequest.StepRequest> stepReqs) {
@@ -72,6 +75,9 @@ public class ApprovalRuleService {
             s.setApproverType(sr.approverType());
             s.setApproverRef(sr.approverRef());
             s.setRequiredPermission(sr.requiredPermission());
+            if (sr.quorum() != null) {
+                s.setQuorum(sr.quorum().toUpperCase().trim());
+            }
             return stepRepo.save(s);
         }).toList();
     }

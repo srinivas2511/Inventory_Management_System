@@ -33,6 +33,10 @@ public class ApprovalRuleStep {
     @Column(name = "required_permission", length = 60)
     private String requiredPermission;
 
+    // V87
+    @Column(name = "quorum", nullable = false, length = 5)
+    private String quorum = "ANY";
+
     public ApprovalRuleStep() {}
 
     public Long getId() { return id; }
@@ -48,4 +52,6 @@ public class ApprovalRuleStep {
     public void setApproverRef(String v) { this.approverRef = v; }
     public String getRequiredPermission() { return requiredPermission; }
     public void setRequiredPermission(String v) { this.requiredPermission = v; }
+    public String getQuorum() { return quorum; }
+    public void setQuorum(String v) { this.quorum = v; }
 }

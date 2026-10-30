@@ -2,7 +2,7 @@ package com.mfg.ims.approval.service;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.function.Consumer;
+import java.util.Set;
 
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -10,8 +10,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.mfg.ims.approval.domain.ApprovalRequest;
+import com.mfg.ims.approval.dto.ApprovalRequestDto;
 import com.mfg.ims.approval.event.ApprovalCompletedEvent;
 import com.mfg.ims.approval.repository.ApprovalRequestRepository;
+import com.mfg.ims.auth.service.UserPermissionCache.CachedUser;
 import com.mfg.ims.common.exception.BusinessRuleException;
 import com.mfg.ims.common.exception.ErrorCode;
 import com.mfg.ims.common.exception.NotFoundException;
@@ -42,7 +44,7 @@ public class ApprovalService {
     @Transactional
     public List<ApprovalRequest> requestApproval(String docType, Long docId,
                                                   Long requestedBy, List<StepDefinition> steps) {
-        List<ApprovalRequest> created = steps.stream().map(step -> {
+        return steps.stream().map(step -> {
             ApprovalRequest ar = new ApprovalRequest();
             ar.setDocumentType(docType);
             ar.setDocumentId(docId);
@@ -51,16 +53,15 @@ public class ApprovalService {
             ar.setRequestedBy(requestedBy);
             return repo.save(ar);
         }).toList();
-        return created;
     }
 
     /**
-     * Approves the current pending step.
-     * Enforces: caller holds required_permission; caller ≠ requester.
-     * If all steps approved → publishes ApprovalCompletedEvent.
+     * Approves the pending request identified by requestId.
+     * Enforces: caller ≠ requester (SoD).
+     * If all steps for the document are now approved → publishes ApprovalCompletedEvent.
      */
     @Transactional
-    public ApprovalRequest approve(Long requestId, String comment) {
+    public ApprovalRequestDto approve(Long requestId, String comment) {
         ApprovalRequest ar = require(requestId);
         if (!ar.isPending()) {
             throw new BusinessRuleException(ErrorCode.ILLEGAL_STATE_TRANSITION,
@@ -77,19 +78,16 @@ public class ApprovalService {
         ar.setComment(comment);
         repo.save(ar);
 
-        // Check if all steps for this document are now approved
         long pending = repo.countPendingSteps(ar.getDocumentType(), ar.getDocumentId());
         if (pending == 0) {
             publisher.publishEvent(new ApprovalCompletedEvent(ar.getDocumentType(), ar.getDocumentId()));
         }
-        return ar;
+        return ApprovalRequestDto.from(ar);
     }
 
-    /**
-     * Rejects the current pending step.
-     */
+    /** Rejects the pending request. */
     @Transactional
-    public ApprovalRequest reject(Long requestId, String comment) {
+    public ApprovalRequestDto reject(Long requestId, String comment) {
         ApprovalRequest ar = require(requestId);
         if (!ar.isPending()) {
             throw new BusinessRuleException(ErrorCode.ILLEGAL_STATE_TRANSITION,
@@ -99,7 +97,41 @@ public class ApprovalService {
         ar.setDecidedBy(currentUserId());
         ar.setDecidedAt(Instant.now());
         ar.setComment(comment);
-        return repo.save(ar);
+        return ApprovalRequestDto.from(repo.save(ar));
+    }
+
+    /**
+     * Withdraws a pending request. Only the original requester may withdraw.
+     */
+    @Transactional
+    public void withdraw(Long requestId) {
+        ApprovalRequest ar = require(requestId);
+        if (!ar.isPending()) {
+            throw new BusinessRuleException(ErrorCode.ILLEGAL_STATE_TRANSITION,
+                    "Approval request " + requestId + " is not PENDING");
+        }
+        Long currentUserId = currentUserId();
+        if (!currentUserId.equals(ar.getRequestedBy())) {
+            throw new BusinessRuleException(ErrorCode.VALIDATION_FAILED,
+                    "Only the requester can withdraw their own approval request");
+        }
+        ar.setStatus("WITHDRAWN");
+        ar.setWithdrawnAt(Instant.now());
+        repo.save(ar);
+    }
+
+    /** Returns pending requests the current user can decide (matched by their permissions). */
+    @Transactional(readOnly = true)
+    public List<ApprovalRequestDto> findPendingForCurrentUser() {
+        Set<String> perms = currentUserPermissions();
+        if (perms.isEmpty()) return List.of();
+        return repo.findPendingByPermissions(perms).stream().map(ApprovalRequestDto::from).toList();
+    }
+
+    /** Returns requests the current user has already decided, newest first. */
+    @Transactional(readOnly = true)
+    public List<ApprovalRequestDto> findHistoryForCurrentUser() {
+        return repo.findDecidedBy(currentUserId()).stream().map(ApprovalRequestDto::from).toList();
     }
 
     @Transactional(readOnly = true)
@@ -119,10 +151,20 @@ public class ApprovalService {
     private Long currentUserId() {
         try {
             var auth = SecurityContextHolder.getContext().getAuthentication();
-            if (auth != null && auth.getPrincipal() instanceof com.mfg.ims.auth.service.UserPermissionCache.CachedUser user) {
+            if (auth != null && auth.getPrincipal() instanceof CachedUser user) {
                 return user.id();
             }
         } catch (Exception ignored) {}
         return -1L;
+    }
+
+    private Set<String> currentUserPermissions() {
+        try {
+            var auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.getPrincipal() instanceof CachedUser user) {
+                return user.permissions();
+            }
+        } catch (Exception ignored) {}
+        return Set.of();
     }
 }
