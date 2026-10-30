@@ -69,7 +69,7 @@ class Phase12FinanceIT extends AbstractIntegrationTest {
     @Test
     void p12_1_create_sales_invoice() {
         var req = new SaveInvoiceRequest(customerId, null, "TAX", "B2B", "27",
-                null, null, null, "CUST-PO-001", null, "INR", "Test invoice",
+                null, null, null, "CUST-PO-001", null, "INR", "Test invoice", null, null,
                 List.of(new SaveInvoiceRequest.ItemLine(
                         td.product().getId(), null, "Product A",
                         new BigDecimal("10"), "PCS", new BigDecimal("1000.00"),
@@ -87,7 +87,7 @@ class Phase12FinanceIT extends AbstractIntegrationTest {
     @Test
     void p12_2_post_sales_invoice() {
         var req = new SaveInvoiceRequest(customerId, null, "TAX", "B2B", null,
-                null, null, null, null, null, "INR", null,
+                null, null, null, null, null, "INR", null, null, null,
                 List.of(new SaveInvoiceRequest.ItemLine(
                         td.product().getId(), null, "Product B",
                         new BigDecimal("5"), "PCS", new BigDecimal("2000.00"),
@@ -102,7 +102,7 @@ class Phase12FinanceIT extends AbstractIntegrationTest {
     @Test
     void p12_3_cancel_sales_invoice() {
         var req = new SaveInvoiceRequest(customerId, null, "TAX", "B2B", null,
-                null, null, null, null, null, "INR", null,
+                null, null, null, null, null, "INR", null, null, null,
                 List.of(new SaveInvoiceRequest.ItemLine(
                         td.product().getId(), null, "Product C",
                         BigDecimal.ONE, "PCS", new BigDecimal("500.00"),

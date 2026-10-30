@@ -297,6 +297,6 @@ public class GoodsReceiptService {
                 poNumber,
                 gr.getReceiptDate(), gr.getSupplierChallanNo(), gr.getVehicleNo(),
                 gr.getWarehouseId(), gr.getStatus(), gr.getReceivedBy(), itemDtos,
-                gr.getServiceConfirmationId());
+                gr.getServiceConfirmationId(), gr.isRequiresApproval());
     }
 }

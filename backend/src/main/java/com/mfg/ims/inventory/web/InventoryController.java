@@ -151,14 +151,6 @@ public class InventoryController {
         return queryService.belowMinimum();
     }
 
-    @GetMapping("/stock-card/{materialId}")
-    @PreAuthorize("hasAuthority('INVENTORY_VIEW')")
-    public Page<InventoryTransactionDto> stockCard(
-            @PathVariable Long materialId,
-            @PageableDefault(size = 50, sort = "id", direction = org.springframework.data.domain.Sort.Direction.DESC) Pageable pageable) {
-        return queryService.stockCard(materialId, pageable);
-    }
-
     // ── Stock transfer ────────────────────────────────────────────────────────
 
     @PostMapping("/transfers")

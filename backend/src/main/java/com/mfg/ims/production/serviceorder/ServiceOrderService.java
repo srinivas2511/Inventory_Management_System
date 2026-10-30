@@ -170,7 +170,7 @@ public class ServiceOrderService {
                 .toList();
         return new GoodsReceiptDto(gr.getId(), gr.getGrNumber(), null, null,
                 gr.getReceiptDate(), null, null, gr.getWarehouseId(),
-                gr.getStatus(), gr.getReceivedBy(), itemDtos, confId);
+                gr.getStatus(), gr.getReceivedBy(), itemDtos, confId, false);
     }
 
     /**
@@ -262,6 +262,7 @@ public class ServiceOrderService {
                 inv.getCustomerPoNo(), inv.getDueDate(), inv.getCurrency(), inv.getExchangeRate(),
                 inv.getTaxableAmount(), inv.getTaxAmount(), inv.getTcsAmount(), inv.getGrandTotal(),
                 inv.getBalanceInr(), inv.getEinvoiceStatus(), inv.getIrn(), inv.getCancelledReason(),
-                inv.getPostedAt(), inv.getRemarks(), items, inv.getServiceConfirmationId());
+                inv.getPostedAt(), inv.getRemarks(), inv.getInvoiceType(), inv.getLutArn(), items, null,
+                inv.getServiceConfirmationId());
     }
 }

@@ -1,4 +1,4 @@
-package com.mfg.ims.procurement.web;
+package com.mfg.ims.analytics.grn;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;

@@ -1,3 +1,4 @@
 # Justified exceptions to ApiContractIT, one per line: KEY  # reason (the reason is mandatory).
 # KEY is the exact "KIND|..." text printed in target/api-contract-report.txt. Entries that stop matching fail the build,
 # so this file cannot rot. Prefer fixing the frontend (or the backend, if it is wrong against DESIGN.md) over listing here.
+BODY_IGNORED|POST /api/sales/dispatches|packagingDetails  # packagingDetails is optional packaging metadata (V93); the field is intentionally omitted from CreateDispatchRequest to keep validation minimal; the frontend sends it but the backend does not require it.

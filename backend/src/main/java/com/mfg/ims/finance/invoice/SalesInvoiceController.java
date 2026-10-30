@@ -63,7 +63,7 @@ public class SalesInvoiceController {
 
     @PostMapping("/from-service-confirmation/{confId}")
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAuthority('SALES_MANAGE')")
+    @PreAuthorize("hasAuthority('SALES_INVOICE_CREATE')")
     public SalesInvoiceDto fromServiceConfirmation(@PathVariable Long confId,
                                                    @AuthenticationPrincipal CachedUser actor) {
         return service.createFromServiceConfirmation(confId, actor.id());

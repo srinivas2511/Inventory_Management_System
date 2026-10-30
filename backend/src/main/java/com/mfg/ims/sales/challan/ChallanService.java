@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.mfg.ims.common.numbering.DocumentNumberService;
+import com.mfg.ims.partner.repository.CustomerRepository;
 
 @Service
 @Transactional
@@ -17,10 +18,22 @@ public class ChallanService {
 
     private final ChallanRepository repo;
     private final DocumentNumberService numberService;
+    private final CustomerRepository customerRepo;
 
-    public ChallanService(ChallanRepository repo, DocumentNumberService numberService) {
+    public ChallanService(ChallanRepository repo, DocumentNumberService numberService,
+                          CustomerRepository customerRepo) {
         this.repo = repo;
         this.numberService = numberService;
+        this.customerRepo = customerRepo;
+    }
+
+    public record CustomerInfo(String name, String email, String address) {}
+
+    @Transactional(readOnly = true)
+    public CustomerInfo customerInfo(Long customerId) {
+        return customerRepo.findById(customerId)
+                .map(c -> new CustomerInfo(c.getName(), c.getEmail(), c.getAddress()))
+                .orElse(new CustomerInfo("", null, ""));
     }
 
     @Transactional(readOnly = true)

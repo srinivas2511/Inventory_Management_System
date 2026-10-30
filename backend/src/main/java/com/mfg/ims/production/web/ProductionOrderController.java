@@ -142,20 +142,20 @@ public class ProductionOrderController {
     // ---- 13.9 convenience endpoints ----
 
     @PostMapping("/{id}/complete-all")
-    @PreAuthorize("hasAuthority('PRODUCTION_MANAGE')")
+    @PreAuthorize("hasAuthority('PRODUCTION_CLOSE')")
     public ProductionOrderDto completeAll(@PathVariable Long id) {
         return convenienceService.completeAll(id);
     }
 
     @PostMapping("/quick-create")
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAuthority('PRODUCTION_MANAGE')")
+    @PreAuthorize("hasAuthority('PRODUCTION_CREATE')")
     public ProductionOrderDto quickCreate(@Valid @RequestBody QuickCreateRequest req) {
         return convenienceService.quickCreate(req);
     }
 
     @org.springframework.web.bind.annotation.PatchMapping("/{id}/routing")
-    @PreAuthorize("hasAuthority('PRODUCTION_MANAGE')")
+    @PreAuthorize("hasAuthority('PRODUCTION_UPDATE')")
     public List<ProductionOperationDto> updateRouting(@PathVariable Long id,
                                                        @Valid @RequestBody UpdateRoutingRequest req) {
         return convenienceService.updateRouting(id, req);

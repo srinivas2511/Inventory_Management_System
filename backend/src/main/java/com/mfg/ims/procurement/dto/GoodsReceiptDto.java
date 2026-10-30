@@ -16,7 +16,8 @@ public record GoodsReceiptDto(
         String status,
         Long receivedBy,
         List<GrItemDto> items,
-        Long serviceConfirmationId
+        Long serviceConfirmationId,
+        boolean requiresApproval
 ) {
     public record GrItemDto(
             Long id,

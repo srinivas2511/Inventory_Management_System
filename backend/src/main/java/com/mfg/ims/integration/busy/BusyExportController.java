@@ -104,11 +104,11 @@ public class BusyExportController {
                 jdbc.update("""
                         UPDATE ims.busy_sync_queue
                         SET status = 'EXPORTED', exported_at = :now,
-                            export_attempt = export_attempt + 1, export_payload = :csv::jsonb
+                            export_attempt = export_attempt + 1, export_payload = CAST(:csv AS jsonb)
                         WHERE id = :id
                         """,
                         new MapSqlParameterSource()
-                                .addValue("now", Instant.now())
+                                .addValue("now", java.sql.Timestamp.from(Instant.now()))
                                 .addValue("csv", "{\"csv\":\"" + csv.replace("\"", "\\\"") + "\"}")
                                 .addValue("id", queueId));
                 exported++;

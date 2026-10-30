@@ -48,9 +48,9 @@ class BomImportIT extends AbstractIntegrationTest {
     @AfterEach
     void tearDown() {
         SecurityContextHolder.clearContext();
-        // cleanup in dependency order: bom_items → boms → products
-        jdbc.update("DELETE FROM ims.bom_items WHERE bom_id IN (SELECT id FROM ims.boms WHERE product_id IN (SELECT id FROM ims.products WHERE product_code = ?))", productCode);
-        jdbc.update("DELETE FROM ims.boms WHERE product_id IN (SELECT id FROM ims.products WHERE product_code = ?)", productCode);
+        // cleanup in dependency order: bom_items → bom → products
+        jdbc.update("DELETE FROM ims.bom_items WHERE bom_id IN (SELECT id FROM ims.bom WHERE product_id IN (SELECT id FROM ims.products WHERE product_code = ?))", productCode);
+        jdbc.update("DELETE FROM ims.bom WHERE product_id IN (SELECT id FROM ims.products WHERE product_code = ?)", productCode);
         jdbc.update("DELETE FROM ims.products WHERE product_code = ?", productCode);
     }
 
@@ -70,7 +70,7 @@ class BomImportIT extends AbstractIntegrationTest {
         assertThat(result.rows().get(0).status()).isEqualTo("CREATED");
 
         Integer bomCount = jdbc.queryForObject("""
-                SELECT count(*) FROM ims.boms b
+                SELECT count(*) FROM ims.bom b
                   JOIN ims.products p ON p.id = b.product_id
                  WHERE p.product_code = ? AND b.status = 'DRAFT'
                 """, Integer.class, productCode);

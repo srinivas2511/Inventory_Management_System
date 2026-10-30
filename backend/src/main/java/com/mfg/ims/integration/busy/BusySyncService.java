@@ -46,7 +46,7 @@ public class BusySyncService {
                        SELECT 1 FROM ims.busy_sync_queue bq WHERE bq.journal_id = jh.id
                    )
                  ORDER BY jh.posting_date, jh.id
-                """, new MapSqlParameterSource("since", since));
+                """, new MapSqlParameterSource("since", java.sql.Timestamp.from(since)));
 
         int synced = 0;
         int failed = 0;
@@ -62,12 +62,12 @@ public class BusySyncService {
                         INSERT INTO ims.busy_sync_queue
                             (journal_id, journal_number, status, export_attempt, exported_at,
                              export_payload)
-                        VALUES (:jid, :jnum, 'EXPORTED', 1, :now, :payload::jsonb)
+                        VALUES (:jid, :jnum, 'EXPORTED', 1, :now, CAST(:payload AS jsonb))
                         """,
                         new MapSqlParameterSource()
                                 .addValue("jid", journalId)
                                 .addValue("jnum", journalNumber)
-                                .addValue("now", syncTime)
+                                .addValue("now", java.sql.Timestamp.from(syncTime))
                                 .addValue("payload", "{\"xml\":" + jsonString(xml) + "}"));
                 synced++;
             } catch (Exception e) {

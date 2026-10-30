@@ -75,7 +75,7 @@ class InvoiceDispatchIT extends AbstractIntegrationTest {
 
         // Create invoice linked to SO, no dispatchId
         var req = new SaveInvoiceRequest(customerId, LocalDate.now(), "TAX", "B2B", null,
-                null, so.id(), null, null, null, "INR", null, List.of(
+                null, so.id(), null, null, null, "INR", null, null, null, List.of(
                         new SaveInvoiceRequest.ItemLine(td.product().getId(), null, "Item A",
                                 BigDecimal.ONE, "PCS", new BigDecimal("1000.00"), null, null)));
         var inv = invoiceService.create(req, TEST_USER_ID);
@@ -91,7 +91,7 @@ class InvoiceDispatchIT extends AbstractIntegrationTest {
     void id_2_no_auto_dispatch_when_no_so() {
         // Create invoice with no salesOrderId
         var req = new SaveInvoiceRequest(customerId, LocalDate.now(), "TAX", "B2B", null,
-                null, null, null, null, null, "INR", null, List.of(
+                null, null, null, null, null, "INR", null, null, null, List.of(
                         new SaveInvoiceRequest.ItemLine(td.product().getId(), null, "Item B",
                                 BigDecimal.ONE, "PCS", new BigDecimal("500.00"), null, null)));
         var inv = invoiceService.create(req, TEST_USER_ID);
@@ -105,7 +105,7 @@ class InvoiceDispatchIT extends AbstractIntegrationTest {
     void id_3_cancel_blocked_when_payment_applied() {
         // Create and post an invoice
         var req = new SaveInvoiceRequest(customerId, LocalDate.now(), "TAX", "B2B", null,
-                null, null, null, null, null, "INR", null, List.of(
+                null, null, null, null, null, "INR", null, null, null, List.of(
                         new SaveInvoiceRequest.ItemLine(td.product().getId(), null, "Item C",
                                 BigDecimal.ONE, "PCS", new BigDecimal("2000.00"), null, null)));
         var inv = invoiceService.create(req, TEST_USER_ID);

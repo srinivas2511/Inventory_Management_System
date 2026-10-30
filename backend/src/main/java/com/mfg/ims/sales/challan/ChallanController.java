@@ -17,10 +17,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
-
 import com.mfg.ims.notification.service.EmailSender;
-import com.mfg.ims.partner.repository.CustomerRepository;
 
 @RestController
 @RequestMapping("/api/sales/delivery-challans")
@@ -28,14 +25,12 @@ public class ChallanController {
 
     private final ChallanService service;
     private final ChallanRenderer renderer;
-    private final CustomerRepository customerRepo;
     private final EmailSender emailSender;
 
     public ChallanController(ChallanService service, ChallanRenderer renderer,
-                             CustomerRepository customerRepo, EmailSender emailSender) {
+                             EmailSender emailSender) {
         this.service = service;
         this.renderer = renderer;
-        this.customerRepo = customerRepo;
         this.emailSender = emailSender;
     }
 
@@ -84,9 +79,9 @@ public class ChallanController {
     @PreAuthorize("hasAuthority('CHALLAN_VIEW')")
     public ResponseEntity<byte[]> pdf(@PathVariable Long id) {
         var challan = service.get(id);
-        var customer = customerRepo.findById(challan.customerId()).orElse(null);
-        String customerName = customer != null ? customer.getName() : "";
-        String customerAddress = customer != null && customer.getAddress() != null ? customer.getAddress() : "";
+        var customer = service.customerInfo(challan.customerId());
+        String customerName = customer.name() != null ? customer.name() : "";
+        String customerAddress = customer.address() != null ? customer.address() : "";
         byte[] pdfBytes = renderer.render(challan, customerName, customerAddress);
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_PDF);
@@ -103,19 +98,14 @@ public class ChallanController {
     @PreAuthorize("hasAuthority('CHALLAN_ISSUE')")
     public Map<String, String> sendEmail(@PathVariable Long id) {
         var challan = service.get(id);
-        var customer = customerRepo.findById(challan.customerId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Customer not found for challan: " + id));
-        if (customer.getEmail() == null || customer.getEmail().isBlank()) {
+        var customer = service.customerInfo(challan.customerId());
+        if (customer.email() == null || customer.email().isBlank()) {
             return Map.of("message", "Email skipped - no customer email");
         }
-        String customerName = customer.getName() != null ? customer.getName() : "";
-        String customerAddress = customer.getAddress() != null ? customer.getAddress() : "";
-        // generate PDF but send a plain text email with challan reference
-        // (attaching PDF bytes to email is not supported by the base EmailSender interface;
-        //  we send a text notification as per the available interface)
+        String customerName = customer.name() != null ? customer.name() : "";
+        String customerAddress = customer.address() != null ? customer.address() : "";
         emailSender.send(
-                customer.getEmail(),
+                customer.email(),
                 "Delivery Challan " + challan.docNo(),
                 "Dear " + ChallanRenderer.safe(customerName) + ",\n\n"
                 + "Please find attached delivery challan " + challan.docNo()
@@ -125,6 +115,6 @@ public class ChallanController {
                         ? challan.deliveryAddress() : customerAddress)
                 + "\n\nThank you for your business."
         );
-        return Map.of("message", "Email sent to " + customer.getEmail());
+        return Map.of("message", "Email sent to " + customer.email());
     }
 }

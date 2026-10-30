@@ -22,12 +22,12 @@ CREATE TABLE eway_bills (
     version             BIGINT NOT NULL DEFAULT 0
 );
 
-INSERT INTO permissions (code, description)
-VALUES ('EWAY_BILL_MANAGE', 'Generate e-way bills')
+INSERT INTO permissions (code, module, description) VALUES
+  ('EWAY_BILL_MANAGE', 'FINANCE', 'Generate e-way bills')
 ON CONFLICT (code) DO NOTHING;
 
 INSERT INTO role_permissions (role_id, permission_id)
 SELECT r.id, p.id FROM roles r, permissions p
-WHERE r.name IN ('ADMIN', 'SALES_MANAGER', 'FINANCE_MANAGER')
+WHERE r.code IN ('ADMIN', 'SALES_MANAGER', 'FINANCE_MANAGER')
   AND p.code = 'EWAY_BILL_MANAGE'
 ON CONFLICT DO NOTHING;

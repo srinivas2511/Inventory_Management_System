@@ -12,7 +12,7 @@ CREATE TABLE advance_receipts (
     customer_id     BIGINT NOT NULL REFERENCES customers(id),
     receipt_date    DATE NOT NULL,
     amount          NUMERIC(18,4) NOT NULL,
-    currency_code   CHAR(3) NOT NULL DEFAULT 'INR',
+    currency_code   VARCHAR(3) NOT NULL DEFAULT 'INR',
     reference       VARCHAR(100),
     notes           TEXT,
     status          VARCHAR(20) NOT NULL DEFAULT 'OPEN',
@@ -25,12 +25,12 @@ CREATE TABLE advance_receipts (
     version         BIGINT NOT NULL DEFAULT 0
 );
 
-INSERT INTO permissions (code, description)
-VALUES ('ADVANCE_RECEIPT_MANAGE', 'Manage advance receipts')
+INSERT INTO permissions (code, module, description) VALUES
+  ('ADVANCE_RECEIPT_MANAGE', 'FINANCE', 'Manage advance receipts')
 ON CONFLICT (code) DO NOTHING;
 
 INSERT INTO role_permissions (role_id, permission_id)
 SELECT r.id, p.id FROM roles r, permissions p
-WHERE r.name IN ('ADMIN', 'FINANCE_MANAGER')
+WHERE r.code IN ('ADMIN', 'FINANCE_MANAGER')
   AND p.code = 'ADVANCE_RECEIPT_MANAGE'
 ON CONFLICT DO NOTHING;
