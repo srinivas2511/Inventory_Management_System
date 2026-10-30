@@ -129,6 +129,13 @@ export const NAV_GROUPS: NavGroup[] = [
         permission: 'SCRAP_VIEW',
         enabled: true,
       },
+      {
+        label: $localize`:@@nav.item-stock-alerts:Stock Alerts`,
+        icon: 'warning',
+        route: '/inventory/stock-alerts',
+        permission: 'INVENTORY_VIEW',
+        enabled: true,
+      },
     ],
   },
   {

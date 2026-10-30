@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -16,10 +17,14 @@ public class ServiceOrderService {
 
     private final ServiceOrderRepository repo;
     private final DocumentNumberService docNos;
+    private final ServiceConfirmationRepository confirmRepo;
 
-    public ServiceOrderService(ServiceOrderRepository repo, DocumentNumberService docNos) {
+    public ServiceOrderService(ServiceOrderRepository repo,
+                                DocumentNumberService docNos,
+                                ServiceConfirmationRepository confirmRepo) {
         this.repo = repo;
         this.docNos = docNos;
+        this.confirmRepo = confirmRepo;
     }
 
     public ServiceOrderDto create(CreateServiceOrderRequest req, Long actorId) {
@@ -62,6 +67,31 @@ public class ServiceOrderService {
         return toDto(repo.save(so));
     }
 
+    /** Confirm the service delivery — creates a confirmation record and advances status to IN_PROGRESS. */
+    public ServiceConfirmationDto confirm(Long id, ConfirmServiceRequest req, Long actorId) {
+        ServiceOrder so = findOrThrow(id);
+        ServiceConfirmation conf = new ServiceConfirmation();
+        conf.setSoId(so.getId());
+        conf.setConfirmedAt(Instant.now());
+        conf.setConfirmedBy(actorId);
+        if (req != null) conf.setRemarks(req.remarks());
+        conf = confirmRepo.save(conf);
+        // Advance status if still DRAFT or CONFIRMED
+        if ("DRAFT".equals(so.getStatus()) || "CONFIRMED".equals(so.getStatus())) {
+            so.setStatus("IN_PROGRESS");
+            so.setUpdatedBy(actorId);
+            repo.save(so);
+        }
+        return toConfirmDto(conf);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ServiceConfirmationDto> getConfirmations(Long id) {
+        findOrThrow(id); // ensure exists
+        return confirmRepo.findBySoIdOrderByConfirmedAtDesc(id).stream()
+                .map(this::toConfirmDto).collect(Collectors.toList());
+    }
+
     private ServiceOrder findOrThrow(Long id) {
         return repo.findByIdAndCompanyId(id, 1L)
                 .orElseThrow(() -> new NotFoundException("ServiceOrder", id));
@@ -72,5 +102,10 @@ public class ServiceOrderService {
                 so.getServiceKind(), so.getVendorId(), so.getCustomerId(), so.getDescription(),
                 so.getScheduledDate(), so.getCompletedDate(), so.getServiceCharge(),
                 so.getTaxAmount(), so.getGrandTotal(), so.getRemarks(), so.getCreatedAt());
+    }
+
+    private ServiceConfirmationDto toConfirmDto(ServiceConfirmation c) {
+        return new ServiceConfirmationDto(c.getId(), c.getSoId(), c.getConfirmedAt(),
+                c.getConfirmedBy(), c.getRemarks());
     }
 }

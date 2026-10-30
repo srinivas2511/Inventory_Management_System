@@ -45,10 +45,30 @@ public class JobWorkController {
         return service.issue(id, actor.id());
     }
 
+    /** Issue specific materials to sub-contractor with inventory OUT transactions. */
+    @PostMapping("/{id}/issue-materials")
+    @PreAuthorize("hasAuthority('JWO_ISSUE')")
+    public JobWorkOrderDto issueMaterials(@PathVariable Long id,
+                                          @RequestBody IssueMaterialsRequest req,
+                                          @AuthenticationPrincipal CachedUser actor) {
+        return service.issueMaterials(id, req, actor.id());
+    }
+
+    /** Receive processed goods back from sub-contractor. */
     @PostMapping("/{id}/receive")
     @PreAuthorize("hasAuthority('JWO_RECEIVE')")
     public JobWorkOrderDto receive(@PathVariable Long id,
+                                    @RequestBody(required = false) ReceiveJobWorkRequest req,
                                     @AuthenticationPrincipal CachedUser actor) {
-        return service.receive(id, actor.id());
+        return service.receive(id, req, actor.id());
+    }
+
+    /** Record job work service charges for AP invoice matching. */
+    @PostMapping("/{id}/record-charges")
+    @PreAuthorize("hasAuthority('JWO_CREATE')")
+    public JobWorkChargeDto recordCharges(@PathVariable Long id,
+                                          @RequestBody RecordChargesRequest req,
+                                          @AuthenticationPrincipal CachedUser actor) {
+        return service.recordCharges(id, req, actor.id());
     }
 }

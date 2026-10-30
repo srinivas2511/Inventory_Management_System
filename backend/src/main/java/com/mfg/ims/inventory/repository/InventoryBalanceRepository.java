@@ -79,4 +79,19 @@ public interface InventoryBalanceRepository extends JpaRepository<InventoryBalan
 
     @Query(value = "SELECT COALESCE(SUM(b.qty_on_hand * m.standard_cost), 0) FROM ims.inventory_balances b JOIN ims.materials m ON m.id = b.material_id WHERE b.qty_on_hand > 0", nativeQuery = true)
     java.math.BigDecimal sumInventoryValue();
+
+    /**
+     * Materials where total AVAILABLE on-hand < min_stock. Returns rows: material_id, material_code, name, min_stock, on_hand.
+     */
+    @Query(value = """
+        SELECT m.id AS material_id, m.material_code, m.name, m.min_stock, m.uom,
+               COALESCE(SUM(b.qty_on_hand), 0) AS on_hand
+        FROM ims.materials m
+        LEFT JOIN ims.inventory_balances b ON b.material_id = m.id AND b.stock_status = 'AVAILABLE'
+        WHERE m.active = true AND m.min_stock > 0
+        GROUP BY m.id, m.material_code, m.name, m.min_stock, m.uom
+        HAVING COALESCE(SUM(b.qty_on_hand), 0) < m.min_stock
+        ORDER BY m.material_code
+        """, nativeQuery = true)
+    List<Object[]> findBelowMinimum();
 }

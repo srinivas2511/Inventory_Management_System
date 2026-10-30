@@ -3,6 +3,7 @@ package com.mfg.ims.production.barcode;
 import com.mfg.ims.auth.service.UserPermissionCache.CachedUser;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -37,6 +38,12 @@ public class BarcodeController {
     public BarcodeLabelDto generate(@Valid @RequestBody GenerateBarcodeRequest request,
                                     @AuthenticationPrincipal CachedUser actor) {
         return service.generate(request, actor.id());
+    }
+
+    @GetMapping(value = "/{id}/label", produces = MediaType.TEXT_HTML_VALUE)
+    @PreAuthorize("hasAuthority('PRODUCTION_VIEW')")
+    public String label(@PathVariable Long id) {
+        return service.generateLabel(id);
     }
 
     @PostMapping("/{id}/print")

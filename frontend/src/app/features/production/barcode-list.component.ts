@@ -72,6 +72,14 @@ export interface BarcodeLabelDto {
           <th mat-header-cell *matHeaderCellDef>Created</th>
           <td mat-cell *matCellDef="let row">{{ row.createdAt | istDate: 'short' }}</td>
         </ng-container>
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef>Actions</th>
+          <td mat-cell *matCellDef="let row">
+            <button mat-icon-button aria-label="Print barcode label" (click)="printLabel(row.id)">
+              <mat-icon aria-hidden="true">print</mat-icon>
+            </button>
+          </td>
+        </ng-container>
         <tr mat-header-row *matHeaderRowDef="columns"></tr>
         <tr mat-row *matRowDef="let row; columns: columns"></tr>
       </table>
@@ -82,7 +90,7 @@ export class BarcodeListComponent implements OnInit {
   private http = inject(HttpClient);
   private snack = inject(MatSnackBar);
 
-  readonly columns = ['id', 'labelType', 'refType', 'refId', 'barcodeValue', 'printCount', 'printedAt', 'createdAt'];
+  readonly columns = ['id', 'labelType', 'refType', 'refId', 'barcodeValue', 'printCount', 'printedAt', 'createdAt', 'actions'];
   readonly labels = signal<BarcodeLabelDto[]>([]);
   readonly loading = signal(true);
 
@@ -96,6 +104,21 @@ export class BarcodeListComponent implements OnInit {
         this.snack.open('Failed to load barcodes', 'Close', { duration: 3000 });
         this.loading.set(false);
       },
+    });
+  }
+
+  printLabel(id: number): void {
+    this.http.get(`/api/production/barcodes/${id}/label`, { responseType: 'text' }).subscribe({
+      next: (html) => {
+        const win = window.open('', '_blank');
+        if (win) {
+          win.document.write(html);
+          win.document.close();
+          win.focus();
+          win.print();
+        }
+      },
+      error: () => this.snack.open('Failed to load label', 'Close', { duration: 3000 }),
     });
   }
 }
