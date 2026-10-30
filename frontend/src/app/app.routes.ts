@@ -670,6 +670,13 @@ export const routes: Routes = [
           import('./features/documents/document-upload.component').then((m) => m.DocumentUploadComponent),
       },
       {
+        path: 'documents/all',
+        title: 'All Documents',
+        canActivate: [permissionGuard('REPORT_VIEW')],
+        loadComponent: () =>
+          import('./features/documents/all-documents.component').then((m) => m.AllDocumentsComponent),
+      },
+      {
         path: 'documents/:id',
         title: 'Document',
         canActivate: [permissionGuard('DOCUMENT_VIEW')],
@@ -1098,13 +1105,6 @@ export const routes: Routes = [
         title: 'Busy Export',
         canActivate: [permissionGuard('BUSY_EXPORT_VIEW')],
         loadComponent: () => import('./features/integration/busy-export.component').then((m) => m.BusyExportComponent),
-      },
-      {
-        path: 'documents/all',
-        title: 'All Documents',
-        canActivate: [permissionGuard('REPORT_VIEW')],
-        loadComponent: () =>
-          import('./features/documents/all-documents.component').then((m) => m.AllDocumentsComponent),
       },
     ],
   },
