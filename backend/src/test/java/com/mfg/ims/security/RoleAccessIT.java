@@ -693,6 +693,20 @@ class RoleAccessIT extends AbstractIntegrationTest {
                     Set.of("OPERATOR", "MANAGEMENT", "SALES", "QUALITY_MANAGER", "FINANCE_MANAGER", "ACCOUNTANT", "ENGINEER")),
             // Phase 10: Supplier quotes — ADMIN + PURCHASE_MANAGER (RFQ_VIEW)
             Probe.of(HttpMethod.GET, "/api/supplier-quotes", PHASE10_PURCHASE_ALLOWED, PHASE10_PURCHASE_FORBIDDEN),
+            // Phase 10 (new): RFQ nested quote endpoints — /api/procurement/rfqs/{id}/quotes
+            Probe.of(HttpMethod.GET, "/api/procurement/rfqs/" + MISSING + "/quotes",
+                    PHASE10_PURCHASE_ALLOWED, PHASE10_PURCHASE_FORBIDDEN),
+            Probe.withBody(HttpMethod.POST, "/api/procurement/rfqs/" + MISSING + "/quotes",
+                    "{\"docNo\":\"SQ-PROBE\",\"rfqId\":" + MISSING + ",\"supplierId\":" + MISSING + ",\"items\":[]}",
+                    PHASE10_PURCHASE_ALLOWED, PHASE10_PURCHASE_FORBIDDEN),
+            Probe.of(HttpMethod.POST, "/api/procurement/rfqs/" + MISSING + "/quotes/" + MISSING + "/award",
+                    PHASE10_PURCHASE_ALLOWED, PHASE10_PURCHASE_FORBIDDEN),
+            // Phase 10 (new): PO amend and revision history
+            Probe.withBody(HttpMethod.POST, "/api/procurement/purchase-orders/" + MISSING + "/amend",
+                    "{\"reason\":\"probe amendment\"}",
+                    PHASE10_PURCHASE_ALLOWED, PHASE10_PURCHASE_FORBIDDEN),
+            Probe.of(HttpMethod.GET, "/api/procurement/purchase-orders/" + MISSING + "/revisions",
+                    PHASE10_PURCHASE_ALLOWED, PHASE10_PURCHASE_FORBIDDEN),
             // Phase 11: Quotations — ADMIN + SALES_MANAGER (QUOTATION_VIEW)
             Probe.of(HttpMethod.GET, "/api/sales/quotations", PHASE11_SALES_ALLOWED, PHASE11_SALES_FORBIDDEN),
             Probe.of(HttpMethod.GET, "/api/sales/quotations/" + MISSING, PHASE11_SALES_ALLOWED, PHASE11_SALES_FORBIDDEN),
@@ -953,7 +967,12 @@ class RoleAccessIT extends AbstractIntegrationTest {
             // V87: approval decide by missing request id answers 404
             Map.entry("POST /api/approvals/999999/approve", 404),
             Map.entry("POST /api/approvals/999999/reject", 404),
-            Map.entry("POST /api/approvals/999999/withdraw", 404));
+            Map.entry("POST /api/approvals/999999/withdraw", 404),
+            // Phase 10 (new): RFQ nested quotes — POST with non-existent rfq_id/supplier_id → FK violation → 409
+            Map.entry("POST /api/procurement/rfqs/999999/quotes", 409),
+            // Phase 10 (new): award with non-existent quoteId → 404; amend with non-existent poId → 404
+            Map.entry("POST /api/procurement/rfqs/999999/quotes/999999/award", 404),
+            Map.entry("POST /api/procurement/purchase-orders/999999/amend", 404));
 
     @Autowired UserAdminService userAdminService;
     @Autowired @Qualifier("requestMappingHandlerMapping") RequestMappingHandlerMapping handlerMapping;

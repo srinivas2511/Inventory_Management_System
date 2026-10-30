@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { DecimalPipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
@@ -9,6 +9,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
+import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
@@ -46,6 +47,15 @@ export interface PurchaseOrderDto {
   allowedActions: string[];
 }
 
+export interface PoRevisionDto {
+  id: number;
+  poId: number;
+  revisionNo: number;
+  reason: string;
+  createdBy: number | null;
+  createdAt: string;
+}
+
 @Component({
   selector: 'app-purchase-order-list',
   standalone: true,
@@ -59,6 +69,7 @@ export interface PurchaseOrderDto {
     MatInputModule,
     MatSelectModule,
     MatProgressSpinnerModule,
+    MatTabsModule,
     MatTooltipModule,
     MatSnackBarModule,
     DecimalPipe,
@@ -158,6 +169,26 @@ export interface PurchaseOrderDto {
                 <mat-icon>local_shipping</mat-icon>
               </button>
             }
+            @if (r.status === 'APPROVED' || r.status === 'SENT_TO_SUPPLIER') {
+              <button
+                mat-icon-button
+                matTooltip="Amend (record revision)"
+                aria-label="Amend"
+                *appHasPermission="'PURCHASE_AMEND'"
+                (click)="openAmendDialog(r)"
+              >
+                <mat-icon aria-hidden="true">edit_note</mat-icon>
+              </button>
+            }
+            <button
+              mat-icon-button
+              matTooltip="Revision History"
+              aria-label="Revision History"
+              *appHasPermission="'PURCHASE_VIEW'"
+              (click)="openRevisionsDialog(r)"
+            >
+              <mat-icon aria-hidden="true">history</mat-icon>
+            </button>
             <a
               mat-icon-button
               [href]="'/api/procurement/purchase-orders/' + r.id + '/pdf'"
@@ -175,19 +206,106 @@ export interface PurchaseOrderDto {
       </table>
       <app-list-paginator [paged]="paged" (changed)="load()" />
     }
+
+    <!-- Amend Dialog -->
+    @if (amendDialogOpen()) {
+      <div class="dialog-backdrop" role="button" tabindex="0" aria-label="Close dialog"
+           (click)="closeAmendDialog()" (keydown.escape)="closeAmendDialog()">
+        <div class="dialog-panel" role="presentation" (click)="$event.stopPropagation()">
+          <h3>Amend PO — {{ amendTarget()?.poNumber }}</h3>
+          <form [formGroup]="amendForm" (ngSubmit)="submitAmend()">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Reason for Amendment</mat-label>
+              <textarea matInput formControlName="reason" rows="3" placeholder="Describe the change..."></textarea>
+              @if (amendForm.get('reason')?.hasError('required')) {
+                <mat-error>Reason is required</mat-error>
+              }
+            </mat-form-field>
+            <div class="dialog-actions">
+              <button mat-button type="button" (click)="closeAmendDialog()">Cancel</button>
+              <button mat-raised-button color="primary" type="submit" [disabled]="amendForm.invalid || savingAmend()">
+                Save Revision
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    }
+
+    <!-- Revisions Dialog -->
+    @if (revisionsDialogOpen()) {
+      <div class="dialog-backdrop" role="button" tabindex="0" aria-label="Close dialog"
+           (click)="closeRevisionsDialog()" (keydown.escape)="closeRevisionsDialog()">
+        <div class="dialog-panel wide" role="presentation" (click)="$event.stopPropagation()">
+          <h3>Revision History — {{ amendTarget()?.poNumber }}</h3>
+          @if (revisionsLoading()) {
+            <mat-spinner diameter="32" />
+          } @else if (revisions().length === 0) {
+            <p style="color:#666; padding:12px 0">No amendments recorded.</p>
+          } @else {
+            <table mat-table [dataSource]="revisions()" class="full-width">
+              <ng-container matColumnDef="revisionNo">
+                <th mat-header-cell *matHeaderCellDef>#</th>
+                <td mat-cell *matCellDef="let r">{{ r.revisionNo }}</td>
+              </ng-container>
+              <ng-container matColumnDef="reason">
+                <th mat-header-cell *matHeaderCellDef>Reason</th>
+                <td mat-cell *matCellDef="let r">{{ r.reason }}</td>
+              </ng-container>
+              <ng-container matColumnDef="createdBy">
+                <th mat-header-cell *matHeaderCellDef>Changed By</th>
+                <td mat-cell *matCellDef="let r">{{ r.createdBy ?? '—' }}</td>
+              </ng-container>
+              <ng-container matColumnDef="createdAt">
+                <th mat-header-cell *matHeaderCellDef>Date</th>
+                <td mat-cell *matCellDef="let r">{{ r.createdAt | istDate: 'dd/MM/yyyy HH:mm' }}</td>
+              </ng-container>
+              <tr mat-header-row *matHeaderRowDef="revisionColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: revisionColumns"></tr>
+            </table>
+          }
+          <div class="dialog-actions">
+            <button mat-button (click)="closeRevisionsDialog()">Close</button>
+          </div>
+        </div>
+      </div>
+    }
   `,
+  styles: [`
+    .dialog-backdrop {
+      position: fixed; inset: 0; background: rgba(0,0,0,.4);
+      display: flex; align-items: center; justify-content: center; z-index: 1000;
+    }
+    .dialog-panel { background: #fff; border-radius: 8px; padding: 24px; width: 480px; }
+    .dialog-panel.wide { width: 680px; }
+    .dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+    .full-width { width: 100%; }
+  `],
 })
 export class PurchaseOrderListComponent implements OnInit {
   private http = inject(HttpClient);
   private snack = inject(MatSnackBar);
   private dialog = inject(MatDialog);
   private session = inject(SessionStore);
+  private fb = inject(FormBuilder);
 
   columns = ['poNumber', 'supplierId', 'poDate', 'grandTotal', 'status', 'actions'];
+  revisionColumns = ['revisionNo', 'reason', 'createdBy', 'createdAt'];
   rows = signal<PurchaseOrderDto[]>([]);
   loading = signal(false);
   readonly paged = new PagedList();
   statusCtrl = new FormControl<string | null>(null);
+
+  // Amend dialog state
+  amendDialogOpen = signal(false);
+  amendTarget = signal<PurchaseOrderDto | null>(null);
+  savingAmend = signal(false);
+  amendForm!: FormGroup;
+
+  // Revisions dialog state
+  revisionsDialogOpen = signal(false);
+  revisionsLoading = signal(false);
+  revisions = signal<PoRevisionDto[]>([]);
 
   ngOnInit(): void {
     this.statusCtrl.valueChanges.subscribe(() => {
@@ -238,5 +356,58 @@ export class PurchaseOrderListComponent implements OnInit {
       },
       error: (e) => this.snack.open(e.error?.detail ?? 'Error', 'OK', { duration: 4000 }),
     });
+  }
+
+  openAmendDialog(po: PurchaseOrderDto): void {
+    this.amendTarget.set(po);
+    this.amendForm = this.fb.group({ reason: ['', [Validators.required, Validators.minLength(3)]] });
+    this.amendDialogOpen.set(true);
+  }
+
+  closeAmendDialog(): void {
+    this.amendDialogOpen.set(false);
+    this.amendTarget.set(null);
+  }
+
+  submitAmend(): void {
+    if (this.amendForm.invalid) return;
+    const po = this.amendTarget();
+    if (!po) return;
+    this.savingAmend.set(true);
+    this.http
+      .post<PoRevisionDto>(`/api/procurement/purchase-orders/${po.id}/amend`, this.amendForm.value)
+      .subscribe({
+        next: (rev) => {
+          this.snack.open(`Revision ${rev.revisionNo} recorded`, 'OK', { duration: 3000 });
+          this.savingAmend.set(false);
+          this.closeAmendDialog();
+        },
+        error: (e) => {
+          this.snack.open(e.error?.detail ?? 'Error saving revision', 'Close', { duration: 4000 });
+          this.savingAmend.set(false);
+        },
+      });
+  }
+
+  openRevisionsDialog(po: PurchaseOrderDto): void {
+    this.amendTarget.set(po);
+    this.revisionsLoading.set(true);
+    this.revisionsDialogOpen.set(true);
+    this.http.get<PoRevisionDto[]>(`/api/procurement/purchase-orders/${po.id}/revisions`).subscribe({
+      next: (data) => {
+        this.revisions.set(data);
+        this.revisionsLoading.set(false);
+      },
+      error: () => {
+        this.revisionsLoading.set(false);
+        this.snack.open('Failed to load revisions', 'Close', { duration: 3000 });
+      },
+    });
+  }
+
+  closeRevisionsDialog(): void {
+    this.revisionsDialogOpen.set(false);
+    this.revisions.set([]);
+    this.amendTarget.set(null);
   }
 }
