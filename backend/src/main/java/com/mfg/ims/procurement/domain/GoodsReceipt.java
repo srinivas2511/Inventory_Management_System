@@ -37,6 +37,9 @@ public class GoodsReceipt extends BaseEntity {
     @Column(name = "status", nullable = false, length = 20)
     private String status = "POSTED";
 
+    @Column(name = "requires_approval", nullable = false)
+    private boolean requiresApproval = false;
+
     @Column(name = "received_by", nullable = false)
     private Long receivedBy;
 
@@ -68,6 +71,9 @@ public class GoodsReceipt extends BaseEntity {
     public void setPlantId(Long plantId) { this.plantId = plantId; }
     public String getStatus() { return status; }
     public void setStatus(String v) { this.status = v; }
+
+    public boolean isRequiresApproval() { return requiresApproval; }
+    public void setRequiresApproval(boolean v) { this.requiresApproval = v; }
 
     public Long getReceivedBy() { return receivedBy; }
     public void setReceivedBy(Long v) { this.receivedBy = v; }

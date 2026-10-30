@@ -60,6 +60,9 @@ public class StockAdjustment extends BaseEntity {
     @Column(name = "stock_count_id")
     private Long stockCountId;
 
+    @Column(name = "requires_approval", nullable = false)
+    private boolean requiresApproval = false;
+
     public StockAdjustment() {}
 
     public String getAdjustmentNumber() { return adjustmentNumber; }
@@ -95,6 +98,9 @@ public class StockAdjustment extends BaseEntity {
     public void setRequestedBy(Long requestedBy) { this.requestedBy = requestedBy; }
     public void setPostedTransactionId(Long postedTransactionId) { this.postedTransactionId = postedTransactionId; }
     public void setStockCountId(Long stockCountId) { this.stockCountId = stockCountId; }
+
+    public boolean isRequiresApproval() { return requiresApproval; }
+    public void setRequiresApproval(boolean v) { this.requiresApproval = v; }
 
     public BigDecimal varianceQty() {
         return countedQty.subtract(systemQty);

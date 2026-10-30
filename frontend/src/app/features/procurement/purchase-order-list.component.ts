@@ -45,6 +45,19 @@ export interface PurchaseOrderDto {
   submittedBy?: number | null;
   items: PurchaseOrderItemDto[];
   allowedActions: string[];
+  amendmentPending?: boolean;
+}
+
+export interface PoBalanceDto {
+  lineId: number;
+  poId: number;
+  poNumber: string;
+  materialId: number;
+  materialName: string;
+  orderedQty: number;
+  receivedQty: number;
+  balanceQty: number;
+  unitPrice: number;
 }
 
 export interface PoRevisionDto {
@@ -189,6 +202,15 @@ export interface PoRevisionDto {
             >
               <mat-icon aria-hidden="true">history</mat-icon>
             </button>
+            <button
+              mat-icon-button
+              matTooltip="PO Balance"
+              aria-label="PO Balance"
+              *appHasPermission="'PURCHASE_VIEW'"
+              (click)="openBalanceDialog(r)"
+            >
+              <mat-icon aria-hidden="true">account_balance_wallet</mat-icon>
+            </button>
             <a
               mat-icon-button
               [href]="'/api/procurement/purchase-orders/' + r.id + '/pdf'"
@@ -270,6 +292,49 @@ export interface PoRevisionDto {
         </div>
       </div>
     }
+
+    <!-- PO Balance Dialog -->
+    @if (balanceDialogOpen()) {
+      <div class="dialog-backdrop" role="button" tabindex="0" aria-label="Close dialog"
+           (click)="closeBalanceDialog()" (keydown.escape)="closeBalanceDialog()">
+        <div class="dialog-panel wide" role="presentation" (click)="$event.stopPropagation()">
+          <h3>PO Balance — {{ balanceTarget()?.poNumber }}</h3>
+          @if (balanceLoading()) {
+            <div style="padding:16px"><mat-spinner diameter="32" /></div>
+          } @else if (balanceRows().length === 0) {
+            <p style="color:#666; padding:12px 0">No balance lines found.</p>
+          } @else {
+            <table mat-table [dataSource]="balanceRows()" class="full-width">
+              <ng-container matColumnDef="materialName">
+                <th mat-header-cell *matHeaderCellDef>Material</th>
+                <td mat-cell *matCellDef="let r">{{ r.materialName }}</td>
+              </ng-container>
+              <ng-container matColumnDef="orderedQty">
+                <th mat-header-cell *matHeaderCellDef>Ordered Qty</th>
+                <td mat-cell *matCellDef="let r">{{ r.orderedQty | number: '1.3-3' }}</td>
+              </ng-container>
+              <ng-container matColumnDef="receivedQty">
+                <th mat-header-cell *matHeaderCellDef>Received Qty</th>
+                <td mat-cell *matCellDef="let r">{{ r.receivedQty | number: '1.3-3' }}</td>
+              </ng-container>
+              <ng-container matColumnDef="balanceQty">
+                <th mat-header-cell *matHeaderCellDef>Balance Qty</th>
+                <td mat-cell *matCellDef="let r">{{ r.balanceQty | number: '1.3-3' }}</td>
+              </ng-container>
+              <ng-container matColumnDef="unitPrice">
+                <th mat-header-cell *matHeaderCellDef>Unit Price</th>
+                <td mat-cell *matCellDef="let r">{{ r.unitPrice | number: '1.2-2' }}</td>
+              </ng-container>
+              <tr mat-header-row *matHeaderRowDef="balanceColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: balanceColumns"></tr>
+            </table>
+          }
+          <div class="dialog-actions">
+            <button mat-button (click)="closeBalanceDialog()">Close</button>
+          </div>
+        </div>
+      </div>
+    }
   `,
   styles: [`
     .dialog-backdrop {
@@ -306,6 +371,13 @@ export class PurchaseOrderListComponent implements OnInit {
   revisionsDialogOpen = signal(false);
   revisionsLoading = signal(false);
   revisions = signal<PoRevisionDto[]>([]);
+
+  // PO Balance dialog state
+  balanceDialogOpen = signal(false);
+  balanceLoading = signal(false);
+  balanceTarget = signal<PurchaseOrderDto | null>(null);
+  balanceRows = signal<PoBalanceDto[]>([]);
+  balanceColumns = ['materialName', 'orderedQty', 'receivedQty', 'balanceQty', 'unitPrice'];
 
   ngOnInit(): void {
     this.statusCtrl.valueChanges.subscribe(() => {
@@ -409,5 +481,21 @@ export class PurchaseOrderListComponent implements OnInit {
     this.revisionsDialogOpen.set(false);
     this.revisions.set([]);
     this.amendTarget.set(null);
+  }
+
+  openBalanceDialog(po: PurchaseOrderDto): void {
+    this.balanceTarget.set(po);
+    this.balanceDialogOpen.set(true);
+    this.balanceLoading.set(true);
+    this.http.get<PoBalanceDto[]>('/api/procurement/po-balance', { params: { poId: String(po.id) } }).subscribe({
+      next: (rows) => { this.balanceRows.set(rows); this.balanceLoading.set(false); },
+      error: () => { this.balanceLoading.set(false); this.snack.open('Failed to load PO balance', 'Close', { duration: 3000 }); },
+    });
+  }
+
+  closeBalanceDialog(): void {
+    this.balanceDialogOpen.set(false);
+    this.balanceRows.set([]);
+    this.balanceTarget.set(null);
   }
 }

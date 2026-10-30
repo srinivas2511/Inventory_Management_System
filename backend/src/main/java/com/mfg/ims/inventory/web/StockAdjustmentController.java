@@ -71,9 +71,16 @@ public class StockAdjustmentController {
                 req.stockStatus(), req.countedQty(), req.reason());
     }
 
+    /** Direct approve — force-posts the adjustment bypassing the multi-step workflow. */
+    @PostMapping("/{id}/approve")
+    @PreAuthorize("hasAuthority('INVENTORY_ADJUST')")
+    public StockAdjustmentDto approve(@PathVariable Long id) {
+        return service.forceApprove(id);
+    }
+
     @PostMapping("/approval-requests/{approvalId}/approve")
     @PreAuthorize("hasAnyAuthority('ADJUST_REVIEW','ADJUST_APPROVE','ADJUST_APPROVE_ADMIN')")
-    public void approve(@PathVariable Long approvalId, @Valid @RequestBody DecisionRequest req) {
+    public void approveStep(@PathVariable Long approvalId, @Valid @RequestBody DecisionRequest req) {
         service.approveStep(approvalId, req.comment());
     }
 

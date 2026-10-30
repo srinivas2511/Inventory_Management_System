@@ -99,6 +99,9 @@ public class StockAdjustmentService {
         adj.setReason(reason);
         adj.setStatus("REQUESTED");
         adj.setRequestedBy(currentUserId());
+        boolean approvalRequired = "REQUIRED".equalsIgnoreCase(
+                settingService.get("inventory.adjustment.approval_mode", "NONE"));
+        adj.setRequiresApproval(approvalRequired);
         adjRepo.save(adj);
 
         // Value of the variance at the weighted average cost of the stock counted (the item's standard cost when the
@@ -138,6 +141,19 @@ public class StockAdjustmentService {
         adjRepo.save(adj);
         auditService.record("ADJ_REJECTED", "STOCK_ADJUSTMENT", String.valueOf(adj.getId()),
                 adj.getStatus(), "REJECTED", comment);
+    }
+
+    /** Direct approve: force-post an adjustment bypassing the multi-step workflow (admin override). */
+    @Transactional
+    public StockAdjustmentDto forceApprove(Long id) {
+        StockAdjustment adj = adjRepo.findById(id)
+                .orElseThrow(() -> new NotFoundException("Adjustment not found: " + id));
+        if ("POSTED".equals(adj.getStatus()) || "REJECTED".equals(adj.getStatus())) {
+            throw new BusinessRuleException(ErrorCode.VALIDATION_FAILED,
+                    "Adjustment is already " + adj.getStatus());
+        }
+        postAdjustment(adj);
+        return StockAdjustmentDto.from(adj);
     }
 
     /** Called by the approval engine when all steps are approved. */
