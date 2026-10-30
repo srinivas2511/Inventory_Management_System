@@ -46,13 +46,25 @@ public class MrpSourceDataRepository {
 
     public MrpInput load(LocalDate today, LocalDate horizonEnd, boolean includeSafetyStock,
                          int defaultPurchaseLead, int defaultProductionLead, BigDecimal machineHoursPerWeek) {
+        return load(today, horizonEnd, includeSafetyStock, defaultPurchaseLead, defaultProductionLead,
+                machineHoursPerWeek, null);
+    }
+
+    /** Overload that narrows demand to a single Order Confirmation (13.4 MRP by OC). */
+    public MrpInput load(LocalDate today, LocalDate horizonEnd, boolean includeSafetyStock,
+                         int defaultPurchaseLead, int defaultProductionLead, BigDecimal machineHoursPerWeek,
+                         Long ocId) {
         MapSqlParameterSource p = new MapSqlParameterSource()
                 .addValue("today", Date.valueOf(today))
                 .addValue("end", Date.valueOf(horizonEnd))
                 .addValue("purchaseLead", defaultPurchaseLead);
 
         List<Demand> demands = new ArrayList<>();
-        demands.addAll(salesDemand(p));
+        if (ocId != null) {
+            demands.addAll(ocDemand(ocId, today));
+        } else {
+            demands.addAll(salesDemand(p));
+        }
         demands.addAll(forecastDemand(p));
         demands.addAll(productionMaterialDemand(p));
         if (includeSafetyStock) {
@@ -76,6 +88,25 @@ public class MrpSourceDataRepository {
     }
 
     // ── demand ────────────────────────────────────────────────────────────────
+
+    /** Demand from a single Order Confirmation's product lines (13.4). */
+    private List<Demand> ocDemand(Long ocId, LocalDate today) {
+        return jdbc.query("""
+                SELECT oci.product_id, oci.oc_id, oci.qty,
+                       COALESCE(oci.delivery_date, CAST(:today AS date)) AS need_date
+                  FROM ims.order_confirmation_items oci
+                 WHERE oci.oc_id = :ocId AND oci.item_kind = 'PRODUCT'
+                   AND oci.product_id IS NOT NULL AND oci.qty > 0
+                """,
+                new MapSqlParameterSource()
+                        .addValue("ocId", ocId)
+                        .addValue("today", Date.valueOf(today)),
+                (rs, i) -> new Demand(
+                        new ItemKey(ItemType.PRODUCT, rs.getLong("product_id")),
+                        rs.getDate("need_date").toLocalDate(),
+                        rs.getBigDecimal("qty"),
+                        "ORDER_CONFIRMATION", rs.getLong("oc_id")));
+    }
 
     private List<Demand> salesDemand(SqlParameterSource p) {
         return jdbc.query("""

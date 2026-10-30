@@ -92,6 +92,7 @@ public class MaterialService {
         m.setStandardCost(req.standardCost());
         m.setShelfLifeDays(req.shelfLifeDays());
         m.setDescription(req.description());
+        m.setServiceItem(req.serviceItem());
 
         if (req.preferredSupplierId() != null) {
             m.setPreferredSupplier(supplierRepo.findById(req.preferredSupplierId())

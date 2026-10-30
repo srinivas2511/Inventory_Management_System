@@ -66,6 +66,7 @@ public class MrpRunService {
         int horizon = req != null && req.horizonDays() != null
                 ? req.horizonDays() : settings.getInt("mrp.default_horizon_days", 90);
         boolean safety = req == null || req.includeSafetyStock() == null || req.includeSafetyStock();
+        Long ocId = req != null ? req.ocId() : null;
         Long userId = CurrentUser.id();
 
         if (!sourceData.tryLockRun()) {
@@ -87,7 +88,8 @@ public class MrpRunService {
             MrpInput input = sourceData.load(today, today.plusDays(horizon), safety,
                     settings.getInt("mrp.default_purchase_lead_days", 7),
                     settings.getInt("mrp.default_production_lead_days", 3),
-                    BigDecimal.valueOf(settings.getInt("mrp.machine_hours_per_week", 80)));
+                    BigDecimal.valueOf(settings.getInt("mrp.machine_hours_per_week", 80)),
+                    ocId);
             long t1 = System.nanoTime();
             MrpResult result = MrpEngine.run(input);
             long t2 = System.nanoTime();

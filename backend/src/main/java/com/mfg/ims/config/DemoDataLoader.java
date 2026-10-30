@@ -354,7 +354,7 @@ public class DemoDataLoader {
                             "KG", supplierId,
                             new BigDecimal("50"), new BigDecimal("100"),
                             new BigDecimal("2000"), new BigDecimal("85.0000"),
-                            null, "High-carbon silicon-manganese spring steel wire rod, IS 4454", null));
+                            null, "High-carbon silicon-manganese spring steel wire rod, IS 4454", false, null));
                     log.info("step3: material created id={}", dto.id());
                     return dto.id();
                 });
@@ -668,7 +668,7 @@ public class DemoDataLoader {
                         "KG", supplierId,
                         new BigDecimal("100"), new BigDecimal("200"),
                         new BigDecimal("1000"), new BigDecimal("120.0000"),
-                        null, "No stock on hand: raises the low-stock alert in the demo", null));
+                        null, "No stock on hand: raises the low-stock alert in the demo", false, null));
                 log.info("step14: low-stock demo material created");
             }
             alertSweepJob.runSweep();

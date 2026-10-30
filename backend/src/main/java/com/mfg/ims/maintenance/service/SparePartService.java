@@ -204,7 +204,7 @@ public class SparePartService {
 
     private SaveMaterialRequest materialRequest(SaveSparePartRequest req) {
         return new SaveMaterialRequest(req.sparePartCode(), req.name(), MATERIAL_TYPE, null, null, req.uom(), null,
-                req.minStock(), req.reorderLevel(), null, req.standardCost(), null, req.description(), null);
+                req.minStock(), req.reorderLevel(), null, req.standardCost(), null, req.description(), false, null);
     }
 
     private void validateStockLevels(SaveSparePartRequest req) {

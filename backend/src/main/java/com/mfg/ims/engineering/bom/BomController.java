@@ -15,15 +15,19 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.math.BigDecimal;
+
 import jakarta.validation.Valid;
 
 @RestController
 public class BomController {
 
     private final BomService service;
+    private final BomExplosionService explosionService;
 
-    public BomController(BomService service) {
+    public BomController(BomService service, BomExplosionService explosionService) {
         this.service = service;
+        this.explosionService = explosionService;
     }
 
     @GetMapping("/api/boms")
@@ -87,5 +91,25 @@ public class BomController {
     @PreAuthorize("hasAuthority('BOM_VIEW')")
     public BomDto getActiveBom(@PathVariable Long productId) {
         return service.findActiveBomForProduct(productId);
+    }
+
+    @GetMapping("/api/boms/{id}/explosion")
+    @PreAuthorize("hasAuthority('BOM_VIEW')")
+    public BomExplosionDto explosion(@PathVariable Long id,
+                                     @RequestParam(defaultValue = "1") BigDecimal qty) {
+        return explosionService.explode(id, qty);
+    }
+
+    @PostMapping("/api/boms/{id}/duplicate")
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAuthority('BOM_CREATE')")
+    public BomDto duplicate(@PathVariable Long id) {
+        return service.duplicate(id);
+    }
+
+    @GetMapping("/api/boms/{id}/cost-check")
+    @PreAuthorize("hasAuthority('BOM_VIEW')")
+    public BomCostCheckDto costCheck(@PathVariable Long id) {
+        return explosionService.costCheck(id);
     }
 }

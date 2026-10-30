@@ -83,6 +83,9 @@ public class ProductionOrder extends BaseEntity {
     @Column(name = "remarks", length = 500)
     private String remarks;
 
+    @Column(name = "complete_in_one_step", nullable = false)
+    private boolean completeInOneStep = false;
+
     @jakarta.persistence.Column(name = "plant_id")
     private Long plantId;
 
@@ -158,4 +161,7 @@ public class ProductionOrder extends BaseEntity {
 
     public String getRemarks() { return remarks; }
     public void setRemarks(String v) { this.remarks = v; }
+
+    public boolean isCompleteInOneStep() { return completeInOneStep; }
+    public void setCompleteInOneStep(boolean v) { this.completeInOneStep = v; }
 }

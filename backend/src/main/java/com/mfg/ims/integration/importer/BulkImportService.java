@@ -31,6 +31,9 @@ import com.mfg.ims.common.exception.BusinessRuleException;
 import com.mfg.ims.common.exception.ErrorCode;
 import com.mfg.ims.common.exception.NotFoundException;
 import com.mfg.ims.common.settings.SystemSettingService;
+import com.mfg.ims.engineering.bom.BomRepository;
+import com.mfg.ims.engineering.bom.BomService;
+import com.mfg.ims.engineering.bom.CreateBomRequest;
 import com.mfg.ims.integration.importer.ImportDtos.ImportResult;
 import com.mfg.ims.integration.importer.ImportDtos.RowResult;
 import com.mfg.ims.integration.importer.RowReader.SourceRow;
@@ -71,6 +74,12 @@ public class BulkImportService {
                           Consumer<Object> create, Map<String, String> codeColumns, List<String> example) {
     }
 
+    /** Flat import row for BOM header creation; items can be added via the API after import. */
+    public record BomImportRow(
+            @jakarta.validation.constraints.NotBlank String productCode,
+            java.math.BigDecimal baseQuantity,
+            String changeReason) {}
+
     /** Flat import row for opening-stock; codes are resolved to IDs in the create consumer. */
     public record OpeningStockRow(
             @jakarta.validation.constraints.NotBlank String itemType,
@@ -97,6 +106,7 @@ public class BulkImportService {
     private final WarehouseRepository warehouses;
     private final WarehouseLocationRepository locations;
     private final OpeningStockPostingPort openingStockPort;
+    private final BomRepository bomRepo;
 
     public BulkImportService(Validator validator, ObjectMapper mapper, SystemSettingService settings,
                              AuditService audit, PlatformTransactionManager transactionManager,
@@ -105,7 +115,8 @@ public class BulkImportService {
                              MaterialRepository materials, SupplierRepository suppliers,
                              CustomerRepository customers, ProductRepository products,
                              WarehouseRepository warehouses, WarehouseLocationRepository locations,
-                             OpeningStockPostingPort openingStockPort) {
+                             OpeningStockPostingPort openingStockPort,
+                             BomRepository bomRepo, BomService bomService) {
         this.validator = validator;
         this.mapper = mapper;
         this.settings = settings;
@@ -117,6 +128,7 @@ public class BulkImportService {
         this.warehouses = warehouses;
         this.locations = locations;
         this.openingStockPort = openingStockPort;
+        this.bomRepo = bomRepo;
         this.perRow = new TransactionTemplate(transactionManager);
         this.perRow.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
 
@@ -171,6 +183,20 @@ public class BulkImportService {
                 Map.of(),
                 List.of("itemType", "itemCode", "warehouseCode", "locationCode", "stockStatus",
                         "quantity", "uom", "unitCost", "remarks")));
+        targets.put("boms", new Target("boms", BomImportRow.class,
+                r -> ((BomImportRow) r).productCode(),
+                productCode -> products.findByProductCode(productCode)
+                        .map(p -> bomRepo.existsByProductIdAndStatus(p.getId(), "DRAFT"))
+                        .orElse(false),
+                r -> {
+                    BomImportRow row = (BomImportRow) r;
+                    Long productId = products.findByProductCode(row.productCode())
+                            .orElseThrow(() -> unknownCode("product", row.productCode())).getId();
+                    bomService.create(new CreateBomRequest(productId, row.baseQuantity(),
+                            row.changeReason(), List.of()));
+                },
+                Map.of(),
+                List.of("productCode", "baseQuantity", "changeReason")));
     }
 
     public List<String> entities() {

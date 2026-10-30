@@ -167,6 +167,46 @@ public class BomService {
         return toDto(bom);
     }
 
+    /** Creates a completely new BOM (new BOM number) as a copy of the given BOM (any status). */
+    @Transactional
+    public BomDto duplicate(Long id) {
+        Bom source = bomRepo.findById(id).orElseThrow(() -> new NotFoundException("BOM not found: " + id));
+
+        Bom copy = new Bom();
+        copy.setBomNumber(numberService.next("BOM"));
+        copy.setRevision("A");
+        copy.setProductId(source.getProductId());
+        copy.setStatus("DRAFT");
+        copy.setBaseQuantity(source.getBaseQuantity());
+        copy.setChangeReason("Duplicated from " + source.getBomNumber() + "/" + source.getRevision());
+        copy = bomRepo.save(copy);
+
+        List<BomItem> copiedItems = new ArrayList<>();
+        for (BomItem src : source.getItems()) {
+            BomItem item = new BomItem();
+            item.setBom(copy);
+            item.setLineNo(src.getLineNo());
+            item.setItemKind(src.getItemKind());
+            item.setMaterialId(src.getMaterialId());
+            item.setOperationId(src.getOperationId());
+            item.setRequiredQty(src.getRequiredQty());
+            item.setUom(src.getUom());
+            item.setScrapPct(src.getScrapPct());
+            item.setInstruction(src.getInstruction());
+            item.setAlternateMaterialId(src.getAlternateMaterialId());
+            item.setAlternate(src.isAlternate());
+            item.setAlternateFactor(src.getAlternateFactor());
+            copiedItems.add(item);
+        }
+        copy.getItems().addAll(copiedItems);
+        copy = bomRepo.save(copy);
+
+        auditService.record("BOM_DUPLICATE", "Bom", String.valueOf(copy.getId()),
+                source.getBomNumber() + "/" + source.getRevision(),
+                copy.getBomNumber() + "/A", null);
+        return toDto(copy);
+    }
+
     @Transactional
     public BomDto copyRevision(Long id) {
         return copyRevision(id, null);

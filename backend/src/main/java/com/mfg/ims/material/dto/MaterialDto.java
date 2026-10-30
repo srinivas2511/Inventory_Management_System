@@ -20,6 +20,7 @@ public record MaterialDto(
         Integer shelfLifeDays,
         String description,
         boolean active,
+        boolean serviceItem,
         Long version) {
 
     public static MaterialDto from(Material m) {
@@ -29,6 +30,6 @@ public record MaterialDto(
             m.getPreferredSupplier() != null ? m.getPreferredSupplier().getId() : null,
             m.getMinStock(), m.getReorderLevel(), m.getMaxStock(),
             m.getStandardCost(), m.getShelfLifeDays(), m.getDescription(),
-            m.isActive(), m.getVersion());
+            m.isActive(), m.isServiceItem(), m.getVersion());
     }
 }
