@@ -59,6 +59,9 @@ public class ProductionOrder extends BaseEntity {
     @Column(name = "sales_order_id")
     private Long salesOrderId;
 
+    @Column(name = "oc_id")
+    private Long ocId;
+
     @Column(name = "priority", nullable = false)
     private short priority = 3;
 
@@ -129,6 +132,9 @@ public class ProductionOrder extends BaseEntity {
 
     public Long getSalesOrderId() { return salesOrderId; }
     public void setSalesOrderId(Long v) { this.salesOrderId = v; }
+
+    public Long getOcId() { return ocId; }
+    public void setOcId(Long v) { this.ocId = v; }
 
     public short getPriority() { return priority; }
     public void setPriority(short v) { this.priority = v; }

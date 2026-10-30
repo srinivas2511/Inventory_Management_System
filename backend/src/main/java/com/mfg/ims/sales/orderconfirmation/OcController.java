@@ -61,4 +61,22 @@ public class OcController {
     public OcDto cancel(@PathVariable Long id) {
         return service.cancel(id);
     }
+
+    @PostMapping("/{id}/submit")
+    @PreAuthorize("hasAuthority('OC_SUBMIT')")
+    public OcDto submit(@PathVariable Long id) {
+        return service.submit(id);
+    }
+
+    @PostMapping("/{id}/approve")
+    @PreAuthorize("hasAuthority('OC_APPROVE')")
+    public OcDto approve(@PathVariable Long id) {
+        return service.approve(id);
+    }
+
+    @PostMapping("/{id}/create-work-order")
+    @PreAuthorize("hasAuthority('OC_CREATE_WORKORDER')")
+    public WorkOrderResultDto createWorkOrder(@PathVariable Long id) {
+        return service.createWorkOrder(id);
+    }
 }
