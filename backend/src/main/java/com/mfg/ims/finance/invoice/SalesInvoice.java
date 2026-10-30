@@ -87,6 +87,12 @@ public class SalesInvoice extends BaseEntity {
     @Column(name = "eway_bill_no", length = 20)
     private String ewayBillNo;
 
+    @Column(name = "invoice_type", nullable = false, length = 20)
+    private String invoiceType = "STANDARD";
+
+    @Column(name = "lut_arn", length = 50)
+    private String lutArn;
+
     @Column(name = "cancelled_reason", length = 300)
     private String cancelledReason;
 
@@ -156,6 +162,10 @@ public class SalesInvoice extends BaseEntity {
     public void setAckNo(String v) { this.ackNo = v; }
     public String getEwayBillNo() { return ewayBillNo; }
     public void setEwayBillNo(String v) { this.ewayBillNo = v; }
+    public String getInvoiceType() { return invoiceType; }
+    public void setInvoiceType(String v) { this.invoiceType = v; }
+    public String getLutArn() { return lutArn; }
+    public void setLutArn(String v) { this.lutArn = v; }
     public String getCancelledReason() { return cancelledReason; }
     public void setCancelledReason(String v) { this.cancelledReason = v; }
     public Long getJournalEntryId() { return journalEntryId; }

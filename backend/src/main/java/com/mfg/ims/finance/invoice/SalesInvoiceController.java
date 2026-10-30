@@ -61,6 +61,14 @@ public class SalesInvoiceController {
         return service.cancel(id, reason, actor.id());
     }
 
+    @PostMapping("/from-service-confirmation/{confId}")
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAuthority('SALES_MANAGE')")
+    public SalesInvoiceDto fromServiceConfirmation(@PathVariable Long confId,
+                                                   @AuthenticationPrincipal CachedUser actor) {
+        return service.createFromServiceConfirmation(confId, actor.id());
+    }
+
     @GetMapping(value = "/{id}/pdf", produces = "application/pdf")
     @PreAuthorize("hasAuthority('SALES_INVOICE_VIEW')")
     public ResponseEntity<byte[]> pdf(@PathVariable Long id) {

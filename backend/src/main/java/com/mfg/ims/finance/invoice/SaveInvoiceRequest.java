@@ -18,6 +18,8 @@ public record SaveInvoiceRequest(
         LocalDate dueDate,
         String currency,
         String remarks,
+        String invoiceType,
+        String lutArn,
         List<ItemLine> items
 ) {
     public record ItemLine(

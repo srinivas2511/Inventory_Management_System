@@ -346,6 +346,14 @@
         <source>Payment Reminders</source>
         <target>ಪಾವತಿ ಜ್ಞಾಪನಗಳು</target>
       </trans-unit>
+      <trans-unit id="nav.item-advance-receipts" datatype="html">
+        <source>Advance Receipts</source>
+        <target>ಮುಂಗಡ ರಸೀದಿಗಳು</target>
+      </trans-unit>
+      <trans-unit id="nav.item-party-ledger" datatype="html">
+        <source>Party Ledger</source>
+        <target>ಪಾರ್ಟಿ ಲೆಡ್ಜರ್</target>
+      </trans-unit>
       <trans-unit id="nav.group-controlling" datatype="html">
         <source>Controlling</source>
         <target>ನಿಯಂತ್ರಣ</target>
@@ -569,6 +577,10 @@
       <trans-unit id="nav.item-gst-einvoice" datatype="html">
         <source>GST E-Invoice</source>
         <target>ಜಿಎಸ್‌ಟಿ ಇ-ಇನ್‌ವಾಯ್ಸ್</target>
+      </trans-unit>
+      <trans-unit id="nav.item-eway-bill" datatype="html">
+        <source>E-Way Bill</source>
+        <target>ಇ-ವೇ ಬಿಲ್</target>
       </trans-unit>
       <trans-unit id="nav.item-integration-call-log" datatype="html">
         <source>Integration Call Log</source>

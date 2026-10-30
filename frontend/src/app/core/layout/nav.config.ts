@@ -600,6 +600,20 @@ export const NAV_GROUPS: NavGroup[] = [
         permission: 'REMINDER_MANAGE',
         enabled: true,
       },
+      {
+        label: $localize`:@@nav.item-advance-receipts:Advance Receipts`,
+        icon: 'payments',
+        route: '/finance/advance-receipts',
+        permission: 'ADVANCE_RECEIPT_MANAGE',
+        enabled: true,
+      },
+      {
+        label: $localize`:@@nav.item-party-ledger:Party Ledger`,
+        icon: 'menu_book',
+        route: '/finance/party-ledger',
+        permission: 'AR_MANAGE',
+        enabled: true,
+      },
     ],
   },
   {
@@ -1001,6 +1015,14 @@ export const NAV_GROUPS: NavGroup[] = [
         route: '/integration/tally-ledger-mappings',
         companyLevel: true,
         permission: 'INTEGRATION_MANAGE',
+        enabled: true,
+      },
+      {
+        label: $localize`:@@nav.item-eway-bill:E-Way Bill`,
+        icon: 'receipt_long',
+        route: '/integration/eway-bill',
+        companyLevel: true,
+        permission: 'EWAY_BILL_MANAGE',
         enabled: true,
       },
       {

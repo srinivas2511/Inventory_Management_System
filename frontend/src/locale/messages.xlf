@@ -604,6 +604,20 @@
           <context context-type="linenumber">589</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="nav.item-advance-receipts" datatype="html">
+        <source>Advance Receipts</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/layout/nav.config.ts</context>
+          <context context-type="linenumber">600</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="nav.item-party-ledger" datatype="html">
+        <source>Party Ledger</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/layout/nav.config.ts</context>
+          <context context-type="linenumber">607</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="nav.group-controlling" datatype="html">
         <source>Controlling</source>
         <context-group purpose="location">
@@ -994,6 +1008,13 @@
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/core/layout/nav.config.ts</context>
           <context context-type="linenumber">505</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="nav.item-eway-bill" datatype="html">
+        <source>E-Way Bill</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/layout/nav.config.ts</context>
+          <context context-type="linenumber">512</context>
         </context-group>
       </trans-unit>
       <trans-unit id="nav.item-integration-call-log" datatype="html">
