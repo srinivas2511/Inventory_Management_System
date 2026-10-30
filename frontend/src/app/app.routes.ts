@@ -599,6 +599,27 @@ export const routes: Routes = [
           import('./features/finance/payment-reminders.component').then((m) => m.PaymentRemindersComponent),
       },
       {
+        path: 'finance/advance-receipts',
+        title: 'Advance Receipts',
+        canActivate: [permissionGuard('ADVANCE_RECEIPT_MANAGE')],
+        loadComponent: () =>
+          import('./features/finance/advance-receipts.component').then((m) => m.AdvanceReceiptsComponent),
+      },
+      {
+        path: 'finance/party-ledger',
+        title: 'Party Ledger',
+        canActivate: [permissionGuard('AR_MANAGE')],
+        loadComponent: () =>
+          import('./features/finance/party-ledger.component').then((m) => m.PartyLedgerComponent),
+      },
+      {
+        path: 'integration/eway-bill',
+        title: 'E-Way Bill',
+        canActivate: [permissionGuard('EWAY_BILL_MANAGE')],
+        loadComponent: () =>
+          import('./features/integration/eway-bill.component').then((m) => m.EwayBillComponent),
+      },
+      {
         path: 'controlling/cost-centres',
         title: 'Cost Centres',
         canActivate: [permissionGuard('CONTROLLING_VIEW')],

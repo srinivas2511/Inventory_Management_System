@@ -346,6 +346,14 @@
         <source>Payment Reminders</source>
         <target>भुगतान अनुस्मारक</target>
       </trans-unit>
+      <trans-unit id="nav.item-advance-receipts" datatype="html">
+        <source>Advance Receipts</source>
+        <target>अग्रिम रसीद</target>
+      </trans-unit>
+      <trans-unit id="nav.item-party-ledger" datatype="html">
+        <source>Party Ledger</source>
+        <target>पार्टी खाता बही</target>
+      </trans-unit>
       <trans-unit id="nav.group-controlling" datatype="html">
         <source>Controlling</source>
         <target>नियंत्रण</target>
@@ -569,6 +577,10 @@
       <trans-unit id="nav.item-gst-einvoice" datatype="html">
         <source>GST E-Invoice</source>
         <target>जीएसटी ई-चालान</target>
+      </trans-unit>
+      <trans-unit id="nav.item-eway-bill" datatype="html">
+        <source>E-Way Bill</source>
+        <target>ई-वे बिल</target>
       </trans-unit>
       <trans-unit id="nav.item-integration-call-log" datatype="html">
         <source>Integration Call Log</source>

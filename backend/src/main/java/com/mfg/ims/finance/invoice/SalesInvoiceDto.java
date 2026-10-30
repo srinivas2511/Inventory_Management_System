@@ -32,6 +32,8 @@ public record SalesInvoiceDto(
         String cancelledReason,
         Instant postedAt,
         String remarks,
+        String invoiceType,
+        String lutArn,
         List<ItemDto> items
 ) {
     public record ItemDto(

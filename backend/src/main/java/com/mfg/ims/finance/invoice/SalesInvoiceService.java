@@ -1,6 +1,7 @@
 package com.mfg.ims.finance.invoice;
 
 import com.mfg.ims.common.numbering.DocumentNumberService;
+import com.mfg.ims.production.serviceorder.ServiceConfirmationRepository;
 import com.mfg.ims.sales.domain.Dispatch;
 import com.mfg.ims.sales.repository.DispatchRepository;
 import com.mfg.ims.sales.repository.SalesOrderRepository;
@@ -23,13 +24,16 @@ public class SalesInvoiceService {
     private final DocumentNumberService numberService;
     private final DispatchRepository dispatchRepo;
     private final SalesOrderRepository salesOrderRepo;
+    private final ServiceConfirmationRepository serviceConfirmationRepo;
 
     public SalesInvoiceService(SalesInvoiceRepository repo, DocumentNumberService numberService,
-                               DispatchRepository dispatchRepo, SalesOrderRepository salesOrderRepo) {
+                               DispatchRepository dispatchRepo, SalesOrderRepository salesOrderRepo,
+                               ServiceConfirmationRepository serviceConfirmationRepo) {
         this.repo = repo;
         this.numberService = numberService;
         this.dispatchRepo = dispatchRepo;
         this.salesOrderRepo = salesOrderRepo;
+        this.serviceConfirmationRepo = serviceConfirmationRepo;
     }
 
     @Transactional(readOnly = true)
@@ -49,6 +53,17 @@ public class SalesInvoiceService {
         inv.setCustomerId(req.customerId());
         if (req.invoiceKind() != null) inv.setInvoiceKind(req.invoiceKind());
         if (req.supplyType() != null) inv.setSupplyType(req.supplyType());
+        String invType = req.invoiceType() != null ? req.invoiceType() : "STANDARD";
+        inv.setInvoiceType(invType);
+        if ("EXPORT".equals(invType)) {
+            if (req.lutArn() == null || req.lutArn().isBlank()) {
+                throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
+                        "Letter of Undertaking ARN (lut_arn) is required for EXPORT invoices");
+            }
+            inv.setLutArn(req.lutArn());
+        } else {
+            inv.setLutArn(req.lutArn());
+        }
         inv.setPlaceOfSupply(req.placeOfSupply());
         inv.setOcId(req.ocId());
         inv.setSalesOrderId(req.salesOrderId());
@@ -97,6 +112,11 @@ public class SalesInvoiceService {
         if (!"DRAFT".equals(inv.getStatus())) {
             throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
                     "Only DRAFT invoices can be posted");
+        }
+        // PROFORMA invoices do not post to GL; they stay as a reference document
+        if ("PROFORMA".equals(inv.getInvoiceType())) {
+            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
+                    "PROFORMA invoices cannot be posted to GL");
         }
         // Auto-create a direct dispatch when no dispatch is linked but a sales order is
         if (inv.getDispatchId() == null && inv.getSalesOrderId() != null) {
@@ -157,6 +177,31 @@ public class SalesInvoiceService {
                 inv.getCustomerPoNo(), inv.getDueDate(), inv.getCurrency(), inv.getExchangeRate(),
                 inv.getTaxableAmount(), inv.getTaxAmount(), inv.getTcsAmount(), inv.getGrandTotal(),
                 inv.getBalanceInr(), inv.getEinvoiceStatus(), inv.getIrn(), inv.getCancelledReason(),
-                inv.getPostedAt(), inv.getRemarks(), items);
+                inv.getPostedAt(), inv.getRemarks(), inv.getInvoiceType(), inv.getLutArn(), items);
+    }
+
+    /** 12.12 — create an AD_HOC invoice from a service order confirmation */
+    public SalesInvoiceDto createFromServiceConfirmation(Long serviceConfId, Long userId) {
+        var conf = serviceConfirmationRepo.findById(serviceConfId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Service confirmation not found: " + serviceConfId));
+        var so = salesOrderRepo.findById(conf.getSoId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Sales order not found for service confirmation: " + serviceConfId));
+
+        var inv = new SalesInvoice();
+        inv.setDocNo(numberService.next("SI"));
+        inv.setDocDate(LocalDate.now());
+        inv.setCustomerId(so.getCustomerId());
+        inv.setInvoiceKind("TAX");
+        inv.setSupplyType("B2B");
+        inv.setSalesOrderId(conf.getSoId());
+        inv.setCurrency("INR");
+        inv.setInvoiceType("AD_HOC");
+        inv.setRemarks("Invoice from service confirmation #" + serviceConfId);
+        inv.setTaxableAmount(BigDecimal.ZERO);
+        inv.setGrandTotal(BigDecimal.ZERO);
+        inv.setBalanceInr(BigDecimal.ZERO);
+        return toDto(repo.save(inv));
     }
 }
