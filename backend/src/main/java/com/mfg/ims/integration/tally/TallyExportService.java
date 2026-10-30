@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -34,9 +35,106 @@ public class TallyExportService {
     private final NamedParameterJdbcTemplate jdbc;
     private final AuditService audit;
 
-    public TallyExportService(NamedParameterJdbcTemplate jdbc, AuditService audit) {
+    private final TallyLedgerMappingRepository ledgerMappingRepo;
+
+    public TallyExportService(NamedParameterJdbcTemplate jdbc, AuditService audit,
+                               TallyLedgerMappingRepository ledgerMappingRepo) {
         this.jdbc = jdbc;
         this.audit = audit;
+        this.ledgerMappingRepo = ledgerMappingRepo;
+    }
+
+    /**
+     * Exception thrown when a GL account has no Tally ledger mapping.
+     * Callers should catch this and mark the queue entry as LEDGER_MISSING.
+     */
+    public static class LedgerMissingException extends RuntimeException {
+        private final String accountCode;
+        public LedgerMissingException(String accountCode) {
+            super("Ledger not mapped: " + accountCode);
+            this.accountCode = accountCode;
+        }
+        public String getAccountCode() { return accountCode; }
+    }
+
+    /**
+     * Maps a source document type to the appropriate Tally voucher type name.
+     */
+    static String voucherTypeFromSource(String sourceType) {
+        if (sourceType == null) return "Journal";
+        return switch (sourceType.toUpperCase()) {
+            case "SALES_INVOICE" -> "Sales";
+            case "PURCHASE_INVOICE" -> "Purchase";
+            case "AR_RECEIPT" -> "Receipt";
+            case "AP_PAYMENT" -> "Payment";
+            default -> "Journal";
+        };
+    }
+
+    /**
+     * Builds Tally voucher XML for a queue entry, using tally_ledger_mappings for ledger names.
+     * Throws LedgerMissingException if any GL account lacks a mapping.
+     */
+    public String buildVoucherXmlForQueue(String sourceType, Long journalId) {
+        String tallyVoucherType = voucherTypeFromSource(sourceType);
+        Map<Long, Voucher> byId = new LinkedHashMap<>();
+        jdbc.query("""
+                SELECT jh.id, jh.journal_number, jh.posting_date, jh.description,
+                       a.account_code, a.name, jl.debit_amount, jl.credit_amount
+                  FROM ims.journal_headers jh
+                  JOIN ims.journal_lines jl ON jl.journal_header_id = jh.id
+                  JOIN ims.gl_accounts a    ON a.id = jl.gl_account_id
+                 WHERE jh.id = :jid
+                 ORDER BY jl.line_number
+                """, new MapSqlParameterSource("jid", journalId), rs -> {
+            long id = rs.getLong("id");
+            Voucher v = byId.get(id);
+            if (v == null) {
+                v = new Voucher(rs.getString("journal_number"), rs.getDate("posting_date").toLocalDate(),
+                        rs.getString("description"), new ArrayList<>());
+                byId.put(id, v);
+            }
+            String accountCode = rs.getString("account_code");
+            // Look up tally ledger mapping
+            Optional<TallyLedgerMapping> mapping =
+                    ledgerMappingRepo.findByCompanyIdAndGlAccountCode(1L, accountCode);
+            if (mapping.isEmpty()) {
+                throw new LedgerMissingException(accountCode);
+            }
+            v.lines().add(new Line(mapping.get().getTallyLedger(),
+                    rs.getBigDecimal("debit_amount"), rs.getBigDecimal("credit_amount")));
+        });
+
+        if (byId.isEmpty()) return "";
+        Voucher v = byId.values().iterator().next();
+        StringBuilder body = new StringBuilder();
+        body.append("<TALLYMESSAGE xmlns:UDF=\"TallyUDF\"><VOUCHER VCHTYPE=\"")
+                .append(escape(tallyVoucherType)).append("\" ACTION=\"Create\">")
+                .append("<DATE>").append(v.date().format(TALLY_DATE)).append("</DATE>")
+                .append("<VOUCHERTYPENAME>").append(escape(tallyVoucherType)).append("</VOUCHERTYPENAME>")
+                .append("<VOUCHERNUMBER>").append(escape(v.number())).append("</VOUCHERNUMBER>")
+                .append("<NARRATION>").append(escape(v.narration())).append("</NARRATION>");
+        for (Line l : v.lines()) {
+            boolean debit = l.debit().signum() > 0;
+            BigDecimal amount = (debit ? l.debit().negate() : l.credit()).setScale(2, RoundingMode.HALF_UP);
+            body.append("<ALLLEDGERENTRIES.LIST><LEDGERNAME>").append(escape(l.ledger())).append("</LEDGERNAME>")
+                    .append("<ISDEEMEDPOSITIVE>").append(debit ? "Yes" : "No").append("</ISDEEMEDPOSITIVE>")
+                    .append("<AMOUNT>").append(amount.toPlainString()).append("</AMOUNT></ALLLEDGERENTRIES.LIST>");
+        }
+        body.append("</VOUCHER></TALLYMESSAGE>\n");
+        return envelope(tallyVoucherType + " Vouchers", body.toString());
+    }
+
+    /** Checks the tally.combine_purchase_vouchers system setting. */
+    boolean isCombinePurchaseVouchersEnabled() {
+        try {
+            String val = jdbc.queryForObject(
+                    "SELECT value FROM ims.system_settings WHERE key = 'tally.combine_purchase_vouchers'",
+                    new MapSqlParameterSource(), String.class);
+            return Boolean.parseBoolean(val);
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     public String ledgers() {

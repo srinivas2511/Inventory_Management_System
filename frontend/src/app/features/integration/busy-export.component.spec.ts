@@ -1,12 +1,14 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { BusyExportComponent } from './busy-export.component';
 
 describe('BusyExportComponent', () => {
   let fixture: ComponentFixture<BusyExportComponent>;
   let comp: BusyExportComponent;
+  let http: HttpTestingController;
+
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [BusyExportComponent, NoopAnimationsModule],
@@ -14,8 +16,30 @@ describe('BusyExportComponent', () => {
     }).compileComponents();
     fixture = TestBed.createComponent(BusyExportComponent);
     comp = fixture.componentInstance;
-    fixture.detectChanges();
+    http = TestBed.inject(HttpTestingController);
   });
-  it('creates', () => expect(comp).toBeTruthy());
-  it('queue starts empty', () => expect(comp.queue()).toEqual([]));
+
+  afterEach(() => http.verify());
+
+  it('creates', () => {
+    fixture.detectChanges();
+    http.expectOne('/api/integration/busy-export/queue').flush([]);
+    http.expectOne('/api/integration/busy/sync-log').flush([]);
+    expect(comp).toBeTruthy();
+  });
+
+  it('queue starts empty', () => {
+    fixture.detectChanges();
+    http.expectOne('/api/integration/busy-export/queue').flush([]);
+    http.expectOne('/api/integration/busy/sync-log').flush([]);
+    expect(comp.queue()).toEqual([]);
+  });
+
+  it('syncNow button exists', () => {
+    fixture.detectChanges();
+    http.expectOne('/api/integration/busy-export/queue').flush([]);
+    http.expectOne('/api/integration/busy/sync-log').flush([]);
+    fixture.detectChanges();
+    expect(comp.syncing()).toBeFalse();
+  });
 });

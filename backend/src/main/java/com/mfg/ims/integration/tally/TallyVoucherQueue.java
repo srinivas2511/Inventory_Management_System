@@ -44,6 +44,9 @@ public class TallyVoucherQueue {
     @Column(name = "sent_at")
     private OffsetDateTime sentAt;
 
+    @Column(name = "reconciled_at")
+    private OffsetDateTime reconciledAt;
+
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt = OffsetDateTime.now();
 
@@ -83,6 +86,8 @@ public class TallyVoucherQueue {
     public void setApprovedAt(OffsetDateTime approvedAt) { this.approvedAt = approvedAt; }
     public OffsetDateTime getSentAt() { return sentAt; }
     public void setSentAt(OffsetDateTime sentAt) { this.sentAt = sentAt; }
+    public OffsetDateTime getReconciledAt() { return reconciledAt; }
+    public void setReconciledAt(OffsetDateTime reconciledAt) { this.reconciledAt = reconciledAt; }
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public Long getCreatedBy() { return createdBy; }
     public void setCreatedBy(Long createdBy) { this.createdBy = createdBy; }

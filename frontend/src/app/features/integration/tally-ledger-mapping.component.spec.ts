@@ -19,30 +19,38 @@ describe('TallyLedgerMappingComponent', () => {
 
   afterEach(() => http.verify());
 
+  function flushInit(mappings: unknown[] = []) {
+    http.expectOne('/api/integration/tally/ledger-mappings').flush(mappings);
+    http.expectOne('/api/integration/tally/voucher-queue/counts').flush(
+      { draft: 0, approved: 0, sent: 0, ledgerMissing: 0, failed: 0 });
+  }
+
   it('should create and load mappings', () => {
     fixture.detectChanges();
-    const req = http.expectOne('/api/integration/tally/ledger-mappings');
-    req.flush([{ id: 1, glAccountCode: '4001', tallyLedger: 'Sales', notes: '', createdAt: new Date().toISOString() }]);
+    http.expectOne('/api/integration/tally/ledger-mappings').flush(
+      [{ id: 1, glAccountCode: '4001', tallyLedger: 'Sales', notes: '', createdAt: new Date().toISOString() }]);
+    http.expectOne('/api/integration/tally/voucher-queue/counts').flush(
+      { draft: 0, approved: 0, sent: 0, ledgerMissing: 0, failed: 0 });
     fixture.detectChanges();
     expect(fixture.componentInstance.mappings().length).toBe(1);
   });
 
   it('should show empty list when no mappings', () => {
     fixture.detectChanges();
-    http.expectOne('/api/integration/tally/ledger-mappings').flush([]);
+    flushInit();
     fixture.detectChanges();
     expect(fixture.componentInstance.mappings().length).toBe(0);
   });
 
   it('save should be disabled with empty form', () => {
     fixture.detectChanges();
-    http.expectOne('/api/integration/tally/ledger-mappings').flush([]);
+    flushInit();
     expect(fixture.componentInstance.form.invalid).toBeTrue();
   });
 
   it('should have Readiness Check button', () => {
     fixture.detectChanges();
-    http.expectOne('/api/integration/tally/ledger-mappings').flush([]);
+    flushInit();
     fixture.detectChanges();
     const btn = fixture.nativeElement.querySelector('button[aria-label="Run Tally readiness check"]');
     expect(btn).toBeTruthy();
