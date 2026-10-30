@@ -837,7 +837,16 @@ class RoleAccessIT extends AbstractIntegrationTest {
             Probe.withBody(HttpMethod.POST, "/api/settings/onboarding/complete", "{\"stepKey\":\"company\"}", PHASE16_INTEG_ALLOWED, PHASE16_INTEG_FORBIDDEN),
             Probe.of(HttpMethod.DELETE, "/api/settings/onboarding/steps/company", PHASE16_INTEG_ALLOWED, PHASE16_INTEG_FORBIDDEN),
             // Unified All Documents — REPORT_VIEW (widely granted: V1 PRODUCTION_MANAGER/STORE_MANAGER/PURCHASE_MANAGER/SALES/MANAGEMENT, V45 FINANCE_MANAGER, V67 SALES_MANAGER, V19 CONTROLLER, V37 ADMIN)
-            Probe.of(HttpMethod.GET, "/api/documents/all", REPORT_VIEW_WIDE_ALLOWED, REPORT_VIEW_WIDE_FORBIDDEN));
+            Probe.of(HttpMethod.GET, "/api/documents/all", REPORT_VIEW_WIDE_ALLOWED, REPORT_VIEW_WIDE_FORBIDDEN),
+            // V114: Tally day-book + reconciliation — INTEGRATION_MANAGE (ADMIN only)
+            Probe.of(HttpMethod.GET, "/api/integration/tally/day-book", PHASE16_INTEG_ALLOWED, PHASE16_INTEG_FORBIDDEN),
+            Probe.of(HttpMethod.GET, "/api/integration/tally/reconciliation-status", PHASE16_INTEG_ALLOWED, PHASE16_INTEG_FORBIDDEN),
+            Probe.withBody(HttpMethod.POST, "/api/integration/tally/reconcile",
+                    "{\"voucherQueueIds\":[]}", PHASE16_INTEG_ALLOWED, PHASE16_INTEG_FORBIDDEN),
+            Probe.of(HttpMethod.GET, "/api/integration/tally/voucher-queue/counts", PHASE16_INTEG_ALLOWED, PHASE16_INTEG_FORBIDDEN),
+            // V114: Busy full-sync — INTEGRATION_MANAGE / BUSY_EXPORT_VIEW
+            Probe.of(HttpMethod.POST, "/api/integration/busy/sync", PHASE16_INTEG_ALLOWED, PHASE16_INTEG_FORBIDDEN),
+            Probe.of(HttpMethod.GET, "/api/integration/busy/sync-log", PHASE16_BUSY_ALLOWED, PHASE16_BUSY_FORBIDDEN));
 
     /**
      * What a permitted caller gets when it is not a 2xx. Every other permitted probe must answer 2xx. These probes

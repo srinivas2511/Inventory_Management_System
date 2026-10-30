@@ -25,6 +25,23 @@ interface ExportResult {
   failed: number;
 }
 
+interface SyncResult {
+  synced: number;
+  failed: number;
+  syncedAt: string;
+}
+
+interface SyncLogRow {
+  id: number;
+  journal_id: number;
+  journal_number: string;
+  status: string;
+  export_attempt: number;
+  last_error: string | null;
+  exported_at: string | null;
+  created_at: string;
+}
+
 @Component({
   selector: 'app-busy-export',
   standalone: true,
@@ -44,6 +61,9 @@ interface ExportResult {
         <div class="actions">
           <button mat-stroked-button color="primary" (click)="stage()">Stage pending journals</button>
           <button mat-flat-button color="primary" (click)="run()">Run export</button>
+          <button mat-flat-button color="accent" (click)="syncNow()" [disabled]="syncing()">
+            {{ syncing() ? 'Syncing…' : 'Sync Now' }}
+          </button>
         </div>
       </div>
 
@@ -76,6 +96,34 @@ interface ExportResult {
           <td class="mat-cell" colspan="5" style="text-align:center;padding:24px">Queue is empty</td>
         </tr>
       </mat-table>
+
+      @if (syncLog().length > 0) {
+        <h3 class="section-title">Sync Log</h3>
+        <mat-table [dataSource]="syncLog()" class="queue-table">
+          <ng-container matColumnDef="journalNumber">
+            <mat-header-cell *matHeaderCellDef>Journal</mat-header-cell>
+            <mat-cell *matCellDef="let r">{{ r.journal_number }}</mat-cell>
+          </ng-container>
+          <ng-container matColumnDef="status">
+            <mat-header-cell *matHeaderCellDef>Status</mat-header-cell>
+            <mat-cell *matCellDef="let r"><mat-chip>{{ r.status }}</mat-chip></mat-cell>
+          </ng-container>
+          <ng-container matColumnDef="exportAttempt">
+            <mat-header-cell *matHeaderCellDef>Attempts</mat-header-cell>
+            <mat-cell *matCellDef="let r">{{ r.export_attempt }}</mat-cell>
+          </ng-container>
+          <ng-container matColumnDef="exportedAt">
+            <mat-header-cell *matHeaderCellDef>Synced At</mat-header-cell>
+            <mat-cell *matCellDef="let r">{{ r.exported_at ? (r.exported_at | istDate: 'mediumDate') : '—' }}</mat-cell>
+          </ng-container>
+          <ng-container matColumnDef="lastError">
+            <mat-header-cell *matHeaderCellDef>Error</mat-header-cell>
+            <mat-cell *matCellDef="let r" class="error-cell">{{ r.last_error || '—' }}</mat-cell>
+          </ng-container>
+          <mat-header-row *matHeaderRowDef="logColumns"></mat-header-row>
+          <mat-row *matRowDef="let r; columns: logColumns"></mat-row>
+        </mat-table>
+      }
     </div>
   `,
   styles: [
@@ -100,12 +148,20 @@ interface ExportResult {
         color: #c62828;
         font-size: 12px;
       }
+      .section-title {
+        margin-top: 24px;
+        font-size: 16px;
+        font-weight: 500;
+      }
     `,
   ],
 })
 export class BusyExportComponent implements OnInit {
   columns = ['journalNumber', 'status', 'exportAttempt', 'exportedAt', 'lastError'];
+  logColumns = ['journalNumber', 'status', 'exportAttempt', 'exportedAt', 'lastError'];
   queue = signal<QueueRow[]>([]);
+  syncLog = signal<SyncLogRow[]>([]);
+  syncing = signal(false);
 
   constructor(
     private http: HttpClient,
@@ -114,10 +170,18 @@ export class BusyExportComponent implements OnInit {
 
   ngOnInit(): void {
     this.load();
+    this.loadSyncLog();
   }
 
   load(): void {
     this.http.get<QueueRow[]>('/api/integration/busy-export/queue').subscribe((d) => this.queue.set(d));
+  }
+
+  loadSyncLog(): void {
+    this.http.get<SyncLogRow[]>('/api/integration/busy/sync-log').subscribe({
+      next: (d) => this.syncLog.set(d),
+      error: () => { /* sync-log endpoint optional */ },
+    });
   }
 
   stage(): void {
@@ -131,6 +195,22 @@ export class BusyExportComponent implements OnInit {
     this.http.post<ExportResult>('/api/integration/busy-export/run', {}).subscribe((r) => {
       this.snack.open(`Exported: ${r.exported}, Failed: ${r.failed}`, 'OK', { duration: 4000 });
       this.load();
+    });
+  }
+
+  syncNow(): void {
+    this.syncing.set(true);
+    this.http.post<SyncResult>('/api/integration/busy/sync', {}).subscribe({
+      next: (r) => {
+        this.snack.open(`Sync complete: ${r.synced} synced, ${r.failed} failed`, 'OK', { duration: 4000 });
+        this.syncing.set(false);
+        this.load();
+        this.loadSyncLog();
+      },
+      error: () => {
+        this.snack.open('Sync failed', 'Close', { duration: 4000 });
+        this.syncing.set(false);
+      },
     });
   }
 }

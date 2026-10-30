@@ -4,6 +4,7 @@ import { HttpClient } from '@angular/common/http';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
+import { MatChipsModule } from '@angular/material/chips';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -28,6 +29,14 @@ export interface TallyReadinessCheck {
 export interface TallyReadinessDto {
   checks: TallyReadinessCheck[];
   ready: boolean;
+}
+
+export interface VoucherQueueCountsDto {
+  draft: number;
+  approved: number;
+  sent: number;
+  ledgerMissing: number;
+  failed: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -123,9 +132,11 @@ export class TallyReadinessDialogComponent {
   selector: 'app-tally-ledger-mapping',
   standalone: true,
   imports: [
+    CommonModule,
     ReactiveFormsModule,
     MatButtonModule,
     MatCardModule,
+    MatChipsModule,
     MatDialogModule,
     MatFormFieldModule,
     MatIconModule,
@@ -141,6 +152,33 @@ export class TallyReadinessDialogComponent {
         Readiness Check
       </button>
     </div>
+
+    @if (counts()) {
+      <div class="counts-row">
+        <mat-chip-set aria-label="Voucher queue status filters">
+          <mat-chip (click)="setStatusFilter('PENDING_APPROVAL')" [highlighted]="statusFilter() === 'PENDING_APPROVAL'">
+            Draft: {{ counts()!.draft }}
+          </mat-chip>
+          <mat-chip (click)="setStatusFilter('APPROVED')" [highlighted]="statusFilter() === 'APPROVED'">
+            Approved: {{ counts()!.approved }}
+          </mat-chip>
+          <mat-chip (click)="setStatusFilter('SENT')" [highlighted]="statusFilter() === 'SENT'">
+            Sent: {{ counts()!.sent }}
+          </mat-chip>
+          <mat-chip (click)="setStatusFilter('LEDGER_MISSING')" [highlighted]="statusFilter() === 'LEDGER_MISSING'"
+            class="chip-warn">
+            Ledger Missing: {{ counts()!.ledgerMissing }}
+          </mat-chip>
+          <mat-chip (click)="setStatusFilter('EXCEPTION')" [highlighted]="statusFilter() === 'EXCEPTION'"
+            class="chip-error">
+            Failed: {{ counts()!.failed }}
+          </mat-chip>
+          @if (statusFilter()) {
+            <mat-chip (click)="setStatusFilter(null)">Clear filter</mat-chip>
+          }
+        </mat-chip-set>
+      </div>
+    }
 
     <mat-card>
       <mat-card-header><mat-card-title>Add Mapping</mat-card-title></mat-card-header>
@@ -200,6 +238,8 @@ export class TallyLedgerMappingComponent implements OnInit {
   private dialog = inject(MatDialog);
 
   mappings = signal<TallyLedgerMappingDto[]>([]);
+  counts = signal<VoucherQueueCountsDto | null>(null);
+  statusFilter = signal<string | null>(null);
   cols = ['glAccountCode', 'tallyLedger', 'notes', 'actions'];
 
   form: FormGroup = this.fb.group({
@@ -210,6 +250,7 @@ export class TallyLedgerMappingComponent implements OnInit {
 
   ngOnInit(): void {
     this.load();
+    this.loadCounts();
   }
 
   load(): void {
@@ -217,6 +258,17 @@ export class TallyLedgerMappingComponent implements OnInit {
       next: (data) => this.mappings.set(data),
       error: () => this.snackBar.open('Failed to load mappings', 'Close', { duration: 3000 }),
     });
+  }
+
+  loadCounts(): void {
+    this.http.get<VoucherQueueCountsDto>('/api/integration/tally/voucher-queue/counts').subscribe({
+      next: (data) => this.counts.set(data),
+      error: () => { /* counts section is optional */ },
+    });
+  }
+
+  setStatusFilter(status: string | null): void {
+    this.statusFilter.set(status);
   }
 
   save(): void {

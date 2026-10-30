@@ -13,11 +13,12 @@ public record TallyVoucherQueueDto(
         Long approvedBy,
         OffsetDateTime approvedAt,
         OffsetDateTime sentAt,
+        OffsetDateTime reconciledAt,
         OffsetDateTime createdAt) {
 
     static TallyVoucherQueueDto from(TallyVoucherQueue q) {
         return new TallyVoucherQueueDto(q.getId(), q.getSourceType(), q.getSourceId(),
                 q.getVoucherType(), q.getStatus(), q.getExceptionCode(), q.getExceptionDetail(),
-                q.getApprovedBy(), q.getApprovedAt(), q.getSentAt(), q.getCreatedAt());
+                q.getApprovedBy(), q.getApprovedAt(), q.getSentAt(), q.getReconciledAt(), q.getCreatedAt());
     }
 }

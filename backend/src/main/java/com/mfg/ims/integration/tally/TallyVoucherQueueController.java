@@ -42,4 +42,10 @@ public class TallyVoucherQueueController {
                                           @AuthenticationPrincipal CachedUser actor) {
         return service.markSent(id, actor.id());
     }
+
+    @GetMapping("/counts")
+    @PreAuthorize("hasAuthority('INTEGRATION_MANAGE')")
+    public TallyVoucherQueueService.VoucherQueueCountsDto counts() {
+        return service.counts();
+    }
 }

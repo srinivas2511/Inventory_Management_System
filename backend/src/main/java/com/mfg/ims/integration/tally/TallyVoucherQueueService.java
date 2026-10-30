@@ -4,7 +4,9 @@ import com.mfg.ims.common.exception.NotFoundException;
 import com.mfg.ims.enterprise.repository.CompanyRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 
 @Service
@@ -76,5 +78,75 @@ public class TallyVoucherQueueService {
         q.setPayloadXml(payloadXml);
         q.setCreatedBy(actorId);
         return TallyVoucherQueueDto.from(repo.save(q));
+    }
+
+    public TallyVoucherQueueDto markLedgerMissing(Long id, String accountCode, Long actorId) {
+        TallyVoucherQueue q = repo.findById(id)
+                .orElseThrow(() -> new NotFoundException("TallyVoucherQueue", id));
+        q.setStatus("LEDGER_MISSING");
+        q.setExceptionCode("LEDGER_MISSING");
+        q.setExceptionDetail("Ledger not mapped: " + accountCode);
+        q.setUpdatedAt(OffsetDateTime.now());
+        q.setUpdatedBy(actorId);
+        return TallyVoucherQueueDto.from(repo.save(q));
+    }
+
+    // ── Day-book ─────────────────────────────────────────────────────────────
+
+    public record DayBookEntryDto(Long id, String voucherType, String documentRef, OffsetDateTime sentAt) {}
+
+    @Transactional(readOnly = true)
+    public List<DayBookEntryDto> dayBook(LocalDate from, LocalDate to) {
+        OffsetDateTime fromDt = from != null ? from.atStartOfDay().atOffset(ZoneOffset.UTC) :
+                LocalDate.now().withDayOfMonth(1).atStartOfDay().atOffset(ZoneOffset.UTC);
+        OffsetDateTime toDt = to != null ? to.plusDays(1).atStartOfDay().atOffset(ZoneOffset.UTC) :
+                LocalDate.now().plusDays(1).atStartOfDay().atOffset(ZoneOffset.UTC);
+        return repo.findByCompanyIdAndStatusAndSentAtBetweenOrderBySentAtDesc(1L, "SENT", fromDt, toDt)
+                .stream()
+                .map(q -> new DayBookEntryDto(q.getId(), q.getVoucherType(),
+                        q.getSourceType() != null ? q.getSourceType() + "/" + q.getSourceId() : null,
+                        q.getSentAt()))
+                .toList();
+    }
+
+    // ── Reconciliation ───────────────────────────────────────────────────────
+
+    public record ReconciliationStatusDto(long sent, long reconciled, long unreconciled) {}
+
+    @Transactional(readOnly = true)
+    public ReconciliationStatusDto reconciliationStatus(LocalDate from, LocalDate to) {
+        OffsetDateTime fromDt = from != null ? from.atStartOfDay().atOffset(ZoneOffset.UTC) :
+                LocalDate.now().withDayOfMonth(1).atStartOfDay().atOffset(ZoneOffset.UTC);
+        OffsetDateTime toDt = to != null ? to.plusDays(1).atStartOfDay().atOffset(ZoneOffset.UTC) :
+                LocalDate.now().plusDays(1).atStartOfDay().atOffset(ZoneOffset.UTC);
+        List<TallyVoucherQueue> sent =
+                repo.findByCompanyIdAndStatusAndSentAtBetweenOrderBySentAtDesc(1L, "SENT", fromDt, toDt);
+        long reconciledCount = sent.stream().filter(q -> q.getReconciledAt() != null).count();
+        return new ReconciliationStatusDto(sent.size(), reconciledCount, sent.size() - reconciledCount);
+    }
+
+    public void reconcile(List<Long> ids) {
+        OffsetDateTime now = OffsetDateTime.now();
+        for (Long id : ids) {
+            repo.findById(id).ifPresent(q -> {
+                q.setReconciledAt(now);
+                q.setUpdatedAt(now);
+                repo.save(q);
+            });
+        }
+    }
+
+    // ── Counts for flow section ───────────────────────────────────────────────
+
+    public record VoucherQueueCountsDto(long draft, long approved, long sent, long ledgerMissing, long failed) {}
+
+    @Transactional(readOnly = true)
+    public VoucherQueueCountsDto counts() {
+        long draft = repo.countByCompanyIdAndStatus(1L, "PENDING_APPROVAL");
+        long approved = repo.countByCompanyIdAndStatus(1L, "APPROVED");
+        long sent = repo.countByCompanyIdAndStatus(1L, "SENT");
+        long ledgerMissing = repo.countByCompanyIdAndStatus(1L, "LEDGER_MISSING");
+        long failed = repo.countByCompanyIdAndStatus(1L, "EXCEPTION");
+        return new VoucherQueueCountsDto(draft, approved, sent, ledgerMissing, failed);
     }
 }

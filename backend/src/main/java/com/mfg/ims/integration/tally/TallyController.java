@@ -8,6 +8,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -84,6 +86,34 @@ public class TallyController {
 
         boolean ready = checks.stream().allMatch(TallyReadinessDto.CheckItem::ok);
         return new TallyReadinessDto(checks, ready);
+    }
+
+    // ── Day-book ──────────────────────────────────────────────────────────────
+
+    @GetMapping("/day-book")
+    @PreAuthorize("hasAuthority('INTEGRATION_MANAGE')")
+    public List<TallyVoucherQueueService.DayBookEntryDto> dayBook(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate) {
+        return voucherQueueService.dayBook(fromDate, toDate);
+    }
+
+    // ── Reconciliation ────────────────────────────────────────────────────────
+
+    @GetMapping("/reconciliation-status")
+    @PreAuthorize("hasAuthority('INTEGRATION_MANAGE')")
+    public TallyVoucherQueueService.ReconciliationStatusDto reconciliationStatus(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate) {
+        return voucherQueueService.reconciliationStatus(fromDate, toDate);
+    }
+
+    public record ReconcileRequest(List<Long> voucherQueueIds) {}
+
+    @PostMapping("/reconcile")
+    @PreAuthorize("hasAuthority('INTEGRATION_MANAGE')")
+    public void reconcile(@RequestBody ReconcileRequest req) {
+        voucherQueueService.reconcile(req.voucherQueueIds());
     }
 
     private static ResponseEntity<String> xml(String filename, String body) {
