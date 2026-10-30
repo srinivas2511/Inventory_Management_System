@@ -1,8 +1,10 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
+import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -17,6 +19,106 @@ export interface TallyLedgerMappingDto {
   createdAt: string;
 }
 
+export interface TallyReadinessCheck {
+  name: string;
+  ok: boolean;
+  detail: string;
+}
+
+export interface TallyReadinessDto {
+  checks: TallyReadinessCheck[];
+  ready: boolean;
+}
+
+// ---------------------------------------------------------------------------
+// Readiness Check Dialog
+// ---------------------------------------------------------------------------
+@Component({
+  selector: 'app-tally-readiness-dialog',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [CommonModule, MatButtonModule, MatDialogModule, MatIconModule],
+  template: `
+    <h2 mat-dialog-title>Tally Readiness Check</h2>
+    <mat-dialog-content>
+      @if (loading()) {
+        <p class="loading-msg">Checking readiness&hellip;</p>
+      } @else if (error()) {
+        <p class="error-msg">{{ error() }}</p>
+      } @else if (result()) {
+        <ul class="check-list" role="list">
+          @for (check of result()!.checks; track check.name) {
+            <li class="check-item" [class.ok]="check.ok" [class.fail]="!check.ok">
+              <mat-icon [style.color]="check.ok ? '#2e7d32' : '#c62828'" aria-hidden="true">
+                {{ check.ok ? 'check_circle' : 'cancel' }}
+              </mat-icon>
+              <span class="check-name">{{ check.name }}</span>
+              <span class="check-detail">{{ check.detail }}</span>
+            </li>
+          }
+        </ul>
+        <p class="overall" [class.ready]="result()!.ready" [class.not-ready]="!result()!.ready">
+          {{ result()!.ready ? 'Ready for sync' : 'Configuration needed' }}
+        </p>
+      }
+    </mat-dialog-content>
+    <mat-dialog-actions align="end">
+      <button mat-button mat-dialog-close>Close</button>
+    </mat-dialog-actions>
+  `,
+  styles: [`
+    .loading-msg { color: #616161; padding: 8px 0; }
+    .error-msg   { color: #c62828; padding: 8px 0; }
+    .check-list  { list-style: none; padding: 0; margin: 0 0 12px; }
+    .check-item  {
+      display: grid;
+      grid-template-columns: 24px 1fr;
+      grid-template-rows: auto auto;
+      column-gap: 10px;
+      row-gap: 2px;
+      padding: 8px 0;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    .check-item:last-child { border-bottom: none; }
+    .check-item mat-icon { grid-row: 1 / 3; align-self: center; }
+    .check-name  { font-weight: 500; font-size: 13px; }
+    .check-detail { font-size: 12px; color: #616161; }
+    .overall {
+      margin-top: 12px;
+      font-weight: 600;
+      font-size: 14px;
+      text-align: center;
+      padding: 8px;
+      border-radius: 4px;
+    }
+    .ready     { background: #e8f5e9; color: #2e7d32; }
+    .not-ready { background: #ffebee; color: #c62828; }
+  `],
+})
+export class TallyReadinessDialogComponent {
+  private http = inject(HttpClient);
+
+  loading = signal(true);
+  error   = signal<string | null>(null);
+  result  = signal<TallyReadinessDto | null>(null);
+
+  constructor() {
+    this.http.get<TallyReadinessDto>('/api/integration/tally/readiness').subscribe({
+      next: (data) => {
+        this.result.set(data);
+        this.loading.set(false);
+      },
+      error: () => {
+        this.error.set('Failed to load readiness status. Check your permissions and server connection.');
+        this.loading.set(false);
+      },
+    });
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Ledger Mapping Component
+// ---------------------------------------------------------------------------
 @Component({
   selector: 'app-tally-ledger-mapping',
   standalone: true,
@@ -24,6 +126,7 @@ export interface TallyLedgerMappingDto {
     ReactiveFormsModule,
     MatButtonModule,
     MatCardModule,
+    MatDialogModule,
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
@@ -31,8 +134,12 @@ export interface TallyLedgerMappingDto {
     MatSnackBarModule,
   ],
   template: `
-    <div class="page-header">
+    <div class="page-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
       <h2 i18n="@@nav.tally_ledger_mapping">Tally Ledger Mappings</h2>
+      <button mat-stroked-button color="primary" (click)="openReadinessCheck()" aria-label="Run Tally readiness check">
+        <mat-icon aria-hidden="true">health_and_safety</mat-icon>
+        Readiness Check
+      </button>
     </div>
 
     <mat-card>
@@ -90,6 +197,7 @@ export class TallyLedgerMappingComponent implements OnInit {
   private http = inject(HttpClient);
   private fb = inject(FormBuilder);
   private snackBar = inject(MatSnackBar);
+  private dialog = inject(MatDialog);
 
   mappings = signal<TallyLedgerMappingDto[]>([]);
   cols = ['glAccountCode', 'tallyLedger', 'notes', 'actions'];
@@ -127,5 +235,9 @@ export class TallyLedgerMappingComponent implements OnInit {
       next: () => this.load(),
       error: () => this.snackBar.open('Failed to delete mapping', 'Close', { duration: 3000 }),
     });
+  }
+
+  openReadinessCheck(): void {
+    this.dialog.open(TallyReadinessDialogComponent, { width: '480px', autoFocus: false });
   }
 }

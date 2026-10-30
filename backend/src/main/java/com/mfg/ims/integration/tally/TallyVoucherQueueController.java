@@ -35,4 +35,11 @@ public class TallyVoucherQueueController {
                                         @AuthenticationPrincipal CachedUser actor) {
         return service.reject(id, actor.id());
     }
+
+    @PutMapping("/{id}/mark-sent")
+    @PreAuthorize("hasAuthority('ACCOUNTING_VOUCHER_APPROVE')")
+    public TallyVoucherQueueDto markSent(@PathVariable Long id,
+                                          @AuthenticationPrincipal CachedUser actor) {
+        return service.markSent(id, actor.id());
+    }
 }

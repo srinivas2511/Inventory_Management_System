@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IMS Tally Bridge</title>
+  <style>
+    :root {
+      --primary: #1565c0;
+      --primary-dark: #003c8f;
+      --success: #2e7d32;
+      --error: #c62828;
+      --warning: #f57c00;
+      --bg: #fafafa;
+      --surface: #ffffff;
+      --border: #e0e0e0;
+      --text: #212121;
+      --text-secondary: #616161;
+      --radius: 6px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      width: 420px;
+      min-height: 300px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 13px;
+      color: var(--text);
+      background: var(--bg);
+    }
+
+    /* ---- Header ---- */
+    .header {
+      background: var(--primary);
+      color: #fff;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .header .icon {
+      font-size: 20px;
+      line-height: 1;
+    }
+
+    .header h1 {
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+    }
+
+    /* ---- Server config section ---- */
+    .section {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+
+    .section label {
+      display: block;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      padding: 7px 10px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 13px;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    input[type="text"]:focus {
+      border-color: var(--primary);
+    }
+
+    button {
+      padding: 7px 14px;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s, opacity 0.15s;
+    }
+
+    button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .btn-primary:not(:disabled):hover {
+      background: var(--primary-dark);
+    }
+
+    .btn-sync {
+      background: var(--success);
+      color: #fff;
+      width: 100%;
+      padding: 9px;
+      font-size: 14px;
+      margin-top: 4px;
+    }
+
+    .btn-sync:not(:disabled):hover {
+      background: #1b5e20;
+    }
+
+    /* ---- Status indicator ---- */
+    .status-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .status-dot.connected    { background: var(--success); }
+    .status-dot.error        { background: var(--error); }
+    .status-dot.pending      { background: var(--warning); }
+
+    .status-text {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    /* ---- Stats ---- */
+    .stats-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 16px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .stats-row .label {
+      font-weight: 500;
+      color: var(--text-secondary);
+      font-size: 12px;
+    }
+
+    .badge {
+      background: var(--primary);
+      color: #fff;
+      border-radius: 12px;
+      padding: 2px 9px;
+      font-size: 12px;
+      font-weight: 600;
+      min-width: 22px;
+      text-align: center;
+    }
+
+    /* ---- Voucher table ---- */
+    .table-wrap {
+      max-height: 180px;
+      overflow-y: auto;
+      background: var(--surface);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    thead tr {
+      background: #f5f5f5;
+      position: sticky;
+      top: 0;
+    }
+
+    th, td {
+      padding: 6px 10px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #f9f9f9; }
+
+    .empty-msg {
+      padding: 16px;
+      text-align: center;
+      color: var(--text-secondary);
+      font-style: italic;
+    }
+
+    /* ---- Sync button area ---- */
+    .sync-area {
+      padding: 12px 16px;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+    }
+
+    /* ---- Toast ---- */
+    .toast {
+      display: none;
+      position: fixed;
+      bottom: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #323232;
+      color: #fff;
+      padding: 8px 16px;
+      border-radius: var(--radius);
+      font-size: 12px;
+      z-index: 999;
+      white-space: nowrap;
+    }
+
+    .toast.show { display: block; }
+
+    /* ---- Footer ---- */
+    .footer {
+      padding: 8px 16px;
+      font-size: 11px;
+      color: var(--text-secondary);
+      border-top: 1px solid var(--border);
+      background: #f5f5f5;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <span class="icon" aria-hidden="true">&#x21BA;</span>
+    <h1>IMS Tally Bridge</h1>
+  </div>
+
+  <!-- Server URL config -->
+  <div class="section">
+    <label for="server-url">IMS Server URL</label>
+    <div class="input-row">
+      <input type="text" id="server-url" placeholder="http://localhost:8080" aria-label="IMS Server URL" />
+      <button class="btn-primary" id="btn-connect">Save &amp; Connect</button>
+    </div>
+  </div>
+
+  <!-- Connection status -->
+  <div class="status-row">
+    <span class="status-dot pending" id="status-dot" aria-hidden="true"></span>
+    <span class="status-text" id="status-text" role="status">Not connected</span>
+  </div>
+
+  <!-- Pending count -->
+  <div class="stats-row">
+    <span class="label">Pending Vouchers</span>
+    <span class="badge" id="pending-count" aria-live="polite">0</span>
+  </div>
+
+  <!-- Voucher table -->
+  <div class="table-wrap" role="region" aria-label="Pending vouchers">
+    <table id="voucher-table" aria-label="Pending vouchers">
+      <thead>
+        <tr>
+          <th>No.</th>
+          <th>Date</th>
+          <th>Amount</th>
+          <th>Type</th>
+        </tr>
+      </thead>
+      <tbody id="voucher-body">
+        <tr><td colspan="4" class="empty-msg">No pending vouchers</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Sync All button -->
+  <div class="sync-area">
+    <button class="btn-sync" id="btn-sync-all" disabled aria-label="Sync all pending vouchers to Tally">
+      Sync All to Tally
+    </button>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    Last synced: <span id="last-synced">Never</span>
+  </div>
+
+  <!-- Toast notification -->
+  <div class="toast" id="toast" role="alert" aria-live="assertive"></div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

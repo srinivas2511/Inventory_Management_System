@@ -1,0 +1,149 @@
+;; =====================================================================
+;; IMS Tally Integration TDL — ims.tdl
+;; Compatible with: Tally Prime 3.x or later
+;; Version: 1.0.0
+;; Description:
+;;   Extends Tally Prime with an IMS (Inventory Management System)
+;;   Reference Number field on Vouchers and a custom IMS Sync report
+;;   that lets the accountant see which vouchers have been tagged
+;;   with an IMS reference and configure the IMS server URL.
+;; =====================================================================
+
+;; -------------------------------------------------------------------
+;; SYSTEM VARIABLES — persistent, survive Tally restarts
+;; -------------------------------------------------------------------
+
+[System: Variable]
+
+[Variable: IMSApiURL]
+ Type    : String
+ Default : "http://localhost:8080"
+ Persistent : Yes
+
+[Variable: IMSLastSyncTime]
+ Type    : String
+ Default : "Never"
+ Persistent : Yes
+
+;; -------------------------------------------------------------------
+;; USER-DEFINED FIELD — IMS Reference Number on Voucher
+;; Stored with the voucher and visible in drill-down
+;; -------------------------------------------------------------------
+
+[Field: IMS Reference No]
+ Use        : Name Field
+ Set as     : "IMS Ref"
+ Modifiable : Yes
+
+;; Extend the built-in Voucher object to include IMS Reference No
+[#Object: Voucher]
+ Add : Key List : IMS Reference No
+
+;; -------------------------------------------------------------------
+;; IMS SYNC REPORT — lists all vouchers with their IMS references
+;; -------------------------------------------------------------------
+
+;; System formula: report title string
+[System: Formula]
+
+IMSVouchersTitle : "IMS Voucher Sync Report"
+IMSApiURLLabel   : "IMS Server URL: " + ##IMSApiURL
+
+;; Top-level report definition
+[Report: IMS Vouchers]
+ Form       : IMS Vouchers Form
+ Title      : @@IMSVouchersTitle
+
+;; Form contains the URL banner + data part
+[Form: IMS Vouchers Form]
+ Parts      : IMS Vouchers Header Part, IMS Vouchers Part
+ Title      : @@IMSVouchersTitle
+ Width      : 100% Screen
+
+;; Header part showing configured server URL
+[Part: IMS Vouchers Header Part]
+ Lines      : IMS Vouchers Header Line
+ Scroll     : Vertical
+
+[Line: IMS Vouchers Header Line]
+ Fields     : IMS URL Display Field
+
+[Field: IMS URL Display Field]
+ Use        : Name Field
+ Set as     : @@IMSApiURLLabel
+ Width      : 80%
+
+;; Data part — iterates over all Vouchers in the company
+[Part: IMS Vouchers Part]
+ Lines      : IMS Vouchers Header Row, IMS Vouchers Line
+ Repeat     : IMS Vouchers Line : Voucher
+ Scroll     : Vertical
+
+;; Column header row
+[Line: IMS Vouchers Header Row]
+ Fields     : IMS Hdr RefNo, IMS Hdr VchNo, IMS Hdr Date, IMS Hdr Party, IMS Hdr Amt
+
+[Field: IMS Hdr RefNo]
+ Use        : Name Field
+ Set as     : "IMS Ref #"
+ Width      : 20%
+
+[Field: IMS Hdr VchNo]
+ Use        : Name Field
+ Set as     : "Voucher No"
+ Width      : 15%
+
+[Field: IMS Hdr Date]
+ Use        : Name Field
+ Set as     : "Date"
+ Width      : 12%
+
+[Field: IMS Hdr Party]
+ Use        : Name Field
+ Set as     : "Party / Ledger"
+ Width      : 30%
+
+[Field: IMS Hdr Amt]
+ Use        : Amount Field
+ Set as     : "Amount"
+ Width      : 15%
+
+;; Data row — one per Voucher
+[Line: IMS Vouchers Line]
+ Fields     : IMS Ref Field, IMS Vch No Field, IMS Vch Date Field, IMS Party Field, IMS Amt Field
+ [Local: Field: IMS Vch No Field   : Use : Vch Num Field]
+ [Local: Field: IMS Vch Date Field : Use : Short Date Field]
+ [Local: Field: IMS Party Field    : Use : Name Field]
+ [Local: Field: IMS Amt Field      : Use : Amount Field]
+
+[Field: IMS Ref Field]
+ Use        : Name Field
+ Set as     : $IMSReferenceNo
+ Width      : 20%
+ Modifiable : Yes
+
+[Field: IMS Vch No Field]
+ Width      : 15%
+
+[Field: IMS Vch Date Field]
+ Set as     : $Date
+ Width      : 12%
+
+[Field: IMS Party Field]
+ Set as     : $PartyLedgerName
+ Width      : 30%
+
+[Field: IMS Amt Field]
+ Set as     : $Amount
+ Width      : 15%
+
+;; -------------------------------------------------------------------
+;; MENU ITEM — adds "IMS Sync" entry under Gateway of Tally
+;; -------------------------------------------------------------------
+
+[#Menu: Gateway of Tally]
+ Add         : Item   : "IMS Sync"     : Display : IMS Vouchers
+
+;; =====================================================================
+;; END OF FILE
+;; =====================================================================
