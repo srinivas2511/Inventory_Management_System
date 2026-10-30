@@ -338,6 +338,14 @@
         <source>Open Items</source>
         <target>खुली मदें</target>
       </trans-unit>
+      <trans-unit id="nav.item-tds-entries" datatype="html">
+        <source>TDS Entries</source>
+        <target>टीडीएस प्रविष्टियाँ</target>
+      </trans-unit>
+      <trans-unit id="nav.item-payment-reminders" datatype="html">
+        <source>Payment Reminders</source>
+        <target>भुगतान अनुस्मारक</target>
+      </trans-unit>
       <trans-unit id="nav.group-controlling" datatype="html">
         <source>Controlling</source>
         <target>नियंत्रण</target>

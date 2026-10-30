@@ -338,6 +338,14 @@
         <source>Open Items</source>
         <target>ತೆರೆದ ಮದ್ದುಗಳು</target>
       </trans-unit>
+      <trans-unit id="nav.item-tds-entries" datatype="html">
+        <source>TDS Entries</source>
+        <target>ಟಿಡಿಎಸ್ ನಮೂದುಗಳು</target>
+      </trans-unit>
+      <trans-unit id="nav.item-payment-reminders" datatype="html">
+        <source>Payment Reminders</source>
+        <target>ಪಾವತಿ ಜ್ಞಾಪನಗಳು</target>
+      </trans-unit>
       <trans-unit id="nav.group-controlling" datatype="html">
         <source>Controlling</source>
         <target>ನಿಯಂತ್ರಣ</target>
