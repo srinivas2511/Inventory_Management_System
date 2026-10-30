@@ -66,6 +66,9 @@ public class OrderConfirmation extends BaseEntity {
     @Column(name = "copied_from_id")
     private Long copiedFromId;
 
+    @Column(name = "original_oc_id")
+    private Long originalOcId;
+
     @Column(name = "submitted_by")
     private Long submittedBy;
 
@@ -105,6 +108,8 @@ public class OrderConfirmation extends BaseEntity {
     public void setSalesOrderId(Long v) { this.salesOrderId = v; }
     public Long getCopiedFromId() { return copiedFromId; }
     public void setCopiedFromId(Long v) { this.copiedFromId = v; }
+    public Long getOriginalOcId() { return originalOcId; }
+    public void setOriginalOcId(Long v) { this.originalOcId = v; }
     public Long getSubmittedBy() { return submittedBy; }
     public void setSubmittedBy(Long v) { this.submittedBy = v; }
     public List<OrderConfirmationItem> getItems() { return items; }

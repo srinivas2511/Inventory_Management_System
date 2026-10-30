@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -78,5 +79,13 @@ public class OcController {
     @PreAuthorize("hasAuthority('OC_CREATE_WORKORDER')")
     public WorkOrderResultDto createWorkOrder(@PathVariable Long id) {
         return service.createWorkOrder(id);
+    }
+
+    /** 11.2 Copy-OC: create a DRAFT copy of an existing OC, retaining all lines. */
+    @PostMapping("/{id}/copy")
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAuthority('OC_SUBMIT')")
+    public OcDto copyOc(@PathVariable Long id) {
+        return service.copyOc(id);
     }
 }

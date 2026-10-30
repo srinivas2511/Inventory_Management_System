@@ -237,6 +237,44 @@ public class OcService {
                         "Order confirmation not found: " + id));
     }
 
+    /**
+     * 11.2 Copy-OC: create a DRAFT copy of an existing OC, linking back to the original.
+     * Requires OC_SUBMIT permission (matches the create-level permission requirement).
+     */
+    public OcDto copyOc(Long sourceId) {
+        var source = find(sourceId);
+        var copy = new OrderConfirmation();
+        copy.setDocNo(numberService.next("OC"));
+        copy.setDocDate(java.time.LocalDate.now());
+        copy.setCustomerId(source.getCustomerId());
+        copy.setOcKind(source.getOcKind());
+        copy.setCurrency(source.getCurrency());
+        copy.setExchangeRate(source.getExchangeRate());
+        copy.setCustomerPoNo(source.getCustomerPoNo());
+        copy.setCustomerPoDate(source.getCustomerPoDate());
+        copy.setDeliveryDate(source.getDeliveryDate());
+        copy.setIncoterm(source.getIncoterm());
+        copy.setRemarks(source.getRemarks());
+        copy.setOriginalOcId(sourceId);
+        int lineNo = 1;
+        for (var srcItem : source.getItems()) {
+            var item = new OrderConfirmationItem();
+            item.setOc(copy);
+            item.setLineNo(lineNo++);
+            item.setMaterialId(srcItem.getMaterialId());
+            item.setProductId(srcItem.getProductId());
+            item.setDescription(srcItem.getDescription());
+            item.setQty(srcItem.getQty());
+            item.setUom(srcItem.getUom());
+            item.setRate(srcItem.getRate());
+            item.setLineTotal(srcItem.getLineTotal());
+            item.setDeliveryDate(srcItem.getDeliveryDate());
+            item.setCustomerPartNo(srcItem.getCustomerPartNo());
+            copy.getItems().add(item);
+        }
+        return toDto(repo.save(copy));
+    }
+
     private OcDto toDto(OrderConfirmation oc) {
         var items = oc.getItems().stream()
                 .map(i -> new OcDto.ItemDto(i.getId(), i.getLineNo(), i.getItemKind(),
@@ -247,7 +285,7 @@ public class OcService {
         return new OcDto(oc.getId(), oc.getDocNo(), oc.getDocDate(), oc.getStatus(),
                 oc.getOcKind(), oc.getCustomerId(), oc.getQuotationId(),
                 oc.getCustomerPoNo(), oc.getCustomerPoDate(), oc.getDeliveryDate(),
-                oc.getCurrency(), oc.getGrandTotal(), oc.getRemarks(),
-                oc.getSalesOrderId(), oc.getSubmittedBy(), items);
+                oc.getCurrency(), oc.getExchangeRate(), oc.getGrandTotal(), oc.getRemarks(),
+                oc.getSalesOrderId(), oc.getSubmittedBy(), oc.getOriginalOcId(), items);
     }
 }

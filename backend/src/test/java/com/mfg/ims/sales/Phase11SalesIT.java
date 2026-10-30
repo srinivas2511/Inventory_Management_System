@@ -156,6 +156,7 @@ class Phase11SalesIT extends AbstractIntegrationTest {
                 customerId, null, "DELIVERY", null, null,
                 "123 Main St, City", "MH01AB1234", "John Driver",
                 "LR-001", null, "Handle with care",
+                null, null,
                 List.of(new SaveChallanRequest.ItemLine(
                         null, td.product().getId(), "Product",
                         new BigDecimal("5"), "PCS", new BigDecimal("200.00"), null, null)));

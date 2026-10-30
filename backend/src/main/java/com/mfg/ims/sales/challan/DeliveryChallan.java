@@ -1,6 +1,7 @@
 package com.mfg.ims.sales.challan;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -63,6 +64,15 @@ public class DeliveryChallan extends BaseEntity {
     @Column(name = "grand_total", precision = 18, scale = 4)
     private BigDecimal grandTotal;
 
+    @Column(name = "is_returnable", nullable = false)
+    private boolean isReturnable = false;
+
+    @Column(name = "expected_return_date")
+    private LocalDate expectedReturnDate;
+
+    @Column(name = "returned_at")
+    private Instant returnedAt;
+
     @OneToMany(mappedBy = "challan", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("lineNo")
     private List<DeliveryChallanItem> items = new ArrayList<>();
@@ -97,5 +107,11 @@ public class DeliveryChallan extends BaseEntity {
     public void setRemarks(String v) { this.remarks = v; }
     public BigDecimal getGrandTotal() { return grandTotal; }
     public void setGrandTotal(BigDecimal v) { this.grandTotal = v; }
+    public boolean isReturnable() { return isReturnable; }
+    public void setReturnable(boolean v) { this.isReturnable = v; }
+    public LocalDate getExpectedReturnDate() { return expectedReturnDate; }
+    public void setExpectedReturnDate(LocalDate v) { this.expectedReturnDate = v; }
+    public Instant getReturnedAt() { return returnedAt; }
+    public void setReturnedAt(Instant v) { this.returnedAt = v; }
     public List<DeliveryChallanItem> getItems() { return items; }
 }

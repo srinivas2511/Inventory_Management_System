@@ -3,6 +3,7 @@ import { DecimalPipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -25,8 +26,10 @@ export interface OcDto {
   customerPoNo: string | null;
   deliveryDate: string | null;
   currency: string;
+  exchangeRate: number | null;
   grandTotal: number | null;
   submittedBy: number | null;
+  originalOcId: number | null;
   items: OcItemDto[];
 }
 
@@ -53,6 +56,7 @@ interface CustomerLookup {
   imports: [
     ReactiveFormsModule,
     MatButtonModule,
+    MatCheckboxModule,
     MatDialogModule,
     MatFormFieldModule,
     MatInputModule,
@@ -75,6 +79,19 @@ interface CustomerLookup {
           <mat-label i18n="@@oc.field_customer_po">Customer PO No.</mat-label>
           <input matInput formControlName="customerPoNo" />
         </mat-form-field>
+        <mat-checkbox formControlName="isForeign" i18n="@@oc.field_foreign_oc">
+          Foreign OC (export order)
+        </mat-checkbox>
+        @if (form.value.isForeign) {
+          <mat-form-field appearance="outline">
+            <mat-label i18n="@@oc.field_currency">Currency</mat-label>
+            <input matInput formControlName="currency" placeholder="USD" maxlength="3" />
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label i18n="@@oc.field_exchange_rate">Exchange Rate</mat-label>
+            <input matInput type="number" formControlName="exchangeRate" min="0" />
+          </mat-form-field>
+        }
         <mat-form-field appearance="outline">
           <mat-label i18n="@@oc.field_remarks">Remarks</mat-label>
           <textarea matInput formControlName="remarks" rows="2"></textarea>
@@ -101,6 +118,9 @@ export class NewOcDialogComponent implements OnInit {
   form = this.fb.group({
     customerId: [null as number | null, Validators.required],
     customerPoNo: [''],
+    isForeign: [false],
+    currency: [''],
+    exchangeRate: [null as number | null],
     remarks: [''],
   });
 
@@ -113,12 +133,17 @@ export class NewOcDialogComponent implements OnInit {
   save(): void {
     if (this.form.invalid) return;
     const v = this.form.value;
-    const body = {
+    const body: Record<string, unknown> = {
       customerId: v.customerId,
       customerPoNo: v.customerPoNo || null,
       remarks: v.remarks || null,
       items: [],
     };
+    if (v.isForeign) {
+      body['ocKind'] = 'FOREIGN';
+      body['currency'] = v.currency || 'USD';
+      body['exchangeRate'] = v.exchangeRate;
+    }
     this.http.post('/api/sales/order-confirmations', body).subscribe({
       next: () => this.dialog.closeAll(),
       error: () => this.snackBar.open('Failed to submit OC', 'Close', { duration: 3000 }),
@@ -196,6 +221,12 @@ export class NewOcDialogComponent implements OnInit {
                       aria-label="Approve OC"
                       i18n="@@oc.btn_approve">Approve</button>
             }
+            <button mat-icon-button
+                    (click)="copyOc(row)"
+                    aria-label="Copy OC"
+                    matTooltip="Copy OC">
+              <mat-icon aria-hidden="true">content_copy</mat-icon>
+            </button>
           </td>
         </ng-container>
         <tr mat-header-row *matHeaderRowDef="columns"></tr>
@@ -256,6 +287,16 @@ export class OrderConfirmationListComponent implements OnInit {
         const msg = err?.error?.message ?? 'Approve failed (SoD: approver must differ from submitter)';
         this.snackBar.open(msg, 'Close', { duration: 4000 });
       },
+    });
+  }
+
+  copyOc(oc: OcDto): void {
+    this.http.post(`/api/sales/order-confirmations/${oc.id}/copy`, {}).subscribe({
+      next: () => {
+        this.snackBar.open('OC copied', 'Close', { duration: 2000 });
+        this.load();
+      },
+      error: () => this.snackBar.open('Copy OC failed', 'Close', { duration: 3000 }),
     });
   }
 }

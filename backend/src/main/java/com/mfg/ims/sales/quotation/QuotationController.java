@@ -1,6 +1,7 @@
 package com.mfg.ims.sales.quotation;
 
 import java.util.List;
+import java.util.Map;
 
 import jakarta.validation.Valid;
 
@@ -79,5 +80,26 @@ public class QuotationController {
     @PreAuthorize("hasAuthority('QUOTATION_CONVERT')")
     public QuotationConversionResultDto convertToOc(@PathVariable Long id) {
         return ocService.convertFromQuotation(id);
+    }
+
+    /**
+     * 11.1 Amend: snapshots the current approved/sent quotation into revision history,
+     * then resets to DRAFT with an incremented revision number.
+     */
+    @PostMapping("/{id}/amend")
+    @PreAuthorize("hasAuthority('QUOTATION_AMEND')")
+    public QuotationDto amend(@PathVariable Long id,
+            @RequestBody(required = false) Map<String, String> body) {
+        String reason = body != null ? body.getOrDefault("reason", "Amended") : "Amended";
+        return service.amend(id, reason);
+    }
+
+    /**
+     * 11.1 Revision history: returns all saved revision snapshots for a quotation.
+     */
+    @GetMapping("/{id}/revisions")
+    @PreAuthorize("hasAuthority('QUOTATION_VIEW')")
+    public List<QuotationRevisionDto> revisions(@PathVariable Long id) {
+        return service.listRevisions(id);
     }
 }

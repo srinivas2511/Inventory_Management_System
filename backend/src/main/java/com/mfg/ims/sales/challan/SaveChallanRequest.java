@@ -19,6 +19,8 @@ public record SaveChallanRequest(
         String lrNo,
         String courier,
         String remarks,
+        Boolean isReturnable,
+        LocalDate expectedReturnDate,
         @Size(min = 1) List<ItemLine> items
 ) {
     public record ItemLine(
