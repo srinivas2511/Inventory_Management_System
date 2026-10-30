@@ -35,7 +35,8 @@ public record SalesInvoiceDto(
         String invoiceType,
         String lutArn,
         List<ItemDto> items,
-        java.util.Map<String, Object> packagingDetails
+        java.util.Map<String, Object> packagingDetails,
+        Long serviceConfirmationId
 ) {
     public record ItemDto(
             Long id,

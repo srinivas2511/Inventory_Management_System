@@ -19,8 +19,11 @@ public class GoodsReceipt extends BaseEntity {
     @Column(name = "gr_number", nullable = false, unique = true, length = 20)
     private String grNumber;
 
-    @Column(name = "purchase_order_id", nullable = false)
+    @Column(name = "purchase_order_id")
     private Long purchaseOrderId;
+
+    @Column(name = "service_confirmation_id")
+    private Long serviceConfirmationId;
 
     @Column(name = "receipt_date", nullable = false)
     private LocalDate receiptDate;
@@ -77,6 +80,9 @@ public class GoodsReceipt extends BaseEntity {
 
     public Long getReceivedBy() { return receivedBy; }
     public void setReceivedBy(Long v) { this.receivedBy = v; }
+
+    public Long getServiceConfirmationId() { return serviceConfirmationId; }
+    public void setServiceConfirmationId(Long v) { this.serviceConfirmationId = v; }
 
     public List<GoodsReceiptItem> getItems() { return items; }
 }

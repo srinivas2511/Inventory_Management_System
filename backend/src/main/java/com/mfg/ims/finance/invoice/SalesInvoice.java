@@ -108,6 +108,9 @@ public class SalesInvoice extends BaseEntity {
     @Column(name = "remarks", length = 1000)
     private String remarks;
 
+    @Column(name = "service_confirmation_id")
+    private Long serviceConfirmationId;
+
     @OneToMany(mappedBy = "invoice", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("lineNo")
     private List<SalesInvoiceItem> items = new ArrayList<>();
@@ -176,5 +179,7 @@ public class SalesInvoice extends BaseEntity {
     public void setPostedBy(Long v) { this.postedBy = v; }
     public String getRemarks() { return remarks; }
     public void setRemarks(String v) { this.remarks = v; }
+    public Long getServiceConfirmationId() { return serviceConfirmationId; }
+    public void setServiceConfirmationId(Long v) { this.serviceConfirmationId = v; }
     public List<SalesInvoiceItem> getItems() { return items; }
 }

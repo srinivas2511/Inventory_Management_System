@@ -177,7 +177,8 @@ public class SalesInvoiceService {
                 inv.getCustomerPoNo(), inv.getDueDate(), inv.getCurrency(), inv.getExchangeRate(),
                 inv.getTaxableAmount(), inv.getTaxAmount(), inv.getTcsAmount(), inv.getGrandTotal(),
                 inv.getBalanceInr(), inv.getEinvoiceStatus(), inv.getIrn(), inv.getCancelledReason(),
-                inv.getPostedAt(), inv.getRemarks(), inv.getInvoiceType(), inv.getLutArn(), items, null);
+                inv.getPostedAt(), inv.getRemarks(), inv.getInvoiceType(), inv.getLutArn(), items, null,
+                inv.getServiceConfirmationId());
     }
 
     /** 12.12 — create an AD_HOC invoice from a service order confirmation */
@@ -198,6 +199,7 @@ public class SalesInvoiceService {
         inv.setSalesOrderId(conf.getSoId());
         inv.setCurrency("INR");
         inv.setInvoiceType("AD_HOC");
+        inv.setServiceConfirmationId(serviceConfId);
         inv.setRemarks("Invoice from service confirmation #" + serviceConfId);
         inv.setTaxableAmount(BigDecimal.ZERO);
         inv.setGrandTotal(BigDecimal.ZERO);

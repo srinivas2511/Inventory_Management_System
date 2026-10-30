@@ -1,6 +1,8 @@
 package com.mfg.ims.production.serviceorder;
 
 import com.mfg.ims.auth.service.UserPermissionCache.CachedUser;
+import com.mfg.ims.finance.invoice.SalesInvoiceDto;
+import com.mfg.ims.procurement.dto.GoodsReceiptDto;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -59,5 +61,30 @@ public class ServiceOrderController {
     @PreAuthorize("hasAuthority('SERVICE_ORDER_VIEW')")
     public List<ServiceConfirmationDto> confirmations(@PathVariable Long id) {
         return service.getConfirmations(id);
+    }
+
+    /**
+     * Create a goods-receipt inward (GRN) from a service confirmation.
+     * Posts stock IN as SERVICE_INWARD via InventoryPostingService.
+     */
+    @PostMapping("/confirmations/{confId}/inward")
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAuthority('INVENTORY_RECEIVE')")
+    public GoodsReceiptDto createInward(@PathVariable Long confId,
+                                         @RequestBody CreateGrnFromConfRequest req,
+                                         @AuthenticationPrincipal CachedUser actor) {
+        return service.createInwardFromConfirmation(confId, req, actor.id());
+    }
+
+    /**
+     * Create a sales invoice from a service confirmation.
+     */
+    @PostMapping("/confirmations/{confId}/invoice")
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAuthority('SALES_INVOICE_CREATE')")
+    public SalesInvoiceDto createInvoice(@PathVariable Long confId,
+                                          @RequestBody ServiceInvoiceRequest req,
+                                          @AuthenticationPrincipal CachedUser actor) {
+        return service.createInvoiceFromConfirmation(confId, req, actor.id());
     }
 }

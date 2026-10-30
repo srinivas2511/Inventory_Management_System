@@ -289,10 +289,14 @@ public class GoodsReceiptService {
                         i.getMaterialBatchId(), null,
                         i.isInspectionRequired(), null))
                 .toList();
+        String poNumber = gr.getPurchaseOrderId() != null
+                ? poRepo.findById(gr.getPurchaseOrderId()).map(PurchaseOrder::getPoNumber).orElse(null)
+                : null;
         return new GoodsReceiptDto(
                 gr.getId(), gr.getGrNumber(), gr.getPurchaseOrderId(),
-                poRepo.findById(gr.getPurchaseOrderId()).map(PurchaseOrder::getPoNumber).orElse(null),
+                poNumber,
                 gr.getReceiptDate(), gr.getSupplierChallanNo(), gr.getVehicleNo(),
-                gr.getWarehouseId(), gr.getStatus(), gr.getReceivedBy(), itemDtos);
+                gr.getWarehouseId(), gr.getStatus(), gr.getReceivedBy(), itemDtos,
+                gr.getServiceConfirmationId());
     }
 }

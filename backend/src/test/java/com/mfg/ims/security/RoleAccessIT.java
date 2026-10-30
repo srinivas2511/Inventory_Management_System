@@ -759,6 +759,16 @@ class RoleAccessIT extends AbstractIntegrationTest {
             // Phase 14: Service orders — ADMIN + PRODUCTION_MANAGER (SERVICE_ORDER_VIEW)
             Probe.of(HttpMethod.GET, "/api/production/service-orders", PHASE14_JWO_ALLOWED, PHASE14_JWO_FORBIDDEN),
             Probe.of(HttpMethod.GET, "/api/production/service-orders/" + MISSING, PHASE14_JWO_ALLOWED, PHASE14_JWO_FORBIDDEN),
+            // Item 14.2: Service inward (GRN) — ADMIN + STORE_MANAGER + STORE_OPERATOR (INVENTORY_RECEIVE)
+            Probe.withBody(HttpMethod.POST, "/api/production/service-orders/confirmations/" + MISSING + "/inward",
+                    "{\"warehouseId\":1,\"locationId\":1,\"receivedDate\":\"2026-01-01\",\"items\":[]}",
+                    Set.of("ADMIN", "STORE_MANAGER", "STORE_OPERATOR"),
+                    Set.of("OPERATOR", "SALES", "PURCHASE_MANAGER", "PRODUCTION_MANAGER", "FINANCE_MANAGER")),
+            // Item 14.2: Service invoice — ADMIN + FINANCE_MANAGER (SALES_INVOICE_CREATE)
+            Probe.withBody(HttpMethod.POST, "/api/production/service-orders/confirmations/" + MISSING + "/invoice",
+                    "{\"invoiceDate\":\"2026-01-01\",\"customerId\":1,\"lines\":[]}",
+                    Set.of("ADMIN", "FINANCE_MANAGER"),
+                    Set.of("OPERATOR", "SALES", "PURCHASE_MANAGER", "PRODUCTION_MANAGER", "STORE_MANAGER")),
             // Phase 15: BI — ADMIN + FINANCE_MANAGER + MANAGEMENT + CONTROLLER (BI_VIEW)
             Probe.of(HttpMethod.GET, "/api/bi", PHASE15_BI_ALLOWED, PHASE15_BI_FORBIDDEN),
             Probe.of(HttpMethod.GET, "/api/bi/sales", PHASE15_BI_ALLOWED, PHASE15_BI_FORBIDDEN),
@@ -951,6 +961,9 @@ class RoleAccessIT extends AbstractIntegrationTest {
             // Phase 14: GET by missing id answers 404
             Map.entry("GET /api/production/job-work-orders/999999", 404),
             Map.entry("GET /api/production/service-orders/999999", 404),
+            // Item 14.2: service confirmation inward/invoice with missing confId answers 404
+            Map.entry("POST /api/production/service-orders/confirmations/999999/inward", 404),
+            Map.entry("POST /api/production/service-orders/confirmations/999999/invoice", 404),
             // Phase 15: register with unknown code answers 404; saved report with missing id answers 404
             Map.entry("GET /api/registers/UNKNOWN_CODE", 404),
             Map.entry("GET /api/report-builder/saved/999999", 404),

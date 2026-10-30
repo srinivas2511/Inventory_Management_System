@@ -15,7 +15,8 @@ public record GoodsReceiptDto(
         Long warehouseId,
         String status,
         Long receivedBy,
-        List<GrItemDto> items
+        List<GrItemDto> items,
+        Long serviceConfirmationId
 ) {
     public record GrItemDto(
             Long id,
