@@ -25,6 +25,8 @@ export interface BomDto {
   bomNumber: string;
   revision: string;
   productId: number;
+  productCode: string | null;
+  productName: string | null;
   status: string;
   effectiveFrom: string;
   effectiveTo: string;
@@ -89,8 +91,8 @@ export interface BomDto {
           <td mat-cell *matCellDef="let r">{{ r.revision }}</td>
         </ng-container>
         <ng-container matColumnDef="productId">
-          <th mat-header-cell *matHeaderCellDef>Product ID</th>
-          <td mat-cell *matCellDef="let r">{{ r.productId }}</td>
+          <th mat-header-cell *matHeaderCellDef>Product</th>
+          <td mat-cell *matCellDef="let r">{{ r.productCode ? (r.productCode + ' · ' + r.productName) : r.productId }}</td>
         </ng-container>
         <ng-container matColumnDef="baseQuantity">
           <th mat-header-cell *matHeaderCellDef>Base Qty</th>

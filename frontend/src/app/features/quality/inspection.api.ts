@@ -33,6 +33,7 @@ export interface QualityInspectionDto {
   materialCode: string | null;
   fgBatchId: number | null;
   productionOrderId: number | null;
+  productionOrderNumber: string | null;
   productionOperationId: number | null;
   inspectedQty: number;
   sampleSize: number | null;

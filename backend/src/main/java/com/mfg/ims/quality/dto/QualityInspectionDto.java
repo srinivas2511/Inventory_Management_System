@@ -17,6 +17,7 @@ public record QualityInspectionDto(
         String materialCode,
         Long fgBatchId,
         Long productionOrderId,
+        String productionOrderNumber,
         Long productionOperationId,
         BigDecimal inspectedQty,
         Integer sampleSize,

@@ -522,7 +522,7 @@ public class FinalInspectionService {
                 insp.getGoodsReceiptItemId(), null,
                 insp.getMaterialBatchId(), null,
                 insp.getMaterialId(), null,
-                insp.getFgBatchId(), insp.getProductionOrderId(), insp.getProductionOperationId(),
+                insp.getFgBatchId(), insp.getProductionOrderId(), null, insp.getProductionOperationId(),
                 insp.getInspectedQty(), insp.getSampleSize(),
                 insp.getAcceptedQty(), insp.getRejectedQty(), insp.getHoldQty(),
                 insp.getInspectorId(), insp.getInspectedAt(), insp.getDecisionAt(),

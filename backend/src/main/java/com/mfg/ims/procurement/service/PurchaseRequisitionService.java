@@ -18,20 +18,24 @@ import com.mfg.ims.common.numbering.DocumentNumberService;
 import com.mfg.ims.procurement.domain.PurchaseRequisition;
 import com.mfg.ims.procurement.dto.CreateRequisitionRequest;
 import com.mfg.ims.procurement.dto.PurchaseRequisitionDto;
+import com.mfg.ims.material.repository.MaterialRepository;
 import com.mfg.ims.procurement.repository.PurchaseRequisitionRepository;
 
 @Service
 public class PurchaseRequisitionService {
 
     private final PurchaseRequisitionRepository prRepo;
+    private final MaterialRepository materialRepo;
     private final DocumentNumberService numberService;
     private final AuditService auditService;
 
     public PurchaseRequisitionService(
             PurchaseRequisitionRepository prRepo,
+            MaterialRepository materialRepo,
             DocumentNumberService numberService,
             AuditService auditService) {
         this.prRepo = prRepo;
+        this.materialRepo = materialRepo;
         this.numberService = numberService;
         this.auditService = auditService;
     }
@@ -101,8 +105,11 @@ public class PurchaseRequisitionService {
     }
 
     private PurchaseRequisitionDto toDto(PurchaseRequisition pr) {
+        String[] matNames = materialRepo.findById(pr.getMaterialId())
+                .map(m -> new String[]{m.getMaterialCode(), m.getName()})
+                .orElse(new String[]{null, null});
         return new PurchaseRequisitionDto(
-                pr.getId(), pr.getPrNumber(), pr.getMaterialId(), null, null,
+                pr.getId(), pr.getPrNumber(), pr.getMaterialId(), matNames[0], matNames[1],
                 pr.getRequestedQty(), pr.getUom(), pr.getNeededBy(), pr.getReason(),
                 pr.getStatus(), pr.getRequestedBy(), pr.getConvertedPoId(), null);
     }

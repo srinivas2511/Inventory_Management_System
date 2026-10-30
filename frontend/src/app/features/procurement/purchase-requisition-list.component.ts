@@ -23,6 +23,8 @@ export interface PurchaseRequisitionDto {
   id: number;
   prNumber: string;
   materialId: number;
+  materialCode: string;
+  materialName: string;
   requestedQty: number;
   uom: string;
   neededBy: string;
@@ -81,7 +83,7 @@ export interface PurchaseRequisitionDto {
         </ng-container>
         <ng-container matColumnDef="materialId">
           <th mat-header-cell *matHeaderCellDef>Material</th>
-          <td mat-cell *matCellDef="let r">{{ r.materialId }}</td>
+          <td mat-cell *matCellDef="let r">{{ r.materialCode ? r.materialCode + ' · ' + r.materialName : r.materialId }}</td>
         </ng-container>
         <ng-container matColumnDef="requestedQty">
           <th mat-header-cell *matHeaderCellDef>Qty</th>

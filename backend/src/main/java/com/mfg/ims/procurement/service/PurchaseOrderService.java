@@ -26,6 +26,8 @@ import com.mfg.ims.procurement.domain.PurchaseOrderItem;
 import com.mfg.ims.procurement.domain.PurchaseRequisition;
 import com.mfg.ims.procurement.dto.CreatePoRequest;
 import com.mfg.ims.procurement.dto.PurchaseOrderDto;
+import com.mfg.ims.material.repository.MaterialRepository;
+import com.mfg.ims.partner.repository.SupplierRepository;
 import com.mfg.ims.procurement.repository.PurchaseOrderItemRepository;
 import com.mfg.ims.procurement.repository.PurchaseOrderRepository;
 import com.mfg.ims.procurement.repository.PurchaseRequisitionRepository;
@@ -43,6 +45,8 @@ public class PurchaseOrderService {
     private final com.mfg.ims.material.service.SupplierApprovedMaterialService approvedMaterials;
 
     private final com.mfg.ims.enterprise.scope.PlantScope plantScope;
+    private final SupplierRepository supplierRepo;
+    private final MaterialRepository materialRepo;
 
 
     public PurchaseOrderService(
@@ -52,12 +56,15 @@ public class PurchaseOrderService {
             DocumentNumberService numberService,
             AuditService auditService,
             ApplicationEventPublisher eventPublisher,
-
+            SupplierRepository supplierRepo,
+            MaterialRepository materialRepo,
             com.mfg.ims.enterprise.scope.PlantScope plantScope,
             com.mfg.ims.material.service.SupplierApprovedMaterialService approvedMaterials) {
         this.approvedMaterials = approvedMaterials;
 
         this.plantScope = plantScope;
+        this.supplierRepo = supplierRepo;
+        this.materialRepo = materialRepo;
         this.poRepo = poRepo;
         this.poItemRepo = poItemRepo;
         this.prRepo = prRepo;
@@ -243,16 +250,24 @@ public class PurchaseOrderService {
                 : poItemRepo.findByPurchaseOrderId(po.getId());
 
         List<PurchaseOrderDto.PurchaseOrderItemDto> itemDtos = items.stream()
-                .map(i -> new PurchaseOrderDto.PurchaseOrderItemDto(
-                        i.getId(), i.getLineNo(), i.getMaterialId(),
-                        null, null, null,
-                        i.getOrderedQty(), i.getReceivedQty(), i.getAcceptedQty(), i.getRejectedQty(),
-                        i.getRate(), i.getTaxPct(), i.getLineTotal()))
+                .map(i -> {
+                    String[] matNames = materialRepo.findById(i.getMaterialId())
+                            .map(m -> new String[]{m.getMaterialCode(), m.getName(), m.getUom()})
+                            .orElse(new String[]{null, null, null});
+                    return new PurchaseOrderDto.PurchaseOrderItemDto(
+                            i.getId(), i.getLineNo(), i.getMaterialId(),
+                            matNames[0], matNames[1], matNames[2],
+                            i.getOrderedQty(), i.getReceivedQty(), i.getAcceptedQty(), i.getRejectedQty(),
+                            i.getRate(), i.getTaxPct(), i.getLineTotal());
+                })
                 .toList();
 
+        String supplierName = supplierRepo.findById(po.getSupplierId())
+                .map(s -> s.getSupplierCode() + " · " + s.getName())
+                .orElse(null);
         List<String> allowed = allowedActions(po.getStatus());
         return new PurchaseOrderDto(
-                po.getId(), po.getPoNumber(), po.getSupplierId(), null,
+                po.getId(), po.getPoNumber(), po.getSupplierId(), supplierName,
                 po.getPoDate(), po.getExpectedDeliveryDate(), po.getStatus(),
                 po.getSubtotal(), po.getTaxTotal(), po.getGrandTotal(), po.getCurrency(),
                 po.getPaymentTerms(), po.getRemarks(), po.getRequisitionId(),

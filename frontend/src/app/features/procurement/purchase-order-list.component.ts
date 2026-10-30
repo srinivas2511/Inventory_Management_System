@@ -35,6 +35,7 @@ export interface PurchaseOrderDto {
   id: number;
   poNumber: string;
   supplierId: number;
+  supplierName: string;
   poDate: string;
   expectedDeliveryDate: string;
   status: string;
@@ -100,7 +101,7 @@ export interface PurchaseOrderDto {
         </ng-container>
         <ng-container matColumnDef="supplierId">
           <th mat-header-cell *matHeaderCellDef>Supplier</th>
-          <td mat-cell *matCellDef="let r">{{ r.supplierId }}</td>
+          <td mat-cell *matCellDef="let r">{{ r.supplierName }}</td>
         </ng-container>
         <ng-container matColumnDef="poDate">
           <th mat-header-cell *matHeaderCellDef>PO Date</th>

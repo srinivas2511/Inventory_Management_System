@@ -99,7 +99,7 @@ interface ReasonLine {
         }
         @if (i.productionOrderId) {
           <dt>Production order</dt>
-          <dd>{{ i.productionOrderId }}</dd>
+          <dd>{{ i.productionOrderNumber ?? i.productionOrderId }}</dd>
         }
         <dt>Inspected quantity</dt>
         <dd>{{ i.inspectedQty | number: '1.0-3' }}</dd>

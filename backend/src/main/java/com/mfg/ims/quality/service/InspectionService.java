@@ -26,6 +26,7 @@ import com.mfg.ims.inventory.service.StockLocationQueryService;
 import com.mfg.ims.inventory.service.StockLocationQueryService.LocationStock;
 import com.mfg.ims.procurement.event.GoodsReceivedForInspectionEvent;
 import com.mfg.ims.procurement.repository.PurchaseOrderItemRepository;
+import com.mfg.ims.production.repository.ProductionOrderRepository;
 import com.mfg.ims.quality.domain.InspectionPlan;
 import com.mfg.ims.quality.domain.InspectionPlanParameter;
 import com.mfg.ims.quality.domain.QualityInspection;
@@ -44,6 +45,7 @@ public class InspectionService {
     private final InspectionPlanRepository planRepo;
     private final MaterialBatchRepository batchRepo;
     private final PurchaseOrderItemRepository poItemRepo;
+    private final ProductionOrderRepository productionOrderRepo;
     private final DocumentNumberService numberService;
     private final AuditService auditService;
     private final ApplicationEventPublisher events;
@@ -56,6 +58,7 @@ public class InspectionService {
             InspectionPlanRepository planRepo,
             MaterialBatchRepository batchRepo,
             PurchaseOrderItemRepository poItemRepo,
+            ProductionOrderRepository productionOrderRepo,
             DocumentNumberService numberService,
             AuditService auditService,
             ApplicationEventPublisher events,
@@ -66,6 +69,7 @@ public class InspectionService {
         this.planRepo = planRepo;
         this.batchRepo = batchRepo;
         this.poItemRepo = poItemRepo;
+        this.productionOrderRepo = productionOrderRepo;
         this.numberService = numberService;
         this.auditService = auditService;
         this.events = events;
@@ -539,12 +543,16 @@ public class InspectionService {
                         i.getActualText(), i.getUnit(), i.getResult(), i.getDeviationNote(),
                         i.isMandatory(), i.getDeviationApprovedBy(), i.getDeviationApprovedAt(), i.getSpecSource()))
                 .toList();
+        String productionOrderNumber = insp.getProductionOrderId() == null ? null
+                : productionOrderRepo.findById(insp.getProductionOrderId())
+                        .map(po -> po.getOrderNumber())
+                        .orElse(null);
         return new QualityInspectionDto(
                 insp.getId(), insp.getInspectionNumber(), insp.getInspectionType(), insp.getStatus(),
                 insp.getGoodsReceiptItemId(), null,
                 insp.getMaterialBatchId(), null,
                 insp.getMaterialId(), null,
-                insp.getFgBatchId(), insp.getProductionOrderId(), insp.getProductionOperationId(),
+                insp.getFgBatchId(), insp.getProductionOrderId(), productionOrderNumber, insp.getProductionOperationId(),
                 insp.getInspectedQty(), insp.getSampleSize(),
                 insp.getAcceptedQty(), insp.getRejectedQty(), insp.getHoldQty(),
                 insp.getInspectorId(), insp.getInspectedAt(), insp.getDecisionAt(),
