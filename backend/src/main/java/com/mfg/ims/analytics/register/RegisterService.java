@@ -65,4 +65,16 @@ public class RegisterService {
         List<Map<String, Object>> rows = jdbc.queryForList(sql);
         return new RegisterDto(code, REGISTER_NAMES.getOrDefault(code, code), rows);
     }
+
+    /** GRNs not yet posted or cancelled (e.g. awaiting approval). */
+    public List<Map<String, Object>> grnPending() {
+        return jdbc.queryForList(
+                "SELECT * FROM ims.grn_pending ORDER BY receipt_date DESC LIMIT 500");
+    }
+
+    /** GRNs whose AP invoice value mismatches the receipt value. */
+    public List<Map<String, Object>> grnInvoiceMismatch() {
+        return jdbc.queryForList(
+                "SELECT * FROM ims.grn_invoice_mismatch ORDER BY grn_id DESC LIMIT 500");
+    }
 }

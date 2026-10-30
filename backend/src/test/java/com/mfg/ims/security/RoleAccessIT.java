@@ -421,6 +421,17 @@ class RoleAccessIT extends AbstractIntegrationTest {
                     Set.of("ADMIN", "STORE_OPERATOR", "PURCHASE_MANAGER"), Set.of("OPERATOR", "SALES")),
             Probe.of(HttpMethod.GET, "/api/procurement/goods-receipts/" + MISSING,
                     Set.of("ADMIN", "STORE_OPERATOR", "PURCHASE_MANAGER"), Set.of("OPERATOR", "SALES")),
+            // GRN approve (item 10.8 approval mode) — INVENTORY_RECEIVE (STORE_MANAGER, STORE_OPERATOR, ADMIN)
+            Probe.of(HttpMethod.POST, "/api/procurement/goods-receipts/" + MISSING + "/approve",
+                    Set.of("ADMIN", "STORE_MANAGER", "STORE_OPERATOR"), Set.of("OPERATOR", "SALES", "PURCHASE_MANAGER")),
+            // GRN reports (item 10.3) — PURCHASE_VIEW (ADMIN, PURCHASE_MANAGER, MANAGEMENT)
+            Probe.of(HttpMethod.GET, "/api/procurement/grn-reports/pending",
+                    Set.of("ADMIN", "PURCHASE_MANAGER", "MANAGEMENT"), Set.of("OPERATOR", "SALES", "STORE_OPERATOR")),
+            Probe.of(HttpMethod.GET, "/api/procurement/grn-reports/invoice-mismatch",
+                    Set.of("ADMIN", "PURCHASE_MANAGER", "MANAGEMENT"), Set.of("OPERATOR", "SALES", "STORE_OPERATOR")),
+            // PO balance view (item 10.7) — PURCHASE_VIEW
+            Probe.of(HttpMethod.GET, "/api/procurement/po-balance",
+                    Set.of("ADMIN", "PURCHASE_MANAGER", "MANAGEMENT"), Set.of("OPERATOR", "SALES", "STORE_OPERATOR")),
             // sales and dispatch
             Probe.of(HttpMethod.GET, "/api/sales/orders", Set.of("ADMIN", "SALES", "DISPATCH", "MANAGEMENT"),
                     Set.of("OPERATOR")),
@@ -878,6 +889,7 @@ class RoleAccessIT extends AbstractIntegrationTest {
             Map.entry("GET /api/maintenance/requests/999999/spare-parts", 404),
             Map.entry("GET /api/oee/machines/999999", 404),
             Map.entry("GET /api/procurement/goods-receipts/999999", 404),
+            Map.entry("POST /api/procurement/goods-receipts/999999/approve", 404),
             Map.entry("GET /api/spare-parts/999999", 404),
             Map.entry("GET /api/spc/charts/999999", 404),
             Map.entry("POST /api/ap/invoices/999999/match-override", 404),

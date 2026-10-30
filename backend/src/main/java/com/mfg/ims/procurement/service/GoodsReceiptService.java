@@ -106,6 +106,9 @@ public class GoodsReceiptService {
 
         BigDecimal tolerancePct = settingService.getDecimal(OVER_RECEIPT_TOLERANCE_KEY, new BigDecimal("10"));
 
+        boolean approvalRequired = "REQUIRED".equalsIgnoreCase(
+                settingService.get("inventory.inward.approval_mode", "NONE"));
+
         GoodsReceipt gr = new GoodsReceipt();
         gr.setGrNumber(numberService.next("GR"));
         gr.setPurchaseOrderId(req.purchaseOrderId());
@@ -114,7 +117,8 @@ public class GoodsReceiptService {
         gr.setVehicleNo(req.vehicleNo());
         gr.setWarehouseId(req.warehouseId());
         gr.setPlantId(po.getPlantId());
-        gr.setStatus("POSTED");
+        gr.setStatus(approvalRequired ? "PENDING_APPROVAL" : "POSTED");
+        gr.setRequiresApproval(approvalRequired);
         gr.setReceivedBy(currentUserId());
         gr = grRepo.save(gr);
 
@@ -164,33 +168,38 @@ public class GoodsReceiptService {
             grItem.setMaterialBatchId(batch.getId());
             grItem = grItemRepo.save(grItem);
 
-            // Post to inventory as QUARANTINE
-            postingService.post(new PostingCommand(
-                    "PURCHASE_RECEIPT", "MATERIAL",
-                    poItem.getMaterialId(), null,
-                    batch.getId(), null,
-                    req.warehouseId(), line.locationId(),
-                    "QUARANTINE",
-                    receivedQty, null,
-                    poItem.getRate(),
-                    "GOODS_RECEIPT", gr.getId(), gr.getGrNumber(),
-                    "GR: " + gr.getGrNumber()));
+            if (!approvalRequired) {
+                // Post to inventory as QUARANTINE
+                postingService.post(new PostingCommand(
+                        "PURCHASE_RECEIPT", "MATERIAL",
+                        poItem.getMaterialId(), null,
+                        batch.getId(), null,
+                        req.warehouseId(), line.locationId(),
+                        "QUARANTINE",
+                        receivedQty, null,
+                        poItem.getRate(),
+                        "GOODS_RECEIPT", gr.getId(), gr.getGrNumber(),
+                        "GR: " + gr.getGrNumber()));
 
-            // Update po_item received qty
-            poItem.setReceivedQty(poItem.getReceivedQty().add(receivedQty));
-            poItemRepo.save(poItem);
+                // Update po_item received qty
+                poItem.setReceivedQty(poItem.getReceivedQty().add(receivedQty));
+                poItemRepo.save(poItem);
 
-            // Publish event — InspectionService listener creates the inspection
-            eventPublisher.publishEvent(new GoodsReceivedForInspectionEvent(
-                    grItem.getId(), batch.getId(), poItem.getMaterialId(),
-                    req.warehouseId(), line.locationId(), inspectionRequired));
+                // Publish event — InspectionService listener creates the inspection
+                eventPublisher.publishEvent(new GoodsReceivedForInspectionEvent(
+                        grItem.getId(), batch.getId(), poItem.getMaterialId(),
+                        req.warehouseId(), line.locationId(), inspectionRequired));
+            }
 
             savedItems.add(grItem);
         }
 
-        poService.refreshPoStatus(po.getId());
+        if (!approvalRequired) {
+            poService.refreshPoStatus(po.getId());
+        }
 
-        auditService.record("GR_POSTED", "GOODS_RECEIPT", String.valueOf(gr.getId()),
+        auditService.record(approvalRequired ? "GR_PENDING_APPROVAL" : "GR_POSTED",
+                "GOODS_RECEIPT", String.valueOf(gr.getId()),
                 null, gr.getGrNumber(), null);
 
         return toDto(gr, savedItems);
@@ -219,6 +228,44 @@ public class GoodsReceiptService {
         plantScope.assertVisible(po.getPlantId(), "Purchase order", poId);
         return grRepo.findByPurchaseOrderId(poId, pageable)
                 .map(gr -> toDto(gr, grItemRepo.findByGoodsReceiptId(gr.getId())));
+    }
+
+    @Transactional
+    public GoodsReceiptDto approve(Long id) {
+        GoodsReceipt gr = grRepo.findById(id)
+                .orElseThrow(() -> new com.mfg.ims.common.exception.NotFoundException("Goods receipt not found: " + id));
+        if (!"PENDING_APPROVAL".equals(gr.getStatus())) {
+            throw new com.mfg.ims.common.exception.BusinessRuleException(
+                    com.mfg.ims.common.exception.ErrorCode.VALIDATION_FAILED,
+                    "Goods receipt is not pending approval");
+        }
+        List<GoodsReceiptItem> items = grItemRepo.findByGoodsReceiptId(id);
+        for (GoodsReceiptItem grItem : items) {
+            PurchaseOrderItem poItem = poItemRepo.findById(grItem.getPoItemId())
+                    .orElseThrow(() -> new com.mfg.ims.common.exception.NotFoundException(
+                            "PO item not found: " + grItem.getPoItemId()));
+            postingService.post(new PostingCommand(
+                    "PURCHASE_RECEIPT", "MATERIAL",
+                    grItem.getMaterialId(), null,
+                    grItem.getMaterialBatchId(), null,
+                    gr.getWarehouseId(), grItem.getLocationId(),
+                    "QUARANTINE",
+                    grItem.getReceivedQty(), null,
+                    poItem.getRate(),
+                    "GOODS_RECEIPT", gr.getId(), gr.getGrNumber(),
+                    "GR: " + gr.getGrNumber()));
+            poItem.setReceivedQty(poItem.getReceivedQty().add(grItem.getReceivedQty()));
+            poItemRepo.save(poItem);
+            eventPublisher.publishEvent(new GoodsReceivedForInspectionEvent(
+                    grItem.getId(), grItem.getMaterialBatchId(), grItem.getMaterialId(),
+                    gr.getWarehouseId(), grItem.getLocationId(), grItem.isInspectionRequired()));
+        }
+        gr.setStatus("POSTED");
+        grRepo.save(gr);
+        poService.refreshPoStatus(gr.getPurchaseOrderId());
+        auditService.record("GR_APPROVED", "GOODS_RECEIPT", String.valueOf(gr.getId()),
+                "PENDING_APPROVAL", "POSTED", null);
+        return toDto(gr, items);
     }
 
     // ── private helpers ───────────────────────────────────────────────────────

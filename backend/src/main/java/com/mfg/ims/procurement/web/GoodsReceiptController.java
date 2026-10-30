@@ -56,6 +56,12 @@ public class GoodsReceiptController {
         return service.findById(id);
     }
 
+    @PostMapping("/goods-receipts/{id}/approve")
+    @PreAuthorize("hasAuthority('INVENTORY_RECEIVE')")
+    public GoodsReceiptDto approve(@PathVariable Long id) {
+        return service.approve(id);
+    }
+
     @GetMapping("/purchase-orders/{poId}/goods-receipts")
     @PreAuthorize("hasAnyAuthority('PURCHASE_VIEW','INVENTORY_RECEIVE')")
     public Page<GoodsReceiptDto> listByPo(

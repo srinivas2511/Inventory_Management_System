@@ -20,6 +20,7 @@ import com.mfg.ims.common.exception.NotFoundException;
 import com.mfg.ims.common.event.PurchaseOrderApprovedEvent;
 import com.mfg.ims.common.numbering.DocumentNumberService;
 import com.mfg.ims.common.security.SegregationOfDuties;
+import com.mfg.ims.procurement.AmendmentGuard;
 import com.mfg.ims.procurement.domain.PurchaseOrder;
 import com.mfg.ims.enterprise.scope.PlantScope;
 import com.mfg.ims.procurement.domain.PurchaseOrderItem;
@@ -47,6 +48,7 @@ public class PurchaseOrderService {
     private final com.mfg.ims.enterprise.scope.PlantScope plantScope;
     private final SupplierRepository supplierRepo;
     private final MaterialRepository materialRepo;
+    private final AmendmentGuard amendmentGuard;
 
 
     public PurchaseOrderService(
@@ -59,7 +61,8 @@ public class PurchaseOrderService {
             SupplierRepository supplierRepo,
             MaterialRepository materialRepo,
             com.mfg.ims.enterprise.scope.PlantScope plantScope,
-            com.mfg.ims.material.service.SupplierApprovedMaterialService approvedMaterials) {
+            com.mfg.ims.material.service.SupplierApprovedMaterialService approvedMaterials,
+            AmendmentGuard amendmentGuard) {
         this.approvedMaterials = approvedMaterials;
 
         this.plantScope = plantScope;
@@ -71,6 +74,7 @@ public class PurchaseOrderService {
         this.numberService = numberService;
         this.auditService = auditService;
         this.eventPublisher = eventPublisher;
+        this.amendmentGuard = amendmentGuard;
     }
 
     @Transactional
@@ -266,13 +270,14 @@ public class PurchaseOrderService {
                 .map(s -> s.getSupplierCode() + " · " + s.getName())
                 .orElse(null);
         List<String> allowed = allowedActions(po.getStatus());
+        boolean pending = po.getId() != null && amendmentGuard.amendmentPending(po.getId());
         return new PurchaseOrderDto(
                 po.getId(), po.getPoNumber(), po.getSupplierId(), supplierName,
                 po.getPoDate(), po.getExpectedDeliveryDate(), po.getStatus(),
                 po.getSubtotal(), po.getTaxTotal(), po.getGrandTotal(), po.getCurrency(),
                 po.getPaymentTerms(), po.getRemarks(), po.getRequisitionId(),
                 po.getSubmittedBy(), po.getApprovedBy(), po.getApprovedAt(),
-                itemDtos, allowed);
+                itemDtos, allowed, pending);
     }
 
     private List<String> allowedActions(String status) {
