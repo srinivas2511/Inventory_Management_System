@@ -20,7 +20,7 @@ public class GoodsReceiptItem extends BaseEntity {
     @JoinColumn(name = "goods_receipt_id", nullable = false)
     private GoodsReceipt goodsReceipt;
 
-    @Column(name = "po_item_id", nullable = false)
+    @Column(name = "po_item_id")
     private Long poItemId;
 
     @Column(name = "material_id", nullable = false)
@@ -29,7 +29,7 @@ public class GoodsReceiptItem extends BaseEntity {
     @Column(name = "received_qty", nullable = false, precision = 18, scale = 3)
     private BigDecimal receivedQty;
 
-    @Column(name = "location_id", nullable = false)
+    @Column(name = "location_id")
     private Long locationId;
 
     @Column(name = "heat_number", length = 40)

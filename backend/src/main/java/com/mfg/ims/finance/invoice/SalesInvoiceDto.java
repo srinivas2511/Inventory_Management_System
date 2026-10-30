@@ -32,7 +32,8 @@ public record SalesInvoiceDto(
         String cancelledReason,
         Instant postedAt,
         String remarks,
-        List<ItemDto> items
+        List<ItemDto> items,
+        Long serviceConfirmationId
 ) {
     public record ItemDto(
             Long id,
