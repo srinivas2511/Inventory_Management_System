@@ -65,15 +65,22 @@ public class CostAllocationService {
 
     @Transactional
     public CostAllocationRuleDto createRule(SaveAllocationRuleRequest req) {
-        CostAllocationRule newRule = new CostAllocationRule();
-        newRule.setCostCentreId(req.costCentreId());
-        newRule.setAllocationBase(req.allocationBase());
-        CostAllocationRule saved = ruleRepo.save(newRule);
-        Long savedId = saved.getId();
-        auditService.record("CREATED", "COST_ALLOCATION_RULE", String.valueOf(savedId),
-                null, req.costCentreId() + "/" + req.allocationBase(), null);
-        return findAllRules().stream().filter(r -> r.id().equals(savedId)).findFirst()
-                .orElseThrow();
+        // Idempotent: return existing rule rather than 409 on duplicate (cost_centre, base) pair.
+        return ruleRepo.findByCostCentreIdAndAllocationBase(req.costCentreId(), req.allocationBase())
+                .map(existing -> findAllRules().stream()
+                        .filter(r -> r.id().equals(existing.getId()))
+                        .findFirst().orElseThrow())
+                .orElseGet(() -> {
+                    CostAllocationRule newRule = new CostAllocationRule();
+                    newRule.setCostCentreId(req.costCentreId());
+                    newRule.setAllocationBase(req.allocationBase());
+                    CostAllocationRule saved = ruleRepo.save(newRule);
+                    Long savedId = saved.getId();
+                    auditService.record("CREATED", "COST_ALLOCATION_RULE", String.valueOf(savedId),
+                            null, req.costCentreId() + "/" + req.allocationBase(), null);
+                    return findAllRules().stream().filter(r -> r.id().equals(savedId)).findFirst()
+                            .orElseThrow();
+                });
     }
 
     @Transactional

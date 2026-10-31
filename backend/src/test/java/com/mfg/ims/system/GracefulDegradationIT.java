@@ -87,6 +87,9 @@ class GracefulDegradationIT extends AbstractIntegrationTest {
         } catch (Exception ignored) {
             // index already present — nothing to do
         }
+        // Reset the health indicator so the DEGRADED state does not bleed into later ITs
+        // (show-details:never causes Spring Boot 3.5 to report any non-UP aggregate as DOWN).
+        reportingHealth.updateLastResult(null);
     }
 
     @Test

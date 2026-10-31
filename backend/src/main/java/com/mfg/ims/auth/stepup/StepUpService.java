@@ -39,6 +39,12 @@ public class StepUpService {
         this.clock = clock;
     }
 
+    /** Clears a user's step-up elevation so the next sensitive action will prompt again. */
+    @Transactional
+    public void clearElevation(Long userId) {
+        jdbc.update("UPDATE ims.users SET step_up_until = NULL WHERE id = ?", userId);
+    }
+
     /** Throws STEP_UP_REQUIRED when the feature is on and the user has not re-authenticated recently. */
     @Transactional(readOnly = true)
     public void requireFresh() {

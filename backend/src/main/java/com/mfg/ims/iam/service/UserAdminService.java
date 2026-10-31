@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.mfg.ims.audit.service.AuditService;
 import com.mfg.ims.auth.service.AuthService;
 import com.mfg.ims.auth.service.UserPermissionCache;
+import com.mfg.ims.auth.stepup.StepUpService;
 import com.mfg.ims.common.exception.BusinessRuleException;
 import com.mfg.ims.common.exception.ConflictException;
 import com.mfg.ims.common.exception.ErrorCode;
@@ -42,6 +43,7 @@ public class UserAdminService {
     private final AuthService authService;
     private final AdminGuard adminGuard;
     private final SystemSettingService settings;
+    private final StepUpService stepUpService;
 
     public UserAdminService(UserRepository userRepo, RoleRepository roleRepo,
                             PasswordEncoder passwordEncoder,
@@ -49,7 +51,8 @@ public class UserAdminService {
                             AuditService auditService,
                             AuthService authService,
                             AdminGuard adminGuard,
-                            SystemSettingService settings) {
+                            SystemSettingService settings,
+                            StepUpService stepUpService) {
         this.userRepo = userRepo;
         this.roleRepo = roleRepo;
         this.passwordEncoder = passwordEncoder;
@@ -58,6 +61,7 @@ public class UserAdminService {
         this.authService = authService;
         this.adminGuard = adminGuard;
         this.settings = settings;
+        this.stepUpService = stepUpService;
     }
 
     @Transactional(readOnly = true)
@@ -220,20 +224,20 @@ public class UserAdminService {
         return new AdminResetPasswordResponse(generated ? temporary : null, generated);
     }
 
-    /** Clears a lockout (the failed-attempt counter and the lock-until time). Nothing to do for an account that is not locked. */
+    /** Clears a lockout (failed-attempt counter, lock-until time) and any outstanding step-up elevation. */
     @Transactional
     public UserDto unlock(Long id) {
         User user = requireUser(id);
         boolean wasLocked = user.isLocked();
         int attempts = user.getFailedAttempts();
-        if (!wasLocked && attempts == 0) {
-            return UserDto.from(user);
-        }
         user.setFailedAttempts(0);
         user.setLockedUntil(null);
         userRepo.save(user);
-        auditService.record("UNLOCK", "USER", String.valueOf(id),
-            "locked=" + wasLocked + ", failedAttempts=" + attempts, "locked=false, failedAttempts=0", null);
+        stepUpService.clearElevation(id);
+        if (wasLocked || attempts > 0) {
+            auditService.record("UNLOCK", "USER", String.valueOf(id),
+                "locked=" + wasLocked + ", failedAttempts=" + attempts, "locked=false, failedAttempts=0", null);
+        }
         return UserDto.from(user);
     }
 
