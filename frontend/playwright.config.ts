@@ -13,7 +13,7 @@ export default defineConfig({
   globalSetup: './e2e/global-setup.ts',
   fullyParallel: false,
   workers: 1,
-  retries: 1,
+  retries: 0,
   timeout: 90_000,
   expect: { timeout: 10_000 },
   reporter: [['list'], ['html', { open: 'never' }]],
