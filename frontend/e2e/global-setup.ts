@@ -27,7 +27,9 @@ export default async function globalSetup(): Promise<void> {
     const found = byName.get(u.username);
     if (found) {
       if (found.active === false || found.enabled === false) await admin.post(`/api/admin/users/${found.id}/reactivate`);
-      if (found.locked) await admin.post(`/api/admin/users/${found.id}/unlock`);
+      // Always reset failed-attempt counter — a stale lock from a prior run survives DB resets if the schema
+      // drop/create raced with the old backend; unlock is a no-op when the account is not locked.
+      await admin.post(`/api/admin/users/${found.id}/unlock`);
       // Already usable with the final password: nothing to do.
       if ((await login(u.username, ROLE_PASSWORD)).status === 200) continue;
       // Otherwise it is still on the initial password (the demo loader creates the DESIGN 11.2 users with it, D-01).

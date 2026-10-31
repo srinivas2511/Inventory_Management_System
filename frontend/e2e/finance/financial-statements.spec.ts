@@ -186,7 +186,7 @@ test.describe.serial('Overhead cost allocation (R10-6.3)', () => {
     // Use the first section (Allocation Rules) as scope to avoid matching the Period select below.
     const rulesSection = p.locator('section').first();
     await pick(rulesSection, /cost centre/i, 0);
-    await pick(rulesSection, /allocation base/i, 1);
+    await pick(rulesSection, /allocation base/i, 2); // PRODUCTION_QTY (index 2): index 0=LABOUR_HOURS seeded by V60, index 1=MACHINE_HOURS
     const saved = p.waitForResponse((r) => /\/api\/controlling\/overhead-allocation\/rules$/.test(r.url()) && r.request().method() === 'POST');
     await p.getByRole('button', { name: /add rule/i }).click();
     const res = await saved;
