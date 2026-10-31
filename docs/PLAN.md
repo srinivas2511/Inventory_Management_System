@@ -1,12 +1,14 @@
 # PLAN.md — Configurable Manufacturing ERP Platform
 
-**Version:** 2.0  **Date:** 2026-10-02
+**Version:** 2.0  **Date:** 2026-10-02  **Last updated:** 2026-10-31
 **Inputs:** REQUIREMENTS.md v2.0 (what) · ARCHITECTURE.md v2.0 (structure) · DESIGN.md v2.0 (detail)
 **Purpose:** the execution plan — releases, tasks, estimates, dependencies, quality gates, and the order of work. Each task points to the exact DESIGN.md / ARCHITECTURE.md section it implements.
 
 > Document map: REQUIREMENTS = *what* · ARCHITECTURE = *structure* · DESIGN = *detail* · **PLAN = *order, effort and gates*.**
 >
 > **Platform note:** Releases R1–R8 deliver the Spring Manufacturing (v1) configuration of the platform. The universal Core ERP, Manufacturing and Common Services layers are built once and reused by all future industry verticals. Releases R9–R20 expand the platform into a full SAP-class ERP. R20 adds additional industry verticals solely through seed data migrations.
+>
+> **Overall status (2026-10-31):** All releases R1–R20 **complete**. ERP extension phases 9–17 (PLAN-ERP.md) also substantially complete via Flyway V64–V115; see PLAN-ERP.md for per-phase status. HEAD `4ebd994`. Backend: 3,924 IT tests (0 failed). Frontend: 873/873 unit tests, lint and build clean. E2E: 432/433 passed × 2 consecutive fresh-database Playwright runs (exit 0; 1 skipped = PRED-4 expected).
 
 ## Contents
 1. Planning Basis and Assumptions
