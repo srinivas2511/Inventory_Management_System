@@ -8,7 +8,7 @@
 >
 > **Platform note:** Releases R1–R8 deliver the Spring Manufacturing (v1) configuration of the platform. The universal Core ERP, Manufacturing and Common Services layers are built once and reused by all future industry verticals. Releases R9–R20 expand the platform into a full SAP-class ERP. R20 adds additional industry verticals solely through seed data migrations.
 >
-> **Overall status (2026-10-31):** All releases R1–R20 **complete**. ERP extension phases 9–17 (PLAN-ERP.md) also substantially complete via Flyway V64–V115; see PLAN-ERP.md for per-phase status. HEAD `4ebd994`. Backend: 3,924 IT tests (0 failed). Frontend: 873/873 unit tests, lint and build clean. E2E: 432/433 passed × 2 consecutive fresh-database Playwright runs (exit 0; 1 skipped = PRED-4 expected).
+> **Overall status (2026-10-31):** All releases R1–R20 **complete**. ERP extension phases 9–17 (PLAN-ERP.md) also substantially complete via Flyway V64–V115; see PLAN-ERP.md for per-phase status. HEAD `8562b36`. Backend: 3,924 IT tests (0 failed). Frontend: 873/873 unit tests, lint and build clean. E2E: 432/433 passed × 2 consecutive fresh-database Playwright runs (exit 0; 1 skipped = PRED-4 expected). Post-baseline E2E fixes applied: GST e-invoice idempotent generate, global-setup unconditional unlock, ALLOC-1 allocation base index, D-10 adjustment sum. Run 6 re-validated 432/433 (44.1 min, exit 0); run 7 in progress.
 
 ## Contents
 1. Planning Basis and Assumptions
