@@ -83,10 +83,14 @@ test.describe('Known defects (documented behaviour not yet met)', () => {
 
   test('D-10 a stock adjustment compares the counted quantity with the real on-hand quantity (UAT STK-02/STK-03)', async () => {
     const { material } = await demoIds();
-    const rows = (await balances()).filter((b) => b.materialId === material.id && b.stockStatus === 'AVAILABLE' && Number(b.qtyOnHand) > 10);
+    const allBals = await balances();
+    const rows = allBals.filter((b) => b.materialId === material.id && b.stockStatus === 'AVAILABLE' && Number(b.qtyOnHand) > 10);
     const bal = rows.sort((x, y) => Number(y.qtyOnHand) - Number(x.qtyOnHand))[0];
     expect(bal, 'material stock exists (run the workflow spec first)').toBeTruthy();
-    const onHand = Number(bal.qtyOnHand);
+    // systemQty = sum of ALL AVAILABLE batches at this warehouse+location (matches what the adjustment API computes)
+    const onHand = allBals
+      .filter((b) => b.materialId === material.id && b.warehouseId === bal.warehouseId && b.locationId === bal.locationId && b.stockStatus === 'AVAILABLE')
+      .reduce((sum, b) => sum + Number(b.qtyOnHand), 0);
     const r = await apiFor(U.storeMgr).post('/api/inventory/adjustments', {
       itemType: 'MATERIAL',
       materialId: material.id,

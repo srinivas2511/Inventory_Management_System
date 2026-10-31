@@ -7,6 +7,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -139,10 +140,13 @@ public class GstEInvoiceService {
 
     @Transactional
     public EInvoiceDto generate(GenerateRequest req, Long userId) {
-        // Check for existing (idempotent)
-        repo.findByDispatchId(req.dispatchId()).ifPresent(e -> {
-            throw new IllegalStateException("E-invoice already generated for dispatch " + req.dispatchId());
-        });
+        // Idempotent: return existing e-invoice if one already exists for this dispatch.
+        Optional<GstEInvoice> existing = repo.findByDispatchId(req.dispatchId());
+        if (existing.isPresent()) {
+            GstEInvoice e = existing.get();
+            return new EInvoiceDto(e.getId(), e.getDispatchId(), e.getIrn(), e.getAckNo(),
+                e.getAckDate(), e.getStatus(), e.getGeneratedAt());
+        }
 
         Map<String, Object> dispatch = fetchDispatch(req.dispatchId());
         List<Map<String, Object>> items = fetchDispatchItems(req.dispatchId());
