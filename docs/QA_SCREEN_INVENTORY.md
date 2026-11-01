@@ -125,13 +125,13 @@
 | 119 | Admin | Modules | /admin/modules | Config | MODULE_MANAGE | UI_VERIFIED (S11) — page title "Modules" confirmed |
 | 120 | Admin | Attribute Definitions | /admin/attribute-definitions | List | ATTRIBUTE_MANAGE | UI_VERIFIED (S11) — page title "Attribute Definitions" confirmed |
 | 121 | Admin | Negative Stock Overrides | /admin/negative-stock-overrides | Config | INVENTORY_NEGATIVE_OVERRIDE | UI_VERIFIED (S11) — page title "Negative Stock Overrides" confirmed |
-| 122 | Admin | Item Categories | /admin/item-categories | List | SETTINGS_MANAGE | UI_VERIFIED (S11) — page title "Item Categories" confirmed |
+| 122 | Admin | Item Categories | /admin/item-categories | List | SETTINGS_MANAGE | FORM_POPULATED_AND_SAVED (S14) — QA-CAT-001 "QA Raw Materials" BOTH created; table row confirmed; form uses categoryCode matching backend (no DEF) |
 | 123 | Admin | Document Series | /admin/document-series | List | SETTINGS_MANAGE | UI_VERIFIED (S11) — page title "Document Series" confirmed |
 | 124 | Admin | Company Profile | /admin/company-profile | Form | SETTINGS_MANAGE | UI_VERIFIED (S11) — page title "Company Profile" confirmed |
 | 125 | Admin | Payment Terms | /admin/payment-terms | List | SETTINGS_MANAGE | FORM_POPULATED_AND_SAVED (S11/S12) — DEF-007 fixed (termCode/netDays field mapping); QA-NET-45 created via API 201; regression spec added; 875/875 frontend tests pass |
 | 126 | Admin | Transporters | /admin/transporters | List | SETTINGS_MANAGE | FORM_POPULATED_AND_SAVED (S13) — DEF-008 fixed (transporterCode/gstTransporterId field mapping); QA-TRP-001 "QA Logistics Pvt Ltd" created; regression spec added; 2/2 tests pass |
-| 127 | Admin | Teams | /admin/teams | List | SETTINGS_MANAGE | UI_VERIFIED (S11) — page title "Teams" confirmed |
-| 128 | Admin | Approval Rules | /admin/approval-rules | List | APPROVAL_RULE_VIEW | UI_VERIFIED (S11) — page title "Approval Rules" confirmed |
+| 127 | Admin | Teams | /admin/teams | List | SETTINGS_MANAGE | FORM_POPULATED_AND_SAVED (S13/S14) — DEF-009 fixed + committed (teamCode field mapping, commit 6a5d949); QA-TEAM-01 "QA Testing Team" created; regression spec 2/2 pass |
+| 128 | Admin | Approval Rules | /admin/approval-rules | List | APPROVAL_RULE_VIEW | FORM_POPULATED_AND_SAVED (S14) — PURCHASE_ORDER "QA PO Approval Rule" created (Priority 0, 0 steps); expansion panel confirmed in list; form fields match backend SaveApprovalRuleRequest (no DEF) |
 | 129 | Admin | Data Imports | /admin/imports | Tool | IMPORT_VIEW | UI_VERIFIED (S11) — page title "Data Imports" confirmed |
 | 130 | Admin | Setup Wizard | /admin/onboarding | Wizard | ONBOARDING_VIEW | UI_VERIFIED (S11) — page title "Setup Wizard" confirmed |
 | 131 | CRM | Leads List | /crm/leads | List | CRM_VIEW | FORM_POPULATED_AND_SAVED (S12) — LD/26/00004 "QA-2026-LEAD-Corp" created inline (Source: Trade Show, Est. value 1,50,000, Close: 31 Mar 2027); list confirmed |
