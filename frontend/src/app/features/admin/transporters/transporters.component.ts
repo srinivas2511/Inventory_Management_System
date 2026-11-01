@@ -165,7 +165,9 @@ export class TransportersComponent implements OnInit {
 
   save() {
     if (this.form.invalid) return;
-    this.http.post<TransporterDto>('/api/admin/transporters', this.form.value).subscribe({
+    const v = this.form.value;
+    const body = { transporterCode: v.code, name: v.name, gstTransporterId: v.gstin ?? null, contact: v.phone ?? null };
+    this.http.post<TransporterDto>('/api/admin/transporters', body).subscribe({
       next: (created) => {
         this.transporters.update((arr) => [...arr, created]);
         this.creating.set(false);
