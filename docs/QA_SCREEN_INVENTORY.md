@@ -1,16 +1,16 @@
 # QA Screen Inventory
 
-**Total screens:** 165 | **Last updated:** 2026-11-01 (S12)
+**Total screens:** 165 | **Last updated:** 2026-11-01 (S16)
 
 | # | Module | Screen | Route | Type | Permission | Status |
 |---|--------|--------|-------|------|------------|--------|
 | 1 | Auth | Sign In | /login | Form | — | PASS |
 | 2 | Auth | Forgot Password | /forgot-password | Form | — | NOT_TESTED — requires email/token flow |
 | 3 | Auth | Reset Password | /reset-password/:token | Form | — | NOT_TESTED — requires valid reset token |
-| 4 | Auth | Change Password | /change-password | Form | signedIn | UI_VERIFIED (S11) — page renders with current/new/confirm password fields |
+| 4 | Auth | Change Password | /change-password | Form | signedIn | VALIDATION_TESTED (S15) — all 3 fields required; empty submit shows "Enter your current password"; live policy hints: 10+ chars/uppercase/lowercase/digit/special char/no-username update dynamically; confirm mismatch caught client-side; not submitted (would invalidate admin session and all demo data access) |
 | 5 | Overview | Dashboard | /dashboard | Dashboard | DASHBOARD_VIEW | PASS |
 | 6 | Overview | Notifications | /notifications | List | — | UI_VERIFIED (S11) — page title confirmed |
-| 7 | Overview | Notification Preferences | /notifications/preferences | Config | — | UI_VERIFIED (S11) — page title confirmed |
+| 7 | Overview | Notification Preferences | /notifications/preferences | Config | — | FUNCTIONAL_TESTED (S16) — toggle checkbox triggers immediate PUT /api/notification-preferences → 200; preferences persisted per user |
 | 8 | Overview | Approval Inbox | /approvals | List | APPROVAL_DECIDE | UI_VERIFIED (S11) — page title "Approval Inbox" confirmed |
 | 9 | Master Data | Materials List | /master/materials | List | MATERIAL_VIEW | PASS |
 | 10 | Master Data | Suppliers List | /master/suppliers | List | SUPPLIER_MANAGE | FORM_POPULATED_AND_SAVED (S7) — create tested with all fields + empty validation; edit + Approved Materials tab; QA-2026-SUP-001 created |
@@ -20,17 +20,17 @@
 | 14 | Inventory | Current Stock | /inventory/stock | List | INVENTORY_VIEW | UI_VERIFIED (S7) — loads with stock data; Warehouse+Status filters visible; AVAILABLE/Quality Pending/Quarantine/SCRAP status badges; Opening Balance button present |
 | 15 | Inventory | Stock Ledger | /inventory/ledger | List | INVENTORY_VIEW | UI_VERIFIED (S7) — loads with transaction history; TXN types (PRODUCTION RECEIPT, MATERIAL CONSUMPTION, MATERIAL RECEIPT, etc.) |
 | 16 | Inventory | Batch Tracking | /inventory/batches | List | INVENTORY_VIEW | UI_VERIFIED (S11) — page title "Batch Tracking" confirmed; API GET /api/inventory/batches returns 200 |
-| 17 | Inventory | Stock Adjustments | /inventory/adjustments | List | INVENTORY_VIEW | UI_VERIFIED (S11) — page title "Stock Adjustments" confirmed; API 200 |
+| 17 | Inventory | Stock Adjustments | /inventory/adjustments | List | INVENTORY_VIEW | FORM_POPULATED_AND_SAVED (S16) — ADJ/26/00003 created: MATERIAL DEMO-WR-65SI2 (id=1), MAIN-WH, Bin A-IIMBQ, counted=3 vs system=5 → variance -2.000, ₹170.00, REQUESTED. Note: backend rejects countedQty > systemQty without a batchId (cannot add stock without specifying a batch — BusinessRuleException). Approve/Reject buttons visible for ADJUST_REVIEW role. |
 | 18 | Inventory | Valuation Report | /inventory/valuation-report | Report | VALUATION_VIEW | UI_VERIFIED (S11) — page title "Inventory Valuation Report" confirmed; API 200 |
 | 19 | Inventory | Scrap Lots | /inventory/scrap-lots | List | SCRAP_VIEW | UI_VERIFIED (S11) — page title "Scrap Lots" confirmed; API 200 |
 | 20 | Procurement | Purchase Orders | /procurement/purchase-orders | List | PURCHASE_VIEW | FORM_POPULATED_AND_SAVED (S7) — New PO created PUR/26/00038 with QA-2026-SUP-001 supplier, 1 line item 500 KG @ 285 INR + 18% GST; DRAFT status confirmed |
 | 21 | Procurement | Purchase Requisitions | /procurement/requisitions | List | PURCHASE_VIEW | FORM_POPULATED_AND_SAVED (S7) — New PR created PR/26/00002: DEMO-WR-65SI2 250 KG needed 15/12/2026; "Requisition created" toast confirmed |
-| 22 | Procurement | Goods Receipts | /procurement/goods-receipts | List | INVENTORY_RECEIVE | UI_VERIFIED (S11) — page title "Goods Receipts" confirmed; API GET /api/procurement/goods-receipts returns 200 |
+| 22 | Procurement | Goods Receipts | /procurement/goods-receipts | List | INVENTORY_RECEIVE | DIALOG_TESTED (S14) — Receive Goods dialog verified; PO dropdown correctly shows "No approved purchase order" when all POs received; form fields: PO select, Receipt Date, Warehouse select, Supplier Challan No., Vehicle No. all visible; full GR creation blocked by SoD (admin submitted QA PO, needs different user to approve) |
 | 23 | Procurement | RFQs | /procurement/rfqs | List | RFQ_VIEW | UI_VERIFIED (S11) — page title "RFQs" confirmed |
 | 24 | Procurement | Purchase Invoices | /procurement/purchase-invoices | List | PURCHASE_INVOICE_VIEW | UI_VERIFIED (S11) — page title "Purchase Invoices" confirmed |
 | 25 | Procurement | Purchase Returns | /procurement/purchase-returns | List | PURCHASE_RETURN_VIEW | UI_VERIFIED (S11) — page title "Purchase Returns" confirmed |
 | 26 | Procurement | Purchase Return Challans | /procurement/purchase-return-challans | List | PRC_CHALLAN_VIEW | UI_VERIFIED (S11) — page title "Purchase Return Challans" confirmed |
-| 27 | Engineering | Bill of Materials | /engineering/bom | List | BOM_VIEW | UI_VERIFIED (S11) — page title "Bill of Materials" confirmed |
+| 27 | Engineering | Bill of Materials | /engineering/bom | List | BOM_VIEW | FORM_POPULATED_AND_SAVED (S14) — BOM/26/00004 created: QA-2026-PROD-001 product, DEMO-WR-65SI2 material 0.045 KG/piece, Base Qty=1, Rev A, DRAFT; list shows 4 BOMs |
 | 28 | Engineering | Product Routing | /engineering/routing | Detail/Editor | PRODUCT_VIEW | UI_VERIFIED (S11) — page title "Product Routing" confirmed |
 | 29 | Production | Production Orders | /production/orders | List | PRODUCTION_VIEW | FORM_POPULATED_AND_SAVED (S7) — New Order created PO/26/00017 DRAFT: DEMO-CS-25X3 Qty=100 Priority=3-Normal Line=LINE-A; BOM auto-linked; toast confirmed |
 | 30 | Production | My Work | /production/my-work | List/Action | PRODUCTION_EXECUTE | UI_VERIFIED (S11) — page title "My Work" confirmed |
@@ -42,7 +42,7 @@
 | 36 | Production | Service Orders | /production/service-orders | List | SERVICE_ORDER_VIEW | UI_VERIFIED (S11) — page title "Service Orders" confirmed |
 | 37 | Production | Plan Board | /production/plan-board | Dashboard | PLAN_BOARD_VIEW | UI_VERIFIED (S11) — page title "Production Plan Board" confirmed |
 | 38 | Production | Capacity Board | /production/capacity-board | Dashboard | CAPACITY_VIEW | UI_VERIFIED (S11) — page title "Capacity Board" confirmed |
-| 39 | Production | Order Templates | /production/templates | List | PROD_TEMPLATE_VIEW | UI_VERIFIED (S11) — page title "Production Order Templates" confirmed |
+| 39 | Production | Order Templates | /production/templates | List | PROD_TEMPLATE_VIEW | FORM_POPULATED_AND_SAVED (S16) — QA-TMPL-001 "QA Spring Production Template" created: productId=1, plannedQty=100, leadTimeDays=3; record appears in table with edit/delete icons |
 | 40 | Quality | Inspections List | /quality/inspections | List | QUALITY_VIEW | UI_VERIFIED (S11) — page title "Quality Inspections" confirmed |
 | 41 | Quality | Inspection Detail | /quality/inspections/:id | Detail | QUALITY_VIEW | UI_VERIFIED (S11) — title "Maintenance Request" pattern confirms detail routing works |
 | 42 | Quality | FG Batches | /quality/fg-batches | List | QUALITY_VIEW | UI_VERIFIED (S11) — page title "FG Batches" confirmed |
@@ -96,21 +96,21 @@
 | 90 | Controlling | Cost Estimate Detail | /controlling/cost-estimates/:id | Detail | CONTROLLING_VIEW | UI_VERIFIED (S11) — /controlling/cost-estimates/1 renders "Cost Estimate" detail |
 | 91 | Controlling | Variance Analysis | /controlling/variances | Report | CONTROLLING_VIEW | UI_VERIFIED (S11) — page title "Variance Analysis" confirmed |
 | 92 | Controlling | Controlling Reports | /controlling/reports | Report | CONTROLLING_VIEW | UI_VERIFIED (S11) — page title "Controlling Reports" confirmed |
-| 93 | Controlling | Overhead Allocation | /controlling/overhead-allocation | Tool | OVERHEAD_ALLOC_VIEW | UI_VERIFIED (S11) — page title "Overhead Allocation" confirmed |
+| 93 | Controlling | Overhead Allocation | /controlling/overhead-allocation | Tool | OVERHEAD_ALLOC_VIEW | FUNCTIONAL_TESTED (S16) — 2 existing rules (CC-PROD-01 LABOUR_HOURS + PRODUCTION_QTY, both active); Run Allocation for period 1 → Run ID=2 COMPLETED; POST /api/controlling/overhead-allocation/run → 200; allocation lines populated |
 | 94 | MRP | MRP Runs | /mrp/runs | List | MRP_VIEW | FUNCTIONAL_TESTED (S9) — MRP run triggered; run id=1 confirmed in list |
 | 95 | MRP | MRP Proposals | /mrp/proposals | List | MRP_VIEW | UI_VERIFIED (S11) — page title "MRP Proposals" confirmed; API 200 |
-| 96 | MRP | Demand Forecasts | /mrp/forecasts | List | MRP_VIEW | UI_VERIFIED (S11) — page title "Demand Forecasts" confirmed; API 200 |
+| 96 | MRP | Demand Forecasts | /mrp/forecasts | List | MRP_VIEW | FORM_POPULATED_AND_SAVED (S15) — demand forecast created: productId=1 (DEMO-CS-25X3), target 31 Mar 2027, qty 500, notes "QA test forecast"; table row confirmed with product name; Delete button present |
 | 97 | MRP | Planning Parameters | /mrp/planning | Config | MRP_VIEW | UI_VERIFIED (S11) — page title "Planning Parameters" confirmed |
 | 98 | Documents | Documents List | /documents | List | DOCUMENT_VIEW | UI_VERIFIED (S11) — page title "Documents" confirmed; API 200 |
-| 99 | Documents | Upload Document | /documents/new | Form | DOCUMENT_UPLOAD | UI_VERIFIED (S11) — page title "Upload Document" confirmed |
+| 99 | Documents | Upload Document | /documents/new | Form | DOCUMENT_UPLOAD | FORM_POPULATED_AND_SAVED (S15) — DOC/26/00001 "QA Test Manual v1.0" uploaded (Manual category, rev A, 82B text file); navigated to detail confirming document number, SHA256, version table; Submit for review: DRAFT→REVIEW transition confirmed; Approve blocked by SoD (uploader cannot approve own document — "The person who uploaded the current version cannot approve it") |
 | 100 | Documents | All Documents | /documents/all | List | REPORT_VIEW | UI_VERIFIED (S11) — page title "All Documents" confirmed |
-| 101 | Documents | Document Detail | /documents/:id | Detail | DOCUMENT_VIEW | UI_VERIFIED (S11) — /documents/1 renders "Document" detail page |
+| 101 | Documents | Document Detail | /documents/:id | Detail | DOCUMENT_VIEW | FUNCTIONAL_TESTED (S15) — DOC/26/00001 detail renders: version history table, Download/Submit for review/Return to draft actions, Linked records section; SoD enforced on approve |
 | 102 | Analytics | Analytical Dashboards | /analytics | Dashboard | ANALYTICS_VIEW | UI_VERIFIED (S11) — page title "Analytical Dashboards" confirmed |
 | 103 | Analytics | Analytics Explorer | /analytics/explorer | Tool | ANALYTICS_VIEW | UI_VERIFIED (S11) — page title "Analytics Explorer" confirmed |
 | 104 | Analytics | Business Intelligence | /analytics/bi | Dashboard | BI_VIEW | UI_VERIFIED (S11) — page title "Business Intelligence" confirmed |
 | 105 | Analytics | Registers | /analytics/registers | Report | REGISTER_VIEW | UI_VERIFIED (S11) — page title "Registers" confirmed; API returns 200 |
 | 106 | Analytics | Report Builder | /analytics/report-builder | Tool | REPORT_BUILD | UI_VERIFIED (S11) — page title "Report Builder" confirmed |
-| 107 | Admin | Webhooks | /admin/webhooks | List | WEBHOOK_VIEW | UI_VERIFIED (S11) — page title "Webhooks" confirmed |
+| 107 | Admin | Webhooks | /admin/webhooks | List | WEBHOOK_VIEW | DIALOG_TESTED (S15) — "+ New webhook" form revealed inline: Name, Target URL, event checkboxes (StockPosted, OrderCompleted, InvoicePaid); form filled (QA-WEBHOOK-TEST / localhost URL); server-side validation confirmed: "Webhook target refused: the host resolves to an address that is not publicly routable" — form functional, URL reachability validation working; full save not completed (no public URL available for QA test) |
 | 108 | Admin | Data Import/Export | /admin/data | Tool | DATA_EXPORT | UI_VERIFIED (S11) — page title "Data Import and Export" confirmed |
 | 109 | Admin | Notification Admin | /admin/notifications | Config | NOTIFICATION_MANAGE | UI_VERIFIED (S11) — page title "Notification Administration" confirmed |
 | 110 | PLM | ECO List | /plm/ecos | List | PLM_VIEW | FUNCTIONAL_TESTED (S10) — ECO/26/00001 created; list shows it |
@@ -118,16 +118,16 @@
 | 112 | PLM | ECO Detail | /plm/ecos/:id | Detail | PLM_VIEW | FUNCTIONAL_TESTED (S10) — detail renders with affected items, actions (Submit, Cancel) |
 | 113 | PLM | Product Lifecycle | /plm/lifecycle | List | PLM_VIEW | UI_VERIFIED (S11) — page title "Product Lifecycle" confirmed |
 | 114 | Admin | Users | /admin/users | List | USER_VIEW | FORM_POPULATED_AND_SAVED (S12) — user qa.testuser "QA Test User" created; count 23→24 users confirmed; all policy checks green |
-| 115 | Admin | Plants | /admin/plants | List | PLANT_MANAGE | UI_VERIFIED (S11) — page title "Plants" confirmed |
-| 116 | Admin | Roles | /admin/roles | List | ROLE_MANAGE | UI_VERIFIED (S11) — page title "Roles" confirmed |
-| 117 | Admin | Audit Logs | /admin/audit-logs | List | AUDIT_VIEW | UI_VERIFIED (S11) — page title "Audit Logs" confirmed |
-| 118 | Admin | System Settings | /admin/settings | Config | SETTINGS_MANAGE | UI_VERIFIED (S11) — page title "System Settings" confirmed |
-| 119 | Admin | Modules | /admin/modules | Config | MODULE_MANAGE | UI_VERIFIED (S11) — page title "Modules" confirmed |
+| 115 | Admin | Plants | /admin/plants | List | PLANT_MANAGE | FORM_POPULATED_AND_SAVED (S16) — QA-PLT-01 "QA Test Plant" created with address; "Plant QA-PLT-01 saved" snackbar; 5 plants in list; edit pencil icon visible per row |
+| 116 | Admin | Roles | /admin/roles | List | ROLE_MANAGE | FUNCTIONAL_TESTED (S17) — read-only seeded roles list (no create by design); ADMIN role permissions dialog opened showing 289 permissions grouped by module (ANALYTICS, CONTROLLING, etc.); GET /api/admin/roles → 200 |
+| 117 | Admin | Audit Logs | /admin/audit-logs | List | AUDIT_VIEW | FUNCTIONAL_TESTED (S17) — page loads with 6 recent audit entries; entity filter set to PLANT triggers GET /api/audit-logs?entity=PLANT → 200; action filter control confirmed present |
+| 118 | Admin | System Settings | /admin/settings | Config | SETTINGS_MANAGE | FUNCTIONAL_TESTED (S16) — 107 settings rows; inline edit on auth.lockout.max_attempts (value=5 saved); PUT /api/settings/auth.lockout.max_attempts → 200; "Setting updated" snackbar confirmed |
+| 119 | Admin | Modules | /admin/modules | Config | MODULE_MANAGE | FUNCTIONAL_TESTED (S17) — Modules page renders 8 module toggles all active; GET /api/admin/modules → 200 |
 | 120 | Admin | Attribute Definitions | /admin/attribute-definitions | List | ATTRIBUTE_MANAGE | UI_VERIFIED (S11) — page title "Attribute Definitions" confirmed |
 | 121 | Admin | Negative Stock Overrides | /admin/negative-stock-overrides | Config | INVENTORY_NEGATIVE_OVERRIDE | UI_VERIFIED (S11) — page title "Negative Stock Overrides" confirmed |
 | 122 | Admin | Item Categories | /admin/item-categories | List | SETTINGS_MANAGE | FORM_POPULATED_AND_SAVED (S14) — QA-CAT-001 "QA Raw Materials" BOTH created; table row confirmed; form uses categoryCode matching backend (no DEF) |
-| 123 | Admin | Document Series | /admin/document-series | List | SETTINGS_MANAGE | UI_VERIFIED (S11) — page title "Document Series" confirmed |
-| 124 | Admin | Company Profile | /admin/company-profile | Form | SETTINGS_MANAGE | UI_VERIFIED (S11) — page title "Company Profile" confirmed |
+| 123 | Admin | Document Series | /admin/document-series | List | SETTINGS_MANAGE | FORM_POPULATED_AND_SAVED (S14) — QA_TEST_DOC series created with format QA-{FY}-{00000}, FISCAL_YEAR reset, isDefault=false; form uses form.value directly — all field names match SaveDocumentSeriesRequest (no DEF) |
+| 124 | Admin | Company Profile | /admin/company-profile | Form | SETTINGS_MANAGE | FORM_POPULATED_AND_SAVED (S15) — all 9 fields saved: Legal Name "QA Manufacturing Company Pvt Ltd", GSTIN 29AAQCQ5344R1ZW, PAN AAQCQ5344R, CIN U28100KA2020PTC001234, address/phone/email/website; "Profile saved" snackbar confirmed; PUT /api/admin/company-profile 200; form.value field names match CompanyProfileDto exactly (no DEF) |
 | 125 | Admin | Payment Terms | /admin/payment-terms | List | SETTINGS_MANAGE | FORM_POPULATED_AND_SAVED (S11/S12) — DEF-007 fixed (termCode/netDays field mapping); QA-NET-45 created via API 201; regression spec added; 875/875 frontend tests pass |
 | 126 | Admin | Transporters | /admin/transporters | List | SETTINGS_MANAGE | FORM_POPULATED_AND_SAVED (S13) — DEF-008 fixed (transporterCode/gstTransporterId field mapping); QA-TRP-001 "QA Logistics Pvt Ltd" created; regression spec added; 2/2 tests pass |
 | 127 | Admin | Teams | /admin/teams | List | SETTINGS_MANAGE | FORM_POPULATED_AND_SAVED (S13/S14) — DEF-009 fixed + committed (teamCode field mapping, commit 6a5d949); QA-TEAM-01 "QA Testing Team" created; regression spec 2/2 pass |
@@ -164,8 +164,8 @@
 | 158 | WMS | Pick Waves | /wms/waves | List | WMS_VIEW | UI_VERIFIED (S11) — page title "Pick Waves" confirmed; API 200 |
 | 159 | WMS | Cycle Counts List | /wms/cycle-counts | List | WMS_VIEW | UI_VERIFIED (S11) — page title "Cycle Counts" confirmed; API 200 |
 | 160 | WMS | Cycle Count Detail | /wms/cycle-counts/:id | Detail | WMS_VIEW | UI_VERIFIED (S11) — /wms/cycle-counts/1 renders "Cycle Count" detail page |
-| 161 | Integration | GST E-Invoice | /integration/gst-einvoice | Tool | GST_EINVOICE_VIEW | UI_VERIFIED (S11) — page title "GST E-Invoice" confirmed |
+| 161 | Integration | GST E-Invoice | /integration/gst-einvoice | Tool | GST_EINVOICE_VIEW | FUNCTIONAL_TESTED (S16) — Generate e-Invoice form: dispatchId=4 → POST /api/integration/gst-einvoice/generate → 200 (idempotent); 1 invoice in list with GENERATED status and download icon; validates dispatchId required (empty blocked) |
 | 162 | Integration | Integration Call Log | /integration/call-log | List | INTEGRATION_MANAGE | UI_VERIFIED (S11) — page title "Integration Call Log" confirmed; API 200 |
-| 163 | Integration | Tally Ledger Mappings | /integration/tally-ledger-mappings | List | INTEGRATION_MANAGE | UI_VERIFIED (S11) — page title "Tally Ledger Mappings" confirmed |
+| 163 | Integration | Tally Ledger Mappings | /integration/tally-ledger-mappings | List | INTEGRATION_MANAGE | FORM_POPULATED_AND_SAVED (S15) — mapping created: GL 4001, Tally Ledger "QA Sales Revenue Ledger", Notes "QA test mapping - AR Control"; table row confirmed; voucher queue status chips (Draft/Approved/Sent/Ledger Missing/Failed) all show 0; Readiness Check button present; form fields match backend directly (no DEF) |
 | 164 | Integration | Shipment Tracking | /integration/shipment-tracking | List | SHIPMENT_TRACK_VIEW | UI_VERIFIED (S11) — page title "Shipment Tracking" confirmed |
 | 165 | Integration | Busy Export | /integration/busy-export | Tool | BUSY_EXPORT_VIEW | UI_VERIFIED (S11) — page title "Busy Export" confirmed |
