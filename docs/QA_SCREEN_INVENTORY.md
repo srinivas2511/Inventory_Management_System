@@ -1,6 +1,6 @@
 # QA Screen Inventory
 
-**Total screens:** 165 | **Last updated:** 2026-11-01 (S20)
+**Total screens:** 165 | **Last updated:** 2026-11-01 (S21)
 
 | # | Module | Screen | Route | Type | Permission | Status |
 |---|--------|--------|-------|------|------------|--------|
@@ -26,9 +26,9 @@
 | 20 | Procurement | Purchase Orders | /procurement/purchase-orders | List | PURCHASE_VIEW | FORM_POPULATED_AND_SAVED (S7) — New PO created PUR/26/00038 with QA-2026-SUP-001 supplier, 1 line item 500 KG @ 285 INR + 18% GST; DRAFT status confirmed |
 | 21 | Procurement | Purchase Requisitions | /procurement/requisitions | List | PURCHASE_VIEW | FORM_POPULATED_AND_SAVED (S7) — New PR created PR/26/00002: DEMO-WR-65SI2 250 KG needed 15/12/2026; "Requisition created" toast confirmed |
 | 22 | Procurement | Goods Receipts | /procurement/goods-receipts | List | INVENTORY_RECEIVE | DIALOG_TESTED (S14) — Receive Goods dialog verified; PO dropdown correctly shows "No approved purchase order" when all POs received; form fields: PO select, Receipt Date, Warehouse select, Supplier Challan No., Vehicle No. all visible; full GR creation blocked by SoD (admin submitted QA PO, needs different user to approve) |
-| 23 | Procurement | RFQs | /procurement/rfqs | List | RFQ_VIEW | FUNCTIONAL_TESTED (S18) — GET /api/rfqs → 200 (0 results — no RFQs created); quoteColumns + recordQuoteDialog present; recordQuote and viewQuotes dialogs wired |
-| 24 | Procurement | Purchase Invoices | /procurement/purchase-invoices | List | PURCHASE_INVOICE_VIEW | FUNCTIONAL_TESTED (S18) — GET /api/purchase-invoices → 200 (0 results; no GRs approved yet); table columns: docNo, supplierInvoiceNo, total, status, matchStatus |
-| 25 | Procurement | Purchase Returns | /procurement/purchase-returns | List | PURCHASE_RETURN_VIEW | FUNCTIONAL_TESTED (S19) — GET /api/purchase-returns → 200; 0 returns (none created); list renders |
+| 23 | Procurement | RFQs | /procurement/rfqs | List | FORM_POPULATED_AND_SAVED (S21) — QA-RFQ-2026-001 created (supplierId=1, 500 kg wire rod due 2026-12-31); POST /api/rfqs → 201; SENT via POST /api/rfqs/1/send; GET confirms 1 RFQ status=SENT |
+| 24 | Procurement | Purchase Invoices | /procurement/purchase-invoices | List | FUNCTIONAL_TESTED (S18) — GET /api/purchase-invoices → 200 (0 results; no GRs approved yet); table columns: docNo, supplierInvoiceNo, total, status, matchStatus |
+| 25 | Procurement | Purchase Returns | /procurement/purchase-returns | List | FORM_POPULATED_AND_SAVED (S21) — QA-PR-2026-001 created (supplierId=1, materialId=1, qty=10, price=85, locationId=1 RM-01); reasonCode=QUALITY_REJECTION; POST /api/purchase-returns → 201 DRAFT |
 | 26 | Procurement | Purchase Return Challans | /procurement/purchase-return-challans | List | PRC_CHALLAN_VIEW | FUNCTIONAL_TESTED (S19) — GET /api/procurement/purchase-return-challans → 200; 0 challans; list renders |
 | 27 | Engineering | Bill of Materials | /engineering/bom | List | BOM_VIEW | FORM_POPULATED_AND_SAVED (S14) — BOM/26/00004 created: QA-2026-PROD-001 product, DEMO-WR-65SI2 material 0.045 KG/piece, Base Qty=1, Rev A, DRAFT; list shows 4 BOMs |
 | 28 | Engineering | Product Routing | /engineering/routing | Detail/Editor | PRODUCT_VIEW | FUNCTIONAL_TESTED (S19) — GET /api/products/1/routing → 200; 3 routing steps loaded for product id=1 |
@@ -36,7 +36,7 @@
 | 30 | Production | My Work | /production/my-work | List/Action | PRODUCTION_EXECUTE | FUNCTIONAL_TESTED (S18) — GET /api/production/my-work → 200; operator tablet view loads |
 | 31 | Production | OEE Dashboard | /production/oee | Dashboard | OEE_VIEW | FUNCTIONAL_TESTED (S18) — 1 machine loaded; 30 trend data points; summary for ALL machines (2026-10-03 to 2026-11-01); fromCtrl/toCtrl/machineCtrl/dtMachine/dtCategory filters |
 | 32 | Production | Production Schedule | /production/schedule | Dashboard | SCHEDULE_VIEW | FUNCTIONAL_TESTED (S19) — GET /api/scheduling/gantt?from=2026-11-01 → 200; Gantt DTO with machines/bars |
-| 33 | Production | Barcode Labels | /production/barcodes | List | BARCODE_VIEW | FUNCTIONAL_TESTED (S19) — GET /api/production/barcodes → 200; 0 labels (none printed yet) |
+| 33 | Production | Barcode Labels | /production/barcodes | List | FORM_POPULATED_AND_SAVED (S21) — label id=1 generated: labelType=MATERIAL, refType=MATERIAL, refId=1 (DEMO-WR-65SI2), qrData=QA-BARCODE-DEMO-WR-65SI2; POST /api/production/barcodes → 201; GET confirms 1 label |
 | 34 | Production | Cost Roll-up | /production/cost-rollup | Report | COST_ROLLUP_VIEW | FORM_POPULATED_AND_SAVED (S20) — POST /api/production/cost-rollup/run → 200; 4 materials rolled up (mat 1-4 at costs 85/120/85/85 INR); log entries visible after run |
 | 35 | Production | Job Work Orders | /production/job-work-orders | List | JWO_VIEW | FORM_POPULATED_AND_SAVED (S20) — JWO/26/00001 created (vendorId=1, AMC kind, 50 KG material DEMO-WR-65SI2 sent, jobCharges=5000); POST /api/production/job-work-orders → 201 |
 | 36 | Production | Service Orders | /production/service-orders | List | SERVICE_ORDER_VIEW | FORM_POPULATED_AND_SAVED (S20) — SVO/26/00002 created (serviceKind=AMC, vendorId=1, serviceCharge=15000, scheduled 2026-11-15); valid kinds: INWARD/OUTWARD/AMC/INSTALLATION |
@@ -92,8 +92,8 @@
 | 86 | Finance | Open Items | /finance/open-items | List | OPEN_ITEM_VIEW | FUNCTIONAL_TESTED (S19) — GET /api/finance/open-items → 200; 0 open items; list renders |
 | 87 | Controlling | Cost Centres | /controlling/cost-centres | List | CONTROLLING_VIEW | FORM_POPULATED_AND_SAVED (S12) — CC-QA-01 "QA Testing Centre" created with Labour/h=200; Deactivate button confirms edit available |
 | 88 | Controlling | Internal Orders | /controlling/internal-orders | List | INTERNAL_ORDER_VIEW | FUNCTIONAL_TESTED (S9) — QA-IO-2026-01 created; list and detail verified |
-| 89 | Controlling | Product Costing List | /controlling/cost-estimates | List | FUNCTIONAL_TESTED (S19) — GET /api/controlling/cost-estimates → 200; page[0] (no estimates created yet); Release button per row on draft estimates |
-| 90 | Controlling | Cost Estimate Detail | /controlling/cost-estimates/:id | Detail | CONTROLLING_VIEW | FUNCTIONAL_TESTED (S19) — GET /api/controlling/cost-estimates/{id} endpoint works (confirmed via list API); detail renders cost lines and release workflow |
+| 89 | Controlling | Product Costing List | /controlling/cost-estimates | List | FORM_POPULATED_AND_SAVED (S21) — estimate id=1 created (productId=1 DEMO-CS-25X3, bomId=2 ACTIVE); POST /api/controlling/cost-estimates → 201 DRAFT; GET list confirms 1 estimate |
+| 90 | Controlling | Cost Estimate Detail | /controlling/cost-estimates/:id | Detail | FORM_POPULATED_AND_SAVED (S21) — GET /api/controlling/cost-estimates/1 → 200; detail shows DRAFT status, productId=1, bomId=2; Release button visible |
 | 91 | Controlling | Variance Analysis | /controlling/variances | Report | CONTROLLING_VIEW | FUNCTIONAL_TESTED (S18) — GET /api/controlling/variances?page=0&size=20 → 200 |
 | 92 | Controlling | Controlling Reports | /controlling/reports | Report | FUNCTIONAL_TESTED (S19) — GET /api/reports → 200; 14 report codes loaded; CTR_* filtered for controlling reports (AP_PRICE_VARIANCE, CRM_PIPELINE etc); run report endpoint /api/reports/{code} confirmed |
 | 93 | Controlling | Overhead Allocation | /controlling/overhead-allocation | Tool | OVERHEAD_ALLOC_VIEW | FUNCTIONAL_TESTED (S16) — 2 existing rules (CC-PROD-01 LABOUR_HOURS + PRODUCTION_QTY, both active); Run Allocation for period 1 → Run ID=2 COMPLETED; POST /api/controlling/overhead-allocation/run → 200; allocation lines populated |
@@ -143,7 +143,7 @@
 | 137 | CRM | Contacts | /crm/contacts | List | CRM_VIEW | FORM_POPULATED_AND_SAVED (S17) — inline form filled (QA Test Contact, QA Industries Ltd, qa.contact@qaindustries.com, 9876543210, QA Manager); POST /api/crm/contacts → 201 |
 | 138 | CRM | Customer Activity | /crm/activities | List | CRM_VIEW | FORM_POPULATED_AND_SAVED (S17) — QA Industries Ltd selected; MEETING activity logged (subject, notes, outcome, 60 min); POST /api/crm/activities → 201 |
 | 139 | CRM | Customer Segments | /crm/customers | List | CRM_VIEW | FUNCTIONAL_TESTED (S19) — GET /api/crm/tags → 200 (12 tag groups); GET /api/crm/customers → 200; tag-based segmentation; setCustomerTags action works |
-| 140 | CRM | Price Lists | /crm/prices | List | CRM_VIEW | FUNCTIONAL_TESTED (S19) — GET /api/crm/prices → 200; 0 custom prices; list with customer/product filters; Add price form present |
+| 140 | CRM | Price Lists | /crm/prices | List | FORM_POPULATED_AND_SAVED (S21) — price id=1 created (customerId=1, productId=1, unitPrice=480 INR, valid 2026-01-01 to 2026-12-31); POST /api/crm/prices → 201; GET confirms 1 price entry |
 | 141 | CRM | Sales Pipeline | /crm/pipeline | Dashboard | CRM_VIEW | FUNCTIONAL_TESTED (S19) — GET /api/reports/CRM_PIPELINE → 200; pipeline report data returned; stage funnel chart |
 | 142 | HRM | Employees List | /hrm/employees | List | HR_VIEW | FORM_POPULATED_AND_SAVED (S12) — EMP/26/00003 "QA Employee2026" created (QA Analyst, Quality dept, 01 Nov 2026, PERMANENT, Basic pay 35,000); detail screen confirmed |
 | 143 | HRM | Employee Detail | /hrm/employees/:id | Detail | HR_VIEW | FUNCTIONAL_TESTED (S19) — GET /api/hrm/employees/1 → 200; employee record with skills/shifts/attendance history; GET /api/hrm/training/employee/1 → 200 |
@@ -161,11 +161,11 @@
 | 155 | WMS | Internal Transfers | /wms/transfers | List | WMS_VIEW | FUNCTIONAL_TESTED (S19) — GET /api/wms/transfer-orders → 200 (5 transfers); PENDING/IN_PROGRESS/COMPLETED status filters; movementType=INTERNAL filter |
 | 156 | WMS | Cross-dock | /wms/cross-dock | List | WMS_VIEW | FUNCTIONAL_TESTED (S19) — cross-dock form: select GR + target (SO/Production/Transfer); POST /api/wms/cross-dock; base wms/transfer-orders endpoint works |
 | 157 | WMS | Transfer Order Detail | /wms/orders/:id | Detail | WMS_VIEW | FUNCTIONAL_TESTED (S19) — GET /api/wms/transfer-orders/1 → 200; detail with lines, confirm pick/put-away per line |
-| 158 | WMS | Pick Waves | /wms/waves | List | WMS_VIEW | FUNCTIONAL_TESTED (S19) — GET /api/wms/waves → 200 (0 waves); wave creation from approved SOs; release wave action |
+| 158 | WMS | Pick Waves | /wms/waves | List | FORM_POPULATED_AND_SAVED (S21) — wave id=1 CREATED from SO id=2; POST /api/wms/waves {salesOrderIds:[2]} → 201; GET /api/wms/waves confirms 1 wave status=CREATED |
 | 159 | WMS | Cycle Counts List | /wms/cycle-counts | List | WMS_VIEW | FORM_POPULATED_AND_SAVED (S17) — ABC class A cycle count for Main Warehouse created; POST /api/wms/cycle-counts → 201; navigated to detail page |
 | 160 | WMS | Cycle Count Detail | /wms/cycle-counts/:id | Detail | WMS_VIEW | FUNCTIONAL_TESTED (S17) — detail rendered after creation of count 1; GET /api/wms/cycle-counts/1 → 200 |
 | 161 | Integration | GST E-Invoice | /integration/gst-einvoice | Tool | GST_EINVOICE_VIEW | FUNCTIONAL_TESTED (S16) — Generate e-Invoice form: dispatchId=4 → POST /api/integration/gst-einvoice/generate → 200 (idempotent); 1 invoice in list with GENERATED status and download icon; validates dispatchId required (empty blocked) |
 | 162 | Integration | Integration Call Log | /integration/call-log | List | INTEGRATION_MANAGE | FUNCTIONAL_TESTED (S19) — GET /api/integration/calls → 200 (0 calls); call log list with status/type filters |
 | 163 | Integration | Tally Ledger Mappings | /integration/tally-ledger-mappings | List | INTEGRATION_MANAGE | FORM_POPULATED_AND_SAVED (S15) — mapping created: GL 4001, Tally Ledger "QA Sales Revenue Ledger", Notes "QA test mapping - AR Control"; table row confirmed; voucher queue status chips (Draft/Approved/Sent/Ledger Missing/Failed) all show 0; Readiness Check button present; form fields match backend directly (no DEF) |
-| 164 | Integration | Shipment Tracking | /integration/shipment-tracking | List | SHIPMENT_TRACK_VIEW | FUNCTIONAL_TESTED (S19) — GET /api/integration/shipment-tracking → 200 (0 events); tracking event list with carrier/AWB filters |
-| 165 | Integration | Busy Export | /integration/busy-export | Tool | BUSY_EXPORT_VIEW | FUNCTIONAL_TESTED (S19) — GET /api/integration/busy-export/queue → 200 (0 items); GET /api/integration/busy/sync-log → 200 (0); Stage export + Sync Log tabs; POST stage action |
+| 164 | Integration | Shipment Tracking | /integration/shipment-tracking | List | FORM_POPULATED_AND_SAVED (S21) — tracking id=1 registered: dispatchId=1, courierCode=dhl, trackingNumber=QA-AWB-2026-001; stub URL generated (AfterShip disabled); POST /api/integration/shipment-tracking → 200 PENDING |
+| 165 | Integration | Busy Export | /integration/busy-export | Tool | FORM_POPULATED_AND_SAVED (S21) — stage export triggered: POST /api/integration/busy-export/stage → 200 {queued:64, exported:0, failed:0}; 64 journal lines queued for Busy export |
