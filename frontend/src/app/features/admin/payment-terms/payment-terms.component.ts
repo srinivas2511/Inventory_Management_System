@@ -167,7 +167,9 @@ export class PaymentTermsComponent implements OnInit {
 
   save() {
     if (this.form.invalid) return;
-    this.http.post<PaymentTermDto>('/api/admin/payment-terms', this.form.value).subscribe({
+    const v = this.form.value;
+    const body = { termCode: v.code, name: v.name, netDays: v.dueDays, discountPct: v.discountPct ?? null, discountDays: v.discountDays ?? null };
+    this.http.post<PaymentTermDto>('/api/admin/payment-terms', body).subscribe({
       next: (created) => {
         this.terms.update((arr) => [...arr, created]);
         this.creating.set(false);
