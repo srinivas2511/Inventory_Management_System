@@ -335,7 +335,9 @@ export class TeamsComponent implements OnInit {
 
   save() {
     if (this.form.invalid) return;
-    this.http.post<TeamDto>('/api/admin/teams', { ...this.form.value, members: [] }).subscribe({
+    const v = this.form.value;
+    const body = { teamCode: v.code, name: v.name };
+    this.http.post<TeamDto>('/api/admin/teams', body).subscribe({
       next: (created) => {
         this.teams.update((arr) => [...arr, created]);
         this.creating.set(false);
