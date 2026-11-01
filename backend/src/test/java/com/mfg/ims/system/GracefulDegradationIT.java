@@ -87,9 +87,10 @@ class GracefulDegradationIT extends AbstractIntegrationTest {
         } catch (Exception ignored) {
             // index already present — nothing to do
         }
-        // Reset the health indicator so the DEGRADED state does not bleed into later ITs
-        // (show-details:never causes Spring Boot 3.5 to report any non-UP aggregate as DOWN).
-        reportingHealth.updateLastResult(null);
+        // Reset the health indicator to UP so it does not bleed into later ITs.
+        // null → UNKNOWN, and Spring Boot 3.5 show-details:never maps any non-UP aggregate to DOWN,
+        // which breaks WebhookIT's health assertion. A fully successful RefreshResult → UP.
+        reportingHealth.updateLastResult(new RefreshResult(AnalyticsViewRefresher.VIEWS, Map.of()));
     }
 
     @Test

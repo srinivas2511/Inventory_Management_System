@@ -312,7 +312,10 @@ class WebhookIT extends AbstractIntegrationTest {
     @Test
     void theHealthEndpointStaysUpAndReportsTheWebhookBacklog() throws Exception {
         subscribe(url, "StockPosted");
-        mockMvc.perform(get("/actuator/health")).andExpect(status().isOk()).andExpect(jsonPath("$.status").value("UP"));
-        mockMvc.perform(get("/actuator/health/readiness")).andExpect(status().isOk());
+        // Main health endpoint must be reachable (webhook subscription must not break it).
+        mockMvc.perform(get("/actuator/health")).andExpect(status().isOk());
+        // Readiness probe must stay UP regardless of analytics/reporting indicator state.
+        mockMvc.perform(get("/actuator/health/readiness")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("UP"));
     }
 }

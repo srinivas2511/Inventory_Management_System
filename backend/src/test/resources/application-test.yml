@@ -12,6 +12,9 @@ ims:
       poll-delay-ms: 3600000         # the delivery job never fires on its own; tests call processDue()
 
 management:
+  health:
+    mail:
+      enabled: false    # no SMTP server in tests; prevents MailHealthIndicator from dragging aggregate to DOWN
   endpoints:
     web:
       exposure:
