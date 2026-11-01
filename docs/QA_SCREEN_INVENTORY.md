@@ -1,6 +1,6 @@
 # QA Screen Inventory
 
-**Total screens:** 165 | **Last updated:** 2026-11-01 (S19)
+**Total screens:** 165 | **Last updated:** 2026-11-01 (S20)
 
 | # | Module | Screen | Route | Type | Permission | Status |
 |---|--------|--------|-------|------|------------|--------|
@@ -37,9 +37,9 @@
 | 31 | Production | OEE Dashboard | /production/oee | Dashboard | OEE_VIEW | FUNCTIONAL_TESTED (S18) — 1 machine loaded; 30 trend data points; summary for ALL machines (2026-10-03 to 2026-11-01); fromCtrl/toCtrl/machineCtrl/dtMachine/dtCategory filters |
 | 32 | Production | Production Schedule | /production/schedule | Dashboard | SCHEDULE_VIEW | FUNCTIONAL_TESTED (S19) — GET /api/scheduling/gantt?from=2026-11-01 → 200; Gantt DTO with machines/bars |
 | 33 | Production | Barcode Labels | /production/barcodes | List | BARCODE_VIEW | FUNCTIONAL_TESTED (S19) — GET /api/production/barcodes → 200; 0 labels (none printed yet) |
-| 34 | Production | Cost Roll-up | /production/cost-rollup | Report | COST_ROLLUP_VIEW | FUNCTIONAL_TESTED (S19) — GET /api/production/cost-rollup → 200; 0 log entries (no run yet) |
-| 35 | Production | Job Work Orders | /production/job-work-orders | List | JWO_VIEW | FUNCTIONAL_TESTED (S19) — GET /api/production/job-work-orders → 200; 0 JWOs (none created) |
-| 36 | Production | Service Orders | /production/service-orders | List | SERVICE_ORDER_VIEW | FUNCTIONAL_TESTED (S19) — GET /api/production/service-orders → 200; 0 service orders |
+| 34 | Production | Cost Roll-up | /production/cost-rollup | Report | COST_ROLLUP_VIEW | FORM_POPULATED_AND_SAVED (S20) — POST /api/production/cost-rollup/run → 200; 4 materials rolled up (mat 1-4 at costs 85/120/85/85 INR); log entries visible after run |
+| 35 | Production | Job Work Orders | /production/job-work-orders | List | JWO_VIEW | FORM_POPULATED_AND_SAVED (S20) — JWO/26/00001 created (vendorId=1, AMC kind, 50 KG material DEMO-WR-65SI2 sent, jobCharges=5000); POST /api/production/job-work-orders → 201 |
+| 36 | Production | Service Orders | /production/service-orders | List | SERVICE_ORDER_VIEW | FORM_POPULATED_AND_SAVED (S20) — SVO/26/00002 created (serviceKind=AMC, vendorId=1, serviceCharge=15000, scheduled 2026-11-15); valid kinds: INWARD/OUTWARD/AMC/INSTALLATION |
 | 37 | Production | Plan Board | /production/plan-board | Dashboard | PLAN_BOARD_VIEW | FUNCTIONAL_TESTED (S18) — GET /api/production/plan-board → 200 |
 | 38 | Production | Capacity Board | /production/capacity-board | Dashboard | CAPACITY_VIEW | FUNCTIONAL_TESTED (S18) — GET /api/production/capacity-board?from=2026-11-01&to=2026-11-30 → 200; auto-loads current month |
 | 39 | Production | Order Templates | /production/templates | List | PROD_TEMPLATE_VIEW | FORM_POPULATED_AND_SAVED (S16) — QA-TMPL-001 "QA Spring Production Template" created: productId=1, plannedQty=100, leadTimeDays=3; record appears in table with edit/delete icons |
@@ -47,8 +47,8 @@
 | 41 | Quality | Inspection Detail | /quality/inspections/:id | Detail | QUALITY_VIEW | FUNCTIONAL_TESTED (S19) — GET /api/quality/inspections/1 → 200; inspection detail object (id, type, status, items) returned |
 | 42 | Quality | FG Batches | /quality/fg-batches | List | QUALITY_VIEW | FUNCTIONAL_TESTED (S18) — GET /api/quality/fg-batches?page=0&size=20&sort=id,desc → 200; app-list-paginator present |
 | 43 | Quality | Rejection Analysis | /quality/rejections | Dashboard | QUALITY_VIEW | FUNCTIONAL_TESTED (S18) — GET /api/rejection-reasons/pareto → 200 (1 entry); paretoColumns; loading signal |
-| 44 | Quality | SPC Charts List | /quality/spc | List | FUNCTIONAL_TESTED (S19) — GET /api/spc/charts → 200; 0 charts (none configured); list renders with Add Chart button |
-| 45 | Quality | SPC Chart Detail | /quality/spc/:id | Detail | QUALITY_VIEW | FUNCTIONAL_TESTED (S19) — endpoint GET /api/spc/charts/{id} confirmed working; detail renders parameters/UCL/LCL/points |
+| 44 | Quality | SPC Charts List | /quality/spc | List | FORM_POPULATED_AND_SAVED (S20) — chart id=1 "Outer Diameter" created: productId=1, XBAR_R, subgroupSize=5, usl=25.05/lsl=24.95; POST /api/spc/charts → 201; 5 data points added via /api/spc/charts/1/points |
+| 45 | Quality | SPC Chart Detail | /quality/spc/:id | Detail | QUALITY_VIEW | FORM_POPULATED_AND_SAVED (S20) — chart id=1 opened; 5 data points added via POST /api/spc/charts/1/points (values:[24.98,25.01,24.97,25.02,24.99], sampleSize:5); UCL/LCL control limits visible; chart detail renders fully |
 | 46 | Quality | CAPA List | /quality/capa | List | QUALITY_VIEW | FUNCTIONAL_TESTED (S9) — CAPA/26/00001 created via API; list confirms record |
 | 47 | Quality | CAPA New | /quality/capa/new | Form | CAPA_MANAGE | FUNCTIONAL_TESTED (S9) — form submitted: INTERNAL_AUDIT source, CAPA/26/00001 created |
 | 48 | Quality | CAPA Detail | /quality/capa/:id | Detail | QUALITY_VIEW | FUNCTIONAL_TESTED (S9) — detail screen renders with status, actions |
@@ -59,15 +59,15 @@
 | 53 | Quality | FAI Detail | /quality/fai/:id | Detail | QUALITY_VIEW | FUNCTIONAL_TESTED (S9) — FAI detail renders; status PENDING |
 | 54 | Sales | Sales Orders | /sales/orders | List | SALES_VIEW | FUNCTIONAL_TESTED (S18) — 11 ORDERED sales orders loaded; statusCtrl filter; paged with list-paginator |
 | 55 | Sales | Dispatches | /sales/dispatches | List | DISPATCH_VIEW | FUNCTIONAL_TESTED (S18) — GET /api/sales/dispatches?page=0&size=20&sort=id,desc → 200; paged list |
-| 56 | Sales | Quotations | /sales/quotations | List | QUOTATION_VIEW | FUNCTIONAL_TESTED (S19) — GET /api/sales/quotations → 200; 0 quotations; list with revision history dialog |
-| 57 | Sales | Order Confirmations | /sales/order-confirmations | List | OC_VIEW | FUNCTIONAL_TESTED (S19) — GET /api/sales/order-confirmations → 200; 0 OCs; list renders |
-| 58 | Sales | Delivery Challans | /sales/delivery-challans | List | CHALLAN_VIEW | FUNCTIONAL_TESTED (S19) — GET /api/sales/delivery-challans → 200; 0 challans; list renders |
+| 56 | Sales | Quotations | /sales/quotations | List | FORM_POPULATED_AND_SAVED (S20) — QT/26/00002 created (customerId=1, 100 NOS product @ ₹500, valid until 31 Dec 2026, enquiryRef QA-ENQ-2026-001); SUBMITTED status confirmed; revision history dialog available |
+| 57 | Sales | Order Confirmations | /sales/order-confirmations | List | FORM_POPULATED_AND_SAVED (S20) — OC/26/00001 created via POST /api/sales/quotations/1/convert-to-oc; DRAFT status; 1 line (100 NOS @ ₹500, total ₹50,000); domestic OC kind |
+| 58 | Sales | Delivery Challans | /sales/delivery-challans | List | FORM_POPULATED_AND_SAVED (S20) — DC/26/00003 DRAFT created (challanKind=DELIVERY, customerId=1, vehicleNo KA-01-QA-2026, 10 NOS product @ ₹500); valid kinds: DELIVERY/SERVICE_OUT/PURCHASE_RETURN/RETURNABLE/NON_RETURNABLE |
 | 59 | Insight | Alerts | /insight/alerts | List | ALERT_VIEW | FUNCTIONAL_TESTED (S18) — 4 OPEN alerts (first: LOW_STOCK MEDIUM); statusCtrl + severityCtrl filters present |
 | 60 | Insight | Reports | /insight/reports | Report | REPORT_VIEW | FUNCTIONAL_TESTED (S18) — 14 report types loaded in reportCtrl select; from/to date controls; run report form present |
 | 61 | Insight | Traceability | /insight/traceability | Tool | TRACEABILITY_VIEW | FUNCTIONAL_TESTED (S18) — MATERIAL type select (default); batch ID input ("Enter batch ID"); "search Trace" button; typeCtrl + idCtrl form controls |
 | 62 | Maintenance | Maintenance List | /maintenance | List | MAINTENANCE_VIEW | FUNCTIONAL_TESTED (S17) — Work Requests/PM Schedules tabs load; status/type filters present; no manual create button (requests generated from PM schedules by design); GET /api/maintenance → 200 |
 | 63 | Maintenance | Maintenance Request Detail | /maintenance/requests/:id | Detail | MAINTENANCE_VIEW | FUNCTIONAL_TESTED (S19) — GET /api/maintenance/requests → 200 (0 results); request detail loads spare parts via GET /api/maintenance/requests/{id}/spare-parts |
-| 64 | Maintenance | Spare Parts | /maintenance/spare-parts | List | SPARE_PART_VIEW | FUNCTIONAL_TESTED (S19) — GET /api/spare-parts → 200; 0 spare parts in demo data; list renders with Add button |
+| 64 | Maintenance | Spare Parts | /maintenance/spare-parts | List | FORM_POPULATED_AND_SAVED (S20) — QA-SP-PCS created: code=QA-SP-PCS, name="QA Bearing 6205", uom=PCS, minStock=5, reorderLevel=10, standardCost=350; POST /api/spare-parts → 201; fix: uom must be PCS not EA; business rule: minStock ≤ reorderLevel enforced |
 | 65 | Maintenance | Predictive Maintenance | /maintenance/predictive | Dashboard | PREDICTIVE_MAINT_VIEW | FUNCTIONAL_TESTED (S19) — GET /api/maintenance/predictive/predictions → 200 (0); GET /api/maintenance/predictive/machine-risk → 200 (0); GET /api/maintenance/predictive/sensor-readings?machineId=1 → 200 (2 readings) |
 | 66 | Finance | Finance Dashboard | /finance/dashboard | Dashboard | FINANCE_REPORT | FUNCTIONAL_TESTED (S19) — GET /api/finance/dashboard → 200; dashboard data object returned |
 | 67 | Finance | Journal Entries List | /finance/journals | List | GL_VIEW | FUNCTIONAL_TESTED (S18) — 20 journals loaded including JNL/26/00068 SUBMITTED from S11; GET /api/finance/journals → 200 |
@@ -100,7 +100,7 @@
 | 94 | MRP | MRP Runs | /mrp/runs | List | MRP_VIEW | FUNCTIONAL_TESTED (S9) — MRP run triggered; run id=1 confirmed in list |
 | 95 | MRP | MRP Proposals | /mrp/proposals | List | MRP_VIEW | FUNCTIONAL_TESTED (S18) — GET /api/mrp/proposals?page=0&size=50 → 200 |
 | 96 | MRP | Demand Forecasts | /mrp/forecasts | List | MRP_VIEW | FORM_POPULATED_AND_SAVED (S15) — demand forecast created: productId=1 (DEMO-CS-25X3), target 31 Mar 2027, qty 500, notes "QA test forecast"; table row confirmed with product name; Delete button present |
-| 97 | MRP | Planning Parameters | /mrp/planning | Config | FUNCTIONAL_TESTED (S19) — GET /api/mrp/planning-params → 200; 0 params (none set); form for per-material lot sizing/lead time/safety stock; PUT to save |
+| 97 | MRP | Planning Parameters | /mrp/planning | Config | FORM_POPULATED_AND_SAVED (S20) — planning param saved for materialId=1 (DEMO-WR-65SI2): planningStrategy=MTS, lotSizeRule=FIXED, fixedLotQty=500, leadTimeDays=7; PUT /api/mrp/planning-params → 200; GET confirmed 1 entry |
 | 98 | Documents | Documents List | /documents | List | DOCUMENT_VIEW | FUNCTIONAL_TESTED (S19) — GET /api/documents?page=0&size=5 → 200; page[1] (1 document from S15); list renders with category/status filters |
 | 99 | Documents | Upload Document | /documents/new | Form | DOCUMENT_UPLOAD | FORM_POPULATED_AND_SAVED (S15) — DOC/26/00001 "QA Test Manual v1.0" uploaded (Manual category, rev A, 82B text file); navigated to detail confirming document number, SHA256, version table; Submit for review: DRAFT→REVIEW transition confirmed; Approve blocked by SoD (uploader cannot approve own document — "The person who uploaded the current version cannot approve it") |
 | 100 | Documents | All Documents | /documents/all | List | REPORT_VIEW | FUNCTIONAL_TESTED (S19) — GET /api/documents/all → 200; cross-document search object returned; search filters present |
@@ -109,7 +109,7 @@
 | 103 | Analytics | Analytics Explorer | /analytics/explorer | Tool | ANALYTICS_VIEW | FUNCTIONAL_TESTED (S19) — GET /api/analytics/catalogue → 200; query picker + date range; query runs via GET /api/analytics/query?key=&from=&to= |
 | 104 | Analytics | Business Intelligence | /analytics/bi | Dashboard | BI_VIEW | FUNCTIONAL_TESTED (S18) — GET /api/bi → 200; GET /api/bi/sales → 200; 4 BI areas (sales, procurement, production, finance); areaData loads per selection |
 | 105 | Analytics | Registers | /analytics/registers | Report | REGISTER_VIEW | FUNCTIONAL_TESTED (S18) — GET /api/registers → 200; 14 register codes (REG_PAYMENT, etc.); code selector triggers data load |
-| 106 | Analytics | Report Builder | /analytics/report-builder | Tool | REPORT_BUILD | FUNCTIONAL_TESTED (S19) — GET /api/report-builder/catalogue → 200 (15 entries); GET /api/report-builder/saved → 200 (0 saved); builder form present |
+| 106 | Analytics | Report Builder | /analytics/report-builder | Tool | FORM_POPULATED_AND_SAVED (S20) — saved report id=1 created: name="QA Sales Analysis Report", sourceView=bi_sales, definition={groupBy:"customer",metric:"revenue",period:"MONTHLY"}, shareScope=PRIVATE; POST /api/report-builder/saved → 201; GET confirmed 1 saved report |
 | 107 | Admin | Webhooks | /admin/webhooks | List | WEBHOOK_VIEW | DIALOG_TESTED (S15) — "+ New webhook" form revealed inline: Name, Target URL, event checkboxes (StockPosted, OrderCompleted, InvoicePaid); form filled (QA-WEBHOOK-TEST / localhost URL); server-side validation confirmed: "Webhook target refused: the host resolves to an address that is not publicly routable" — form functional, URL reachability validation working; full save not completed (no public URL available for QA test) |
 | 108 | Admin | Data Import/Export | /admin/data | Tool | DATA_EXPORT | FUNCTIONAL_TESTED (S19) — GET /api/import → 200 (0 jobs); export endpoints via /api/admin/data; CSV upload via POST /api/import; cancel button per job |
 | 109 | Admin | Notification Admin | /admin/notifications | Config | NOTIFICATION_MANAGE | FUNCTIONAL_TESTED (S19) — GET /api/notification-templates → 200 (22 templates); GET /api/notification-log → 200 (50 log entries); template edit + log view |
