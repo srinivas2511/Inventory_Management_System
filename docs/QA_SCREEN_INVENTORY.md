@@ -65,7 +65,7 @@
 | 59 | Insight | Alerts | /insight/alerts | List | ALERT_VIEW | UI_VERIFIED (S11) — page title "Alerts" confirmed |
 | 60 | Insight | Reports | /insight/reports | Report | REPORT_VIEW | UI_VERIFIED (S11) — page title "Reports" confirmed |
 | 61 | Insight | Traceability | /insight/traceability | Tool | TRACEABILITY_VIEW | UI_VERIFIED (S11) — page title "Traceability" confirmed |
-| 62 | Maintenance | Maintenance List | /maintenance | List | MAINTENANCE_VIEW | UI_VERIFIED (S11) — page title "Maintenance" confirmed |
+| 62 | Maintenance | Maintenance List | /maintenance | List | MAINTENANCE_VIEW | FUNCTIONAL_TESTED (S17) — Work Requests/PM Schedules tabs load; status/type filters present; no manual create button (requests generated from PM schedules by design); GET /api/maintenance → 200 |
 | 63 | Maintenance | Maintenance Request Detail | /maintenance/requests/:id | Detail | MAINTENANCE_VIEW | UI_VERIFIED (S11) — /maintenance/requests/1 renders "Maintenance Request" detail |
 | 64 | Maintenance | Spare Parts | /maintenance/spare-parts | List | SPARE_PART_VIEW | UI_VERIFIED (S11) — page title "Spare Parts" confirmed |
 | 65 | Maintenance | Predictive Maintenance | /maintenance/predictive | Dashboard | PREDICTIVE_MAINT_VIEW | UI_VERIFIED (S11) — page title "Predictive Maintenance" confirmed |
@@ -78,12 +78,12 @@
 | 72 | Finance | Accounts Receivable | /finance/ar | List | AR_MANAGE | UI_VERIFIED (S11) — page title "Accounts Receivable" confirmed; API /api/ar/invoices returns 200 |
 | 73 | Finance | AR Reconciliation | /finance/ar-reconciliation | Tool | AR_MANAGE | UI_VERIFIED (S11) — page title "AR Invoice Reconciliation" confirmed |
 | 74 | Finance | Credit Notes | /finance/credit-notes | List | AR_MANAGE | FUNCTIONAL_TESTED (S9) — CRN/26/00002 created; list confirmed; detail renders |
-| 75 | Finance | Debit Notes | /finance/debit-notes | List | AP_MANAGE | UI_VERIFIED (S11) — page title "Debit Notes" confirmed |
+| 75 | Finance | Debit Notes | /finance/debit-notes | List | AP_MANAGE | FUNCTIONAL_TESTED (S17) — list loads with "No debit notes yet" and message pointing to AP screen; GET /api/ap/debit-notes → 200; creation is via AP invoices (by design) |
 | 76 | Finance | GST Tax | /finance/tax | Config | GL_VIEW | UI_VERIFIED (S11) — page title "GST Tax" confirmed |
 | 77 | Finance | Exchange Rates | /finance/exchange-rates | List | GL_VIEW | FORM_POPULATED_AND_SAVED (S11) — USD=84.25 for JAN-2027 saved; toast "USD saved for JAN-2027" confirmed; table row added |
-| 78 | Finance | Budget vs Actual | /finance/budget | Report | GL_VIEW | UI_VERIFIED (S11) — page title "Budget against Actual" confirmed |
+| 78 | Finance | Budget vs Actual | /finance/budget | Report | GL_VIEW | FUNCTIONAL_TESTED (S17) — page loads with GL accounts showing Budget=0/Actual values; Fiscal year 2026 + Period dropdowns present; GET /api/finance/budget → 200 |
 | 79 | Finance | Bank Reconciliation | /finance/bank | Tool | BANK_RECONCILE | UI_VERIFIED (S11) — page title "Bank Reconciliation" confirmed |
-| 80 | Finance | FX Revaluation | /finance/fx-revaluation | Tool | FX_REVALUATION_RUN | UI_VERIFIED (S11) — page title "FX Revaluation" confirmed |
+| 80 | Finance | FX Revaluation | /finance/fx-revaluation | Tool | FX_REVALUATION_RUN | FUNCTIONAL_TESTED (S17) — period 1 (APR-2026) selected; POST /api/finance/fx-revaluation/run?periodId=1 → 200; results table loads via GET → 200 |
 | 81 | Finance | GST Filing Reports | /finance/gst-filing | Report | GST_REPORT_VIEW | UI_VERIFIED (S11) — page title "GST Filing Reports" confirmed |
 | 82 | Finance | Consolidation Report | /finance/consolidation | Report | CONSOLIDATION_VIEW | UI_VERIFIED (S11) — page title "Consolidation Report" confirmed |
 | 83 | Finance | Financial Statements | /finance/financial-statements | Report | FINANCE_REPORT | UI_VERIFIED (S11) — page title "Financial Statements" confirmed |
@@ -140,16 +140,16 @@
 | 134 | CRM | Quotations List | /crm/quotations | List | CRM_VIEW | FORM_POPULATED_AND_SAVED (S13) — QT/26/00001 created (QA Industries Ltd, 1×DEMO-CS-25X3 @ 500, valid 31 Mar 2027); navigated to list confirming record |
 | 135 | CRM | New Quotation | /crm/quotations/new | Form | QUOTATION_CREATE | FORM_POPULATED_AND_SAVED (S13) — Customer mat-select via JS click, product search + add line, unit price 500; Estimated total 500.00; Save redirected to list |
 | 136 | CRM | Edit Quotation | /crm/quotations/:id/edit | Form | QUOTATION_CREATE | FORM_POPULATED_AND_SAVED (S13) — QT/26/00001 edited: added Notes text; Save redirected to list confirming update |
-| 137 | CRM | Contacts | /crm/contacts | List | CRM_VIEW | UI_VERIFIED (S11) — page title "Contacts" confirmed; API 200 |
-| 138 | CRM | Customer Activity | /crm/activities | List | CRM_VIEW | UI_VERIFIED (S11) — page title "Customer Activity" confirmed; API 200 |
+| 137 | CRM | Contacts | /crm/contacts | List | CRM_VIEW | FORM_POPULATED_AND_SAVED (S17) — inline form filled (QA Test Contact, QA Industries Ltd, qa.contact@qaindustries.com, 9876543210, QA Manager); POST /api/crm/contacts → 201 |
+| 138 | CRM | Customer Activity | /crm/activities | List | CRM_VIEW | FORM_POPULATED_AND_SAVED (S17) — QA Industries Ltd selected; MEETING activity logged (subject, notes, outcome, 60 min); POST /api/crm/activities → 201 |
 | 139 | CRM | Customer Segments | /crm/customers | List | CRM_VIEW | UI_VERIFIED (S11) — page title "Customer Segments" confirmed; API 200 |
 | 140 | CRM | Price Lists | /crm/prices | List | CRM_VIEW | UI_VERIFIED (S11) — page title "Price Lists" confirmed |
 | 141 | CRM | Sales Pipeline | /crm/pipeline | Dashboard | CRM_VIEW | UI_VERIFIED (S11) — page title "Sales Pipeline" confirmed |
 | 142 | HRM | Employees List | /hrm/employees | List | HR_VIEW | FORM_POPULATED_AND_SAVED (S12) — EMP/26/00003 "QA Employee2026" created (QA Analyst, Quality dept, 01 Nov 2026, PERMANENT, Basic pay 35,000); detail screen confirmed |
 | 143 | HRM | Employee Detail | /hrm/employees/:id | Detail | HR_VIEW | UI_VERIFIED (S11) — /hrm/employees/1 renders "Employee" detail page |
-| 144 | HRM | Attendance | /hrm/attendance | List | HR_VIEW | UI_VERIFIED (S11) — page title "Attendance" confirmed |
+| 144 | HRM | Attendance | /hrm/attendance | List | HR_VIEW | FORM_POPULATED_AND_SAVED (S17) — PRESENT button clicked for EMP/26/00002 QA TestEmployee; attendance-time dialog opened; check-in 09:00 / check-out 17:30 / remarks filled; POST /api/hrm/attendance → 200 |
 | 145 | HRM | Shifts | /hrm/shifts | List | HR_VIEW | UI_VERIFIED (S11) — page title "Shifts" confirmed; API 200 |
-| 146 | HRM | Leave | /hrm/leave | List | LEAVE_APPLY | UI_VERIFIED (S11) — page title "Leave" confirmed |
+| 146 | HRM | Leave | /hrm/leave | List | LEAVE_APPLY | FUNCTIONAL_TESTED (S17) — leave balances and types load; form shown for LEAVE_APPLY; POST /api/hrm/leave/applications → 404 when admin has no employee record (by design — admin must link employee to apply); GET /api/hrm/leave/types → 200 |
 | 147 | HRM | Training Renewals | /hrm/training | List | HR_VIEW | UI_VERIFIED (S11) — page title "Training Renewals" confirmed |
 | 148 | HRM | Payroll Runs List | /hrm/payroll | List | PAYROLL_RUN | FUNCTIONAL_TESTED (S9) — PAY/26/00001 created; list confirmed |
 | 149 | HRM | Payroll Run Detail | /hrm/payroll/:id | Detail | PAYROLL_RUN | FUNCTIONAL_TESTED (S9) — detail renders with pay slips, totals |
@@ -162,8 +162,8 @@
 | 156 | WMS | Cross-dock | /wms/cross-dock | List | WMS_VIEW | UI_VERIFIED (S11) — page title "Cross-dock" confirmed |
 | 157 | WMS | Transfer Order Detail | /wms/orders/:id | Detail | WMS_VIEW | UI_VERIFIED (S11) — /wms/orders/1 renders "Transfer Order" detail page |
 | 158 | WMS | Pick Waves | /wms/waves | List | WMS_VIEW | UI_VERIFIED (S11) — page title "Pick Waves" confirmed; API 200 |
-| 159 | WMS | Cycle Counts List | /wms/cycle-counts | List | WMS_VIEW | UI_VERIFIED (S11) — page title "Cycle Counts" confirmed; API 200 |
-| 160 | WMS | Cycle Count Detail | /wms/cycle-counts/:id | Detail | WMS_VIEW | UI_VERIFIED (S11) — /wms/cycle-counts/1 renders "Cycle Count" detail page |
+| 159 | WMS | Cycle Counts List | /wms/cycle-counts | List | WMS_VIEW | FORM_POPULATED_AND_SAVED (S17) — ABC class A cycle count for Main Warehouse created; POST /api/wms/cycle-counts → 201; navigated to detail page |
+| 160 | WMS | Cycle Count Detail | /wms/cycle-counts/:id | Detail | WMS_VIEW | FUNCTIONAL_TESTED (S17) — detail rendered after creation of count 1; GET /api/wms/cycle-counts/1 → 200 |
 | 161 | Integration | GST E-Invoice | /integration/gst-einvoice | Tool | GST_EINVOICE_VIEW | FUNCTIONAL_TESTED (S16) — Generate e-Invoice form: dispatchId=4 → POST /api/integration/gst-einvoice/generate → 200 (idempotent); 1 invoice in list with GENERATED status and download icon; validates dispatchId required (empty blocked) |
 | 162 | Integration | Integration Call Log | /integration/call-log | List | INTEGRATION_MANAGE | UI_VERIFIED (S11) — page title "Integration Call Log" confirmed; API 200 |
 | 163 | Integration | Tally Ledger Mappings | /integration/tally-ledger-mappings | List | INTEGRATION_MANAGE | FORM_POPULATED_AND_SAVED (S15) — mapping created: GL 4001, Tally Ledger "QA Sales Revenue Ledger", Notes "QA test mapping - AR Control"; table row confirmed; voucher queue status chips (Draft/Approved/Sent/Ledger Missing/Failed) all show 0; Readiness Check button present; form fields match backend directly (no DEF) |
