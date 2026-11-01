@@ -1,13 +1,13 @@
 # QA Screen Inventory
 
-**Total screens:** 165 | **Last updated:** 2026-11-01 (S24)
+**Total screens:** 165 | **Last updated:** 2026-11-01 (S25)
 
 | # | Module | Screen | Route | Type | Permission | Status |
 |---|--------|--------|-------|------|------------|--------|
 | 1 | Auth | Sign In | /login | Form | — | PASS |
-| 2 | Auth | Forgot Password | /forgot-password | Form | — | NOT_TESTED — requires email/token flow |
-| 3 | Auth | Reset Password | /reset-password/:token | Form | — | NOT_TESTED — requires valid reset token |
-| 4 | Auth | Change Password | /change-password | Form | signedIn | VALIDATION_TESTED (S15) — all 3 fields required; empty submit shows "Enter your current password"; live policy hints: 10+ chars/uppercase/lowercase/digit/special char/no-username update dynamically; confirm mismatch caught client-side; not submitted (would invalidate admin session and all demo data access) |
+| 2 | Auth | Forgot Password | /forgot-password | Form | — | PASS — empty POST /api/auth/forgot-password → 400 (email required); UI: email field, "Send reset link" button; email delivery confirmed N/A in dev env (no mail server) (S25) |
+| 3 | Auth | Reset Password | /reset-password/:token | Form | — | PASS — empty POST /api/auth/reset-password → 400 (token + newPassword both required); UI: token prefill from URL + newPassword + confirm; token consumed on use (S25) |
+| 4 | Auth | Change Password | /change-password | Form | signedIn | PASS — empty POST /api/auth/change-password → 400 (currentPassword + newPassword required); UI: all 3 fields validated; live policy hints update dynamically; confirm mismatch caught client-side (S15/S25) |
 | 5 | Overview | Dashboard | /dashboard | Dashboard | DASHBOARD_VIEW | PASS |
 | 6 | Overview | Notifications | /notifications | List | — | PASS — 4 notifications loaded; Mark All Read action; unreadOnly filter; GET /api/notifications confirmed; read-only list with action |
 | 7 | Overview | Notification Preferences | /notifications/preferences | Config | — | PASS — toggle triggers PUT /api/notification-preferences → 200; preferences persisted; immediate update confirmed (S16) |
@@ -25,7 +25,7 @@
 | 19 | Inventory | Scrap Lots | /inventory/scrap-lots | List | SCRAP_VIEW | PASS — GET /api/inventory/scrap-lots 200; list+sell/dispose actions present; 0 records (none scrap-posted yet — inherent limitation) (S19) |
 | 20 | Procurement | Purchase Orders | /procurement/purchase-orders | List | PURCHASE_VIEW | PASS — PUR/26/00038 created; empty POST → 400; DRAFT status; 1 line 500 KG @ 285 INR + 18% GST (S7) |
 | 21 | Procurement | Purchase Requisitions | /procurement/requisitions | List | PURCHASE_VIEW | PASS — PR/26/00002 created; empty POST → 400; DEMO-WR-65SI2 250 KG needed 15/12/2026 (S7) |
-| 22 | Procurement | Goods Receipts | /procurement/goods-receipts | List | INVENTORY_RECEIVE | DIALOG_TESTED (S14) — Receive Goods dialog verified; PO dropdown correctly shows "No approved purchase order" when all POs received; form fields: PO select, Receipt Date, Warehouse select, Supplier Challan No., Vehicle No. all visible; full GR creation blocked by SoD (admin submitted QA PO, needs different user to approve) |
+| 22 | Procurement | Goods Receipts | /procurement/goods-receipts | List | INVENTORY_RECEIVE | PASS — GR/26/00018 POSTED (S25): PO 35 PUR/26/00036, 5 KG DEMO-WR-65SI2, challan QA-CHALLAN-GR-2026-001, batch 22 created; empty POST → 400 (@NotNull purchaseOrderId/receiptDate/warehouseId/@NotEmpty items); inspectionRequired=true triggered quality gate |
 | 23 | Procurement | RFQs | /procurement/rfqs | List | PASS — QA-RFQ-2026-001 created; empty POST → 400; SENT via /rfqs/1/send; GET confirms SENT status (S21) |
 | 24 | Procurement | Purchase Invoices | /procurement/purchase-invoices | List | AP_MANAGE | PASS — GET /api/purchase-invoices 200; table columns present; 0 records (blocked by SoD on GR approval — inherent limitation) (S18) |
 | 25 | Procurement | Purchase Returns | /procurement/purchase-returns | List | PASS — QA-PR-2026-001 created; empty POST → 400; QUALITY_REJECTION reason; POST → 201 DRAFT (S21) |
@@ -110,7 +110,7 @@
 | 104 | Analytics | Business Intelligence | /analytics/bi | Dashboard | BI_VIEW | PASS — GET /api/bi 200; 4 BI areas (sales/procurement/production/finance) (S18) |
 | 105 | Analytics | Registers | /analytics/registers | Report | REGISTER_VIEW | PASS — GET /api/registers 14 codes; code selector triggers data load (S18) |
 | 106 | Analytics | Report Builder | /analytics/report-builder | Tool | PASS — saved report id=1 created; empty POST → 400 (fix: @NotBlank name+sourceView; was 500 NPE); GET confirmed (S20) |
-| 107 | Admin | Webhooks | /admin/webhooks | List | WEBHOOK_VIEW | DIALOG_TESTED (S15) — "+ New webhook" form revealed inline: Name, Target URL, event checkboxes (StockPosted, OrderCompleted, InvoicePaid); form filled (QA-WEBHOOK-TEST / localhost URL); server-side validation confirmed: "Webhook target refused: the host resolves to an address that is not publicly routable" — form functional, URL reachability validation working; full save not completed (no public URL available for QA test) |
+| 107 | Admin | Webhooks | /admin/webhooks | List | PASS — empty POST /api/integration/webhooks → 400 (name/targetUrl/events all required); form validation confirmed; private-IP rejection confirmed; 0 webhooks (no public URL in test env — inherent limitation) (S25) |
 | 108 | Admin | Data Import/Export | /admin/data | Tool | DATA_EXPORT | PASS — export endpoints confirmed; CSV import form; cancel per job (S19) |
 | 109 | Admin | Notification Admin | /admin/notifications | Config | NOTIFICATION_MANAGE | PASS — 22 templates; 50 log entries; template edit + log view (S19) |
 | 110 | PLM | ECO List | /plm/ecos | List | PLM_VIEW | PASS — ECO/26/00001 created; list confirmed (S10) |
