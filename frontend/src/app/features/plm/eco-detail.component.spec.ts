@@ -159,4 +159,38 @@ describe('EcoDetailComponent', () => {
     expect(button('Submit for review')!.disabled).toBe(true);
     expect(fixture.nativeElement.textContent).toContain('Save your changes before submitting.');
   });
+
+  it('shows the create form when navigating to /plm/ecos/new (null id param)', async () => {
+    // The static route plm/ecos/new has no :id segment — paramMap.get('id') returns null.
+    // isNew must still be set so the edit form renders.
+    await TestBed.configureTestingModule({
+      imports: [EcoDetailComponent, NoopAnimationsModule],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({}) } } },
+      ],
+    })
+      .overrideComponent(EcoDetailComponent, {})
+      .compileComponents();
+    TestBed.inject(SessionStore).setUser({
+      id: 1,
+      username: 'eng',
+      fullName: 'Engineer',
+      email: 'e@example.com',
+      roles: [],
+      permissions: ['PLM_VIEW', 'ECO_CREATE'],
+      mustChangePassword: false,
+    });
+    const fix = TestBed.createComponent(EcoDetailComponent);
+    const http = TestBed.inject(HttpTestingController);
+    fix.detectChanges();
+    http
+      .expectOne((r) => r.url === '/api/product-lifecycle')
+      .flush({ content: [], totalElements: 0, totalPages: 0, size: 200, number: 0 });
+    fix.detectChanges();
+    expect(fix.nativeElement.querySelector('form.edit-form')).not.toBeNull();
+    http.verify();
+  });
 });

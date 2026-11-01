@@ -13,18 +13,18 @@
 | 7 | Overview | Notification Preferences | /notifications/preferences | Config | — | NOT_TESTED |
 | 8 | Overview | Approval Inbox | /approvals | List | APPROVAL_DECIDE | NOT_TESTED |
 | 9 | Master Data | Materials List | /master/materials | List | MATERIAL_VIEW | PASS |
-| 10 | Master Data | Suppliers List | /master/suppliers | List | SUPPLIER_MANAGE | NOT_TESTED |
-| 11 | Master Data | Customers List | /master/customers | List | CUSTOMER_MANAGE | NOT_TESTED |
-| 12 | Master Data | Products List | /master/products | List | PRODUCT_VIEW | NOT_TESTED |
-| 13 | Warehouses | Warehouse List | /warehouse/warehouses | List | INVENTORY_VIEW | NOT_TESTED |
-| 14 | Inventory | Current Stock | /inventory/stock | List | INVENTORY_VIEW | NOT_TESTED |
-| 15 | Inventory | Stock Ledger | /inventory/ledger | List | INVENTORY_VIEW | NOT_TESTED |
+| 10 | Master Data | Suppliers List | /master/suppliers | List | SUPPLIER_MANAGE | FORM_POPULATED_AND_SAVED (S7) — create tested with all fields + empty validation; edit + Approved Materials tab; QA-2026-SUP-001 created |
+| 11 | Master Data | Customers List | /master/customers | List | CUSTOMER_MANAGE | FORM_POPULATED_AND_SAVED (S7) — create tested with all fields; QA-2026-CUST-001 created |
+| 12 | Master Data | Products List | /master/products | List | PRODUCT_VIEW | FORM_POPULATED_AND_SAVED (S7) — create tested with all fields including geometry; QA-2026-PROD-001 created |
+| 13 | Warehouses | Warehouse List | /warehouse/warehouses | List | INVENTORY_VIEW | FORM_POPULATED_AND_SAVED (S7) — New Warehouse created QA-WH-001 "QA Test Warehouse" ACTIVE; expand shows locations; Add Location button available |
+| 14 | Inventory | Current Stock | /inventory/stock | List | INVENTORY_VIEW | UI_VERIFIED (S7) — loads with stock data; Warehouse+Status filters visible; AVAILABLE/Quality Pending/Quarantine/SCRAP status badges; Opening Balance button present; Avg Cost and Value columns shown |
+| 15 | Inventory | Stock Ledger | /inventory/ledger | List | INVENTORY_VIEW | UI_VERIFIED (S7) — loads with transaction history; TXN types (PRODUCTION RECEIPT, MATERIAL CONSUMPTION, MATERIAL RECEIPT, MATERIAL ISSUE, STOCK TRANSFER, PURCHASE RECEIPT); Transaction Type filter available |
 | 16 | Inventory | Batch Tracking | /inventory/batches | List | INVENTORY_VIEW | NOT_TESTED |
 | 17 | Inventory | Stock Adjustments | /inventory/adjustments | List | INVENTORY_VIEW | NOT_TESTED |
 | 18 | Inventory | Valuation Report | /inventory/valuation-report | Report | VALUATION_VIEW | NOT_TESTED |
 | 19 | Inventory | Scrap Lots | /inventory/scrap-lots | List | SCRAP_VIEW | NOT_TESTED |
-| 20 | Procurement | Purchase Orders | /procurement/purchase-orders | List | PURCHASE_VIEW | NOT_TESTED |
-| 21 | Procurement | Purchase Requisitions | /procurement/requisitions | List | PURCHASE_VIEW | NOT_TESTED |
+| 20 | Procurement | Purchase Orders | /procurement/purchase-orders | List | PURCHASE_VIEW | FORM_POPULATED_AND_SAVED (S7) — New PO created PUR/26/00038 with QA-2026-SUP-001 supplier, 1 line item 500 KG @ 285 INR + 18% GST = 1,68,150 total; DRAFT status confirmed |
+| 21 | Procurement | Purchase Requisitions | /procurement/requisitions | List | PURCHASE_VIEW | FORM_POPULATED_AND_SAVED (S7) — New PR created PR/26/00002: DEMO-WR-65SI2 250 KG needed 15/12/2026; "Requisition created" toast confirmed |
 | 22 | Procurement | Goods Receipts | /procurement/goods-receipts | List | INVENTORY_RECEIVE | NOT_TESTED |
 | 23 | Procurement | RFQs | /procurement/rfqs | List | RFQ_VIEW | NOT_TESTED |
 | 24 | Procurement | Purchase Invoices | /procurement/purchase-invoices | List | PURCHASE_INVOICE_VIEW | NOT_TESTED |
@@ -32,7 +32,7 @@
 | 26 | Procurement | Purchase Return Challans | /procurement/purchase-return-challans | List | PRC_CHALLAN_VIEW | NOT_TESTED |
 | 27 | Engineering | Bill of Materials | /engineering/bom | List | BOM_VIEW | NOT_TESTED |
 | 28 | Engineering | Product Routing | /engineering/routing | Detail/Editor | PRODUCT_VIEW | NOT_TESTED |
-| 29 | Production | Production Orders | /production/orders | List | PRODUCTION_VIEW | NOT_TESTED |
+| 29 | Production | Production Orders | /production/orders | List | PRODUCTION_VIEW | FORM_POPULATED_AND_SAVED (S7) — New Order created PO/26/00017 DRAFT: DEMO-CS-25X3 Qty=100 Priority=3-Normal Line=LINE-A; BOM auto-linked; "Production order created as a draft" toast confirmed |
 | 30 | Production | My Work | /production/my-work | List/Action | PRODUCTION_EXECUTE | NOT_TESTED |
 | 31 | Production | OEE Dashboard | /production/oee | Dashboard | OEE_VIEW | NOT_TESTED |
 | 32 | Production | Production Schedule | /production/schedule | Dashboard | SCHEDULE_VIEW | NOT_TESTED |
@@ -49,14 +49,14 @@
 | 43 | Quality | Rejection Analysis | /quality/rejections | Dashboard | QUALITY_VIEW | NOT_TESTED |
 | 44 | Quality | SPC Charts List | /quality/spc | List | QUALITY_VIEW | NOT_TESTED |
 | 45 | Quality | SPC Chart Detail | /quality/spc/:id | Detail | QUALITY_VIEW | NOT_TESTED |
-| 46 | Quality | CAPA List | /quality/capa | List | QUALITY_VIEW | NOT_TESTED |
-| 47 | Quality | CAPA New | /quality/capa/new | Form | CAPA_MANAGE | NOT_TESTED |
-| 48 | Quality | CAPA Detail | /quality/capa/:id | Detail | QUALITY_VIEW | NOT_TESTED |
-| 49 | Quality | Complaints List | /quality/complaints | List | QUALITY_VIEW | NOT_TESTED |
-| 50 | Quality | New Complaint | /quality/complaints/new | Form | COMPLAINT_MANAGE | NOT_TESTED |
-| 51 | Quality | Complaint Detail | /quality/complaints/:id | Detail | QUALITY_VIEW | NOT_TESTED |
-| 52 | Quality | FAI List | /quality/fai | List | QUALITY_VIEW | NOT_TESTED |
-| 53 | Quality | FAI Detail | /quality/fai/:id | Detail | QUALITY_VIEW | NOT_TESTED |
+| 46 | Quality | CAPA List | /quality/capa | List | QUALITY_VIEW | FUNCTIONAL_TESTED |
+| 47 | Quality | CAPA New | /quality/capa/new | Form | CAPA_MANAGE | FUNCTIONAL_TESTED |
+| 48 | Quality | CAPA Detail | /quality/capa/:id | Detail | QUALITY_VIEW | FUNCTIONAL_TESTED |
+| 49 | Quality | Complaints List | /quality/complaints | List | QUALITY_VIEW | FUNCTIONAL_TESTED |
+| 50 | Quality | New Complaint | /quality/complaints/new | Form | COMPLAINT_MANAGE | FUNCTIONAL_TESTED |
+| 51 | Quality | Complaint Detail | /quality/complaints/:id | Detail | QUALITY_VIEW | FUNCTIONAL_TESTED |
+| 52 | Quality | FAI List | /quality/fai | List | QUALITY_VIEW | FUNCTIONAL_TESTED |
+| 53 | Quality | FAI Detail | /quality/fai/:id | Detail | QUALITY_VIEW | FUNCTIONAL_TESTED |
 | 54 | Sales | Sales Orders | /sales/orders | List | SALES_VIEW | NOT_TESTED |
 | 55 | Sales | Dispatches | /sales/dispatches | List | DISPATCH_VIEW | NOT_TESTED |
 | 56 | Sales | Quotations | /sales/quotations | List | QUOTATION_VIEW | NOT_TESTED |
@@ -77,7 +77,7 @@
 | 71 | Finance | Accounts Payable | /finance/ap | List | AP_MANAGE | NOT_TESTED |
 | 72 | Finance | Accounts Receivable | /finance/ar | List | AR_MANAGE | NOT_TESTED |
 | 73 | Finance | AR Reconciliation | /finance/ar-reconciliation | Tool | AR_MANAGE | NOT_TESTED |
-| 74 | Finance | Credit Notes | /finance/credit-notes | List | AR_MANAGE | NOT_TESTED |
+| 74 | Finance | Credit Notes | /finance/credit-notes | List | AR_MANAGE | FUNCTIONAL_TESTED |
 | 75 | Finance | Debit Notes | /finance/debit-notes | List | AP_MANAGE | NOT_TESTED |
 | 76 | Finance | GST Tax | /finance/tax | Config | GL_VIEW | NOT_TESTED |
 | 77 | Finance | Exchange Rates | /finance/exchange-rates | List | GL_VIEW | NOT_TESTED |
@@ -91,13 +91,13 @@
 | 85 | Finance | Payments | /finance/payments | List | PAYMENT_VIEW | NOT_TESTED |
 | 86 | Finance | Open Items | /finance/open-items | List | OPEN_ITEM_VIEW | NOT_TESTED |
 | 87 | Controlling | Cost Centres | /controlling/cost-centres | List | CONTROLLING_VIEW | NOT_TESTED |
-| 88 | Controlling | Internal Orders | /controlling/internal-orders | List | INTERNAL_ORDER_VIEW | NOT_TESTED |
+| 88 | Controlling | Internal Orders | /controlling/internal-orders | List | INTERNAL_ORDER_VIEW | FUNCTIONAL_TESTED |
 | 89 | Controlling | Product Costing List | /controlling/cost-estimates | List | CONTROLLING_VIEW | NOT_TESTED |
 | 90 | Controlling | Cost Estimate Detail | /controlling/cost-estimates/:id | Detail | CONTROLLING_VIEW | NOT_TESTED |
 | 91 | Controlling | Variance Analysis | /controlling/variances | Report | CONTROLLING_VIEW | NOT_TESTED |
 | 92 | Controlling | Controlling Reports | /controlling/reports | Report | CONTROLLING_VIEW | NOT_TESTED |
 | 93 | Controlling | Overhead Allocation | /controlling/overhead-allocation | Tool | OVERHEAD_ALLOC_VIEW | NOT_TESTED |
-| 94 | MRP | MRP Runs | /mrp/runs | List | MRP_VIEW | NOT_TESTED |
+| 94 | MRP | MRP Runs | /mrp/runs | List | MRP_VIEW | FUNCTIONAL_TESTED |
 | 95 | MRP | MRP Proposals | /mrp/proposals | List | MRP_VIEW | NOT_TESTED |
 | 96 | MRP | Demand Forecasts | /mrp/forecasts | List | MRP_VIEW | NOT_TESTED |
 | 97 | MRP | Planning Parameters | /mrp/planning | Config | MRP_VIEW | NOT_TESTED |
@@ -113,9 +113,9 @@
 | 107 | Admin | Webhooks | /admin/webhooks | List | WEBHOOK_VIEW | NOT_TESTED |
 | 108 | Admin | Data Import/Export | /admin/data | Tool | DATA_EXPORT | NOT_TESTED |
 | 109 | Admin | Notification Admin | /admin/notifications | Config | NOTIFICATION_MANAGE | NOT_TESTED |
-| 110 | PLM | ECO List | /plm/ecos | List | PLM_VIEW | NOT_TESTED |
-| 111 | PLM | New ECO | /plm/ecos/new | Form | ECO_CREATE | NOT_TESTED |
-| 112 | PLM | ECO Detail | /plm/ecos/:id | Detail | PLM_VIEW | NOT_TESTED |
+| 110 | PLM | ECO List | /plm/ecos | List | PLM_VIEW | FUNCTIONAL_TESTED |
+| 111 | PLM | New ECO | /plm/ecos/new | Form | ECO_CREATE | FUNCTIONAL_TESTED |
+| 112 | PLM | ECO Detail | /plm/ecos/:id | Detail | PLM_VIEW | FUNCTIONAL_TESTED |
 | 113 | PLM | Product Lifecycle | /plm/lifecycle | List | PLM_VIEW | NOT_TESTED |
 | 114 | Admin | Users | /admin/users | List | USER_VIEW | NOT_TESTED |
 | 115 | Admin | Plants | /admin/plants | List | PLANT_MANAGE | NOT_TESTED |
@@ -136,7 +136,7 @@
 | 130 | Admin | Setup Wizard | /admin/onboarding | Wizard | ONBOARDING_VIEW | NOT_TESTED |
 | 131 | CRM | Leads List | /crm/leads | List | CRM_VIEW | NOT_TESTED |
 | 132 | CRM | Lead Detail | /crm/leads/:id | Detail | CRM_VIEW | NOT_TESTED |
-| 133 | CRM | Opportunities | /crm/opportunities | Dashboard/Kanban | CRM_VIEW | NOT_TESTED |
+| 133 | CRM | Opportunities | /crm/opportunities | Dashboard/Kanban | CRM_VIEW | FUNCTIONAL_TESTED |
 | 134 | CRM | Quotations List | /crm/quotations | List | CRM_VIEW | NOT_TESTED |
 | 135 | CRM | New Quotation | /crm/quotations/new | Form | QUOTATION_CREATE | NOT_TESTED |
 | 136 | CRM | Edit Quotation | /crm/quotations/:id/edit | Form | QUOTATION_CREATE | NOT_TESTED |
@@ -151,10 +151,10 @@
 | 145 | HRM | Shifts | /hrm/shifts | List | HR_VIEW | NOT_TESTED |
 | 146 | HRM | Leave | /hrm/leave | List | LEAVE_APPLY | NOT_TESTED |
 | 147 | HRM | Training Renewals | /hrm/training | List | HR_VIEW | NOT_TESTED |
-| 148 | HRM | Payroll Runs List | /hrm/payroll | List | PAYROLL_RUN | NOT_TESTED |
-| 149 | HRM | Payroll Run Detail | /hrm/payroll/:id | Detail | PAYROLL_RUN | NOT_TESTED |
+| 148 | HRM | Payroll Runs List | /hrm/payroll | List | PAYROLL_RUN | FUNCTIONAL_TESTED |
+| 149 | HRM | Payroll Run Detail | /hrm/payroll/:id | Detail | PAYROLL_RUN | FUNCTIONAL_TESTED |
 | 150 | HRM | Pay Slip | /hrm/payroll/slips/:id | Detail | PAYROLL_RUN | NOT_TESTED |
-| 151 | WMS | Zones & Bins | /wms/bins | List | WMS_VIEW | NOT_TESTED |
+| 151 | WMS | Zones & Bins | /wms/bins | List | WMS_VIEW | FUNCTIONAL_TESTED |
 | 152 | WMS | Bin View | /wms/bin-view | Dashboard | WMS_VIEW | NOT_TESTED |
 | 153 | WMS | Put-away Tasks | /wms/putaway | List | WMS_VIEW | NOT_TESTED |
 | 154 | WMS | Picking List | /wms/picking | List | WMS_VIEW | NOT_TESTED |

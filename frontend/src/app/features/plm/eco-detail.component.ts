@@ -359,10 +359,10 @@ export class EcoDetailComponent implements OnInit {
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
-    if (id === 'new') {
+    if (!id || id === 'new') {
       this.isNew.set(true);
       this.loadProducts();
-    } else if (id) {
+    } else {
       this.load(Number(id));
     }
   }
