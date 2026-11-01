@@ -28,6 +28,10 @@ Thumbs.db
 **/test-results/
 **/playwright-report/
 
+# E2E run logs
+e2e-*.log
+e2e-*.log.err
+
 # Runtime document/attachment storage
 data/
 backend/data/
