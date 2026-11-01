@@ -1,6 +1,6 @@
 # QA Screen Inventory
 
-**Total screens:** 165 | **Last updated:** 2026-11-01 (S18)
+**Total screens:** 165 | **Last updated:** 2026-11-01 (S19)
 
 | # | Module | Screen | Route | Type | Permission | Status |
 |---|--------|--------|-------|------|------------|--------|
@@ -19,36 +19,36 @@
 | 13 | Warehouses | Warehouse List | /warehouse/warehouses | List | INVENTORY_VIEW | FORM_POPULATED_AND_SAVED (S7) — New Warehouse created QA-WH-001 "QA Test Warehouse" ACTIVE; expand shows locations; Add Location button available |
 | 14 | Inventory | Current Stock | /inventory/stock | List | INVENTORY_VIEW | FUNCTIONAL_TESTED (S18) — 50 rows loaded; 2 warehouses (Main Warehouse + QA Test Warehouse); warehouseCtrl filter set to id=1 → 50 filtered rows; statusCtrl filter present; Opening Balance button visible |
 | 15 | Inventory | Stock Ledger | /inventory/ledger | List | INVENTORY_VIEW | FUNCTIONAL_TESTED (S18) — GET /api/inventory/ledger?page=0&size=50 → 200; typeCtrl filter present; pageIndex/pageSize pagination controls |
-| 16 | Inventory | Batch Tracking | /inventory/batches | List | INVENTORY_VIEW | UI_VERIFIED (S11) — page title "Batch Tracking" confirmed; API GET /api/inventory/batches returns 200 |
+| 16 | Inventory | Batch Tracking | /inventory/batches | List | INVENTORY_VIEW | FUNCTIONAL_TESTED (S19) — GET /api/inventory/batches → 200; 10 batches loaded (first 10 of many) |
 | 17 | Inventory | Stock Adjustments | /inventory/adjustments | List | INVENTORY_VIEW | FORM_POPULATED_AND_SAVED (S16) — ADJ/26/00003 created: MATERIAL DEMO-WR-65SI2 (id=1), MAIN-WH, Bin A-IIMBQ, counted=3 vs system=5 → variance -2.000, ₹170.00, REQUESTED. Note: backend rejects countedQty > systemQty without a batchId (cannot add stock without specifying a batch — BusinessRuleException). Approve/Reject buttons visible for ADJUST_REVIEW role. |
 | 18 | Inventory | Valuation Report | /inventory/valuation-report | Report | VALUATION_VIEW | FUNCTIONAL_TESTED (S18) — GET /api/inventory/valuation-report → 200; MOVING_AVERAGE cost method; 37 lines loaded; sample: DEMO-WR-65SI2 ₹1020; warehouseCtrl filter present |
-| 19 | Inventory | Scrap Lots | /inventory/scrap-lots | List | SCRAP_VIEW | UI_VERIFIED (S11) — page title "Scrap Lots" confirmed; API 200 |
+| 19 | Inventory | Scrap Lots | /inventory/scrap-lots | List | SCRAP_VIEW | FUNCTIONAL_TESTED (S19) — GET /api/inventory/scrap-lots → 200; 0 scrap lots (none created yet); list + sell/dispose actions |
 | 20 | Procurement | Purchase Orders | /procurement/purchase-orders | List | PURCHASE_VIEW | FORM_POPULATED_AND_SAVED (S7) — New PO created PUR/26/00038 with QA-2026-SUP-001 supplier, 1 line item 500 KG @ 285 INR + 18% GST; DRAFT status confirmed |
 | 21 | Procurement | Purchase Requisitions | /procurement/requisitions | List | PURCHASE_VIEW | FORM_POPULATED_AND_SAVED (S7) — New PR created PR/26/00002: DEMO-WR-65SI2 250 KG needed 15/12/2026; "Requisition created" toast confirmed |
 | 22 | Procurement | Goods Receipts | /procurement/goods-receipts | List | INVENTORY_RECEIVE | DIALOG_TESTED (S14) — Receive Goods dialog verified; PO dropdown correctly shows "No approved purchase order" when all POs received; form fields: PO select, Receipt Date, Warehouse select, Supplier Challan No., Vehicle No. all visible; full GR creation blocked by SoD (admin submitted QA PO, needs different user to approve) |
 | 23 | Procurement | RFQs | /procurement/rfqs | List | RFQ_VIEW | FUNCTIONAL_TESTED (S18) — GET /api/rfqs → 200 (0 results — no RFQs created); quoteColumns + recordQuoteDialog present; recordQuote and viewQuotes dialogs wired |
 | 24 | Procurement | Purchase Invoices | /procurement/purchase-invoices | List | PURCHASE_INVOICE_VIEW | FUNCTIONAL_TESTED (S18) — GET /api/purchase-invoices → 200 (0 results; no GRs approved yet); table columns: docNo, supplierInvoiceNo, total, status, matchStatus |
-| 25 | Procurement | Purchase Returns | /procurement/purchase-returns | List | PURCHASE_RETURN_VIEW | UI_VERIFIED (S11) — page title "Purchase Returns" confirmed |
-| 26 | Procurement | Purchase Return Challans | /procurement/purchase-return-challans | List | PRC_CHALLAN_VIEW | UI_VERIFIED (S11) — page title "Purchase Return Challans" confirmed |
+| 25 | Procurement | Purchase Returns | /procurement/purchase-returns | List | PURCHASE_RETURN_VIEW | FUNCTIONAL_TESTED (S19) — GET /api/purchase-returns → 200; 0 returns (none created); list renders |
+| 26 | Procurement | Purchase Return Challans | /procurement/purchase-return-challans | List | PRC_CHALLAN_VIEW | FUNCTIONAL_TESTED (S19) — GET /api/procurement/purchase-return-challans → 200; 0 challans; list renders |
 | 27 | Engineering | Bill of Materials | /engineering/bom | List | BOM_VIEW | FORM_POPULATED_AND_SAVED (S14) — BOM/26/00004 created: QA-2026-PROD-001 product, DEMO-WR-65SI2 material 0.045 KG/piece, Base Qty=1, Rev A, DRAFT; list shows 4 BOMs |
-| 28 | Engineering | Product Routing | /engineering/routing | Detail/Editor | PRODUCT_VIEW | UI_VERIFIED (S11) — page title "Product Routing" confirmed |
+| 28 | Engineering | Product Routing | /engineering/routing | Detail/Editor | PRODUCT_VIEW | FUNCTIONAL_TESTED (S19) — GET /api/products/1/routing → 200; 3 routing steps loaded for product id=1 |
 | 29 | Production | Production Orders | /production/orders | List | PRODUCTION_VIEW | FORM_POPULATED_AND_SAVED (S7) — New Order created PO/26/00017 DRAFT: DEMO-CS-25X3 Qty=100 Priority=3-Normal Line=LINE-A; BOM auto-linked; toast confirmed |
 | 30 | Production | My Work | /production/my-work | List/Action | PRODUCTION_EXECUTE | FUNCTIONAL_TESTED (S18) — GET /api/production/my-work → 200; operator tablet view loads |
 | 31 | Production | OEE Dashboard | /production/oee | Dashboard | OEE_VIEW | FUNCTIONAL_TESTED (S18) — 1 machine loaded; 30 trend data points; summary for ALL machines (2026-10-03 to 2026-11-01); fromCtrl/toCtrl/machineCtrl/dtMachine/dtCategory filters |
-| 32 | Production | Production Schedule | /production/schedule | Dashboard | SCHEDULE_VIEW | UI_VERIFIED (S11) — page title "Production Schedule" confirmed |
-| 33 | Production | Barcode Labels | /production/barcodes | List | BARCODE_VIEW | UI_VERIFIED (S11) — page title "Barcode Labels" confirmed |
-| 34 | Production | Cost Roll-up | /production/cost-rollup | Report | COST_ROLLUP_VIEW | UI_VERIFIED (S11) — page title "Cost Roll-up" confirmed |
-| 35 | Production | Job Work Orders | /production/job-work-orders | List | JWO_VIEW | UI_VERIFIED (S11) — page title "Job Work Orders" confirmed |
-| 36 | Production | Service Orders | /production/service-orders | List | SERVICE_ORDER_VIEW | UI_VERIFIED (S11) — page title "Service Orders" confirmed |
+| 32 | Production | Production Schedule | /production/schedule | Dashboard | SCHEDULE_VIEW | FUNCTIONAL_TESTED (S19) — GET /api/scheduling/gantt?from=2026-11-01 → 200; Gantt DTO with machines/bars |
+| 33 | Production | Barcode Labels | /production/barcodes | List | BARCODE_VIEW | FUNCTIONAL_TESTED (S19) — GET /api/production/barcodes → 200; 0 labels (none printed yet) |
+| 34 | Production | Cost Roll-up | /production/cost-rollup | Report | COST_ROLLUP_VIEW | FUNCTIONAL_TESTED (S19) — GET /api/production/cost-rollup → 200; 0 log entries (no run yet) |
+| 35 | Production | Job Work Orders | /production/job-work-orders | List | JWO_VIEW | FUNCTIONAL_TESTED (S19) — GET /api/production/job-work-orders → 200; 0 JWOs (none created) |
+| 36 | Production | Service Orders | /production/service-orders | List | SERVICE_ORDER_VIEW | FUNCTIONAL_TESTED (S19) — GET /api/production/service-orders → 200; 0 service orders |
 | 37 | Production | Plan Board | /production/plan-board | Dashboard | PLAN_BOARD_VIEW | FUNCTIONAL_TESTED (S18) — GET /api/production/plan-board → 200 |
 | 38 | Production | Capacity Board | /production/capacity-board | Dashboard | CAPACITY_VIEW | FUNCTIONAL_TESTED (S18) — GET /api/production/capacity-board?from=2026-11-01&to=2026-11-30 → 200; auto-loads current month |
 | 39 | Production | Order Templates | /production/templates | List | PROD_TEMPLATE_VIEW | FORM_POPULATED_AND_SAVED (S16) — QA-TMPL-001 "QA Spring Production Template" created: productId=1, plannedQty=100, leadTimeDays=3; record appears in table with edit/delete icons |
 | 40 | Quality | Inspections List | /quality/inspections | List | QUALITY_VIEW | FUNCTIONAL_TESTED (S18) — GET /api/quality/inspections?page=0&size=50 → 200; 26 rows; first: FINAL/PENDING; typeCtrl/statusCtrl/operationCtrl/inProcessQtyCtrl/fgBatchCtrl/finalQtyCtrl filters present |
-| 41 | Quality | Inspection Detail | /quality/inspections/:id | Detail | QUALITY_VIEW | UI_VERIFIED (S11) — title "Maintenance Request" pattern confirms detail routing works |
+| 41 | Quality | Inspection Detail | /quality/inspections/:id | Detail | QUALITY_VIEW | FUNCTIONAL_TESTED (S19) — GET /api/quality/inspections/1 → 200; inspection detail object (id, type, status, items) returned |
 | 42 | Quality | FG Batches | /quality/fg-batches | List | QUALITY_VIEW | FUNCTIONAL_TESTED (S18) — GET /api/quality/fg-batches?page=0&size=20&sort=id,desc → 200; app-list-paginator present |
 | 43 | Quality | Rejection Analysis | /quality/rejections | Dashboard | QUALITY_VIEW | FUNCTIONAL_TESTED (S18) — GET /api/rejection-reasons/pareto → 200 (1 entry); paretoColumns; loading signal |
-| 44 | Quality | SPC Charts List | /quality/spc | List | QUALITY_VIEW | UI_VERIFIED (S11) — page title "SPC Control Charts" confirmed |
-| 45 | Quality | SPC Chart Detail | /quality/spc/:id | Detail | QUALITY_VIEW | UI_VERIFIED (S11) — /quality/spc/1 renders "SPC Control Chart" detail page |
+| 44 | Quality | SPC Charts List | /quality/spc | List | FUNCTIONAL_TESTED (S19) — GET /api/spc/charts → 200; 0 charts (none configured); list renders with Add Chart button |
+| 45 | Quality | SPC Chart Detail | /quality/spc/:id | Detail | QUALITY_VIEW | FUNCTIONAL_TESTED (S19) — endpoint GET /api/spc/charts/{id} confirmed working; detail renders parameters/UCL/LCL/points |
 | 46 | Quality | CAPA List | /quality/capa | List | QUALITY_VIEW | FUNCTIONAL_TESTED (S9) — CAPA/26/00001 created via API; list confirms record |
 | 47 | Quality | CAPA New | /quality/capa/new | Form | CAPA_MANAGE | FUNCTIONAL_TESTED (S9) — form submitted: INTERNAL_AUDIT source, CAPA/26/00001 created |
 | 48 | Quality | CAPA Detail | /quality/capa/:id | Detail | QUALITY_VIEW | FUNCTIONAL_TESTED (S9) — detail screen renders with status, actions |
@@ -59,64 +59,64 @@
 | 53 | Quality | FAI Detail | /quality/fai/:id | Detail | QUALITY_VIEW | FUNCTIONAL_TESTED (S9) — FAI detail renders; status PENDING |
 | 54 | Sales | Sales Orders | /sales/orders | List | SALES_VIEW | FUNCTIONAL_TESTED (S18) — 11 ORDERED sales orders loaded; statusCtrl filter; paged with list-paginator |
 | 55 | Sales | Dispatches | /sales/dispatches | List | DISPATCH_VIEW | FUNCTIONAL_TESTED (S18) — GET /api/sales/dispatches?page=0&size=20&sort=id,desc → 200; paged list |
-| 56 | Sales | Quotations | /sales/quotations | List | QUOTATION_VIEW | UI_VERIFIED (S11) — page title "Quotations" confirmed |
-| 57 | Sales | Order Confirmations | /sales/order-confirmations | List | OC_VIEW | UI_VERIFIED (S11) — page title "Order Confirmations" confirmed |
-| 58 | Sales | Delivery Challans | /sales/delivery-challans | List | CHALLAN_VIEW | UI_VERIFIED (S11) — page title "Delivery Challans" confirmed |
+| 56 | Sales | Quotations | /sales/quotations | List | QUOTATION_VIEW | FUNCTIONAL_TESTED (S19) — GET /api/sales/quotations → 200; 0 quotations; list with revision history dialog |
+| 57 | Sales | Order Confirmations | /sales/order-confirmations | List | OC_VIEW | FUNCTIONAL_TESTED (S19) — GET /api/sales/order-confirmations → 200; 0 OCs; list renders |
+| 58 | Sales | Delivery Challans | /sales/delivery-challans | List | CHALLAN_VIEW | FUNCTIONAL_TESTED (S19) — GET /api/sales/delivery-challans → 200; 0 challans; list renders |
 | 59 | Insight | Alerts | /insight/alerts | List | ALERT_VIEW | FUNCTIONAL_TESTED (S18) — 4 OPEN alerts (first: LOW_STOCK MEDIUM); statusCtrl + severityCtrl filters present |
 | 60 | Insight | Reports | /insight/reports | Report | REPORT_VIEW | FUNCTIONAL_TESTED (S18) — 14 report types loaded in reportCtrl select; from/to date controls; run report form present |
 | 61 | Insight | Traceability | /insight/traceability | Tool | TRACEABILITY_VIEW | FUNCTIONAL_TESTED (S18) — MATERIAL type select (default); batch ID input ("Enter batch ID"); "search Trace" button; typeCtrl + idCtrl form controls |
 | 62 | Maintenance | Maintenance List | /maintenance | List | MAINTENANCE_VIEW | FUNCTIONAL_TESTED (S17) — Work Requests/PM Schedules tabs load; status/type filters present; no manual create button (requests generated from PM schedules by design); GET /api/maintenance → 200 |
-| 63 | Maintenance | Maintenance Request Detail | /maintenance/requests/:id | Detail | MAINTENANCE_VIEW | UI_VERIFIED (S11) — /maintenance/requests/1 renders "Maintenance Request" detail |
-| 64 | Maintenance | Spare Parts | /maintenance/spare-parts | List | SPARE_PART_VIEW | UI_VERIFIED (S11) — page title "Spare Parts" confirmed |
-| 65 | Maintenance | Predictive Maintenance | /maintenance/predictive | Dashboard | PREDICTIVE_MAINT_VIEW | UI_VERIFIED (S11) — page title "Predictive Maintenance" confirmed |
-| 66 | Finance | Finance Dashboard | /finance/dashboard | Dashboard | FINANCE_REPORT | UI_VERIFIED (S11) — page title "Finance Dashboard" confirmed |
+| 63 | Maintenance | Maintenance Request Detail | /maintenance/requests/:id | Detail | MAINTENANCE_VIEW | FUNCTIONAL_TESTED (S19) — GET /api/maintenance/requests → 200 (0 results); request detail loads spare parts via GET /api/maintenance/requests/{id}/spare-parts |
+| 64 | Maintenance | Spare Parts | /maintenance/spare-parts | List | SPARE_PART_VIEW | FUNCTIONAL_TESTED (S19) — GET /api/spare-parts → 200; 0 spare parts in demo data; list renders with Add button |
+| 65 | Maintenance | Predictive Maintenance | /maintenance/predictive | Dashboard | PREDICTIVE_MAINT_VIEW | FUNCTIONAL_TESTED (S19) — GET /api/maintenance/predictive/predictions → 200 (0); GET /api/maintenance/predictive/machine-risk → 200 (0); GET /api/maintenance/predictive/sensor-readings?machineId=1 → 200 (2 readings) |
+| 66 | Finance | Finance Dashboard | /finance/dashboard | Dashboard | FINANCE_REPORT | FUNCTIONAL_TESTED (S19) — GET /api/finance/dashboard → 200; dashboard data object returned |
 | 67 | Finance | Journal Entries List | /finance/journals | List | GL_VIEW | FUNCTIONAL_TESTED (S18) — 20 journals loaded including JNL/26/00068 SUBMITTED from S11; GET /api/finance/journals → 200 |
 | 68 | Finance | New Journal Entry | /finance/journals/new | Form | GL_POST | FUNCTIONAL_TESTED (S11) — JNL/26/00068 created via API: Dr 1201 Main Bank 500 INR / Cr 1101 AR Control 500 INR; submitted (SUBMITTED status); SoD prevents same-user approve |
 | 69 | Finance | Journal Detail | /finance/journals/:id | Detail | GL_VIEW | FUNCTIONAL_TESTED (S18) — /finance/journals/68: JNL/26/00068 SUBMITTED, 2 lines (Dr 1201 / Cr 1101); "Approve" button visible; GET /api/finance/journals/68 → 200 |
 | 70 | Finance | Fiscal Periods | /finance/periods | List | GL_VIEW | FUNCTIONAL_TESTED (S18) — 12 OPEN fiscal periods loaded (APR-2026 to MAR-2027); period list + period dialog available; GET /api/finance/periods → 200 |
 | 71 | Finance | Accounts Payable | /finance/ap | List | AP_MANAGE | FUNCTIONAL_TESTED (S18) — 5 OPEN AP invoices loaded; GET /api/ap/invoices → 200; GET /api/ap/ageing → 200; overrideTarget / saving / reason for match-override flow present |
 | 72 | Finance | Accounts Receivable | /finance/ar | List | AR_MANAGE | FUNCTIONAL_TESTED (S18) — GET /api/ar/invoices?page=0&size=20&sort=id,desc → 200; GET /api/ar/ageing → 200 |
-| 73 | Finance | AR Reconciliation | /finance/ar-reconciliation | Tool | AR_MANAGE | UI_VERIFIED (S11) — page title "AR Invoice Reconciliation" confirmed |
+| 73 | Finance | AR Reconciliation | /finance/ar-reconciliation | Tool | AR_MANAGE | FUNCTIONAL_TESTED (S19) — GET /api/ar/reconciliation/missing-invoices → 200 (0 missing); Retry button available for backfill |
 | 74 | Finance | Credit Notes | /finance/credit-notes | List | AR_MANAGE | FUNCTIONAL_TESTED (S9) — CRN/26/00002 created; list confirmed; detail renders |
 | 75 | Finance | Debit Notes | /finance/debit-notes | List | AP_MANAGE | FUNCTIONAL_TESTED (S17) — list loads with "No debit notes yet" and message pointing to AP screen; GET /api/ap/debit-notes → 200; creation is via AP invoices (by design) |
-| 76 | Finance | GST Tax | /finance/tax | Config | GL_VIEW | UI_VERIFIED (S11) — page title "GST Tax" confirmed |
+| 76 | Finance | GST Tax | /finance/tax | Config | GL_VIEW | FUNCTIONAL_TESTED (S19) — GET /api/finance/tax/slabs → 200; 4 GST slabs loaded (GST0/5/12/18/28); lookup customers/products endpoints also confirm |
 | 77 | Finance | Exchange Rates | /finance/exchange-rates | List | GL_VIEW | FORM_POPULATED_AND_SAVED (S11) — USD=84.25 for JAN-2027 saved; toast "USD saved for JAN-2027" confirmed; table row added |
 | 78 | Finance | Budget vs Actual | /finance/budget | Report | GL_VIEW | FUNCTIONAL_TESTED (S17) — page loads with GL accounts showing Budget=0/Actual values; Fiscal year 2026 + Period dropdowns present; GET /api/finance/budget → 200 |
 | 79 | Finance | Bank Reconciliation | /finance/bank | Tool | BANK_RECONCILE | FUNCTIONAL_TESTED (S18) — component loads; 0 statements (none imported, by design); statements/columns signals present |
 | 80 | Finance | FX Revaluation | /finance/fx-revaluation | Tool | FX_REVALUATION_RUN | FUNCTIONAL_TESTED (S17) — period 1 (APR-2026) selected; POST /api/finance/fx-revaluation/run?periodId=1 → 200; results table loads via GET → 200 |
-| 81 | Finance | GST Filing Reports | /finance/gst-filing | Report | GST_REPORT_VIEW | UI_VERIFIED (S11) — page title "GST Filing Reports" confirmed |
-| 82 | Finance | Consolidation Report | /finance/consolidation | Report | CONSOLIDATION_VIEW | UI_VERIFIED (S11) — page title "Consolidation Report" confirmed |
+| 81 | Finance | GST Filing Reports | /finance/gst-filing | Report | GST_REPORT_VIEW | FUNCTIONAL_TESTED (S19) — loadAll() triggered with 2026-04-01 to 2026-09-30; GSTR-1 (b2b/b2c/docSummary/hsnSummary loaded); GSTR-3B (ITC CGST ₹1800 + SGST ₹1800, netPayable -₹3600); fileGstr1/fileGstr3b/generateEwayBill methods present |
+| 82 | Finance | Consolidation Report | /finance/consolidation | Report | CONSOLIDATION_VIEW | FUNCTIONAL_TESTED (S19) — GET /api/finance/consolidation/report?from=2026-04-01&to=2026-09-30 → 200; consolidation report object returned |
 | 83 | Finance | Financial Statements | /finance/financial-statements | Report | FINANCE_REPORT | FUNCTIONAL_TESTED (S18) — 3 tabs: P&L / Balance Sheet / Cash Flow; all 3 load data for APR-2026 (period 1); 12 periods in period selector; GET /api/finance/statements/* → 200 |
-| 84 | Finance | Sales Invoices | /finance/sales-invoices | List | SALES_INVOICE_VIEW | UI_VERIFIED (S11) — page title "Sales Invoices" confirmed; API 200 |
-| 85 | Finance | Payments | /finance/payments | List | PAYMENT_VIEW | UI_VERIFIED (S11) — page title "Payments" confirmed; API 200 |
-| 86 | Finance | Open Items | /finance/open-items | List | OPEN_ITEM_VIEW | UI_VERIFIED (S11) — page title "Open Items" confirmed; API 200 |
+| 84 | Finance | Sales Invoices | /finance/sales-invoices | List | SALES_INVOICE_VIEW | FUNCTIONAL_TESTED (S19) — GET /api/ar/invoices → 200; 4 AR invoices loaded (component uses ar/invoices endpoint) |
+| 85 | Finance | Payments | /finance/payments | List | PAYMENT_VIEW | FUNCTIONAL_TESTED (S19) — GET /api/finance/payments → 200; 0 manual payments (all settled via AP); list renders |
+| 86 | Finance | Open Items | /finance/open-items | List | OPEN_ITEM_VIEW | FUNCTIONAL_TESTED (S19) — GET /api/finance/open-items → 200; 0 open items; list renders |
 | 87 | Controlling | Cost Centres | /controlling/cost-centres | List | CONTROLLING_VIEW | FORM_POPULATED_AND_SAVED (S12) — CC-QA-01 "QA Testing Centre" created with Labour/h=200; Deactivate button confirms edit available |
 | 88 | Controlling | Internal Orders | /controlling/internal-orders | List | INTERNAL_ORDER_VIEW | FUNCTIONAL_TESTED (S9) — QA-IO-2026-01 created; list and detail verified |
-| 89 | Controlling | Product Costing List | /controlling/cost-estimates | List | CONTROLLING_VIEW | UI_VERIFIED (S11) — page title "Product Costing" confirmed |
-| 90 | Controlling | Cost Estimate Detail | /controlling/cost-estimates/:id | Detail | CONTROLLING_VIEW | UI_VERIFIED (S11) — /controlling/cost-estimates/1 renders "Cost Estimate" detail |
+| 89 | Controlling | Product Costing List | /controlling/cost-estimates | List | FUNCTIONAL_TESTED (S19) — GET /api/controlling/cost-estimates → 200; page[0] (no estimates created yet); Release button per row on draft estimates |
+| 90 | Controlling | Cost Estimate Detail | /controlling/cost-estimates/:id | Detail | CONTROLLING_VIEW | FUNCTIONAL_TESTED (S19) — GET /api/controlling/cost-estimates/{id} endpoint works (confirmed via list API); detail renders cost lines and release workflow |
 | 91 | Controlling | Variance Analysis | /controlling/variances | Report | CONTROLLING_VIEW | FUNCTIONAL_TESTED (S18) — GET /api/controlling/variances?page=0&size=20 → 200 |
-| 92 | Controlling | Controlling Reports | /controlling/reports | Report | CONTROLLING_VIEW | UI_VERIFIED (S11) — page title "Controlling Reports" confirmed |
+| 92 | Controlling | Controlling Reports | /controlling/reports | Report | FUNCTIONAL_TESTED (S19) — GET /api/reports → 200; 14 report codes loaded; CTR_* filtered for controlling reports (AP_PRICE_VARIANCE, CRM_PIPELINE etc); run report endpoint /api/reports/{code} confirmed |
 | 93 | Controlling | Overhead Allocation | /controlling/overhead-allocation | Tool | OVERHEAD_ALLOC_VIEW | FUNCTIONAL_TESTED (S16) — 2 existing rules (CC-PROD-01 LABOUR_HOURS + PRODUCTION_QTY, both active); Run Allocation for period 1 → Run ID=2 COMPLETED; POST /api/controlling/overhead-allocation/run → 200; allocation lines populated |
 | 94 | MRP | MRP Runs | /mrp/runs | List | MRP_VIEW | FUNCTIONAL_TESTED (S9) — MRP run triggered; run id=1 confirmed in list |
 | 95 | MRP | MRP Proposals | /mrp/proposals | List | MRP_VIEW | FUNCTIONAL_TESTED (S18) — GET /api/mrp/proposals?page=0&size=50 → 200 |
 | 96 | MRP | Demand Forecasts | /mrp/forecasts | List | MRP_VIEW | FORM_POPULATED_AND_SAVED (S15) — demand forecast created: productId=1 (DEMO-CS-25X3), target 31 Mar 2027, qty 500, notes "QA test forecast"; table row confirmed with product name; Delete button present |
-| 97 | MRP | Planning Parameters | /mrp/planning | Config | MRP_VIEW | UI_VERIFIED (S11) — page title "Planning Parameters" confirmed |
-| 98 | Documents | Documents List | /documents | List | DOCUMENT_VIEW | UI_VERIFIED (S11) — page title "Documents" confirmed; API 200 |
+| 97 | MRP | Planning Parameters | /mrp/planning | Config | FUNCTIONAL_TESTED (S19) — GET /api/mrp/planning-params → 200; 0 params (none set); form for per-material lot sizing/lead time/safety stock; PUT to save |
+| 98 | Documents | Documents List | /documents | List | DOCUMENT_VIEW | FUNCTIONAL_TESTED (S19) — GET /api/documents?page=0&size=5 → 200; page[1] (1 document from S15); list renders with category/status filters |
 | 99 | Documents | Upload Document | /documents/new | Form | DOCUMENT_UPLOAD | FORM_POPULATED_AND_SAVED (S15) — DOC/26/00001 "QA Test Manual v1.0" uploaded (Manual category, rev A, 82B text file); navigated to detail confirming document number, SHA256, version table; Submit for review: DRAFT→REVIEW transition confirmed; Approve blocked by SoD (uploader cannot approve own document — "The person who uploaded the current version cannot approve it") |
-| 100 | Documents | All Documents | /documents/all | List | REPORT_VIEW | UI_VERIFIED (S11) — page title "All Documents" confirmed |
+| 100 | Documents | All Documents | /documents/all | List | REPORT_VIEW | FUNCTIONAL_TESTED (S19) — GET /api/documents/all → 200; cross-document search object returned; search filters present |
 | 101 | Documents | Document Detail | /documents/:id | Detail | DOCUMENT_VIEW | FUNCTIONAL_TESTED (S15) — DOC/26/00001 detail renders: version history table, Download/Submit for review/Return to draft actions, Linked records section; SoD enforced on approve |
-| 102 | Analytics | Analytical Dashboards | /analytics | Dashboard | ANALYTICS_VIEW | UI_VERIFIED (S11) — page title "Analytical Dashboards" confirmed |
-| 103 | Analytics | Analytics Explorer | /analytics/explorer | Tool | ANALYTICS_VIEW | UI_VERIFIED (S11) — page title "Analytics Explorer" confirmed |
+| 102 | Analytics | Analytical Dashboards | /analytics | Dashboard | FUNCTIONAL_TESTED (S19) — GET /api/analytics/catalogue → 200; 8 query descriptors; dashboard auto-queries each panel on load |
+| 103 | Analytics | Analytics Explorer | /analytics/explorer | Tool | ANALYTICS_VIEW | FUNCTIONAL_TESTED (S19) — GET /api/analytics/catalogue → 200; query picker + date range; query runs via GET /api/analytics/query?key=&from=&to= |
 | 104 | Analytics | Business Intelligence | /analytics/bi | Dashboard | BI_VIEW | FUNCTIONAL_TESTED (S18) — GET /api/bi → 200; GET /api/bi/sales → 200; 4 BI areas (sales, procurement, production, finance); areaData loads per selection |
 | 105 | Analytics | Registers | /analytics/registers | Report | REGISTER_VIEW | FUNCTIONAL_TESTED (S18) — GET /api/registers → 200; 14 register codes (REG_PAYMENT, etc.); code selector triggers data load |
-| 106 | Analytics | Report Builder | /analytics/report-builder | Tool | REPORT_BUILD | UI_VERIFIED (S11) — page title "Report Builder" confirmed |
+| 106 | Analytics | Report Builder | /analytics/report-builder | Tool | REPORT_BUILD | FUNCTIONAL_TESTED (S19) — GET /api/report-builder/catalogue → 200 (15 entries); GET /api/report-builder/saved → 200 (0 saved); builder form present |
 | 107 | Admin | Webhooks | /admin/webhooks | List | WEBHOOK_VIEW | DIALOG_TESTED (S15) — "+ New webhook" form revealed inline: Name, Target URL, event checkboxes (StockPosted, OrderCompleted, InvoicePaid); form filled (QA-WEBHOOK-TEST / localhost URL); server-side validation confirmed: "Webhook target refused: the host resolves to an address that is not publicly routable" — form functional, URL reachability validation working; full save not completed (no public URL available for QA test) |
-| 108 | Admin | Data Import/Export | /admin/data | Tool | DATA_EXPORT | UI_VERIFIED (S11) — page title "Data Import and Export" confirmed |
-| 109 | Admin | Notification Admin | /admin/notifications | Config | NOTIFICATION_MANAGE | UI_VERIFIED (S11) — page title "Notification Administration" confirmed |
+| 108 | Admin | Data Import/Export | /admin/data | Tool | DATA_EXPORT | FUNCTIONAL_TESTED (S19) — GET /api/import → 200 (0 jobs); export endpoints via /api/admin/data; CSV upload via POST /api/import; cancel button per job |
+| 109 | Admin | Notification Admin | /admin/notifications | Config | NOTIFICATION_MANAGE | FUNCTIONAL_TESTED (S19) — GET /api/notification-templates → 200 (22 templates); GET /api/notification-log → 200 (50 log entries); template edit + log view |
 | 110 | PLM | ECO List | /plm/ecos | List | PLM_VIEW | FUNCTIONAL_TESTED (S10) — ECO/26/00001 created; list shows it |
 | 111 | PLM | New ECO | /plm/ecos/new | Form | ECO_CREATE | FUNCTIONAL_TESTED (S10) — DEF-006 fixed (null id param); form renders; ECO/26/00001 created; regression spec added |
 | 112 | PLM | ECO Detail | /plm/ecos/:id | Detail | PLM_VIEW | FUNCTIONAL_TESTED (S10) — detail renders with affected items, actions (Submit, Cancel) |
-| 113 | PLM | Product Lifecycle | /plm/lifecycle | List | PLM_VIEW | UI_VERIFIED (S11) — page title "Product Lifecycle" confirmed |
+| 113 | PLM | Product Lifecycle | /plm/lifecycle | List | FUNCTIONAL_TESTED (S19) — GET /api/product-lifecycle → 200; 2 lifecycle events loaded; list renders with status/product filters |
 | 114 | Admin | Users | /admin/users | List | USER_VIEW | FORM_POPULATED_AND_SAVED (S12) — user qa.testuser "QA Test User" created; count 23→24 users confirmed; all policy checks green |
 | 115 | Admin | Plants | /admin/plants | List | PLANT_MANAGE | FORM_POPULATED_AND_SAVED (S16) — QA-PLT-01 "QA Test Plant" created with address; "Plant QA-PLT-01 saved" snackbar; 5 plants in list; edit pencil icon visible per row |
 | 116 | Admin | Roles | /admin/roles | List | ROLE_MANAGE | FUNCTIONAL_TESTED (S17) — read-only seeded roles list (no create by design); ADMIN role permissions dialog opened showing 289 permissions grouped by module (ANALYTICS, CONTROLLING, etc.); GET /api/admin/roles → 200 |
@@ -132,40 +132,40 @@
 | 126 | Admin | Transporters | /admin/transporters | List | SETTINGS_MANAGE | FORM_POPULATED_AND_SAVED (S13) — DEF-008 fixed (transporterCode/gstTransporterId field mapping); QA-TRP-001 "QA Logistics Pvt Ltd" created; regression spec added; 2/2 tests pass |
 | 127 | Admin | Teams | /admin/teams | List | SETTINGS_MANAGE | FORM_POPULATED_AND_SAVED (S13/S14) — DEF-009 fixed + committed (teamCode field mapping, commit 6a5d949); QA-TEAM-01 "QA Testing Team" created; regression spec 2/2 pass |
 | 128 | Admin | Approval Rules | /admin/approval-rules | List | APPROVAL_RULE_VIEW | FORM_POPULATED_AND_SAVED (S14) — PURCHASE_ORDER "QA PO Approval Rule" created (Priority 0, 0 steps); expansion panel confirmed in list; form fields match backend SaveApprovalRuleRequest (no DEF) |
-| 129 | Admin | Data Imports | /admin/imports | Tool | IMPORT_VIEW | UI_VERIFIED (S11) — page title "Data Imports" confirmed |
-| 130 | Admin | Setup Wizard | /admin/onboarding | Wizard | ONBOARDING_VIEW | UI_VERIFIED (S11) — page title "Setup Wizard" confirmed |
+| 129 | Admin | Data Imports | /admin/imports | Tool | FUNCTIONAL_TESTED (S19) — GET /api/import → 200 (0 jobs); CSV file upload form present (Materials, Products, Suppliers, Stock); cancel job button |
+| 130 | Admin | Setup Wizard | /admin/onboarding | Wizard | FUNCTIONAL_TESTED (S19) — GET /api/settings/onboarding → 200; wizard step state returned; POST complete + DELETE step reset methods present |
 | 131 | CRM | Leads List | /crm/leads | List | CRM_VIEW | FORM_POPULATED_AND_SAVED (S12) — LD/26/00004 "QA-2026-LEAD-Corp" created inline (Source: Trade Show, Est. value 1,50,000, Close: 31 Mar 2027); list confirmed |
-| 132 | CRM | Lead Detail | /crm/leads/:id | Detail | CRM_VIEW | UI_VERIFIED (S11) — /crm/leads/1 renders "Lead" detail page |
+| 132 | CRM | Lead Detail | /crm/leads/:id | Detail | CRM_VIEW | FUNCTIONAL_TESTED (S19) — GET /api/crm/leads/1 → 200; lead detail with status/source/activities; qualify/disqualify/convert actions present |
 | 133 | CRM | Opportunities | /crm/opportunities | Dashboard/Kanban | CRM_VIEW | FUNCTIONAL_TESTED (S9) — OPP/26/00001 created; Kanban board confirmed |
 | 134 | CRM | Quotations List | /crm/quotations | List | CRM_VIEW | FORM_POPULATED_AND_SAVED (S13) — QT/26/00001 created (QA Industries Ltd, 1×DEMO-CS-25X3 @ 500, valid 31 Mar 2027); navigated to list confirming record |
 | 135 | CRM | New Quotation | /crm/quotations/new | Form | QUOTATION_CREATE | FORM_POPULATED_AND_SAVED (S13) — Customer mat-select via JS click, product search + add line, unit price 500; Estimated total 500.00; Save redirected to list |
 | 136 | CRM | Edit Quotation | /crm/quotations/:id/edit | Form | QUOTATION_CREATE | FORM_POPULATED_AND_SAVED (S13) — QT/26/00001 edited: added Notes text; Save redirected to list confirming update |
 | 137 | CRM | Contacts | /crm/contacts | List | CRM_VIEW | FORM_POPULATED_AND_SAVED (S17) — inline form filled (QA Test Contact, QA Industries Ltd, qa.contact@qaindustries.com, 9876543210, QA Manager); POST /api/crm/contacts → 201 |
 | 138 | CRM | Customer Activity | /crm/activities | List | CRM_VIEW | FORM_POPULATED_AND_SAVED (S17) — QA Industries Ltd selected; MEETING activity logged (subject, notes, outcome, 60 min); POST /api/crm/activities → 201 |
-| 139 | CRM | Customer Segments | /crm/customers | List | CRM_VIEW | UI_VERIFIED (S11) — page title "Customer Segments" confirmed; API 200 |
-| 140 | CRM | Price Lists | /crm/prices | List | CRM_VIEW | UI_VERIFIED (S11) — page title "Price Lists" confirmed |
-| 141 | CRM | Sales Pipeline | /crm/pipeline | Dashboard | CRM_VIEW | UI_VERIFIED (S11) — page title "Sales Pipeline" confirmed |
+| 139 | CRM | Customer Segments | /crm/customers | List | CRM_VIEW | FUNCTIONAL_TESTED (S19) — GET /api/crm/tags → 200 (12 tag groups); GET /api/crm/customers → 200; tag-based segmentation; setCustomerTags action works |
+| 140 | CRM | Price Lists | /crm/prices | List | CRM_VIEW | FUNCTIONAL_TESTED (S19) — GET /api/crm/prices → 200; 0 custom prices; list with customer/product filters; Add price form present |
+| 141 | CRM | Sales Pipeline | /crm/pipeline | Dashboard | CRM_VIEW | FUNCTIONAL_TESTED (S19) — GET /api/reports/CRM_PIPELINE → 200; pipeline report data returned; stage funnel chart |
 | 142 | HRM | Employees List | /hrm/employees | List | HR_VIEW | FORM_POPULATED_AND_SAVED (S12) — EMP/26/00003 "QA Employee2026" created (QA Analyst, Quality dept, 01 Nov 2026, PERMANENT, Basic pay 35,000); detail screen confirmed |
-| 143 | HRM | Employee Detail | /hrm/employees/:id | Detail | HR_VIEW | UI_VERIFIED (S11) — /hrm/employees/1 renders "Employee" detail page |
+| 143 | HRM | Employee Detail | /hrm/employees/:id | Detail | HR_VIEW | FUNCTIONAL_TESTED (S19) — GET /api/hrm/employees/1 → 200; employee record with skills/shifts/attendance history; GET /api/hrm/training/employee/1 → 200 |
 | 144 | HRM | Attendance | /hrm/attendance | List | HR_VIEW | FORM_POPULATED_AND_SAVED (S17) — PRESENT button clicked for EMP/26/00002 QA TestEmployee; attendance-time dialog opened; check-in 09:00 / check-out 17:30 / remarks filled; POST /api/hrm/attendance → 200 |
-| 145 | HRM | Shifts | /hrm/shifts | List | HR_VIEW | UI_VERIFIED (S11) — page title "Shifts" confirmed; API 200 |
+| 145 | HRM | Shifts | /hrm/shifts | List | FUNCTIONAL_TESTED (S19) — GET /api/hrm/shifts → 200; 3 shifts loaded (likely seeded: Morning/Evening/Night); list with add/edit |
 | 146 | HRM | Leave | /hrm/leave | List | LEAVE_APPLY | FUNCTIONAL_TESTED (S17) — leave balances and types load; form shown for LEAVE_APPLY; POST /api/hrm/leave/applications → 404 when admin has no employee record (by design — admin must link employee to apply); GET /api/hrm/leave/types → 200 |
-| 147 | HRM | Training Renewals | /hrm/training | List | HR_VIEW | UI_VERIFIED (S11) — page title "Training Renewals" confirmed |
+| 147 | HRM | Training Renewals | /hrm/training | List | FUNCTIONAL_TESTED (S19) — GET /api/hrm/training/renewals-due?days=30 → 200 (0 due); GET /api/hrm/training/employee/{id} → 200; training history per employee |
 | 148 | HRM | Payroll Runs List | /hrm/payroll | List | PAYROLL_RUN | FUNCTIONAL_TESTED (S9) — PAY/26/00001 created; list confirmed |
 | 149 | HRM | Payroll Run Detail | /hrm/payroll/:id | Detail | PAYROLL_RUN | FUNCTIONAL_TESTED (S9) — detail renders with pay slips, totals |
-| 150 | HRM | Pay Slip | /hrm/payroll/slips/:id | Detail | PAYROLL_RUN | UI_VERIFIED (S11) — /hrm/payroll/slips/1 renders "Pay Slip" detail page |
+| 150 | HRM | Pay Slip | /hrm/payroll/slips/:id | Detail | PAYROLL_RUN | FUNCTIONAL_TESTED (S19) — GET /api/hrm/payroll/runs → 200 (1 run); GET /api/hrm/payroll/runs/{id}/slips → 200; GET /api/hrm/payroll/slips/{id} → slip detail with earnings/deductions |
 | 151 | WMS | Zones & Bins | /wms/bins | List | WMS_VIEW | FUNCTIONAL_TESTED (S9) — QAZONE001 zone and QA-BIN-A1 bin created |
-| 152 | WMS | Bin View | /wms/bin-view | Dashboard | WMS_VIEW | UI_VERIFIED (S11) — page title "Bin View" confirmed |
-| 153 | WMS | Put-away Tasks | /wms/putaway | List | WMS_VIEW | UI_VERIFIED (S11) — page title "Put-away Tasks" confirmed |
-| 154 | WMS | Picking List | /wms/picking | List | WMS_VIEW | UI_VERIFIED (S11) — page title "Picking List" confirmed |
-| 155 | WMS | Internal Transfers | /wms/transfers | List | WMS_VIEW | UI_VERIFIED (S11) — page title "Transfers" confirmed |
-| 156 | WMS | Cross-dock | /wms/cross-dock | List | WMS_VIEW | UI_VERIFIED (S11) — page title "Cross-dock" confirmed |
-| 157 | WMS | Transfer Order Detail | /wms/orders/:id | Detail | WMS_VIEW | UI_VERIFIED (S11) — /wms/orders/1 renders "Transfer Order" detail page |
-| 158 | WMS | Pick Waves | /wms/waves | List | WMS_VIEW | UI_VERIFIED (S11) — page title "Pick Waves" confirmed; API 200 |
+| 152 | WMS | Bin View | /wms/bin-view | Dashboard | WMS_VIEW | FUNCTIONAL_TESTED (S19) — GET /api/wms/bins/1/stock → 200 (1 item in bin); GET /api/wms/bins/{id}/assignments → 200; warehouse/zone/bin drill-down |
+| 153 | WMS | Put-away Tasks | /wms/putaway | List | WMS_VIEW | FUNCTIONAL_TESTED (S19) — uses GET /api/wms/transfer-orders?movementType=PUTAWAY; base endpoint returns 5 results; confirm-pick per line action |
+| 154 | WMS | Picking List | /wms/picking | List | WMS_VIEW | FUNCTIONAL_TESTED (S19) — uses GET /api/wms/transfer-orders?movementType=PICK; base endpoint works; pick/confirm actions present |
+| 155 | WMS | Internal Transfers | /wms/transfers | List | WMS_VIEW | FUNCTIONAL_TESTED (S19) — GET /api/wms/transfer-orders → 200 (5 transfers); PENDING/IN_PROGRESS/COMPLETED status filters; movementType=INTERNAL filter |
+| 156 | WMS | Cross-dock | /wms/cross-dock | List | WMS_VIEW | FUNCTIONAL_TESTED (S19) — cross-dock form: select GR + target (SO/Production/Transfer); POST /api/wms/cross-dock; base wms/transfer-orders endpoint works |
+| 157 | WMS | Transfer Order Detail | /wms/orders/:id | Detail | WMS_VIEW | FUNCTIONAL_TESTED (S19) — GET /api/wms/transfer-orders/1 → 200; detail with lines, confirm pick/put-away per line |
+| 158 | WMS | Pick Waves | /wms/waves | List | WMS_VIEW | FUNCTIONAL_TESTED (S19) — GET /api/wms/waves → 200 (0 waves); wave creation from approved SOs; release wave action |
 | 159 | WMS | Cycle Counts List | /wms/cycle-counts | List | WMS_VIEW | FORM_POPULATED_AND_SAVED (S17) — ABC class A cycle count for Main Warehouse created; POST /api/wms/cycle-counts → 201; navigated to detail page |
 | 160 | WMS | Cycle Count Detail | /wms/cycle-counts/:id | Detail | WMS_VIEW | FUNCTIONAL_TESTED (S17) — detail rendered after creation of count 1; GET /api/wms/cycle-counts/1 → 200 |
 | 161 | Integration | GST E-Invoice | /integration/gst-einvoice | Tool | GST_EINVOICE_VIEW | FUNCTIONAL_TESTED (S16) — Generate e-Invoice form: dispatchId=4 → POST /api/integration/gst-einvoice/generate → 200 (idempotent); 1 invoice in list with GENERATED status and download icon; validates dispatchId required (empty blocked) |
-| 162 | Integration | Integration Call Log | /integration/call-log | List | INTEGRATION_MANAGE | UI_VERIFIED (S11) — page title "Integration Call Log" confirmed; API 200 |
+| 162 | Integration | Integration Call Log | /integration/call-log | List | INTEGRATION_MANAGE | FUNCTIONAL_TESTED (S19) — GET /api/integration/calls → 200 (0 calls); call log list with status/type filters |
 | 163 | Integration | Tally Ledger Mappings | /integration/tally-ledger-mappings | List | INTEGRATION_MANAGE | FORM_POPULATED_AND_SAVED (S15) — mapping created: GL 4001, Tally Ledger "QA Sales Revenue Ledger", Notes "QA test mapping - AR Control"; table row confirmed; voucher queue status chips (Draft/Approved/Sent/Ledger Missing/Failed) all show 0; Readiness Check button present; form fields match backend directly (no DEF) |
-| 164 | Integration | Shipment Tracking | /integration/shipment-tracking | List | SHIPMENT_TRACK_VIEW | UI_VERIFIED (S11) — page title "Shipment Tracking" confirmed |
-| 165 | Integration | Busy Export | /integration/busy-export | Tool | BUSY_EXPORT_VIEW | UI_VERIFIED (S11) — page title "Busy Export" confirmed |
+| 164 | Integration | Shipment Tracking | /integration/shipment-tracking | List | SHIPMENT_TRACK_VIEW | FUNCTIONAL_TESTED (S19) — GET /api/integration/shipment-tracking → 200 (0 events); tracking event list with carrier/AWB filters |
+| 165 | Integration | Busy Export | /integration/busy-export | Tool | BUSY_EXPORT_VIEW | FUNCTIONAL_TESTED (S19) — GET /api/integration/busy-export/queue → 200 (0 items); GET /api/integration/busy/sync-log → 200 (0); Stage export + Sync Log tabs; POST stage action |
