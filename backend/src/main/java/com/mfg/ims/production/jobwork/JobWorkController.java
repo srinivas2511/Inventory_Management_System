@@ -1,6 +1,7 @@
 package com.mfg.ims.production.jobwork;
 
 import com.mfg.ims.auth.service.UserPermissionCache.CachedUser;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -33,7 +34,7 @@ public class JobWorkController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAuthority('JWO_CREATE')")
-    public JobWorkOrderDto create(@RequestBody CreateJobWorkOrderRequest req,
+    public JobWorkOrderDto create(@Valid @RequestBody CreateJobWorkOrderRequest req,
                                   @AuthenticationPrincipal CachedUser actor) {
         return service.create(req, actor.id());
     }

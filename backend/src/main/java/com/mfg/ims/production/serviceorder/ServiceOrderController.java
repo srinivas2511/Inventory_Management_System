@@ -3,6 +3,7 @@ package com.mfg.ims.production.serviceorder;
 import com.mfg.ims.auth.service.UserPermissionCache.CachedUser;
 import com.mfg.ims.finance.invoice.SalesInvoiceDto;
 import com.mfg.ims.procurement.dto.GoodsReceiptDto;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -35,7 +36,7 @@ public class ServiceOrderController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAuthority('SERVICE_ORDER_CREATE')")
-    public ServiceOrderDto create(@RequestBody CreateServiceOrderRequest req,
+    public ServiceOrderDto create(@Valid @RequestBody CreateServiceOrderRequest req,
                                    @AuthenticationPrincipal CachedUser actor) {
         return service.create(req, actor.id());
     }

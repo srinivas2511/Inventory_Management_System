@@ -1,6 +1,7 @@
 package com.mfg.ims.analytics.reportbuilder;
 
 import com.mfg.ims.auth.service.UserPermissionCache.CachedUser;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -46,7 +47,7 @@ public class ReportBuilderController {
     @PostMapping("/saved")
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAuthority('REPORT_BUILD')")
-    public SavedReportDto createSaved(@RequestBody CreateSavedReportRequest req,
+    public SavedReportDto createSaved(@Valid @RequestBody CreateSavedReportRequest req,
                                        @AuthenticationPrincipal CachedUser actor) {
         return service.createSavedReport(req, actor.id());
     }

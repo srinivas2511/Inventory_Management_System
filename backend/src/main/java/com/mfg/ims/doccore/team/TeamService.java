@@ -8,6 +8,8 @@ import org.springframework.transaction.annotation.Transactional;
 import com.mfg.ims.common.exception.BusinessRuleException;
 import com.mfg.ims.common.exception.ErrorCode;
 import com.mfg.ims.common.exception.NotFoundException;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class TeamService {
@@ -28,6 +30,12 @@ public class TeamService {
 
     @Transactional
     public TeamDto create(String teamCode, String name) {
+        if (teamCode == null || teamCode.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "teamCode is required");
+        }
+        if (name == null || name.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "name is required");
+        }
         if (teamRepo.existsByCompanyIdAndTeamCode(1L, teamCode)) {
             throw new BusinessRuleException(ErrorCode.DUPLICATE_KEY, "Team code already exists: " + teamCode);
         }

@@ -1,12 +1,13 @@
 package com.mfg.ims.production.jobwork;
 
+import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
 public record CreateJobWorkOrderRequest(
         LocalDate docDate,
-        Long vendorId,
+        @NotNull Long vendorId,
         String challanNo,
         LocalDate issueDate,
         LocalDate expectedReturn,
