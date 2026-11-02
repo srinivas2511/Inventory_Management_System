@@ -82,6 +82,13 @@ export const NAV_GROUPS: NavGroup[] = [
         permission: 'WORK_CENTRE_VIEW',
         enabled: true,
       },
+      {
+        label: $localize`:@@nav.item-operations:Operations`,
+        icon: 'precision_manufacturing',
+        route: '/master/operations',
+        permission: 'MASTERDATA_MANAGE',
+        enabled: true,
+      },
     ],
   },
   {

@@ -42,6 +42,10 @@
         <source>Work Centres</source>
         <target>कार्य केन्द्र</target>
       </trans-unit>
+      <trans-unit id="nav.item-operations" datatype="html">
+        <source>Operations</source>
+        <target>संचालन</target>
+      </trans-unit>
       <trans-unit id="nav.item-vendor-types" datatype="html">
         <source>Vendor Types</source>
         <target>विक्रेता प्रकार</target>

@@ -10,7 +10,11 @@ public interface CustomerApprovedProductRepository extends JpaRepository<Custome
 
     List<CustomerApprovedProduct> findByCustomerId(Long customerId);
 
+    List<CustomerApprovedProduct> findByProductId(Long productId);
+
     boolean existsByCustomerIdAndProductId(Long customerId, Long productId);
 
     void deleteByCustomerId(Long customerId);
+
+    void deleteByCustomerIdAndProductId(Long customerId, Long productId);
 }

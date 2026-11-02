@@ -59,6 +59,21 @@ public class OperationService {
     }
 
     @Transactional
+    public OperationDto update(Long id, SaveOperationRequest req) {
+        Operation op = repo.findById(id)
+                .orElseThrow(() -> new NotFoundException("Operation not found: " + id));
+        op.setName(req.name());
+        op.setDescription(req.description());
+        op.setDefaultMachineType(req.defaultMachineType());
+        op.setStandardTimeMin(req.standardTimeMin());
+        op.setSetupTimeMin(req.setupTimeMin());
+        op.setInspection(req.isInspection());
+        op = repo.save(op);
+        auditService.record("OPERATION_UPDATE", "Operation", String.valueOf(id), null, req.name(), null);
+        return OperationDto.from(op);
+    }
+
+    @Transactional
     public OperationDto deactivate(Long id) {
         Operation op = repo.findById(id)
                 .orElseThrow(() -> new NotFoundException("Operation not found: " + id));

@@ -76,6 +76,13 @@ export const routes: Routes = [
           import('./features/master/work-centre/work-centres.component').then((m) => m.WorkCentresComponent),
       },
       {
+        path: 'master/operations',
+        title: 'Operations',
+        canActivate: [permissionGuard('MASTERDATA_MANAGE')],
+        loadComponent: () =>
+          import('./features/engineering/operations.component').then((m) => m.OperationsComponent),
+      },
+      {
         path: 'procurement/vendor-types',
         title: 'Vendor Types',
         canActivate: [permissionGuard('VENDOR_TYPE_VIEW')],

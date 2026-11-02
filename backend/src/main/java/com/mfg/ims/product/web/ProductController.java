@@ -20,6 +20,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.mfg.ims.partner.dto.ApprovedItemDto;
+import com.mfg.ims.partner.dto.SetApprovedItemsRequest;
 import com.mfg.ims.product.dto.ProductDto;
 import com.mfg.ims.product.dto.SaveProductRequest;
 import com.mfg.ims.product.dto.SpringAttributeDefinitionDto;
@@ -75,6 +77,18 @@ public class ProductController {
     @PreAuthorize("hasAuthority('PRODUCT_UPDATE')")
     public ProductDto obsolete(@PathVariable Long id) {
         return service.obsolete(id);
+    }
+
+    @GetMapping("/{id}/customers")
+    @PreAuthorize("hasAuthority('PRODUCT_VIEW')")
+    public List<ApprovedItemDto> getCustomers(@PathVariable Long id) {
+        return service.getCustomersForProduct(id);
+    }
+
+    @PutMapping("/{id}/customers")
+    @PreAuthorize("hasAuthority('PRODUCT_UPDATE')")
+    public void setCustomers(@PathVariable Long id, @RequestBody SetApprovedItemsRequest req) {
+        service.setCustomersForProduct(id, req.ids());
     }
 
     @GetMapping("/attributes/{springType}")

@@ -72,6 +72,13 @@
           <context context-type="linenumber">59</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="nav.item-operations" datatype="html">
+        <source>Operations</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/layout/nav.config.ts</context>
+          <context context-type="linenumber">66</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="nav.item-vendor-types" datatype="html">
         <source>Vendor Types</source>
         <context-group purpose="location">

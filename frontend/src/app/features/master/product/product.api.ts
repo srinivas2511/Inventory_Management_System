@@ -4,6 +4,13 @@ import { Observable, map } from 'rxjs';
 import { AppConfigService } from '../../../core/config/app-config.service';
 import { Page } from '../material/material.api';
 
+/** A customer linked to a product via the approved-products list. */
+export interface CustomerRef {
+  id: number;
+  code: string;
+  name: string;
+}
+
 /** A product type code from the product_types lookup. */
 export type ProductVariant = string;
 
@@ -141,5 +148,13 @@ export class ProductApi {
     return this.http
       .get<BackendAttributeDefinitionDto[]>(`${this.base}/api/products/attributes/${encodeURIComponent(springType)}`)
       .pipe(map((defs) => defs.map(toAttributeDefinition)));
+  }
+
+  getCustomers(productId: number): Observable<CustomerRef[]> {
+    return this.http.get<CustomerRef[]>(`${this.base}/api/products/${productId}/customers`);
+  }
+
+  setCustomers(productId: number, ids: number[]): Observable<void> {
+    return this.http.put<void>(`${this.base}/api/products/${productId}/customers`, { ids });
   }
 }

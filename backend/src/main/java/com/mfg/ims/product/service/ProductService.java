@@ -16,6 +16,9 @@ import com.mfg.ims.common.exception.ConflictException;
 import com.mfg.ims.common.exception.ErrorCode;
 import com.mfg.ims.common.exception.NotFoundException;
 import com.mfg.ims.material.repository.MaterialRepository;
+import com.mfg.ims.partner.domain.CustomerApprovedProduct;
+import com.mfg.ims.partner.dto.ApprovedItemDto;
+import com.mfg.ims.partner.repository.CustomerApprovedProductRepository;
 import com.mfg.ims.partner.repository.CustomerRepository;
 import com.mfg.ims.product.domain.Product;
 import com.mfg.ims.product.domain.SpringSpecification;
@@ -33,17 +36,20 @@ public class ProductService {
     private final ProductRepository productRepo;
     private final MaterialRepository materialRepo;
     private final CustomerRepository customerRepo;
+    private final CustomerApprovedProductRepository approvedProductRepo;
     private final SpringAttributeDefinitionRepository attrDefRepo;
     private final AuditService auditService;
     private final ObjectMapper objectMapper;
 
     public ProductService(ProductRepository productRepo, MaterialRepository materialRepo,
                           CustomerRepository customerRepo,
+                          CustomerApprovedProductRepository approvedProductRepo,
                           SpringAttributeDefinitionRepository attrDefRepo,
                           AuditService auditService, ObjectMapper objectMapper) {
         this.productRepo = productRepo;
         this.materialRepo = materialRepo;
         this.customerRepo = customerRepo;
+        this.approvedProductRepo = approvedProductRepo;
         this.attrDefRepo = attrDefRepo;
         this.auditService = auditService;
         this.objectMapper = objectMapper;
@@ -166,6 +172,29 @@ public class ProductService {
         }
         p.setWorkCentreId(req.workCentreId());
         p.setWeightPer1000Kgs(req.weightPer1000Kgs());
+    }
+
+    @Transactional(readOnly = true)
+    public List<ApprovedItemDto> getCustomersForProduct(Long productId) {
+        require(productId);
+        return approvedProductRepo.findByProductId(productId).stream()
+            .map(cap -> customerRepo.findById(cap.getCustomerId())
+                .map(c -> new ApprovedItemDto(c.getId(), c.getCustomerCode(), c.getName()))
+                .orElse(null))
+            .filter(dto -> dto != null)
+            .toList();
+    }
+
+    @Transactional
+    public void setCustomersForProduct(Long productId, List<Long> customerIds) {
+        require(productId);
+        approvedProductRepo.findByProductId(productId)
+            .forEach(cap -> approvedProductRepo.delete(cap));
+        for (Long customerId : customerIds) {
+            approvedProductRepo.save(new CustomerApprovedProduct(customerId, productId));
+        }
+        auditService.record("SET_CUSTOMERS", "PRODUCT", String.valueOf(productId), null,
+            customerIds.size() + " customers", null);
     }
 
     private String toJson(Object obj) {
