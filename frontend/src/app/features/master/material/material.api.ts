@@ -18,7 +18,7 @@ export interface MaterialDto {
   standardCost?: number;
   preferredSupplierId?: number;
   sourceType?: string;
-  isCustomerMaterial?: boolean;
+  customerMaterial?: boolean;
   active: boolean;
   version: number;
 }
@@ -37,7 +37,7 @@ export interface SaveMaterialRequest {
   standardCost?: number | null;
   preferredSupplierId?: number | null;
   sourceType?: string | null;
-  isCustomerMaterial?: boolean | null;
+  customerMaterial?: boolean | null;
 }
 
 export interface UomDto {

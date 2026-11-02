@@ -119,7 +119,7 @@ import { AttachmentsPanelComponent } from '../../../shared/components/attachment
                   </mat-select>
                 </mat-form-field>
                 <div class="toggle-row">
-                  <mat-slide-toggle formControlName="isCustomerMaterial">Customer material</mat-slide-toggle>
+                  <mat-slide-toggle formControlName="customerMaterial">Customer material</mat-slide-toggle>
                 </div>
                 @if (errorMessage()) {
                   <p class="form-error mat-body-2">{{ errorMessage() }}</p>
@@ -399,7 +399,7 @@ import { AttachmentsPanelComponent } from '../../../shared/components/attachment
             </mat-select>
           </mat-form-field>
           <div class="toggle-row">
-            <mat-slide-toggle formControlName="isCustomerMaterial">Customer material</mat-slide-toggle>
+            <mat-slide-toggle formControlName="customerMaterial">Customer material</mat-slide-toggle>
           </div>
           @if (errorMessage()) {
             <p class="form-error mat-body-2">{{ errorMessage() }}</p>
@@ -493,7 +493,7 @@ export class MaterialFormComponent implements OnInit {
     maxStock: [null as number | null],
     standardCost: [null as number | null, [Validators.required, Validators.min(0)]],
     sourceType: ['LOCAL'],
-    isCustomerMaterial: [false],
+    customerMaterial: [false],
   });
 
   // GC-1 UOM conversions
