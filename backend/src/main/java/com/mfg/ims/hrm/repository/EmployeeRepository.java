@@ -30,4 +30,6 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long>, JpaSp
     @Query("select u from User u join u.roles r where r.code in :roleCodes "
             + "and not exists (select e.id from Employee e where e.userId = u.id) order by u.username")
     List<User> findUsersWithoutEmployee(@Param("roleCodes") Collection<String> roleCodes);
+
+    List<Employee> findByOperatorTrueOrderByOperatorCode();
 }

@@ -72,6 +72,8 @@ export interface ProductDto {
   heatTreatment?: string;
   surfaceTreatment?: string;
   customerId?: number | null;
+  workCentreId?: number | null;
+  weightPer1000Kgs?: number | null;
   attributes?: Record<string, unknown> | null;
   active: boolean;
   version: number;
@@ -91,6 +93,8 @@ export interface SaveProductRequest {
   heatTreatment?: string | null;
   surfaceTreatment?: string | null;
   customerId?: number | null;
+  workCentreId?: number | null;
+  weightPer1000Kgs?: number | null;
   attributes?: Record<string, unknown>;
 }
 

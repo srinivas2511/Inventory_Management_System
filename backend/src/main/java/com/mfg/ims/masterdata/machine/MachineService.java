@@ -60,6 +60,8 @@ public class MachineService {
             }
             machine.setCostCentreId(req.costCentreId());
         }
+        machine.setDescription(req.description());
+        machine.setWorkCentreId(req.workCentreId());
         machine = repo.save(machine);
         auditService.record("MACHINE_SAVE", "Machine", String.valueOf(machine.getId()), null, req.code(), null);
         return MachineDto.from(machine);

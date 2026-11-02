@@ -180,7 +180,7 @@ public class EmployeeService {
                 e.getDepartment());
     }
 
-    EmployeeDto toDto(Employee e, boolean compensationVisible) {
+    public EmployeeDto toDto(Employee e, boolean compensationVisible) {
         String username = e.getUserId() == null ? null
                 : userRepo.findById(e.getUserId()).map(User::getUsername).orElse(null);
         return new EmployeeDto(e.getId(), e.getEmployeeCode(), e.getUserId(), username, e.getFirstName(),
@@ -194,6 +194,7 @@ public class EmployeeService {
                 compensationVisible ? e.getBankIfsc() : null,
                 compensationVisible ? e.getPfNumber() : null,
                 compensationVisible ? e.getEsiNumber() : null,
+                e.isOperator(), e.getOperatorCode(),
                 e.getVersion());
     }
 
@@ -215,6 +216,8 @@ public class EmployeeService {
         e.setPfNumber(blankToNull(req.pfNumber()));
         e.setEsiNumber(blankToNull(req.esiNumber()));
         e.setDefaultShift(blankToNull(req.defaultShift()));
+        e.setOperator(req.operator());
+        e.setOperatorCode(blankToNull(req.operatorCode()));
     }
 
     private void validateLinks(SaveEmployeeRequest req, Employee existing) {

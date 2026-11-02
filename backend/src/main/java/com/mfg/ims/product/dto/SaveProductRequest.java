@@ -37,5 +37,7 @@ public record SaveProductRequest(
         BigDecimal reorderLevel,
         BigDecimal standardCost,
         JsonNode attributes,
+        Long workCentreId,
+        BigDecimal weightPer1000Kgs,
         Long version) {
 }

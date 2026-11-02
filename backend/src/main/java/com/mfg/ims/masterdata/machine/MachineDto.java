@@ -8,7 +8,9 @@ public record MachineDto(
         String productionLine,
         String status,
         boolean active,
-        Long costCentreId) {
+        Long costCentreId,
+        String description,
+        Long workCentreId) {
 
     public static MachineDto from(Machine m) {
         return new MachineDto(
@@ -19,6 +21,8 @@ public record MachineDto(
                 m.getProductionLine(),
                 m.getStatus(),
                 m.isActive(),
-                m.getCostCentreId());
+                m.getCostCentreId(),
+                m.getDescription(),
+                m.getWorkCentreId());
     }
 }

@@ -31,6 +31,12 @@ public class Machine extends BaseEntity {
     @Column(name = "cost_centre_id")
     private Long costCentreId;
 
+    @Column(length = 300)
+    private String description;
+
+    @Column(name = "work_centre_id")
+    private Long workCentreId;
+
     public Machine() {}
 
     public String getMachineCode() { return machineCode; }
@@ -53,4 +59,10 @@ public class Machine extends BaseEntity {
 
     public boolean isActive() { return active; }
     public void setActive(boolean v) { this.active = v; }
+
+    public String getDescription() { return description; }
+    public void setDescription(String v) { this.description = v; }
+
+    public Long getWorkCentreId() { return workCentreId; }
+    public void setWorkCentreId(Long v) { this.workCentreId = v; }
 }

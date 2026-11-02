@@ -175,6 +175,14 @@ export class LookupApi {
     return this.http.get<MaterialStock[]>('/api/lookups/material-stock', { params });
   }
 
+  workCentres(): Observable<LookupOption[]> {
+    return this.http.get<LookupOption[]>('/api/lookups/work-centres');
+  }
+
+  vendorTypes(): Observable<LookupOption[]> {
+    return this.http.get<LookupOption[]>('/api/lookups/vendor-types');
+  }
+
   dispatchableOrders(): Observable<DispatchableOrder[]> {
     return this.http.get<DispatchableOrder[]>('/api/lookups/sales-orders/dispatchable');
   }

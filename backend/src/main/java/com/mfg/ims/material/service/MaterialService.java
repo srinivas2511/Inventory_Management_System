@@ -93,6 +93,8 @@ public class MaterialService {
         m.setShelfLifeDays(req.shelfLifeDays());
         m.setDescription(req.description());
         m.setServiceItem(req.serviceItem());
+        m.setSourceType(req.sourceType() == null || req.sourceType().isBlank() ? "LOCAL" : req.sourceType());
+        m.setCustomerMaterial(req.customerMaterial());
 
         if (req.preferredSupplierId() != null) {
             m.setPreferredSupplier(supplierRepo.findById(req.preferredSupplierId())

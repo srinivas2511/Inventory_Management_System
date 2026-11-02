@@ -45,6 +45,8 @@ public final class EmployeeDtos {
             String bankIfsc,
             String pfNumber,
             String esiNumber,
+            boolean operator,
+            String operatorCode,
             Long version) {}
 
     public record EmployeeSummaryDto(
@@ -77,6 +79,8 @@ public final class EmployeeDtos {
             @Size(max = 20) String esiNumber,
             @Size(max = 10) String defaultShift,
             @Size(max = 300) String payChangeReason,
+            boolean operator,
+            @Size(max = 20) String operatorCode,
             Long version) {}
 
     public record DeactivateEmployeeRequest(

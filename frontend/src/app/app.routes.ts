@@ -69,6 +69,27 @@ export const routes: Routes = [
           import('./features/master/product/product-list.component').then((m) => m.ProductListComponent),
       },
       {
+        path: 'master/work-centres',
+        title: 'Work Centres',
+        canActivate: [permissionGuard('WORK_CENTRE_VIEW')],
+        loadComponent: () =>
+          import('./features/master/work-centre/work-centres.component').then((m) => m.WorkCentresComponent),
+      },
+      {
+        path: 'procurement/vendor-types',
+        title: 'Vendor Types',
+        canActivate: [permissionGuard('VENDOR_TYPE_VIEW')],
+        loadComponent: () =>
+          import('./features/procurement/vendor-types/vendor-types.component').then((m) => m.VendorTypesComponent),
+      },
+      {
+        path: 'hrm/operators',
+        title: 'Operators',
+        canActivate: [permissionGuard('OPERATOR_VIEW')],
+        loadComponent: () =>
+          import('./features/hrm/operators.component').then((m) => m.OperatorsComponent),
+      },
+      {
         path: 'warehouse/warehouses',
         title: 'Warehouses',
         canActivate: [permissionGuard('INVENTORY_VIEW')],
@@ -364,6 +385,13 @@ export const routes: Routes = [
           import('./features/maintenance/predictive-maintenance.component').then(
             (m) => m.PredictiveMaintenanceComponent,
           ),
+      },
+      {
+        path: 'maintenance/machines',
+        title: 'Machines',
+        canActivate: [permissionGuard('MACHINE_MANAGE')],
+        loadComponent: () =>
+          import('./features/maintenance/machine-list.component').then((m) => m.MachineListComponent),
       },
       {
         path: 'integration/gst-einvoice',

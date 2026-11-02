@@ -20,6 +20,8 @@ export interface SupplierDto {
   address?: string;
   gstNumber?: string;
   paymentTerms?: string;
+  notes?: string;
+  vendorTypeId?: number;
   status: string;
   version: number;
 }
@@ -33,6 +35,8 @@ export interface SaveSupplierRequest {
   address?: string;
   gstNumber?: string;
   paymentTerms?: string | null;
+  notes?: string | null;
+  vendorTypeId?: number | null;
 }
 
 @Injectable({ providedIn: 'root' })

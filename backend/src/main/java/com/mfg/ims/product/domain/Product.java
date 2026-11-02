@@ -111,6 +111,12 @@ public class Product extends BaseEntity {
     @Column(name = "allow_negative_stock", nullable = false)
     private boolean allowNegativeStock = false;
 
+    @Column(name = "work_centre_id")
+    private Long workCentreId;
+
+    @Column(name = "weight_per_1000_kgs", precision = 12, scale = 6)
+    private java.math.BigDecimal weightPer1000Kgs;
+
     @OneToOne(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     private SpringSpecification specification;
 
@@ -181,4 +187,10 @@ public class Product extends BaseEntity {
     public void setStandardCost(BigDecimal standardCost) { this.standardCost = standardCost; }
     public void setActive(boolean active) { this.active = active; }
     public void setSpecification(SpringSpecification specification) { this.specification = specification; }
+
+    public Long getWorkCentreId() { return workCentreId; }
+    public void setWorkCentreId(Long v) { this.workCentreId = v; }
+
+    public java.math.BigDecimal getWeightPer1000Kgs() { return weightPer1000Kgs; }
+    public void setWeightPer1000Kgs(java.math.BigDecimal v) { this.weightPer1000Kgs = v; }
 }

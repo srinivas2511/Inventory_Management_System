@@ -72,6 +72,12 @@ public class Material extends BaseEntity {
     @Column(name = "purchase_tax_code", length = 15)
     private String purchaseTaxCode;
 
+    @Column(name = "source_type", nullable = false, length = 10)
+    private String sourceType = "LOCAL";
+
+    @Column(name = "is_customer_material", nullable = false)
+    private boolean customerMaterial = false;
+
     public Material() {}
 
     // ── getters ──────────────────────────────────────────────────────────────
@@ -114,4 +120,10 @@ public class Material extends BaseEntity {
     public void setShelfLifeDays(Integer shelfLifeDays) { this.shelfLifeDays = shelfLifeDays; }
     public void setDescription(String description) { this.description = description; }
     public void setActive(boolean active) { this.active = active; }
+
+    public String getSourceType() { return sourceType; }
+    public void setSourceType(String v) { this.sourceType = v; }
+
+    public boolean isCustomerMaterial() { return customerMaterial; }
+    public void setCustomerMaterial(boolean v) { this.customerMaterial = v; }
 }

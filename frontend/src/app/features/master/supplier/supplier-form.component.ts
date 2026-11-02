@@ -11,7 +11,7 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
 import { applyFieldErrors } from '../../../core/models/problem.model';
 import { SupplierApi, SupplierDto, ApprovedMaterialDto } from './supplier.api';
-import { LookupApi, LookupItem } from '../../../shared/lookup.api';
+import { LookupApi, LookupItem, LookupOption } from '../../../shared/lookup.api';
 import { CommentsPanelComponent } from '../../../shared/components/comments-panel/comments-panel.component';
 import { AttachmentsPanelComponent } from '../../../shared/components/attachments-panel/attachments-panel.component';
 
@@ -78,6 +78,19 @@ const GST_PATTERN = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
                 <mat-form-field appearance="outline" class="full-span">
                   <mat-label>Address</mat-label>
                   <textarea matInput formControlName="address" rows="2"></textarea>
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Vendor Type</mat-label>
+                  <mat-select formControlName="vendorTypeId">
+                    <mat-option [value]="null">— None —</mat-option>
+                    @for (vt of vendorTypes(); track vt.id) {
+                      <mat-option [value]="vt.id">{{ vt.code }} – {{ vt.name }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="full-span">
+                  <mat-label>Notes / Comments</mat-label>
+                  <textarea matInput formControlName="notes" rows="3"></textarea>
                 </mat-form-field>
                 @if (errorMessage()) {
                   <p class="form-error mat-body-2">{{ errorMessage() }}</p>
@@ -191,6 +204,19 @@ const GST_PATTERN = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
             <mat-label>Address</mat-label>
             <textarea matInput formControlName="address" rows="2"></textarea>
           </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Vendor Type</mat-label>
+            <mat-select formControlName="vendorTypeId">
+              <mat-option [value]="null">— None —</mat-option>
+              @for (vt of vendorTypes(); track vt.id) {
+                <mat-option [value]="vt.id">{{ vt.code }} – {{ vt.name }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="full-span">
+            <mat-label>Notes / Comments</mat-label>
+            <textarea matInput formControlName="notes" rows="3"></textarea>
+          </mat-form-field>
           @if (errorMessage()) {
             <p class="form-error mat-body-2">{{ errorMessage() }}</p>
           }
@@ -262,7 +288,7 @@ export class SupplierFormComponent implements OnInit {
   protected readonly supplier = inject<SupplierDto | undefined>(MAT_DIALOG_DATA);
   protected readonly saving = signal(false);
   protected readonly errorMessage = signal('');
-  protected readonly form = inject(FormBuilder).nonNullable.group({
+  protected readonly form = inject(FormBuilder).group({
     supplierCode: ['', Validators.required],
     name: ['', Validators.required],
     contactPerson: [''],
@@ -271,8 +297,11 @@ export class SupplierFormComponent implements OnInit {
     gstNumber: ['', Validators.pattern(GST_PATTERN)],
     address: [''],
     paymentTerms: [''],
+    notes: [''],
+    vendorTypeId: [null as number | null],
   });
 
+  protected readonly vendorTypes = signal<LookupOption[]>([]);
   protected readonly approvedMaterials = signal<ApprovedMaterialDto[]>([]);
   protected readonly allMaterials = signal<LookupItem[]>([]);
   protected readonly approvedSaving = signal(false);
@@ -288,8 +317,9 @@ export class SupplierFormComponent implements OnInit {
   private readonly dialogRef = inject(MatDialogRef<SupplierFormComponent>);
 
   ngOnInit(): void {
+    this.lookupApi.vendorTypes().subscribe((list) => this.vendorTypes.set(list));
     if (this.supplier) {
-      this.form.patchValue(this.supplier);
+      this.form.patchValue({ ...this.supplier, vendorTypeId: this.supplier.vendorTypeId ?? null });
       this.form.controls.supplierCode.disable();
       this.loadApproved();
       this.lookupApi.materials().subscribe((list) => this.allMaterials.set(list));
@@ -338,7 +368,12 @@ export class SupplierFormComponent implements OnInit {
     this.saving.set(true);
     const raw = this.form.getRawValue();
     // GST is optional: a blank field means 'none', not an empty string the API must reject.
-    const req = { ...raw, gstNumber: raw.gstNumber.trim() === '' ? undefined : raw.gstNumber.trim() };
+    const req = {
+      ...raw,
+      gstNumber: raw.gstNumber?.trim() === '' ? undefined : raw.gstNumber?.trim(),
+      notes: raw.notes?.trim() || null,
+      vendorTypeId: raw.vendorTypeId ?? null,
+    };
     const obs = this.supplier ? this.api.update(this.supplier.id, req) : this.api.create(req);
     obs.subscribe({
       next: () => {

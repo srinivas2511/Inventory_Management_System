@@ -38,6 +38,18 @@
         <source>Customers</source>
         <target>ಗ್ರಾಹಕರು</target>
       </trans-unit>
+      <trans-unit id="nav.item-work-centres" datatype="html">
+        <source>Work Centres</source>
+        <target>ಕಾರ್ಯ ಕೇಂದ್ರಗಳು</target>
+      </trans-unit>
+      <trans-unit id="nav.item-vendor-types" datatype="html">
+        <source>Vendor Types</source>
+        <target>ಮಾರಾಟಗಾರ ವಿಧಗಳು</target>
+      </trans-unit>
+      <trans-unit id="nav.item-operators" datatype="html">
+        <source>Operators</source>
+        <target>ಆಪರೇಟರ್‌ಗಳು</target>
+      </trans-unit>
       <trans-unit id="nav.group-warehouses-inventory" datatype="html">
         <source>Warehouses &amp; Inventory</source>
         <target>ಗೋದಾಮುಗಳು ಮತ್ತು ದಾಸ್ತಾನು</target>
@@ -537,6 +549,10 @@
       <trans-unit id="nav.item-predictive-maintenance" datatype="html">
         <source>Predictive Maintenance</source>
         <target>ಭವಿಷ್ಯಸೂಚಕ ನಿರ್ವಹಣೆ</target>
+      </trans-unit>
+      <trans-unit id="nav.item-machines" datatype="html">
+        <source>Machines</source>
+        <target>ಯಂತ್ರಗಳು</target>
       </trans-unit>
       <trans-unit id="nav.group-administration" datatype="html">
         <source>Administration</source>

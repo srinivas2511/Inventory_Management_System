@@ -118,7 +118,7 @@ class HrmIT extends AbstractIntegrationTest {
     private EmployeeDto employee(String basic, Long userId, Long costCentreId) {
         return employeeService.create(new SaveEmployeeRequest(null, userId, "Test", td.code("Emp"), null, null,
                 "Operator", "Production", null, costCentreId, JOINED, EmploymentType.PERMANENT, null,
-                new BigDecimal(basic), null, null, "123456789", "HDFC0000001", null, null, null, null, null));
+                new BigDecimal(basic), null, null, "123456789", "HDFC0000001", null, null, null, null, false, null, null));
     }
 
     private void closePeriodContaining(LocalDate date) {
@@ -498,14 +498,14 @@ class HrmIT extends AbstractIntegrationTest {
 
         SaveEmployeeRequest raise = new SaveEmployeeRequest(e.employeeCode(), linked, e.firstName(), e.lastName(), null,
                 null, "Operator", "Production", null, null, JOINED, EmploymentType.PERMANENT, null,
-                new BigDecimal("45000"), null, null, null, null, null, null, null, null, e.version());
+                new BigDecimal("45000"), null, null, null, null, null, null, null, null, false, null, e.version());
         assertThatThrownBy(() -> employeeService.update(e.id(), raise))
                 .isInstanceOf(BusinessRuleException.class)
                 .extracting("code").isEqualTo(ErrorCode.VALIDATION_FAILED);
 
         SaveEmployeeRequest withReason = new SaveEmployeeRequest(e.employeeCode(), linked, e.firstName(),
                 e.lastName(), null, null, "Operator", "Production", null, null, JOINED, EmploymentType.PERMANENT, null,
-                new BigDecimal("45000"), null, null, null, null, null, null, null, "annual increment", e.version());
+                new BigDecimal("45000"), null, null, null, null, null, null, null, "annual increment", false, null, e.version());
         employeeService.update(e.id(), withReason);
         assertThat(jdbc.queryForObject("""
                 select count(*) from ims.audit_logs where action = 'EMPLOYEE_PAY_CHANGE' and entity_id = ?
@@ -547,7 +547,7 @@ class HrmIT extends AbstractIntegrationTest {
         employeeService.update(operator.id(), new SaveEmployeeRequest(operator.employeeCode(), operatorUser,
                 operator.firstName(), operator.lastName(), null, null, "Operator", "Production", null, null, JOINED,
                 EmploymentType.PERMANENT, null, null, null, null, null, null, null, null, "GENERAL", null,
-                operator.version()));
+                true, operator.employeeCode(), operator.version()));
 
         Long productId = td.product().getId();
         ProductionOrder order = new ProductionOrder();

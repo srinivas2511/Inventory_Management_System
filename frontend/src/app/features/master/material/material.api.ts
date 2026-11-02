@@ -17,6 +17,8 @@ export interface MaterialDto {
   maxStock?: number;
   standardCost?: number;
   preferredSupplierId?: number;
+  sourceType?: string;
+  isCustomerMaterial?: boolean;
   active: boolean;
   version: number;
 }
@@ -34,6 +36,8 @@ export interface SaveMaterialRequest {
   maxStock?: number | null;
   standardCost?: number | null;
   preferredSupplierId?: number | null;
+  sourceType?: string | null;
+  isCustomerMaterial?: boolean | null;
 }
 
 export interface UomDto {

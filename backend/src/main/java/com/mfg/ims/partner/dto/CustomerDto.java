@@ -14,11 +14,16 @@ public record CustomerDto(
         String currencyCode,
         String paymentTerms,
         String status,
+        String regionCode,
+        String state,
+        String city,
+        String country,
         Long version) {
 
     public static CustomerDto from(Customer c) {
         return new CustomerDto(c.getId(), c.getCustomerCode(), c.getName(),
             c.getContactPerson(), c.getPhone(), c.getEmail(), c.getAddress(),
-            c.getGstNumber(), c.getCurrencyCode(), c.getPaymentTerms(), c.getStatus(), c.getVersion());
+            c.getGstNumber(), c.getCurrencyCode(), c.getPaymentTerms(), c.getStatus(),
+            c.getRegionCode(), c.getState(), c.getCity(), c.getCountry(), c.getVersion());
     }
 }

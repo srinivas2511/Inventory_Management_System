@@ -87,6 +87,22 @@ const GST_PATTERN = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
                   <mat-label>Address</mat-label>
                   <textarea matInput formControlName="address" rows="2"></textarea>
                 </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Region code</mat-label>
+                  <input matInput formControlName="regionCode" />
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>State</mat-label>
+                  <input matInput formControlName="state" />
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>City</mat-label>
+                  <input matInput formControlName="city" />
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Country</mat-label>
+                  <input matInput formControlName="country" />
+                </mat-form-field>
                 @if (errorMessage()) {
                   <p class="form-error mat-body-2">{{ errorMessage() }}</p>
                 }
@@ -276,6 +292,22 @@ const GST_PATTERN = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
             <mat-label>Address</mat-label>
             <textarea matInput formControlName="address" rows="2"></textarea>
           </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Region code</mat-label>
+            <input matInput formControlName="regionCode" />
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>State</mat-label>
+            <input matInput formControlName="state" />
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>City</mat-label>
+            <input matInput formControlName="city" />
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Country</mat-label>
+            <input matInput formControlName="country" />
+          </mat-form-field>
           @if (errorMessage()) {
             <p class="form-error mat-body-2">{{ errorMessage() }}</p>
           }
@@ -365,6 +397,10 @@ export class CustomerFormComponent implements OnInit {
     gstNumber: ['', Validators.pattern(GST_PATTERN)],
     address: [''],
     paymentTerms: [''],
+    regionCode: [''],
+    state: [''],
+    city: [''],
+    country: [''],
   });
 
   // GC-2 approved products
@@ -495,7 +531,14 @@ export class CustomerFormComponent implements OnInit {
     this.saving.set(true);
     const raw = this.form.getRawValue();
     // GST is optional: a blank field means 'none', not an empty string the API must reject.
-    const req = { ...raw, gstNumber: raw.gstNumber.trim() === '' ? undefined : raw.gstNumber.trim() };
+    const req = {
+      ...raw,
+      gstNumber: raw.gstNumber.trim() === '' ? undefined : raw.gstNumber.trim(),
+      regionCode: raw.regionCode.trim() || null,
+      state: raw.state.trim() || null,
+      city: raw.city.trim() || null,
+      country: raw.country.trim() || null,
+    };
     const obs = this.customer ? this.api.update(this.customer.id, req) : this.api.create(req);
     obs.subscribe({
       next: () => {

@@ -38,6 +38,10 @@ export interface CustomerDto {
   address?: string;
   gstNumber?: string;
   paymentTerms?: string;
+  regionCode?: string;
+  state?: string;
+  city?: string;
+  country?: string;
   status: string;
   version: number;
 }
@@ -51,6 +55,10 @@ export interface SaveCustomerRequest {
   address?: string;
   gstNumber?: string;
   paymentTerms?: string | null;
+  regionCode?: string | null;
+  state?: string | null;
+  city?: string | null;
+  country?: string | null;
 }
 
 @Injectable({ providedIn: 'root' })

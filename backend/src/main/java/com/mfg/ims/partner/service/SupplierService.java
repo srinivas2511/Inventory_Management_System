@@ -86,6 +86,8 @@ public class SupplierService {
         s.setCurrencyCode(req.currencyCode() == null || req.currencyCode().isBlank() ? "INR" : req.currencyCode());
         s.setPaymentTerms(req.paymentTerms());
         s.setLeadTimeDays(req.leadTimeDays());
+        s.setNotes(req.notes());
+        s.setVendorTypeId(req.vendorTypeId());
     }
 
     private Supplier require(Long id) {

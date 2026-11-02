@@ -37,6 +37,8 @@ public record ProductDto(
         BigDecimal standardCost,
         boolean active,
         JsonNode attributes,
+        Long workCentreId,
+        BigDecimal weightPer1000Kgs,
         Long version) {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
@@ -58,6 +60,7 @@ public record ProductDto(
             p.getUnitWeightKg(), p.getUom(), p.getDrawingNumber(), p.getDrawingRevision(),
             p.getCustomer() != null ? p.getCustomer().getId() : null,
             p.getStatus(), p.getReorderLevel(), p.getStandardCost(),
-            p.isActive(), attrs, p.getVersion());
+            p.isActive(), attrs, p.getWorkCentreId(), p.getWeightPer1000Kgs(),
+            p.getVersion());
     }
 }

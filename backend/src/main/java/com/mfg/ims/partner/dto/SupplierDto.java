@@ -15,12 +15,14 @@ public record SupplierDto(
         String paymentTerms,
         Integer leadTimeDays,
         String status,
+        String notes,
+        Long vendorTypeId,
         Long version) {
 
     public static SupplierDto from(Supplier s) {
         return new SupplierDto(s.getId(), s.getSupplierCode(), s.getName(),
             s.getContactPerson(), s.getPhone(), s.getEmail(), s.getAddress(),
             s.getGstNumber(), s.getCurrencyCode(), s.getPaymentTerms(), s.getLeadTimeDays(),
-            s.getStatus(), s.getVersion());
+            s.getStatus(), s.getNotes(), s.getVendorTypeId(), s.getVersion());
     }
 }

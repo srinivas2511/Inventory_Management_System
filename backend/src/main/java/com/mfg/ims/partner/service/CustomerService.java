@@ -85,6 +85,10 @@ public class CustomerService {
         c.setGstNumber(req.gstNumber() == null || req.gstNumber().isBlank() ? null : req.gstNumber().trim());
         c.setCurrencyCode(req.currencyCode() == null || req.currencyCode().isBlank() ? "INR" : req.currencyCode());
         c.setPaymentTerms(req.paymentTerms());
+        c.setRegionCode(req.regionCode());
+        c.setState(req.state());
+        c.setCity(req.city());
+        c.setCountry(req.country() == null || req.country().isBlank() ? "India" : req.country());
     }
 
     private Customer require(Long id) {

@@ -111,6 +111,16 @@ import { AttachmentsPanelComponent } from '../../../shared/components/attachment
                     <mat-error>{{ numberError('Standard cost', form.controls.standardCost) }}</mat-error>
                   }
                 </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Source type</mat-label>
+                  <mat-select formControlName="sourceType">
+                    <mat-option value="LOCAL">Local</mat-option>
+                    <mat-option value="IMPORT">Import</mat-option>
+                  </mat-select>
+                </mat-form-field>
+                <div class="toggle-row">
+                  <mat-slide-toggle formControlName="isCustomerMaterial">Customer material</mat-slide-toggle>
+                </div>
                 @if (errorMessage()) {
                   <p class="form-error mat-body-2">{{ errorMessage() }}</p>
                 }
@@ -381,6 +391,16 @@ import { AttachmentsPanelComponent } from '../../../shared/components/attachment
               <mat-error>{{ numberError('Standard cost', form.controls.standardCost) }}</mat-error>
             }
           </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Source type</mat-label>
+            <mat-select formControlName="sourceType">
+              <mat-option value="LOCAL">Local</mat-option>
+              <mat-option value="IMPORT">Import</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <div class="toggle-row">
+            <mat-slide-toggle formControlName="isCustomerMaterial">Customer material</mat-slide-toggle>
+          </div>
           @if (errorMessage()) {
             <p class="form-error mat-body-2">{{ errorMessage() }}</p>
           }
@@ -446,6 +466,12 @@ import { AttachmentsPanelComponent } from '../../../shared/components/attachment
         flex: 1;
         min-width: 120px;
       }
+      .toggle-row {
+        grid-column: 1 / -1;
+        display: flex;
+        align-items: center;
+        padding: 4px 0;
+      }
     `,
   ],
 })
@@ -466,6 +492,8 @@ export class MaterialFormComponent implements OnInit {
     reorderLevel: [null as number | null, [Validators.required, Validators.min(0)]],
     maxStock: [null as number | null],
     standardCost: [null as number | null, [Validators.required, Validators.min(0)]],
+    sourceType: ['LOCAL'],
+    isCustomerMaterial: [false],
   });
 
   // GC-1 UOM conversions

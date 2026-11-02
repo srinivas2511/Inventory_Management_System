@@ -164,6 +164,8 @@ public class ProductService {
             p.setCustomer(customerRepo.findById(req.customerId())
                 .orElseThrow(() -> new NotFoundException("Customer not found: " + req.customerId())));
         }
+        p.setWorkCentreId(req.workCentreId());
+        p.setWeightPer1000Kgs(req.weightPer1000Kgs());
     }
 
     private String toJson(Object obj) {

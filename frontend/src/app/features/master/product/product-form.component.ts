@@ -16,6 +16,7 @@ import {
   AttributeDefinitionDto,
   ProductVariant,
 } from './product.api';
+import { LookupApi, LookupOption } from '../../../shared/lookup.api';
 
 @Component({
   selector: 'app-product-form',
@@ -76,6 +77,19 @@ import {
           <mat-form-field appearance="outline">
             <mat-label>Surface treatment</mat-label>
             <input matInput formControlName="surfaceTreatment" />
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Work centre</mat-label>
+            <mat-select formControlName="workCentreId">
+              <mat-option [value]="null">— None —</mat-option>
+              @for (wc of workCentres(); track wc.id) {
+                <mat-option [value]="wc.id">{{ wc.code }} – {{ wc.name }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Weight per 1000 kgs</mat-label>
+            <input matInput type="number" formControlName="weightPer1000Kgs" />
           </mat-form-field>
         </div>
 
@@ -172,6 +186,7 @@ import {
 })
 export class ProductFormComponent implements OnInit {
   protected readonly productTypes = signal<ProductTypeDto[]>([]);
+  protected readonly workCentres = signal<LookupOption[]>([]);
   protected readonly product = inject<ProductDto | undefined>(MAT_DIALOG_DATA);
   protected readonly attrDefs = signal<AttributeDefinitionDto[]>([]);
   protected readonly saving = signal(false);
@@ -185,6 +200,8 @@ export class ProductFormComponent implements OnInit {
     drawingRevision: [''],
     heatTreatment: [''],
     surfaceTreatment: [''],
+    workCentreId: [null as number | null],
+    weightPer1000Kgs: [null as number | null],
     specification: inject(FormBuilder).group({
       wireDiameter: [null as number | null],
       outerDiameter: [null as number | null],
@@ -197,9 +214,11 @@ export class ProductFormComponent implements OnInit {
   protected readonly attrGroup = new FormGroup({});
 
   private readonly api = inject(ProductApi);
+  private readonly lookupApi = inject(LookupApi);
   private readonly dialogRef = inject(MatDialogRef<ProductFormComponent>);
 
   ngOnInit(): void {
+    this.lookupApi.workCentres().subscribe((list) => this.workCentres.set(list));
     if (this.product) {
       this.form.patchValue(this.product);
       this.form.controls.specification.patchValue(this.product);

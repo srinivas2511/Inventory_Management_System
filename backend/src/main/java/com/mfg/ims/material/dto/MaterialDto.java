@@ -21,6 +21,8 @@ public record MaterialDto(
         String description,
         boolean active,
         boolean serviceItem,
+        String sourceType,
+        boolean customerMaterial,
         Long version) {
 
     public static MaterialDto from(Material m) {
@@ -30,6 +32,7 @@ public record MaterialDto(
             m.getPreferredSupplier() != null ? m.getPreferredSupplier().getId() : null,
             m.getMinStock(), m.getReorderLevel(), m.getMaxStock(),
             m.getStandardCost(), m.getShelfLifeDays(), m.getDescription(),
-            m.isActive(), m.isServiceItem(), m.getVersion());
+            m.isActive(), m.isServiceItem(), m.getSourceType(), m.isCustomerMaterial(),
+            m.getVersion());
     }
 }

@@ -43,6 +43,12 @@ public class Supplier extends BaseEntity {
     @Column(nullable = false, length = 10)
     private String status = "ACTIVE";
 
+    @Column(columnDefinition = "TEXT")
+    private String notes;
+
+    @Column(name = "vendor_type_id")
+    private Long vendorTypeId;
+
     public Supplier() {}
 
     // ── getters ──────────────────────────────────────────────────────────────
@@ -70,4 +76,10 @@ public class Supplier extends BaseEntity {
     public void setPaymentTerms(String paymentTerms) { this.paymentTerms = paymentTerms; }
     public void setLeadTimeDays(Integer leadTimeDays) { this.leadTimeDays = leadTimeDays; }
     public void setStatus(String status) { this.status = status; }
+
+    public String getNotes() { return notes; }
+    public void setNotes(String v) { this.notes = v; }
+
+    public Long getVendorTypeId() { return vendorTypeId; }
+    public void setVendorTypeId(Long v) { this.vendorTypeId = v; }
 }

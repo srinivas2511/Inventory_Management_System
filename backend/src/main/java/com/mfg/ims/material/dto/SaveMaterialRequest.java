@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 public record SaveMaterialRequest(
@@ -22,5 +23,8 @@ public record SaveMaterialRequest(
         Integer shelfLifeDays,
         @Size(max = 500) String description,
         boolean serviceItem,
+        @Pattern(regexp = "^(LOCAL|IMPORT)$", message = "sourceType must be LOCAL or IMPORT")
+        String sourceType,
+        boolean customerMaterial,
         Long version) {
 }

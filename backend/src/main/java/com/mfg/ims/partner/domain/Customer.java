@@ -40,6 +40,18 @@ public class Customer extends BaseEntity {
     @Column(nullable = false, length = 10)
     private String status = "ACTIVE";
 
+    @Column(name = "region_code", length = 20)
+    private String regionCode;
+
+    @Column(length = 60)
+    private String state;
+
+    @Column(length = 60)
+    private String city;
+
+    @Column(length = 60)
+    private String country = "India";
+
     public Customer() {}
 
     // ── getters ──────────────────────────────────────────────────────────────
@@ -65,4 +77,16 @@ public class Customer extends BaseEntity {
     public void setGstNumber(String gstNumber) { this.gstNumber = gstNumber; }
     public void setPaymentTerms(String paymentTerms) { this.paymentTerms = paymentTerms; }
     public void setStatus(String status) { this.status = status; }
+
+    public String getRegionCode() { return regionCode; }
+    public void setRegionCode(String v) { this.regionCode = v; }
+
+    public String getState() { return state; }
+    public void setState(String v) { this.state = v; }
+
+    public String getCity() { return city; }
+    public void setCity(String v) { this.city = v; }
+
+    public String getCountry() { return country; }
+    public void setCountry(String v) { this.country = v; }
 }

@@ -317,7 +317,7 @@ public class DemoDataLoader {
                             "Ravi Krishna", "+91-9876540001",
                             "procurement@krishnawires.example",
                             "Plot 42, MIDC Industrial Area, Pune 411026",
-                            null, null, "Net 30", 7, null));
+                            null, null, "Net 30", 7, null, null, null));
                     log.info("step1: supplier created id={}", dto.id());
                     return dto.id();
                 });
@@ -335,7 +335,7 @@ public class DemoDataLoader {
                             "Priya Sharma", "+91-9876540002",
                             "purchase@autoincorp.example",
                             "Survey 18, Peenya Industrial Estate, Bengaluru 560058",
-                            null, null, "Net 45", null));
+                            null, null, "Net 45", null, null, null, "India", null));
                     log.info("step2: customer created id={}", dto.id());
                     return dto.id();
                 });
@@ -354,7 +354,7 @@ public class DemoDataLoader {
                             "KG", supplierId,
                             new BigDecimal("50"), new BigDecimal("100"),
                             new BigDecimal("2000"), new BigDecimal("85.0000"),
-                            null, "High-carbon silicon-manganese spring steel wire rod, IS 4454", false, null));
+                            null, "High-carbon silicon-manganese spring steel wire rod, IS 4454", false, "LOCAL", false, null));
                     log.info("step3: material created id={}", dto.id());
                     return dto.id();
                 });
@@ -386,7 +386,7 @@ public class DemoDataLoader {
                             new BigDecimal("0.045"),   // unitWeightKg
                             "PCS", "DRG-CS25-001", "A",
                             null, null, new BigDecimal("12.5000"),
-                            null, null));
+                            null, null, null, null));
                     log.info("step4: product created id={}", dto.id());
                     return dto.id();
                 });
@@ -668,7 +668,7 @@ public class DemoDataLoader {
                         "KG", supplierId,
                         new BigDecimal("100"), new BigDecimal("200"),
                         new BigDecimal("1000"), new BigDecimal("120.0000"),
-                        null, "No stock on hand: raises the low-stock alert in the demo", false, null));
+                        null, "No stock on hand: raises the low-stock alert in the demo", false, "LOCAL", false, null));
                 log.info("step14: low-stock demo material created");
             }
             alertSweepJob.runSweep();

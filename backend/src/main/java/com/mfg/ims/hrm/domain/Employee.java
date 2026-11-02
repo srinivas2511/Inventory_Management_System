@@ -82,6 +82,12 @@ public class Employee extends BaseEntity {
     @Column(name = "active", nullable = false)
     private boolean active = true;
 
+    @Column(name = "is_operator", nullable = false)
+    private boolean operator = false;
+
+    @Column(name = "operator_code", length = 20)
+    private String operatorCode;
+
     public String getEmployeeCode() { return employeeCode; }
     public void setEmployeeCode(String v) { this.employeeCode = v; }
     public Long getUserId() { return userId; }
@@ -128,6 +134,12 @@ public class Employee extends BaseEntity {
     public void setDefaultShift(String v) { this.defaultShift = v; }
     public boolean isActive() { return active; }
     public void setActive(boolean v) { this.active = v; }
+
+    public boolean isOperator() { return operator; }
+    public void setOperator(boolean v) { this.operator = v; }
+
+    public String getOperatorCode() { return operatorCode; }
+    public void setOperatorCode(String v) { this.operatorCode = v; }
 
     public String fullName() {
         return firstName + " " + lastName;

@@ -59,6 +59,16 @@ public class LookupService {
                 "customer_code", q);
     }
 
+    public List<Option> workCentres() {
+        return jdbc.query("SELECT id, code, name FROM work_centres WHERE active = TRUE ORDER BY code LIMIT " + LIMIT,
+                Map.of(), (rs, i) -> new Option(rs.getLong("id"), rs.getString("code"), rs.getString("name")));
+    }
+
+    public List<Option> vendorTypes() {
+        return jdbc.query("SELECT id, code, description AS name FROM vendor_types WHERE active = TRUE ORDER BY code LIMIT " + LIMIT,
+                Map.of(), (rs, i) -> new Option(rs.getLong("id"), rs.getString("code"), rs.getString("name")));
+    }
+
     public List<Option> warehouses(String q) {
         return options("SELECT id, warehouse_code AS code, name FROM warehouses WHERE active = TRUE"
                         + " AND (:scoped = FALSE OR plant_id IN (:plantIds))",

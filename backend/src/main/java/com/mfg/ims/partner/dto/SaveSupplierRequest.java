@@ -18,5 +18,7 @@ public record SaveSupplierRequest(
         @Size(max = 3) String currencyCode,
         @Size(max = 60) String paymentTerms,
         Integer leadTimeDays,
+        String notes,
+        Long vendorTypeId,
         Long version) {
 }

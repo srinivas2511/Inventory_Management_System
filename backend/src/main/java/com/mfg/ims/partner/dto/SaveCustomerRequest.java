@@ -17,5 +17,9 @@ public record SaveCustomerRequest(
         @Pattern(regexp = "^([A-Z]{3})?$", message = "Use a three-letter currency code such as USD")
         @Size(max = 3) String currencyCode,
         @Size(max = 60) String paymentTerms,
+        @Size(max = 20) String regionCode,
+        @Size(max = 60) String state,
+        @Size(max = 60) String city,
+        @Size(max = 60) String country,
         Long version) {
 }

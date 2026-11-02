@@ -46,6 +46,18 @@ public class LookupController {
         return service.customers(q);
     }
 
+    @GetMapping("/work-centres")
+    @PreAuthorize("hasAnyAuthority('WORK_CENTRE_VIEW','WORK_CENTRE_MANAGE','PRODUCTION_CREATE','MACHINE_MANAGE','PRODUCT_CREATE','PRODUCT_UPDATE')")
+    public List<Option> workCentres() {
+        return service.workCentres();
+    }
+
+    @GetMapping("/vendor-types")
+    @PreAuthorize("hasAnyAuthority('VENDOR_TYPE_VIEW','VENDOR_TYPE_MANAGE','PURCHASE_CREATE','SUPPLIER_MANAGE')")
+    public List<Option> vendorTypes() {
+        return service.vendorTypes();
+    }
+
     @GetMapping("/plants")
     @PreAuthorize("hasAnyAuthority('PURCHASE_CREATE','PRODUCTION_CREATE','SALES_CREATE','PLANT_MANAGE')")
     public List<Option> plants() {
