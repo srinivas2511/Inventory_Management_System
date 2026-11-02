@@ -27,6 +27,8 @@ import com.mfg.ims.hrm.dto.EmployeeDtos.EmployeeDto;
 import com.mfg.ims.hrm.dto.EmployeeDtos.EmployeeSummaryDto;
 import com.mfg.ims.hrm.dto.EmployeeDtos.SaveEmployeeRequest;
 import com.mfg.ims.hrm.dto.EmployeeDtos.UnlinkedUserDto;
+import com.mfg.ims.hrm.dto.OperatorDtos.OperatorListDto;
+import com.mfg.ims.hrm.dto.OperatorDtos.SaveOperatorRequest;
 import com.mfg.ims.hrm.repository.EmployeeRepository;
 import com.mfg.ims.hrm.repository.ShiftRepository;
 import com.mfg.ims.iam.domain.Role;
@@ -171,6 +173,57 @@ public class EmployeeService {
         return toDto(e, HrmSecurity.canSeeCompensation());
     }
 
+    @Transactional
+    public OperatorListDto createOperator(SaveOperatorRequest req) {
+        String code = req.operatorCode().trim();
+        if (repo.existsByOperatorCode(code)) {
+            throw new ConflictException(ErrorCode.DUPLICATE_KEY, "Operator code already exists: " + code);
+        }
+        Employee e = new Employee();
+        e.setEmployeeCode(numberService.next("OPR"));
+        String[] parts = splitName(req.fullName());
+        e.setFirstName(parts[0]);
+        e.setLastName(parts[1]);
+        e.setOperatorCode(code);
+        e.setOperator(true);
+        e.setActive(req.active());
+        e.setDateOfJoining(LocalDate.now());
+        e.setBasicPay(BigDecimal.ZERO);
+        e.setFixedTravelAllowance(BigDecimal.ZERO);
+        e.setFixedOtherAllowances(BigDecimal.ZERO);
+        e = repo.save(e);
+        auditService.record("OPERATOR_CREATE", "EMPLOYEE", String.valueOf(e.getId()), null, code, null);
+        return toOperatorDto(e);
+    }
+
+    @Transactional
+    public OperatorListDto updateOperator(Long id, SaveOperatorRequest req) {
+        Employee e = require(id);
+        String code = req.operatorCode().trim();
+        if (!code.equals(e.getOperatorCode()) && repo.existsByOperatorCode(code)) {
+            throw new ConflictException(ErrorCode.DUPLICATE_KEY, "Operator code already exists: " + code);
+        }
+        String[] parts = splitName(req.fullName());
+        e.setFirstName(parts[0]);
+        e.setLastName(parts[1]);
+        e.setOperatorCode(code);
+        e.setActive(req.active());
+        e = repo.save(e);
+        auditService.record("OPERATOR_UPDATE", "EMPLOYEE", String.valueOf(id), null, code, null);
+        return toOperatorDto(e);
+    }
+
+    public OperatorListDto toOperatorDto(Employee e) {
+        return new OperatorListDto(e.getId(), e.getOperatorCode(), e.getEmployeeCode(),
+                e.fullName(), e.getDesignation(), e.getDepartment(), e.isActive(), e.getVersion());
+    }
+
+    private static String[] splitName(String fullName) {
+        String name = fullName.trim();
+        int sp = name.indexOf(' ');
+        return sp < 0 ? new String[]{name, "-"} : new String[]{name.substring(0, sp), name.substring(sp + 1)};
+    }
+
     Employee require(Long id) {
         return repo.findById(id).orElseThrow(() -> new NotFoundException("Employee", id));
     }
@@ -196,6 +249,12 @@ public class EmployeeService {
                 compensationVisible ? e.getEsiNumber() : null,
                 e.isOperator(), e.getOperatorCode(),
                 e.getVersion());
+    }
+
+    @Transactional(readOnly = true)
+    public List<OperatorListDto> findOperators() {
+        return repo.findByOperatorTrueOrderByOperatorCode()
+                .stream().map(this::toOperatorDto).toList();
     }
 
     private void apply(Employee e, SaveEmployeeRequest req) {

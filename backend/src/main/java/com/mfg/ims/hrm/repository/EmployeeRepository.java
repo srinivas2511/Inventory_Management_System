@@ -32,4 +32,8 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long>, JpaSp
     List<User> findUsersWithoutEmployee(@Param("roleCodes") Collection<String> roleCodes);
 
     List<Employee> findByOperatorTrueOrderByOperatorCode();
+
+    boolean existsByOperatorCode(String operatorCode);
+
+    java.util.Optional<Employee> findByOperatorCode(String operatorCode);
 }

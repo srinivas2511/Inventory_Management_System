@@ -91,6 +91,18 @@ public class ProductController {
         service.setCustomersForProduct(id, req.ids());
     }
 
+    @GetMapping("/{id}/materials")
+    @PreAuthorize("hasAuthority('PRODUCT_VIEW')")
+    public List<ApprovedItemDto> getMaterials(@PathVariable Long id) {
+        return service.getMaterialsForProduct(id);
+    }
+
+    @PutMapping("/{id}/materials")
+    @PreAuthorize("hasAuthority('PRODUCT_UPDATE')")
+    public void setMaterials(@PathVariable Long id, @RequestBody SetApprovedItemsRequest req) {
+        service.setMaterialsForProduct(id, req.ids());
+    }
+
     @GetMapping("/attributes/{springType}")
     @PreAuthorize("isAuthenticated()")
     public List<SpringAttributeDefinitionDto> attributeDefinitions(@PathVariable String springType) {

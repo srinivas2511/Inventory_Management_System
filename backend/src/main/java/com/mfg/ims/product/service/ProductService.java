@@ -21,12 +21,14 @@ import com.mfg.ims.partner.dto.ApprovedItemDto;
 import com.mfg.ims.partner.repository.CustomerApprovedProductRepository;
 import com.mfg.ims.partner.repository.CustomerRepository;
 import com.mfg.ims.product.domain.Product;
+import com.mfg.ims.product.domain.ProductMaterial;
 import com.mfg.ims.product.domain.SpringSpecification;
 import java.util.List;
 
 import com.mfg.ims.product.dto.ProductDto;
 import com.mfg.ims.product.dto.SaveProductRequest;
 import com.mfg.ims.product.dto.SpringAttributeDefinitionDto;
+import com.mfg.ims.product.repository.ProductMaterialRepository;
 import com.mfg.ims.product.repository.ProductRepository;
 import com.mfg.ims.product.repository.SpringAttributeDefinitionRepository;
 
@@ -37,6 +39,7 @@ public class ProductService {
     private final MaterialRepository materialRepo;
     private final CustomerRepository customerRepo;
     private final CustomerApprovedProductRepository approvedProductRepo;
+    private final ProductMaterialRepository productMaterialRepo;
     private final SpringAttributeDefinitionRepository attrDefRepo;
     private final AuditService auditService;
     private final ObjectMapper objectMapper;
@@ -44,12 +47,14 @@ public class ProductService {
     public ProductService(ProductRepository productRepo, MaterialRepository materialRepo,
                           CustomerRepository customerRepo,
                           CustomerApprovedProductRepository approvedProductRepo,
+                          ProductMaterialRepository productMaterialRepo,
                           SpringAttributeDefinitionRepository attrDefRepo,
                           AuditService auditService, ObjectMapper objectMapper) {
         this.productRepo = productRepo;
         this.materialRepo = materialRepo;
         this.customerRepo = customerRepo;
         this.approvedProductRepo = approvedProductRepo;
+        this.productMaterialRepo = productMaterialRepo;
         this.attrDefRepo = attrDefRepo;
         this.auditService = auditService;
         this.objectMapper = objectMapper;
@@ -195,6 +200,31 @@ public class ProductService {
         }
         auditService.record("SET_CUSTOMERS", "PRODUCT", String.valueOf(productId), null,
             customerIds.size() + " customers", null);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ApprovedItemDto> getMaterialsForProduct(Long productId) {
+        require(productId);
+        return productMaterialRepo.findByProductIdOrderByDisplayOrder(productId).stream()
+            .map(pm -> materialRepo.findById(pm.getMaterialId())
+                .map(m -> new ApprovedItemDto(m.getId(), m.getMaterialCode(), m.getName()))
+                .orElse(null))
+            .filter(dto -> dto != null)
+            .toList();
+    }
+
+    @Transactional
+    public void setMaterialsForProduct(Long productId, List<Long> materialIds) {
+        require(productId);
+        productMaterialRepo.deleteByProductId(productId);
+        for (int i = 0; i < materialIds.size(); i++) {
+            Long materialId = materialIds.get(i);
+            ProductMaterial pm = new ProductMaterial(productId, materialId);
+            pm.setDisplayOrder(i);
+            productMaterialRepo.save(pm);
+        }
+        auditService.record("SET_MATERIALS", "PRODUCT", String.valueOf(productId), null,
+            materialIds.size() + " materials", null);
     }
 
     private String toJson(Object obj) {

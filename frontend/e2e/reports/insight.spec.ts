@@ -31,7 +31,11 @@ test.describe('Dashboards, reports, alerts (UAT INS-01 .. INS-06)', () => {
     const target = open[0];
     const a = await openAs(browser, guard, U.admin, '/insight/alerts');
     const p = a.page;
-    const row = p.getByRole('row').filter({ hasText: target.message ?? target.alertType }).first();
+    const row = p
+      .getByRole('row')
+      .filter({ hasText: target.message ?? target.alertType })
+      .filter({ has: p.locator('button').filter({ has: p.locator('mat-icon:text-is("check")') }) })
+      .first();
     await iconButton(row, 'check').click();
     await expect.poll(async () => (await admin().list<any>('/api/alerts?size=100')).find((x) => x.id === target.id)?.status).not.toMatch(/OPEN/i);
     await a.close();

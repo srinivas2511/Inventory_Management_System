@@ -11,6 +11,13 @@ export interface CustomerRef {
   name: string;
 }
 
+/** A raw material linked to a product via product_materials. */
+export interface MaterialRef {
+  id: number;
+  code: string;
+  name: string;
+}
+
 /** A product type code from the product_types lookup. */
 export type ProductVariant = string;
 
@@ -156,5 +163,13 @@ export class ProductApi {
 
   setCustomers(productId: number, ids: number[]): Observable<void> {
     return this.http.put<void>(`${this.base}/api/products/${productId}/customers`, { ids });
+  }
+
+  getMaterials(productId: number): Observable<MaterialRef[]> {
+    return this.http.get<MaterialRef[]>(`${this.base}/api/products/${productId}/materials`);
+  }
+
+  setMaterials(productId: number, ids: number[]): Observable<void> {
+    return this.http.put<void>(`${this.base}/api/products/${productId}/materials`, { ids });
   }
 }

@@ -15,7 +15,7 @@ describe('ProductFormComponent', () => {
       providers: [
         provideNoopAnimations(),
         { provide: MAT_DIALOG_DATA, useValue: null },
-        { provide: MatDialogRef, useValue: { close: () => {} } },
+        { provide: MatDialogRef, useValue: { close: jasmine.createSpy('close') } },
         {
           provide: ProductApi,
           useValue: {
@@ -26,6 +26,8 @@ describe('ProductFormComponent', () => {
             activate: () => of({}),
             getCustomers: () => of([]),
             setCustomers: () => of(undefined),
+            getMaterials: () => of([]),
+            setMaterials: () => of(undefined),
           },
         },
         {

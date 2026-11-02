@@ -1,4 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
@@ -13,6 +14,7 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { DynamicSpecFormComponent } from './dynamic-spec-form.component';
 import {
   CustomerRef,
+  MaterialRef,
   ProductApi,
   ProductDto,
   ProductTypeDto,
@@ -38,6 +40,7 @@ import { LookupApi, LookupItem, LookupOption } from '../../../shared/lookup.api'
     MatChipsModule,
     MatIconModule,
     DynamicSpecFormComponent,
+    NgTemplateOutlet,
   ],
   template: `
     <h2 mat-dialog-title>{{ product ? 'Edit Product' : 'New Product' }}</h2>
@@ -74,6 +77,38 @@ import { LookupApi, LookupItem, LookupOption } from '../../../shared/lookup.api'
                 }
                 @if (approvedCustomers().length === 0) {
                   <span class="mat-body-2 empty-hint">No customers linked yet.</span>
+                }
+              </mat-chip-set>
+            </div>
+          </mat-tab>
+
+          <mat-tab label="Raw Materials">
+            <div class="customers-tab">
+              <div class="customers-header">
+                <span class="mat-body-2">Linked Raw Materials</span>
+                <mat-form-field appearance="outline" class="add-customer-field">
+                  <mat-label>Add raw material</mat-label>
+                  <mat-select [value]="null" (selectionChange)="addMaterial($event.value)">
+                    <mat-option [value]="null">— Select —</mat-option>
+                    @for (m of availableMaterials(); track m.id) {
+                      @if (!isMaterialLinked(m.id)) {
+                        <mat-option [value]="m.id">{{ m.code }} – {{ m.name }}</mat-option>
+                      }
+                    }
+                  </mat-select>
+                </mat-form-field>
+              </div>
+              <mat-chip-set aria-label="Linked raw materials">
+                @for (m of linkedMaterials(); track m.id) {
+                  <mat-chip (removed)="removeMaterial(m.id)">
+                    {{ m.code }} – {{ m.name }}
+                    <button matChipRemove [attr.aria-label]="'Remove ' + m.name">
+                      <mat-icon>cancel</mat-icon>
+                    </button>
+                  </mat-chip>
+                }
+                @if (linkedMaterials().length === 0) {
+                  <span class="mat-body-2 empty-hint">No raw materials linked yet.</span>
                 }
               </mat-chip-set>
             </div>
@@ -264,6 +299,7 @@ export class ProductFormComponent implements OnInit {
   protected readonly materials = signal<LookupItem[]>([]);
   protected readonly availableCustomers = signal<LookupOption[]>([]);
   protected readonly approvedCustomers = signal<CustomerRef[]>([]);
+  protected readonly linkedMaterials = signal<MaterialRef[]>([]);
   protected readonly product = inject<ProductDto | undefined>(MAT_DIALOG_DATA);
   protected readonly attrDefs = signal<AttributeDefinitionDto[]>([]);
   protected readonly saving = signal(false);
@@ -307,6 +343,7 @@ export class ProductFormComponent implements OnInit {
       this.form.controls.productCode.disable();
       this.lookupApi.customers().subscribe((list) => this.availableCustomers.set(list));
       this.loadApprovedCustomers();
+      this.loadLinkedMaterials();
     }
     this.api.listProductTypes().subscribe((types) => this.productTypes.set(types));
     this.form.controls.springType.valueChanges.subscribe((type) => {
@@ -322,8 +359,22 @@ export class ProductFormComponent implements OnInit {
     }
   }
 
+  private loadLinkedMaterials(): void {
+    if (this.product) {
+      this.api.getMaterials(this.product.id).subscribe((list) => this.linkedMaterials.set(list));
+    }
+  }
+
   protected isApproved(customerId: number): boolean {
     return this.approvedCustomers().some((c) => c.id === customerId);
+  }
+
+  protected isMaterialLinked(materialId: number): boolean {
+    return this.linkedMaterials().some((m) => m.id === materialId);
+  }
+
+  protected availableMaterials(): LookupItem[] {
+    return this.materials();
   }
 
   protected addCustomer(customerId: number | null): void {
@@ -336,6 +387,18 @@ export class ProductFormComponent implements OnInit {
     if (!this.product) return;
     const ids = this.approvedCustomers().filter((c) => c.id !== customerId).map((c) => c.id);
     this.api.setCustomers(this.product.id, ids).subscribe(() => this.loadApprovedCustomers());
+  }
+
+  protected addMaterial(materialId: number | null): void {
+    if (!materialId || !this.product) return;
+    const ids = [...this.linkedMaterials().map((m) => m.id), materialId];
+    this.api.setMaterials(this.product.id, ids).subscribe(() => this.loadLinkedMaterials());
+  }
+
+  protected removeMaterial(materialId: number): void {
+    if (!this.product) return;
+    const ids = this.linkedMaterials().filter((m) => m.id !== materialId).map((m) => m.id);
+    this.api.setMaterials(this.product.id, ids).subscribe(() => this.loadLinkedMaterials());
   }
 
   private loadAttrDefs(type: ProductVariant): void {
