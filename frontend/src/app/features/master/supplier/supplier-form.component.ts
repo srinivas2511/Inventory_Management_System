@@ -369,7 +369,13 @@ export class SupplierFormComponent implements OnInit {
     const raw = this.form.getRawValue();
     // GST is optional: a blank field means 'none', not an empty string the API must reject.
     const req = {
-      ...raw,
+      supplierCode: raw.supplierCode ?? '',
+      name: raw.name ?? '',
+      contactPerson: raw.contactPerson ?? undefined,
+      email: raw.email ?? undefined,
+      phone: raw.phone ?? undefined,
+      address: raw.address ?? undefined,
+      paymentTerms: raw.paymentTerms ?? null,
       gstNumber: raw.gstNumber?.trim() === '' ? undefined : raw.gstNumber?.trim(),
       notes: raw.notes?.trim() || null,
       vendorTypeId: raw.vendorTypeId ?? null,
