@@ -722,6 +722,470 @@
         <source>All Documents</source>
         <target>सभी दस्तावेज़</target>
       </trans-unit>
+      <trans-unit id="approval-inbox.approve" datatype="html">
+        <source>Approve</source>
+        <target state="translated">स्वीकृत करें</target>
+      </trans-unit>
+      <trans-unit id="approval-inbox.col-comment" datatype="html">
+        <source>Comment</source>
+        <target state="translated">टिप्पणी</target>
+      </trans-unit>
+      <trans-unit id="approval-inbox.col-created" datatype="html">
+        <source>Requested</source>
+        <target state="translated">अनुरोधित</target>
+      </trans-unit>
+      <trans-unit id="approval-inbox.col-decided" datatype="html">
+        <source>Decided</source>
+        <target state="translated">निर्णीत</target>
+      </trans-unit>
+      <trans-unit id="approval-inbox.col-doc-id" datatype="html">
+        <source>Doc #</source>
+        <target state="translated">दस्तावेज़ #</target>
+      </trans-unit>
+      <trans-unit id="approval-inbox.col-doc-type" datatype="html">
+        <source>Type</source>
+        <target state="translated">प्रकार</target>
+      </trans-unit>
+      <trans-unit id="approval-inbox.col-permission" datatype="html">
+        <source>Permission</source>
+        <target state="translated">अनुमति</target>
+      </trans-unit>
+      <trans-unit id="approval-inbox.col-status" datatype="html">
+        <source>Decision</source>
+        <target state="translated">निर्णय</target>
+      </trans-unit>
+      <trans-unit id="approval-inbox.col-step" datatype="html">
+        <source>Step</source>
+        <target state="translated">चरण</target>
+      </trans-unit>
+      <trans-unit id="approval-inbox.no-history" datatype="html">
+        <source>No decisions recorded yet.</source>
+        <target state="translated">अभी तक कोई निर्णय दर्ज नहीं।</target>
+      </trans-unit>
+      <trans-unit id="approval-inbox.no-pending" datatype="html">
+        <source>No pending approvals.</source>
+        <target state="translated">कोई लंबित अनुमोदन नहीं।</target>
+      </trans-unit>
+      <trans-unit id="approval-inbox.reject" datatype="html">
+        <source>Reject</source>
+        <target state="translated">अस्वीकार करें</target>
+      </trans-unit>
+      <trans-unit id="approval-inbox.tab-history" datatype="html">
+        <source>History</source>
+        <target state="translated">इतिहास</target>
+      </trans-unit>
+      <trans-unit id="approval-inbox.tab-pending" datatype="html">
+        <source>Pending</source>
+        <target state="translated">लंबित</target>
+      </trans-unit>
+      <trans-unit id="approval-inbox.title" datatype="html">
+        <source>Approval Inbox</source>
+        <target state="translated">अनुमोदन इनबॉक्स</target>
+      </trans-unit>
+      <trans-unit id="approval-rules.title" datatype="html">
+        <source>Approval Rules</source>
+        <target state="translated">अनुमोदन नियम</target>
+      </trans-unit>
+      <trans-unit id="capacityBoard.col.available" datatype="html">
+        <source>Available hrs</source>
+        <target state="translated">उपलब्ध घंटे</target>
+      </trans-unit>
+      <trans-unit id="capacityBoard.col.date" datatype="html">
+        <source>Date</source>
+        <target state="translated">दिनांक</target>
+      </trans-unit>
+      <trans-unit id="capacityBoard.col.load" datatype="html">
+        <source>Load %</source>
+        <target state="translated">लोड %</target>
+      </trans-unit>
+      <trans-unit id="capacityBoard.col.machine" datatype="html">
+        <source>Machine</source>
+        <target state="translated">मशीन</target>
+      </trans-unit>
+      <trans-unit id="capacityBoard.col.scheduled" datatype="html">
+        <source>Scheduled hrs</source>
+        <target state="translated">निर्धारित घंटे</target>
+      </trans-unit>
+      <trans-unit id="capacityBoard.empty" datatype="html">
+        <source>No capacity records found for the selected range.</source>
+        <target state="translated">चयनित सीमा के लिए कोई क्षमता रिकॉर्ड नहीं मिला।</target>
+      </trans-unit>
+      <trans-unit id="capacityBoard.from" datatype="html">
+        <source>From</source>
+        <target state="translated">से</target>
+      </trans-unit>
+      <trans-unit id="capacityBoard.load" datatype="html">
+        <source>Load</source>
+        <target state="translated">लोड</target>
+      </trans-unit>
+      <trans-unit id="capacityBoard.subtitle" datatype="html">
+        <source>Machine load and scheduled operations</source>
+        <target state="translated">मशीन लोड और निर्धारित संचालन</target>
+      </trans-unit>
+      <trans-unit id="capacityBoard.title" datatype="html">
+        <source>Capacity Board</source>
+        <target state="translated">क्षमता बोर्ड</target>
+      </trans-unit>
+      <trans-unit id="capacityBoard.to" datatype="html">
+        <source>To</source>
+        <target state="translated">तक</target>
+      </trans-unit>
+      <trans-unit id="challan.btn_issue" datatype="html">
+        <source> Issue </source>
+        <target state="translated">जारी करें</target>
+      </trans-unit>
+      <trans-unit id="challan.btn_mark_returned" datatype="html">
+        <source> Mark Returned </source>
+        <target state="translated">वापसी चिह्नित करें</target>
+      </trans-unit>
+      <trans-unit id="challan.btn_new" datatype="html">
+        <source>+ New Challan</source>
+        <target state="translated">+ नया चालान</target>
+      </trans-unit>
+      <trans-unit id="challan.field_customer" datatype="html">
+        <source>Customer</source>
+        <target state="translated">ग्राहक</target>
+      </trans-unit>
+      <trans-unit id="challan.field_driver_name" datatype="html">
+        <source>Driver Name</source>
+        <target state="translated">चालक का नाम</target>
+      </trans-unit>
+      <trans-unit id="challan.field_expected_return" datatype="html">
+        <source>Expected Return Date</source>
+        <target state="translated">अपेक्षित वापसी तिथि</target>
+      </trans-unit>
+      <trans-unit id="challan.field_kind" datatype="html">
+        <source>Challan Kind</source>
+        <target state="translated">चालान प्रकार</target>
+      </trans-unit>
+      <trans-unit id="challan.field_remarks" datatype="html">
+        <source>Remarks</source>
+        <target state="translated">टिप्पणियाँ</target>
+      </trans-unit>
+      <trans-unit id="challan.field_returnable" datatype="html">
+        <source> Returnable </source>
+        <target state="translated">वापसी योग्य</target>
+      </trans-unit>
+      <trans-unit id="challan.field_vehicle_no" datatype="html">
+        <source>Vehicle No.</source>
+        <target state="translated">वाहन संख्या</target>
+      </trans-unit>
+      <trans-unit id="challan.new_dialog_title" datatype="html">
+        <source>New Delivery Challan</source>
+        <target state="translated">नया डिलीवरी चालान</target>
+      </trans-unit>
+      <trans-unit id="common.cancel" datatype="html">
+        <source>Cancel</source>
+        <target state="translated">रद्द करें</target>
+      </trans-unit>
+      <trans-unit id="common.close" datatype="html">
+        <source>Close</source>
+        <target state="translated">बंद करें</target>
+      </trans-unit>
+      <trans-unit id="common.save" datatype="html">
+        <source> Save </source>
+        <target state="translated">सहेजें</target>
+      </trans-unit>
+      <trans-unit id="company-profile.title" datatype="html">
+        <source>Company Profile</source>
+        <target state="translated">कंपनी प्रोफ़ाइल</target>
+      </trans-unit>
+      <trans-unit id="consolidation.col.amount" datatype="html">
+        <source>Amount (₹)</source>
+        <target state="translated">राशि (₹)</target>
+      </trans-unit>
+      <trans-unit id="consolidation.col.code" datatype="html">
+        <source>Code</source>
+        <target state="translated">कोड</target>
+      </trans-unit>
+      <trans-unit id="consolidation.col.group" datatype="html">
+        <source>Group</source>
+        <target state="translated">समूह</target>
+      </trans-unit>
+      <trans-unit id="consolidation.col.name" datatype="html">
+        <source>Account</source>
+        <target state="translated">खाता</target>
+      </trans-unit>
+      <trans-unit id="consolidation.expense" datatype="html">
+        <source>Expense</source>
+        <target state="translated">व्यय</target>
+      </trans-unit>
+      <trans-unit id="consolidation.from" datatype="html">
+        <source>From</source>
+        <target state="translated">से</target>
+      </trans-unit>
+      <trans-unit id="consolidation.netIncome" datatype="html">
+        <source>Net Income</source>
+        <target state="translated">शुद्ध आय</target>
+      </trans-unit>
+      <trans-unit id="consolidation.revenue" datatype="html">
+        <source>Revenue</source>
+        <target state="translated">राजस्व</target>
+      </trans-unit>
+      <trans-unit id="consolidation.run" datatype="html">
+        <source>Run</source>
+        <target state="translated">चलाएं</target>
+      </trans-unit>
+      <trans-unit id="consolidation.subtitle" datatype="html">
+        <source>Multi-company consolidated financials</source>
+        <target state="translated">बहु-कंपनी समेकित वित्तीय</target>
+      </trans-unit>
+      <trans-unit id="consolidation.title" datatype="html">
+        <source>Consolidation Report</source>
+        <target state="translated">समेकन रिपोर्ट</target>
+      </trans-unit>
+      <trans-unit id="consolidation.to" datatype="html">
+        <source>To</source>
+        <target state="translated">तक</target>
+      </trans-unit>
+      <trans-unit id="document-series.title" datatype="html">
+        <source>Document Series</source>
+        <target state="translated">दस्तावेज़ श्रृंखला</target>
+      </trans-unit>
+      <trans-unit id="imports.title" datatype="html">
+        <source>Data Imports</source>
+        <target state="translated">डेटा आयात</target>
+      </trans-unit>
+      <trans-unit id="item-categories.title" datatype="html">
+        <source>Item Categories</source>
+        <target state="translated">आइटम श्रेणियाँ</target>
+      </trans-unit>
+      <trans-unit id="nav.bi_dashboard" datatype="html">
+        <source>Business Intelligence</source>
+        <target state="translated">व्यापार बुद्धिमत्ता</target>
+      </trans-unit>
+      <trans-unit id="nav.delivery_challans" datatype="html">
+        <source>Delivery Challans</source>
+        <target state="translated">डिलीवरी चालान</target>
+      </trans-unit>
+      <trans-unit id="nav.gst_filing" datatype="html">
+        <source>GST Filing Reports</source>
+        <target state="translated">GST फाइलिंग रिपोर्ट</target>
+      </trans-unit>
+      <trans-unit id="nav.integration_call_log" datatype="html">
+        <source>Integration Call Log</source>
+        <target state="translated">एकीकरण कॉल लॉग</target>
+      </trans-unit>
+      <trans-unit id="nav.order_confirmations" datatype="html">
+        <source>Order Confirmations</source>
+        <target state="translated">ऑर्डर पुष्टि</target>
+      </trans-unit>
+      <trans-unit id="nav.purchase.invoices" datatype="html">
+        <source>Purchase Invoices</source>
+        <target state="translated">खरीद चालान</target>
+      </trans-unit>
+      <trans-unit id="nav.purchase.returns" datatype="html">
+        <source>Purchase Returns</source>
+        <target state="translated">खरीद वापसी</target>
+      </trans-unit>
+      <trans-unit id="nav.quotations" datatype="html">
+        <source>Quotations</source>
+        <target state="translated">कोटेशन</target>
+      </trans-unit>
+      <trans-unit id="nav.registers" datatype="html">
+        <source>Registers</source>
+        <target state="translated">रजिस्टर</target>
+      </trans-unit>
+      <trans-unit id="nav.report_builder" datatype="html">
+        <source>Report Builder</source>
+        <target state="translated">रिपोर्ट बिल्डर</target>
+      </trans-unit>
+      <trans-unit id="nav.rfqs" datatype="html">
+        <source>RFQs</source>
+        <target state="translated">RFQ</target>
+      </trans-unit>
+      <trans-unit id="nav.tally_ledger_mapping" datatype="html">
+        <source>Tally Ledger Mappings</source>
+        <target state="translated">टैली लेजर मैपिंग</target>
+      </trans-unit>
+      <trans-unit id="oc.btn_approve" datatype="html">
+        <source> Approve </source>
+        <target state="translated">स्वीकृत करें</target>
+      </trans-unit>
+      <trans-unit id="oc.btn_new" datatype="html">
+        <source>+ New OC</source>
+        <target state="translated">+ नया OC</target>
+      </trans-unit>
+      <trans-unit id="oc.btn_submit" datatype="html">
+        <source> Submit </source>
+        <target state="translated">सबमिट करें</target>
+      </trans-unit>
+      <trans-unit id="oc.field_currency" datatype="html">
+        <source>Currency</source>
+        <target state="translated">मुद्रा</target>
+      </trans-unit>
+      <trans-unit id="oc.field_customer" datatype="html">
+        <source>Customer</source>
+        <target state="translated">ग्राहक</target>
+      </trans-unit>
+      <trans-unit id="oc.field_customer_po" datatype="html">
+        <source>Customer PO No.</source>
+        <target state="translated">ग्राहक PO संख्या</target>
+      </trans-unit>
+      <trans-unit id="oc.field_exchange_rate" datatype="html">
+        <source>Exchange Rate</source>
+        <target state="translated">विनिमय दर</target>
+      </trans-unit>
+      <trans-unit id="oc.field_foreign_oc" datatype="html">
+        <source> Foreign OC (export order) </source>
+        <target state="translated">विदेशी OC (निर्यात आदेश)</target>
+      </trans-unit>
+      <trans-unit id="oc.field_remarks" datatype="html">
+        <source>Remarks</source>
+        <target state="translated">टिप्पणियाँ</target>
+      </trans-unit>
+      <trans-unit id="oc.new_dialog_title" datatype="html">
+        <source>New Order Confirmation</source>
+        <target state="translated">नई ऑर्डर पुष्टि</target>
+      </trans-unit>
+      <trans-unit id="payment-terms.title" datatype="html">
+        <source>Payment Terms</source>
+        <target state="translated">भुगतान शर्तें</target>
+      </trans-unit>
+      <trans-unit id="planBoard.col.machine" datatype="html">
+        <source>Machine</source>
+        <target state="translated">मशीन</target>
+      </trans-unit>
+      <trans-unit id="planBoard.col.operation" datatype="html">
+        <source>Operation</source>
+        <target state="translated">संचालन</target>
+      </trans-unit>
+      <trans-unit id="planBoard.col.operator" datatype="html">
+        <source>Operator</source>
+        <target state="translated">ऑपरेटर</target>
+      </trans-unit>
+      <trans-unit id="planBoard.col.order" datatype="html">
+        <source>Order</source>
+        <target state="translated">आदेश</target>
+      </trans-unit>
+      <trans-unit id="planBoard.col.plannedEnd" datatype="html">
+        <source>Planned End</source>
+        <target state="translated">नियोजित समाप्ति</target>
+      </trans-unit>
+      <trans-unit id="planBoard.col.plannedStart" datatype="html">
+        <source>Planned Start</source>
+        <target state="translated">नियोजित प्रारंभ</target>
+      </trans-unit>
+      <trans-unit id="planBoard.col.seq" datatype="html">
+        <source>Seq</source>
+        <target state="translated">क्रम</target>
+      </trans-unit>
+      <trans-unit id="planBoard.col.status" datatype="html">
+        <source>Status</source>
+        <target state="translated">स्थिति</target>
+      </trans-unit>
+      <trans-unit id="planBoard.empty" datatype="html">
+        <source>No active operations scheduled.</source>
+        <target state="translated">कोई सक्रिय संचालन निर्धारित नहीं।</target>
+      </trans-unit>
+      <trans-unit id="planBoard.subtitle" datatype="html">
+        <source>Scheduled and in-progress operations</source>
+        <target state="translated">निर्धारित और प्रगतिशील संचालन</target>
+      </trans-unit>
+      <trans-unit id="planBoard.title" datatype="html">
+        <source>Production Plan Board</source>
+        <target state="translated">उत्पादन योजना बोर्ड</target>
+      </trans-unit>
+      <trans-unit id="prodTemplates.col.code" datatype="html">
+        <source>Code</source>
+        <target state="translated">कोड</target>
+      </trans-unit>
+      <trans-unit id="prodTemplates.col.leadTime" datatype="html">
+        <source>Lead Time (days)</source>
+        <target state="translated">लीड टाइम (दिन)</target>
+      </trans-unit>
+      <trans-unit id="prodTemplates.col.name" datatype="html">
+        <source>Name</source>
+        <target state="translated">नाम</target>
+      </trans-unit>
+      <trans-unit id="prodTemplates.col.plannedQty" datatype="html">
+        <source>Planned Qty</source>
+        <target state="translated">नियोजित मात्रा</target>
+      </trans-unit>
+      <trans-unit id="prodTemplates.create" datatype="html">
+        <source><x id="START_TAG_MAT_ICON" ctype="x-mat_icon" equiv-text="&lt;mat-icon aria-hidden=&quot;true&quot;&gt;"/>add<x id="CLOSE_TAG_MAT_ICON" ctype="x-mat_icon" equiv-text="&lt;/mat-icon&gt;"/> New Template </source>
+        <target state="translated">नया टेम्पलेट</target>
+      </trans-unit>
+      <trans-unit id="prodTemplates.empty" datatype="html">
+        <source>No templates defined yet.</source>
+        <target state="translated">अभी तक कोई टेम्पलेट परिभाषित नहीं।</target>
+      </trans-unit>
+      <trans-unit id="prodTemplates.err.code" datatype="html">
+        <source>Code is required</source>
+        <target state="translated">कोड आवश्यक है</target>
+      </trans-unit>
+      <trans-unit id="prodTemplates.err.name" datatype="html">
+        <source>Name is required</source>
+        <target state="translated">नाम आवश्यक है</target>
+      </trans-unit>
+      <trans-unit id="prodTemplates.err.productId" datatype="html">
+        <source>Product ID is required</source>
+        <target state="translated">उत्पाद ID आवश्यक है</target>
+      </trans-unit>
+      <trans-unit id="prodTemplates.field.code" datatype="html">
+        <source>Code</source>
+        <target state="translated">कोड</target>
+      </trans-unit>
+      <trans-unit id="prodTemplates.field.leadTimeDays" datatype="html">
+        <source>Lead Time (days)</source>
+        <target state="translated">लीड टाइम (दिन)</target>
+      </trans-unit>
+      <trans-unit id="prodTemplates.field.name" datatype="html">
+        <source>Name</source>
+        <target state="translated">नाम</target>
+      </trans-unit>
+      <trans-unit id="prodTemplates.field.notes" datatype="html">
+        <source>Notes</source>
+        <target state="translated">नोट्स</target>
+      </trans-unit>
+      <trans-unit id="prodTemplates.field.plannedQty" datatype="html">
+        <source>Planned Qty</source>
+        <target state="translated">नियोजित मात्रा</target>
+      </trans-unit>
+      <trans-unit id="prodTemplates.field.productId" datatype="html">
+        <source>Product ID</source>
+        <target state="translated">उत्पाद ID</target>
+      </trans-unit>
+      <trans-unit id="prodTemplates.subtitle" datatype="html">
+        <source>Reusable order blueprints</source>
+        <target state="translated">पुन: उपयोग करने योग्य आदेश ब्लूप्रिंट</target>
+      </trans-unit>
+      <trans-unit id="prodTemplates.title" datatype="html">
+        <source>Production Order Templates</source>
+        <target state="translated">उत्पादन आदेश टेम्पलेट</target>
+      </trans-unit>
+      <trans-unit id="quotation.amend_title" datatype="html">
+        <source>Amend Quotation</source>
+        <target state="translated">कोटेशन संशोधित करें</target>
+      </trans-unit>
+      <trans-unit id="quotation.btn_amend" datatype="html">
+        <source> Amend </source>
+        <target state="translated">संशोधित करें</target>
+      </trans-unit>
+      <trans-unit id="quotation.btn_amend_short" datatype="html">
+        <source> Amend </source>
+        <target state="translated">संशोधित करें</target>
+      </trans-unit>
+      <trans-unit id="quotation.field_amend_reason" datatype="html">
+        <source>Reason for Amendment</source>
+        <target state="translated">संशोधन का कारण</target>
+      </trans-unit>
+      <trans-unit id="quotation.no_revisions" datatype="html">
+        <source>No revision history available.</source>
+        <target state="translated">कोई संशोधन इतिहास उपलब्ध नहीं।</target>
+      </trans-unit>
+      <trans-unit id="quotation.revisions_title" datatype="html">
+        <source>Quotation Revision History</source>
+        <target state="translated">कोटेशन संशोधन इतिहास</target>
+      </trans-unit>
+      <trans-unit id="teams.title" datatype="html">
+        <source>Teams</source>
+        <target state="translated">टीमें</target>
+      </trans-unit>
+      <trans-unit id="transporters.title" datatype="html">
+        <source>Transporters</source>
+        <target state="translated">ट्रांसपोर्टर</target>
+      </trans-unit>
     </body>
   </file>
 </xliff>

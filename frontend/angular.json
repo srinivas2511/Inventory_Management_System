@@ -79,6 +79,7 @@
             },
             "hi": {
               "localize": ["hi"],
+              "deleteOutputPath": false,
               "budgets": [
                 {
                   "type": "initial",
@@ -95,6 +96,7 @@
             },
             "kn": {
               "localize": ["kn"],
+              "deleteOutputPath": false,
               "budgets": [
                 {
                   "type": "initial",

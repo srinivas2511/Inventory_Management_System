@@ -6,7 +6,7 @@ WORKDIR /app
 COPY frontend/package.json frontend/package-lock.json ./
 RUN npm ci
 COPY frontend/ ./
-RUN npm run build:prod
+RUN npm run build:prod && npm run build:hi && npm run build:kn
 
 # ---- runtime ----
 FROM nginx:1.27-alpine
