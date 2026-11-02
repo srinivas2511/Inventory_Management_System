@@ -217,6 +217,8 @@ export class EmployeeListComponent implements OnInit {
         esiNumber: null,
         defaultShift: null,
         payChangeReason: null,
+        operator: false,
+        operatorCode: null,
         version: null,
       })
       .subscribe({

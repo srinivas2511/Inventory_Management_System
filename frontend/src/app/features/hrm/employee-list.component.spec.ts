@@ -35,6 +35,8 @@ const employee: EmployeeDto = {
   bankIfsc: null,
   pfNumber: null,
   esiNumber: null,
+  operator: false,
+  operatorCode: null,
   version: 0,
 };
 

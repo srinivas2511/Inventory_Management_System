@@ -8,6 +8,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
 import { IstDatePipe } from '../../shared/pipes/ist-date.pipe';
@@ -42,6 +43,7 @@ import {
     MatInputModule,
     MatProgressSpinnerModule,
     MatSelectModule,
+    MatSlideToggleModule,
     MatSnackBarModule,
     MatTableModule,
     StatusBadgeComponent,
@@ -71,6 +73,8 @@ import {
         <dd>{{ e.username || 'not linked' }}</dd>
         <dt>Default shift</dt>
         <dd>{{ e.defaultShift || '-' }}</dd>
+        <dt>Operator</dt>
+        <dd>{{ e.operator ? 'Yes' : 'No' }}{{ e.operatorCode ? ' (' + e.operatorCode + ')' : '' }}</dd>
         @if (e.compensationVisible) {
           <dt>Basic pay</dt>
           <dd>{{ e.basicPay | number: '1.2-2' }}</dd>
@@ -134,6 +138,11 @@ import {
         <mat-form-field appearance="outline">
           <mat-label>Reason for pay change</mat-label>
           <input matInput maxlength="300" formControlName="payChangeReason" />
+        </mat-form-field>
+        <mat-slide-toggle formControlName="operator" aria-label="Operator">Operator</mat-slide-toggle>
+        <mat-form-field appearance="outline">
+          <mat-label>Operator code</mat-label>
+          <input matInput maxlength="20" formControlName="operatorCode" />
         </mat-form-field>
         <button mat-flat-button color="primary" type="submit" [disabled]="editForm.invalid">
           <mat-icon>save</mat-icon> Save
@@ -383,6 +392,8 @@ export class EmployeeDetailComponent implements OnInit {
     bankIfsc: [''],
     payChangeReason: [''],
     leavingReason: [''],
+    operator: [false],
+    operatorCode: [''],
   });
   skillForm = this.fb.nonNullable.group({
     skillType: this.fb.nonNullable.control<SkillType>('MACHINE'),
@@ -425,6 +436,8 @@ export class EmployeeDetailComponent implements OnInit {
           bankIfsc: e.bankIfsc ?? '',
           payChangeReason: '',
           leavingReason: '',
+          operator: e.operator ?? false,
+          operatorCode: e.operatorCode ?? '',
         });
       },
       error: () => this.snack.open('Failed to load employee', 'Dismiss', { duration: 3000 }),
@@ -461,6 +474,8 @@ export class EmployeeDetailComponent implements OnInit {
         esiNumber: e.esiNumber,
         defaultShift: v.defaultShift || null,
         payChangeReason: v.payChangeReason || null,
+        operator: v.operator,
+        operatorCode: v.operatorCode || null,
         version: e.version,
       })
       .subscribe({

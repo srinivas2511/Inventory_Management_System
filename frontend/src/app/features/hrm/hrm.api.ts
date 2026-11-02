@@ -63,6 +63,8 @@ export interface EmployeeDto {
   bankIfsc: string | null;
   pfNumber: string | null;
   esiNumber: string | null;
+  operator: boolean;
+  operatorCode: string | null;
   version: number;
 }
 
@@ -97,6 +99,8 @@ export interface SaveEmployeeRequest {
   esiNumber: string | null;
   defaultShift: string | null;
   payChangeReason: string | null;
+  operator: boolean;
+  operatorCode: string | null;
   version: number | null;
 }
 
