@@ -12,6 +12,8 @@ export interface MaterialDto {
   materialType: string;
   grade?: string;
   diameterMm?: number;
+  hsnCode?: string;
+  minOrderQty?: number;
   minStock?: number;
   reorderLevel?: number;
   maxStock?: number;
@@ -24,13 +26,15 @@ export interface MaterialDto {
 }
 
 export interface SaveMaterialRequest {
-  materialCode: string;
+  materialCode?: string;
   name: string;
   description?: string;
   uom: string;
-  materialType: string;
+  materialType?: string;
   grade?: string;
   diameterMm?: number | null;
+  hsnCode?: string | null;
+  minOrderQty?: number | null;
   minStock?: number | null;
   reorderLevel?: number | null;
   maxStock?: number | null;

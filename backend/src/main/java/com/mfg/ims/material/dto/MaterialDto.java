@@ -23,7 +23,9 @@ public record MaterialDto(
         boolean serviceItem,
         String sourceType,
         boolean customerMaterial,
-        Long version) {
+        Long version,
+        String hsnCode,
+        BigDecimal minOrderQty) {
 
     public static MaterialDto from(Material m) {
         return new MaterialDto(
@@ -33,6 +35,6 @@ public record MaterialDto(
             m.getMinStock(), m.getReorderLevel(), m.getMaxStock(),
             m.getStandardCost(), m.getShelfLifeDays(), m.getDescription(),
             m.isActive(), m.isServiceItem(), m.getSourceType(), m.isCustomerMaterial(),
-            m.getVersion());
+            m.getVersion(), m.getHsnCode(), m.getMinOrderQty());
     }
 }

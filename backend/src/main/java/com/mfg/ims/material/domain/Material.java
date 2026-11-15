@@ -78,6 +78,12 @@ public class Material extends BaseEntity {
     @Column(name = "is_customer_material", nullable = false)
     private boolean customerMaterial = false;
 
+    @Column(name = "hsn_code", length = 8)
+    private String hsnCode;
+
+    @Column(name = "min_order_qty", precision = 18, scale = 3)
+    private BigDecimal minOrderQty;
+
     public Material() {}
 
     // ── getters ──────────────────────────────────────────────────────────────
@@ -126,4 +132,10 @@ public class Material extends BaseEntity {
 
     public boolean isCustomerMaterial() { return customerMaterial; }
     public void setCustomerMaterial(boolean v) { this.customerMaterial = v; }
+
+    public String getHsnCode() { return hsnCode; }
+    public void setHsnCode(String v) { this.hsnCode = v; }
+
+    public BigDecimal getMinOrderQty() { return minOrderQty; }
+    public void setMinOrderQty(BigDecimal v) { this.minOrderQty = v; }
 }

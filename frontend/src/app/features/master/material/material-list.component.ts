@@ -60,12 +60,8 @@ import { MaterialFormComponent } from './material-form.component';
       <div class="loading-center"><mat-spinner diameter="40" /></div>
     } @else {
       <table mat-table [dataSource]="rows()" class="mat-elevation-z1">
-        <ng-container matColumnDef="code">
-          <th mat-header-cell *matHeaderCellDef>Code</th>
-          <td mat-cell *matCellDef="let r">{{ r.materialCode }}</td>
-        </ng-container>
         <ng-container matColumnDef="name">
-          <th mat-header-cell *matHeaderCellDef>Name</th>
+          <th mat-header-cell *matHeaderCellDef>Material Stock Code</th>
           <td mat-cell *matCellDef="let r">{{ r.name }}</td>
         </ng-container>
         <ng-container matColumnDef="type">
@@ -146,7 +142,7 @@ import { MaterialFormComponent } from './material-form.component';
   ],
 })
 export class MaterialListComponent implements OnInit {
-  protected readonly columns = ['code', 'name', 'type', 'uom', 'reorder', 'status', 'actions'];
+  protected readonly columns = ['name', 'type', 'uom', 'reorder', 'status', 'actions'];
   protected readonly rows = signal<MaterialDto[]>([]);
   protected readonly total = signal(0);
   protected readonly loading = signal(false);
@@ -190,7 +186,7 @@ export class MaterialListComponent implements OnInit {
 
   protected openForm(material?: MaterialDto): void {
     const ref = this.dialog.open(MaterialFormComponent, {
-      width: '600px',
+      width: '700px',
       data: material,
     });
     ref.afterClosed().subscribe((saved) => {
