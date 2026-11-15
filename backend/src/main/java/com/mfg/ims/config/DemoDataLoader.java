@@ -316,8 +316,10 @@ public class DemoDataLoader {
                             SUPPLIER_CODE, "Krishna Wire Products Pvt Ltd",
                             "Ravi Krishna", "+91-9876540001",
                             "procurement@krishnawires.example",
-                            "Plot 42, MIDC Industrial Area, Pune 411026",
-                            null, null, "Net 30", 7, null, null, null));
+                            null,
+                            "Plot 42, MIDC Industrial Area", null,
+                            "Pune", "Maharashtra", "411026", "India",
+                            null, null, null, "Net 30", null, 7, null, null, null));
                     log.info("step1: supplier created id={}", dto.id());
                     return dto.id();
                 });

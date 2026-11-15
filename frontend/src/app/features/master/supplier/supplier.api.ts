@@ -18,8 +18,16 @@ export interface SupplierDto {
   email?: string;
   phone?: string;
   address?: string;
+  addressLine1?: string;
+  addressLine2?: string;
+  city?: string;
+  stateName?: string;
+  pinCode?: string;
+  country?: string;
+  pan?: string;
   gstNumber?: string;
   paymentTerms?: string;
+  paymentTermsId?: number;
   notes?: string;
   vendorTypeId?: number;
   status: string;
@@ -27,14 +35,22 @@ export interface SupplierDto {
 }
 
 export interface SaveSupplierRequest {
-  supplierCode: string;
+  supplierCode?: string | null;
   name: string;
   contactPerson?: string;
   email?: string;
   phone?: string;
   address?: string;
+  addressLine1?: string;
+  addressLine2?: string;
+  city?: string;
+  stateName?: string;
+  pinCode?: string;
+  country?: string;
+  pan?: string;
   gstNumber?: string;
   paymentTerms?: string | null;
+  paymentTermsId?: number | null;
   notes?: string | null;
   vendorTypeId?: number | null;
 }

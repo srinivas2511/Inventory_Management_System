@@ -114,6 +114,15 @@ export interface MaterialStock {
   available: number;
 }
 
+export interface PaymentTermOption {
+  id: number;
+  termCode: string;
+  code: string;
+  name: string;
+  netDays: number;
+  active: boolean;
+}
+
 /** Dropdown data for the create forms; readable with the transactional permission, not the master-data ones. */
 @Injectable({ providedIn: 'root' })
 export class LookupApi {
@@ -181,6 +190,10 @@ export class LookupApi {
 
   vendorTypes(): Observable<LookupOption[]> {
     return this.http.get<LookupOption[]>('/api/lookups/vendor-types');
+  }
+
+  paymentTerms(): Observable<PaymentTermOption[]> {
+    return this.http.get<PaymentTermOption[]>('/api/lookups/payment-terms');
   }
 
   dispatchableOrders(): Observable<DispatchableOrder[]> {
