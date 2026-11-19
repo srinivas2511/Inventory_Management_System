@@ -394,7 +394,6 @@ export class MaterialFormComponent implements OnInit {
   protected readonly material = signal<MaterialDto | undefined>(
     inject<MaterialDto | undefined>(MAT_DIALOG_DATA),
   );
-  protected readonly wasSaved = signal(false);
   protected readonly uoms = signal<UomDto[]>([]);
   protected readonly saving = signal(false);
   protected readonly errorMessage = signal('');
@@ -470,7 +469,7 @@ export class MaterialFormComponent implements OnInit {
   }
 
   close(): void {
-    this.dialogRef.close(this.wasSaved());
+    this.dialogRef.close(false);
   }
 
   private patchForm(m: MaterialDto): void {
@@ -644,16 +643,9 @@ export class MaterialFormComponent implements OnInit {
     };
     const obs = this.material() ? this.api.update(this.material()!.id, req) : this.api.create(req);
     obs.subscribe({
-      next: (saved: MaterialDto) => {
+      next: () => {
         this.saving.set(false);
-        this.wasSaved.set(true);
-        if (!this.material()) {
-          // Create succeeded — transition to edit mode in-place so sub-panels are available
-          this.material.set(saved);
-          this.form.patchValue({ materialCode: saved.materialCode });
-          this.form.controls.materialCode.disable();
-          this.loadEditData();
-        }
+        this.dialogRef.close(true);
       },
       error: (err) => {
         this.saving.set(false);

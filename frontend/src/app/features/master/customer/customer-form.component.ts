@@ -543,7 +543,7 @@ export class CustomerFormComponent implements OnInit {
     obs.subscribe({
       next: () => {
         this.saving.set(false);
-        if (!this.customer) this.dialogRef.close(true);
+        this.dialogRef.close(true);
       },
       error: (err) => {
         this.saving.set(false);
