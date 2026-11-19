@@ -53,7 +53,7 @@ import { AttachmentsPanelComponent } from '../../../shared/components/attachment
         }
 
         <mat-form-field appearance="outline" class="full-span">
-          <mat-label>Material Stock Code *</mat-label>
+          <mat-label>Material Stock Code</mat-label>
           <input matInput formControlName="name" data-testid="name" />
           @if (form.controls.name.hasError('required') && form.controls.name.touched) {
             <mat-error>Required</mat-error>
@@ -323,7 +323,7 @@ import { AttachmentsPanelComponent } from '../../../shared/components/attachment
         <button mat-button mat-dialog-close>Close</button>
       } @else {
         <button mat-button mat-dialog-close>Cancel</button>
-        <button mat-flat-button color="primary" form="material-form" type="submit" [disabled]="saving()">
+        <button mat-flat-button color="primary" type="button" (click)="save()" [disabled]="saving()">
           @if (saving()) { <mat-spinner diameter="18" /> } @else { Save }
         </button>
       }
