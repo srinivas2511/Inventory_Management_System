@@ -1,5 +1,6 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { HttpContext } from '@angular/common/http';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatExpansionModule } from '@angular/material/expansion';
@@ -10,6 +11,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 import { applyFieldErrors } from '../../../core/models/problem.model';
+import { SKIP_ERROR_TOAST } from '../../../core/http/http-context-tokens';
 import {
   MaterialApi,
   MaterialDto,
@@ -22,6 +24,8 @@ import {
 import { LookupApi, LookupOption } from '../../../shared/lookup.api';
 import { CommentsPanelComponent } from '../../../shared/components/comments-panel/comments-panel.component';
 import { AttachmentsPanelComponent } from '../../../shared/components/attachments-panel/attachments-panel.component';
+
+const SKIP = new HttpContext().set(SKIP_ERROR_TOAST, true);
 
 @Component({
   selector: 'app-material-form',
@@ -41,11 +45,11 @@ import { AttachmentsPanelComponent } from '../../../shared/components/attachment
     AttachmentsPanelComponent,
   ],
   template: `
-    <h2 mat-dialog-title>{{ material ? 'Edit Material' : 'New Material' }}</h2>
+    <h2 mat-dialog-title>{{ material() ? 'Edit Material' : 'New Material' }}</h2>
     <mat-dialog-content>
       <form [formGroup]="form" id="material-form" (ngSubmit)="save()" novalidate class="form-grid">
 
-        @if (material) {
+        @if (material()) {
           <mat-form-field appearance="outline" class="full-span">
             <mat-label>Code</mat-label>
             <input matInput formControlName="materialCode" readonly data-testid="code" />
@@ -65,7 +69,7 @@ import { AttachmentsPanelComponent } from '../../../shared/components/attachment
           <input matInput formControlName="materialType" data-testid="materialType" />
         </mat-form-field>
         <mat-form-field appearance="outline">
-          <mat-label>UOM *</mat-label>
+          <mat-label>UOM</mat-label>
           <mat-select formControlName="uom" data-testid="uom">
             @for (u of uoms(); track u.code) {
               <mat-option [value]="u.code">{{ u.name }} ({{ u.code }})</mat-option>
@@ -129,7 +133,7 @@ import { AttachmentsPanelComponent } from '../../../shared/components/attachment
           <p class="form-error mat-body-2">{{ errorMessage() }}</p>
         }
 
-        @if (material) {
+        @if (material()) {
           <div class="save-row full-span">
             <button mat-flat-button color="primary" type="submit" [disabled]="saving()">
               @if (saving()) { <mat-spinner diameter="18" /> } @else { Save }
@@ -138,7 +142,7 @@ import { AttachmentsPanelComponent } from '../../../shared/components/attachment
         }
       </form>
 
-      @if (material) {
+      @if (material()) {
         <mat-accordion class="panels">
 
           <mat-expansion-panel>
@@ -305,24 +309,24 @@ import { AttachmentsPanelComponent } from '../../../shared/components/attachment
             <mat-expansion-panel-header>
               <mat-panel-title>Comments</mat-panel-title>
             </mat-expansion-panel-header>
-            <app-comments-panel [entityType]="'MATERIAL'" [entityId]="material?.id || 0"></app-comments-panel>
+            <app-comments-panel [entityType]="'MATERIAL'" [entityId]="material()?.id || 0"></app-comments-panel>
           </mat-expansion-panel>
 
           <mat-expansion-panel>
             <mat-expansion-panel-header>
               <mat-panel-title>Attachments</mat-panel-title>
             </mat-expansion-panel-header>
-            <app-attachments-panel [entityType]="'MATERIAL'" [entityId]="material?.id || 0"></app-attachments-panel>
+            <app-attachments-panel [entityType]="'MATERIAL'" [entityId]="material()?.id || 0"></app-attachments-panel>
           </mat-expansion-panel>
 
         </mat-accordion>
       }
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      @if (material) {
-        <button mat-button mat-dialog-close>Close</button>
+      @if (material()) {
+        <button mat-button (click)="close()">Close</button>
       } @else {
-        <button mat-button mat-dialog-close>Cancel</button>
+        <button mat-button (click)="close()">Cancel</button>
         <button mat-flat-button color="primary" type="button" (click)="save()" [disabled]="saving()">
           @if (saving()) { <mat-spinner diameter="18" /> } @else { Save }
         </button>
@@ -377,7 +381,10 @@ import { AttachmentsPanelComponent } from '../../../shared/components/attachment
   ],
 })
 export class MaterialFormComponent implements OnInit {
-  protected readonly material = inject<MaterialDto | undefined>(MAT_DIALOG_DATA);
+  protected readonly material = signal<MaterialDto | undefined>(
+    inject<MaterialDto | undefined>(MAT_DIALOG_DATA),
+  );
+  protected readonly wasSaved = signal(false);
   protected readonly uoms = signal<UomDto[]>([]);
   protected readonly saving = signal(false);
   protected readonly errorMessage = signal('');
@@ -440,39 +447,59 @@ export class MaterialFormComponent implements OnInit {
 
   ngOnInit(): void {
     this.api.listUoms().subscribe((list) => this.uoms.set(list));
-    if (this.material) {
-      this.form.patchValue({
-        materialCode: this.material.materialCode,
-        name: this.material.name,
-        materialType: this.material.materialType ?? '',
-        uom: this.material.uom,
-        hsnCode: this.material.hsnCode ?? '',
-        grade: this.material.grade ?? '',
-        diameterMm: this.material.diameterMm ?? null,
-        minOrderQty: this.material.minOrderQty ?? null,
-        minStock: this.material.minStock ?? null,
-        reorderLevel: this.material.reorderLevel ?? null,
-        maxStock: this.material.maxStock ?? null,
-        standardCost: this.material.standardCost ?? null,
-        sourceType: this.material.sourceType ?? 'LOCAL',
-        description: this.material.description ?? '',
-      });
+    if (this.material()) {
+      this.patchForm(this.material()!);
       this.form.controls.materialCode.disable();
-      this.loadConversions();
-      this.loadPurchasingInfo();
-      this.loadVendorMappings();
-      this.lookupApi.suppliers().subscribe((list) => this.suppliers.set(list));
+      this.loadEditData();
     }
   }
 
+  close(): void {
+    this.dialogRef.close(this.wasSaved());
+  }
+
+  private patchForm(m: MaterialDto): void {
+    this.form.patchValue({
+      materialCode: m.materialCode,
+      name: m.name,
+      materialType: m.materialType ?? '',
+      uom: m.uom,
+      hsnCode: m.hsnCode ?? '',
+      grade: m.grade ?? '',
+      diameterMm: m.diameterMm ?? null,
+      minOrderQty: m.minOrderQty ?? null,
+      minStock: m.minStock ?? null,
+      reorderLevel: m.reorderLevel ?? null,
+      maxStock: m.maxStock ?? null,
+      standardCost: m.standardCost ?? null,
+      sourceType: m.sourceType ?? 'LOCAL',
+      description: m.description ?? '',
+    });
+  }
+
+  private loadEditData(): void {
+    this.loadConversions();
+    this.loadPurchasingInfo();
+    this.loadVendorMappings();
+    this.lookupApi.suppliers().subscribe({
+      next: (list) => this.suppliers.set(list),
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      error: () => {},
+    });
+  }
+
   private loadConversions(): void {
-    if (!this.material) return;
-    this.api.getUomConversions(this.material.id).subscribe((list) => this.conversions.set(list));
+    if (!this.material()) return;
+    this.api.getUomConversions(this.material()!.id).subscribe({
+      next: (list) => this.conversions.set(list),
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      error: () => {},
+    });
   }
 
   private loadPurchasingInfo(): void {
-    if (!this.material) return;
-    this.api.getPurchasingInfo(this.material.id).subscribe({
+    if (!this.material()) return;
+    this.api.getPurchasingInfo(this.material()!.id, SKIP).subscribe({
       next: (info) =>
         this.purchForm.patchValue({
           purchaseUom: info.purchaseUom ?? null,
@@ -485,14 +512,14 @@ export class MaterialFormComponent implements OnInit {
   }
 
   addConversion(): void {
-    if (this.convForm.invalid || !this.material) {
+    if (this.convForm.invalid || !this.material()) {
       this.convForm.markAllAsTouched();
       return;
     }
     this.convSaving.set(true);
     this.convError.set('');
     const v = this.convForm.getRawValue();
-    this.api.addUomConversion(this.material.id, v.altUom, v.factorToBase!).subscribe({
+    this.api.addUomConversion(this.material()!.id, v.altUom, v.factorToBase!).subscribe({
       next: () => {
         this.convSaving.set(false);
         this.convForm.reset();
@@ -506,16 +533,16 @@ export class MaterialFormComponent implements OnInit {
   }
 
   removeConversion(altUom: string): void {
-    if (!this.material) return;
-    this.api.deleteUomConversion(this.material.id, altUom).subscribe({
+    if (!this.material()) return;
+    this.api.deleteUomConversion(this.material()!.id, altUom).subscribe({
       next: () => this.loadConversions(),
       error: (err) => this.convError.set(err?.error?.message ?? 'Delete failed.'),
     });
   }
 
   private loadVendorMappings(): void {
-    if (!this.material) return;
-    this.api.listVendorMappings(this.material.id).subscribe({
+    if (!this.material()) return;
+    this.api.listVendorMappings(this.material()!.id, SKIP).subscribe({
       next: (list) => this.vendorMappings.set(list),
       // eslint-disable-next-line @typescript-eslint/no-empty-function
       error: () => {},
@@ -523,7 +550,7 @@ export class MaterialFormComponent implements OnInit {
   }
 
   addVendorMapping(): void {
-    if (this.vendorForm.invalid || !this.material) {
+    if (this.vendorForm.invalid || !this.material()) {
       this.vendorForm.markAllAsTouched();
       return;
     }
@@ -531,7 +558,7 @@ export class MaterialFormComponent implements OnInit {
     this.vendorError.set('');
     const v = this.vendorForm.getRawValue();
     this.api
-      .addVendorMapping(this.material.id, {
+      .addVendorMapping(this.material()!.id, {
         supplierId: v.supplierId!,
         supplierItemCode: v.supplierItemCode ?? null,
         lastPrice: v.lastPrice ?? null,
@@ -553,15 +580,15 @@ export class MaterialFormComponent implements OnInit {
   }
 
   removeVendorMapping(mapping: ItemVendorMappingDto): void {
-    if (!this.material) return;
-    this.api.deleteVendorMapping(this.material.id, mapping.id).subscribe({
+    if (!this.material()) return;
+    this.api.deleteVendorMapping(this.material()!.id, mapping.id).subscribe({
       next: () => this.loadVendorMappings(),
       error: (err) => this.vendorError.set(err?.error?.message ?? 'Delete failed.'),
     });
   }
 
   savePurchasing(): void {
-    if (!this.material) return;
+    if (!this.material()) return;
     this.purchSaving.set(true);
     this.purchError.set('');
     const v = this.purchForm.value;
@@ -570,7 +597,7 @@ export class MaterialFormComponent implements OnInit {
       purchaseTaxCode: v.purchaseTaxCode ?? null,
       preferredSupplierId: v.preferredSupplierId ?? null,
     };
-    this.api.savePurchasingInfo(this.material.id, req).subscribe({
+    this.api.savePurchasingInfo(this.material()!.id, req).subscribe({
       next: () => this.purchSaving.set(false),
       error: (err) => {
         this.purchSaving.set(false);
@@ -602,11 +629,18 @@ export class MaterialFormComponent implements OnInit {
       sourceType: raw.sourceType || 'LOCAL',
       description: raw.description?.trim() || undefined,
     };
-    const obs = this.material ? this.api.update(this.material.id, req) : this.api.create(req);
+    const obs = this.material() ? this.api.update(this.material()!.id, req) : this.api.create(req);
     obs.subscribe({
-      next: () => {
+      next: (saved: MaterialDto) => {
         this.saving.set(false);
-        if (!this.material) this.dialogRef.close(true);
+        this.wasSaved.set(true);
+        if (!this.material()) {
+          // Create succeeded — transition to edit mode in-place so sub-panels are available
+          this.material.set(saved);
+          this.form.patchValue({ materialCode: saved.materialCode });
+          this.form.controls.materialCode.disable();
+          this.loadEditData();
+        }
       },
       error: (err) => {
         this.saving.set(false);

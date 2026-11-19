@@ -6,6 +6,7 @@ import { SessionStore } from '../auth/session.store';
 import { safeReturnUrl } from '../auth/return-url';
 import { detailWithFieldErrors, isProblemDetail } from '../models/problem.model';
 import { ToastService } from '../notification/toast.service';
+import { SKIP_ERROR_TOAST } from './http-context-tokens';
 
 /**
  * Maps API problems to user-facing toasts. Validation errors (400) are left to forms to show next to the
@@ -22,6 +23,9 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   return next(req).pipe(
     catchError((error: unknown) => {
       if (error instanceof HttpErrorResponse) {
+        if (req.context.get(SKIP_ERROR_TOAST)) {
+          return throwError(() => error);
+        }
         const problem = isProblemDetail(error.error) ? error.error : null;
         if (error.status === 403 && problem?.code === 'PASSWORD_CHANGE_REQUIRED') {
           const user = session.user();

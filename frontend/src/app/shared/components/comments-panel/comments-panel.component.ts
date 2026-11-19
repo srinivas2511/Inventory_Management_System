@@ -1,7 +1,10 @@
 import { Component, Input, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpContext } from '@angular/common/http';
+import { SKIP_ERROR_TOAST } from '../../../core/http/http-context-tokens';
+
+const SKIP = new HttpContext().set(SKIP_ERROR_TOAST, true);
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -207,7 +210,7 @@ export class CommentsPanelComponent implements OnInit {
   }
 
   private loadComments(): void {
-    this.http.get<CommentDto[]>(`/api/comments?entityType=${this.entityType}&entityId=${this.entityId}`).subscribe({
+    this.http.get<CommentDto[]>(`/api/comments?entityType=${this.entityType}&entityId=${this.entityId}`, { context: SKIP }).subscribe({
       next: (list) => this.comments.set(list),
       // eslint-disable-next-line @typescript-eslint/no-empty-function
       error: () => {},
@@ -215,7 +218,7 @@ export class CommentsPanelComponent implements OnInit {
   }
 
   private loadReminders(): void {
-    this.http.get<ReminderDto[]>(`/api/reminders?entityType=${this.entityType}&entityId=${this.entityId}`).subscribe({
+    this.http.get<ReminderDto[]>(`/api/reminders?entityType=${this.entityType}&entityId=${this.entityId}`, { context: SKIP }).subscribe({
       next: (list) => this.reminders.set(list),
       // eslint-disable-next-line @typescript-eslint/no-empty-function
       error: () => {},

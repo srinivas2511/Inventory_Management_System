@@ -1,6 +1,9 @@
 import { Component, ElementRef, Input, OnInit, ViewChild, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpContext } from '@angular/common/http';
+import { SKIP_ERROR_TOAST } from '../../../core/http/http-context-tokens';
+
+const SKIP = new HttpContext().set(SKIP_ERROR_TOAST, true);
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatListModule } from '@angular/material/list';
@@ -112,7 +115,7 @@ export class AttachmentsPanelComponent implements OnInit {
 
   private loadAttachments(): void {
     this.http
-      .get<AttachmentDto[]>(`/api/attachments?entityType=${this.entityType}&entityId=${this.entityId}`)
+      .get<AttachmentDto[]>(`/api/attachments?entityType=${this.entityType}&entityId=${this.entityId}`, { context: SKIP })
       .subscribe({
         next: (list) => this.attachments.set(list),
         // eslint-disable-next-line @typescript-eslint/no-empty-function

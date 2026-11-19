@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { AppConfigService } from '../../../core/config/app-config.service';
 
@@ -152,16 +152,18 @@ export class MaterialApi {
     );
   }
 
-  getPurchasingInfo(materialId: number): Observable<PurchasingInfoDto> {
-    return this.http.get<PurchasingInfoDto>(`${this.base}/api/materials/${materialId}/purchasing-info`);
+  getPurchasingInfo(materialId: number, context?: HttpContext): Observable<PurchasingInfoDto> {
+    return this.http.get<PurchasingInfoDto>(`${this.base}/api/materials/${materialId}/purchasing-info`,
+      context ? { context } : {});
   }
 
   savePurchasingInfo(materialId: number, req: SavePurchasingInfoRequest): Observable<PurchasingInfoDto> {
     return this.http.put<PurchasingInfoDto>(`${this.base}/api/materials/${materialId}/purchasing-info`, req);
   }
 
-  listVendorMappings(materialId: number): Observable<ItemVendorMappingDto[]> {
-    return this.http.get<ItemVendorMappingDto[]>(`${this.base}/api/materials/${materialId}/vendor-mappings`);
+  listVendorMappings(materialId: number, context?: HttpContext): Observable<ItemVendorMappingDto[]> {
+    return this.http.get<ItemVendorMappingDto[]>(`${this.base}/api/materials/${materialId}/vendor-mappings`,
+      context ? { context } : {});
   }
 
   addVendorMapping(materialId: number, req: SaveVendorMappingRequest): Observable<ItemVendorMappingDto> {
