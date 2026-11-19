@@ -334,6 +334,7 @@ export class ProductFormComponent implements OnInit {
   ngOnInit(): void {
     this.lookupApi.workCentres().subscribe((list) => this.workCentres.set(list));
     this.lookupApi.materials().subscribe((list) => this.materials.set(list));
+    this.lookupApi.customers().subscribe((list) => this.availableCustomers.set(list));
     if (this.product) {
       this.form.patchValue({
         ...this.product,
@@ -341,7 +342,6 @@ export class ProductFormComponent implements OnInit {
       });
       this.form.controls.specification.patchValue(this.product);
       this.form.controls.productCode.disable();
-      this.lookupApi.customers().subscribe((list) => this.availableCustomers.set(list));
       this.loadApprovedCustomers();
       this.loadLinkedMaterials();
     }
