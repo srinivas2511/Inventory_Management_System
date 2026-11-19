@@ -49,12 +49,16 @@ const SKIP = new HttpContext().set(SKIP_ERROR_TOAST, true);
     <mat-dialog-content>
       <form [formGroup]="form" id="material-form" (ngSubmit)="save()" novalidate class="form-grid">
 
-        @if (material()) {
-          <mat-form-field appearance="outline" class="full-span">
-            <mat-label>Code</mat-label>
-            <input matInput formControlName="materialCode" readonly data-testid="code" />
-          </mat-form-field>
-        }
+        <mat-form-field appearance="outline">
+          <mat-label>Code</mat-label>
+          <input matInput formControlName="materialCode"
+                 [placeholder]="material() ? '' : 'Auto-generated'"
+                 [readonly]="!!material()"
+                 data-testid="code" />
+          @if (!material()) {
+            <mat-hint>Leave blank to auto-generate</mat-hint>
+          }
+        </mat-form-field>
 
         <mat-form-field appearance="outline" class="full-span">
           <mat-label>Material Stock Code</mat-label>
@@ -453,6 +457,11 @@ export class MaterialFormComponent implements OnInit {
 
   ngOnInit(): void {
     this.api.listUoms().subscribe((list) => this.uoms.set(list));
+    this.lookupApi.suppliers().subscribe({
+      next: (list) => this.suppliers.set(list),
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      error: () => {},
+    });
     if (this.material()) {
       this.patchForm(this.material()!);
       this.form.controls.materialCode.disable();
@@ -487,11 +496,6 @@ export class MaterialFormComponent implements OnInit {
     this.loadConversions();
     this.loadPurchasingInfo();
     this.loadVendorMappings();
-    this.lookupApi.suppliers().subscribe({
-      next: (list) => this.suppliers.set(list),
-      // eslint-disable-next-line @typescript-eslint/no-empty-function
-      error: () => {},
-    });
   }
 
   private loadConversions(): void {
