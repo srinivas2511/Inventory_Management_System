@@ -122,7 +122,7 @@ const PAN_PATTERN = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
           <input matInput formControlName="supplierCode"
                  [placeholder]="supplier ? '' : 'Auto-generated'" />
           @if (!supplier) {
-            <mat-hint>Leave blank to auto-generate (e.g. SUP-1001)</mat-hint>
+            <mat-hint>Leave blank to auto-generate</mat-hint>
           }
         </mat-form-field>
         <mat-form-field appearance="outline">
