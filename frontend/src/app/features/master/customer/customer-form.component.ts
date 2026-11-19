@@ -58,7 +58,7 @@ const GST_PATTERN = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
                   <mat-label>Name</mat-label>
                   <input matInput formControlName="name" />
                   @if (form.controls.name.hasError('required') && form.controls.name.touched) {
-                    <mat-error>Required</mat-error>
+                    <mat-error>Name is required</mat-error>
                   }
                 </mat-form-field>
                 <mat-form-field appearance="outline">
@@ -256,14 +256,14 @@ const GST_PATTERN = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
             <mat-label>Code</mat-label>
             <input matInput formControlName="customerCode" />
             @if (form.controls.customerCode.hasError('required') && form.controls.customerCode.touched) {
-              <mat-error>Required</mat-error>
+              <mat-error>Code is required</mat-error>
             }
           </mat-form-field>
           <mat-form-field appearance="outline">
             <mat-label>Name</mat-label>
             <input matInput formControlName="name" />
             @if (form.controls.name.hasError('required') && form.controls.name.touched) {
-              <mat-error>Required</mat-error>
+              <mat-error>Name is required</mat-error>
             }
           </mat-form-field>
           <mat-form-field appearance="outline">

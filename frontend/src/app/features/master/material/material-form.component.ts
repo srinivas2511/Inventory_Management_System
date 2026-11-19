@@ -64,7 +64,7 @@ const SKIP = new HttpContext().set(SKIP_ERROR_TOAST, true);
           <mat-label>Material Stock Code</mat-label>
           <input matInput formControlName="name" data-testid="name" />
           @if (form.controls.name.hasError('required') && form.controls.name.touched) {
-            <mat-error>Required</mat-error>
+            <mat-error>Name is required</mat-error>
           }
         </mat-form-field>
 
@@ -80,7 +80,7 @@ const SKIP = new HttpContext().set(SKIP_ERROR_TOAST, true);
             }
           </mat-select>
           @if (form.controls.uom.hasError('required') && form.controls.uom.touched) {
-            <mat-error>Required</mat-error>
+            <mat-error>Unit of measure is required</mat-error>
           }
         </mat-form-field>
 

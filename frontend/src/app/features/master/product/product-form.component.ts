@@ -125,14 +125,14 @@ import { LookupApi, LookupItem, LookupOption } from '../../../shared/lookup.api'
               <mat-label>Code</mat-label>
               <input matInput formControlName="productCode" [readonly]="!!product" data-testid="code" />
               @if (form.controls.productCode.hasError('required') && form.controls.productCode.touched) {
-                <mat-error>Required</mat-error>
+                <mat-error>Product code is required</mat-error>
               }
             </mat-form-field>
             <mat-form-field appearance="outline">
               <mat-label>Name</mat-label>
               <input matInput formControlName="name" data-testid="name" />
               @if (form.controls.name.hasError('required') && form.controls.name.touched) {
-                <mat-error>Required</mat-error>
+                <mat-error>Name is required</mat-error>
               }
             </mat-form-field>
             <mat-form-field appearance="outline">
@@ -143,7 +143,7 @@ import { LookupApi, LookupItem, LookupOption } from '../../../shared/lookup.api'
                 }
               </mat-select>
               @if (form.controls.springType.hasError('required') && form.controls.springType.touched) {
-                <mat-error>Required</mat-error>
+                <mat-error>Product type is required</mat-error>
               }
             </mat-form-field>
             <mat-form-field appearance="outline">

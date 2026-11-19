@@ -129,7 +129,7 @@ const PAN_PATTERN = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
           <mat-label>Name *</mat-label>
           <input matInput formControlName="name" />
           @if (form.controls.name.hasError('required') && form.controls.name.touched) {
-            <mat-error>Required</mat-error>
+            <mat-error>Name is required</mat-error>
           }
         </mat-form-field>
 
