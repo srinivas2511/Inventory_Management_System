@@ -642,7 +642,6 @@ export class MaterialFormComponent implements OnInit {
       serviceItem: false,
       customerMaterial: false,
     };
-    console.log('[material-form] save payload:', JSON.stringify(req));
     const obs = this.material() ? this.api.update(this.material()!.id, req) : this.api.create(req);
     obs.subscribe({
       next: (saved: MaterialDto) => {
