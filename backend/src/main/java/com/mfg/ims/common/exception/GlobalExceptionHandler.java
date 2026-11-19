@@ -100,6 +100,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         // but use the same body shape as every other error.
         if (statusCode.is4xxClientError() && !(body instanceof ProblemDetail pd && pd.getProperties() != null
                 && pd.getProperties().containsKey("code"))) {
+            log.warn("Request error [{}]: {}", statusCode.value(), ex.getMessage());
             ErrorCode code = statusCode.value() == 404 ? ErrorCode.NOT_FOUND : ErrorCode.VALIDATION_FAILED;
             ProblemDetail problem = Problems.of(code, safeDetail(ex, body));
             problem.setStatus(statusCode.value());

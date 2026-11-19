@@ -623,6 +623,7 @@ export class MaterialFormComponent implements OnInit {
     }
     this.saving.set(true);
     const raw = this.form.getRawValue();
+    const toNum = (v: number | null): number | null => (v != null && v !== ('' as unknown) ? +v : null);
     const req: SaveMaterialRequest = {
       materialCode: raw.materialCode?.trim() || undefined,
       name: raw.name,
@@ -630,17 +631,18 @@ export class MaterialFormComponent implements OnInit {
       uom: raw.uom,
       hsnCode: raw.hsnCode?.trim() || undefined,
       grade: raw.grade?.trim() || undefined,
-      diameterMm: raw.diameterMm,
-      minOrderQty: raw.minOrderQty,
-      minStock: raw.minStock,
-      reorderLevel: raw.reorderLevel,
-      maxStock: raw.maxStock,
-      standardCost: raw.standardCost,
+      diameterMm: toNum(raw.diameterMm),
+      minOrderQty: toNum(raw.minOrderQty),
+      minStock: toNum(raw.minStock),
+      reorderLevel: toNum(raw.reorderLevel),
+      maxStock: toNum(raw.maxStock),
+      standardCost: toNum(raw.standardCost),
       sourceType: raw.sourceType || 'LOCAL',
       description: raw.description?.trim() || undefined,
       serviceItem: false,
       customerMaterial: false,
     };
+    console.log('[material-form] save payload:', JSON.stringify(req));
     const obs = this.material() ? this.api.update(this.material()!.id, req) : this.api.create(req);
     obs.subscribe({
       next: (saved: MaterialDto) => {
