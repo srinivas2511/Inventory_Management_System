@@ -41,7 +41,8 @@ export interface SaveMaterialRequest {
   standardCost?: number | null;
   preferredSupplierId?: number | null;
   sourceType?: string | null;
-  customerMaterial?: boolean | null;
+  serviceItem?: boolean;
+  customerMaterial?: boolean;
 }
 
 export interface UomDto {

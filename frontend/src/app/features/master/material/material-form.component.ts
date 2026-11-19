@@ -634,6 +634,8 @@ export class MaterialFormComponent implements OnInit {
       standardCost: raw.standardCost,
       sourceType: raw.sourceType || 'LOCAL',
       description: raw.description?.trim() || undefined,
+      serviceItem: false,
+      customerMaterial: false,
     };
     const obs = this.material() ? this.api.update(this.material()!.id, req) : this.api.create(req);
     obs.subscribe({
