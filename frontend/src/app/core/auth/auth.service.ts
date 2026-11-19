@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { Observable, catchError, finalize, map, of, shareReplay, switchMap, tap, throwError } from 'rxjs';
+import { Observable, catchError, finalize, map, of, retry, shareReplay, switchMap, tap, throwError, timer } from 'rxjs';
 import { AppConfigService } from '../config/app-config.service';
 import { TokenStore } from './token.store';
 import { SessionStore, SessionUser } from './session.store';
@@ -46,6 +46,10 @@ export class AuthService {
    */
   restoreSession(): Observable<boolean> {
     return this.http.post<LoginResponse>(`${this.base}/refresh`, {}).pipe(
+      retry({
+        count: 2,
+        delay: (err, attempt) => (err.status >= 500 ? timer(600 * attempt) : throwError(() => err)),
+      }),
       tap((res) => this.accept(res)),
       map(() => true),
       catchError(() => of(false)),

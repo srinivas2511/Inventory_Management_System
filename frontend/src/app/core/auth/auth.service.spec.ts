@@ -78,10 +78,11 @@ describe('AuthService', () => {
     expect(navigate).not.toHaveBeenCalled();
   });
 
-  it('reports no session, quietly, when start-up finds nobody signed in', () => {
+  it('reports no session, quietly, when start-up finds nobody signed in (401 — no retry)', () => {
     const navigate = spyOn(TestBed.inject(Router), 'navigate');
     let restored: boolean | undefined;
     service.restoreSession().subscribe((r) => (restored = r));
+    // 401 = invalid/absent cookie: no retry, resolve immediately as false
     http.expectOne('/api/auth/refresh').flush({ code: 'INVALID_TOKEN' }, { status: 401, statusText: 'Unauthorized' });
 
     expect(restored).toBeFalse();
