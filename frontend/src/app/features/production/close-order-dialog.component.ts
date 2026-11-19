@@ -53,7 +53,7 @@ export interface CloseDialogData {
             @if (form.controls.reason.invalid && form.controls.reason.touched) {
               <mat-error>A reason is required to write material off</mat-error>
             }
-            <mat-hint>The reason is kept in the audit trail. The written-off cost goes to scrap loss.</mat-hint>
+            <mat-hint>Kept in audit log; cost written off to scrap.</mat-hint>
           </mat-form-field>
         </form>
       }

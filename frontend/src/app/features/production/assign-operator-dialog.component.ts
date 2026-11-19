@@ -45,7 +45,7 @@ export interface AssignDialogData {
         <mat-form-field appearance="outline" class="wide">
           <mat-label>Search people</mat-label>
           <input matInput [formControl]="search" />
-          <mat-hint>Only active users who can execute production work are listed</mat-hint>
+          <mat-hint>Active operators only</mat-hint>
         </mat-form-field>
         <mat-form-field appearance="outline" class="wide">
           <mat-label>Operator</mat-label>

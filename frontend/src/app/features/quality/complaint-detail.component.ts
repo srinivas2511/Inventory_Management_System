@@ -90,7 +90,7 @@ import {
               <mat-option [value]="b.id">{{ b.batchNumber }}</mat-option>
             }
           </mat-select>
-          <mat-hint>Pick a product first to choose one of its batches</mat-hint>
+          <mat-hint>Select a product first</mat-hint>
         </mat-form-field>
         <mat-form-field appearance="outline">
           <mat-label>Complaint date</mat-label>

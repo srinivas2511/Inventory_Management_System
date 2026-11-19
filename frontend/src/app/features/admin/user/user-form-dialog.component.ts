@@ -87,7 +87,7 @@ export interface UserFormData {
             >
               <mat-icon>{{ showPassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
             </button>
-            <mat-hint>They must choose a new one the first time they sign in.</mat-hint>
+            <mat-hint>Required on first sign-in.</mat-hint>
           </mat-form-field>
           <div class="full-span">
             <app-password-hints [password]="form.controls.password.value" [username]="form.controls.username.value" />
@@ -100,7 +100,7 @@ export interface UserFormData {
                   <mat-option [value]="r.code">{{ r.name }} ({{ r.code }})</mat-option>
                 }
               </mat-select>
-              <mat-hint>You can also assign roles later from the user list.</mat-hint>
+              <mat-hint>Roles can be assigned later.</mat-hint>
             </mat-form-field>
           }
         }

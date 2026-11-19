@@ -49,10 +49,7 @@ export interface DebitNoteDialogData {
               <mat-error>Enter an amount greater than zero</mat-error>
             }
             @if (reversedTax() !== null) {
-              <mat-hint data-testid="tax-reversal">
-                Tax reversed {{ reversedTax() | number: '1.2-4' }}, debit total
-                {{ debitTotal() | number: '1.2-4' }}
-              </mat-hint>
+              <mat-hint data-testid="tax-reversal">Tax {{ reversedTax() | number: '1.2-2' }} reversed · total {{ debitTotal() | number: '1.2-2' }}</mat-hint>
             }
           </mat-form-field>
         </div>

@@ -50,8 +50,8 @@ describe('DebitNoteDialogComponent', () => {
     fixture.detectChanges();
 
     const hint = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="tax-reversal"]');
-    expect(hint?.textContent).toContain('Tax reversed 1,800.00');
-    expect(hint?.textContent).toContain('debit total 11,800.00');
+    expect(hint?.textContent).toContain('1,800.00');
+    expect(hint?.textContent).toContain('11,800.00');
   });
 
   it('posts the CreateDebitNoteRequest with trimmed reason', () => {

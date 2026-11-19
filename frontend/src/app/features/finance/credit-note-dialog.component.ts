@@ -61,9 +61,7 @@ export interface CreditNoteDialogData {
               <mat-error>Enter an amount greater than zero</mat-error>
             }
             @if (reversedTax() !== null) {
-              <mat-hint data-testid="tax-reversal">
-                Tax reversed {{ reversedTax() | number: '1.2-4' }}, credit total {{ creditTotal() | number: '1.2-4' }}
-              </mat-hint>
+              <mat-hint data-testid="tax-reversal">Tax {{ reversedTax() | number: '1.2-2' }} reversed · total {{ creditTotal() | number: '1.2-2' }}</mat-hint>
             }
           </mat-form-field>
         </div>
@@ -80,7 +78,7 @@ export interface CreditNoteDialogData {
             <mat-form-field appearance="outline">
               <mat-label>Finished goods batch ID</mat-label>
               <input matInput type="number" formControlName="batchId" />
-              <mat-hint>A batch that was dispatched on this invoice</mat-hint>
+              <mat-hint>Dispatched on this invoice</mat-hint>
             </mat-form-field>
             <mat-form-field appearance="outline">
               <mat-label>Quantity returned</mat-label>

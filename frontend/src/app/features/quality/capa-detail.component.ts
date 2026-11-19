@@ -62,7 +62,7 @@ type NewSource = 'INTERNAL_AUDIT' | 'REJECTION_ANALYSIS';
           <mat-form-field appearance="outline">
             <mat-label>Rejection ID</mat-label>
             <input matInput type="number" formControlName="rejectionId" />
-            <mat-hint>The title and description are filled in from the rejection</mat-hint>
+            <mat-hint>Pre-filled from the rejection</mat-hint>
           </mat-form-field>
         } @else {
           <mat-form-field appearance="outline" class="full">

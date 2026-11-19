@@ -117,12 +117,9 @@ import { ApInvoiceCreateRequest, ApInvoiceDto, DeterminationDto, FinanceApi, Sla
                 <mat-error>Choose the goods receipt this invoice bills</mat-error>
               }
               @if (selected(); as r) {
-                <mat-hint>
-                  Received {{ r.receivedValue | number: '1.2-4' }} · already invoiced
-                  {{ r.invoicedValue | number: '1.2-4' }}
-                </mat-hint>
+                <mat-hint>Received {{ r.receivedValue | number: '1.2-2' }} · invoiced {{ r.invoicedValue | number: '1.2-2' }}</mat-hint>
               } @else if (form.controls.supplierId.value && !loadingReceipts() && receipts().length === 0) {
-                <mat-hint>This supplier has no posted receipt with value left to invoice.</mat-hint>
+                <mat-hint>No open receipt found for this supplier.</mat-hint>
               }
             </mat-form-field>
             <mat-form-field appearance="outline">
@@ -162,7 +159,7 @@ import { ApInvoiceCreateRequest, ApInvoiceDto, DeterminationDto, FinanceApi, Sla
                   <mat-option [value]="s.slabCode">{{ s.slabCode }} · {{ s.description }}</mat-option>
                 }
               </mat-select>
-              <mat-hint>Taxed by place of supply, from the supplier's GSTIN</mat-hint>
+              <mat-hint>Determined by supplier's GSTIN</mat-hint>
             </mat-form-field>
             <mat-form-field appearance="outline">
               <mat-label>Currency</mat-label>
@@ -170,7 +167,7 @@ import { ApInvoiceCreateRequest, ApInvoiceDto, DeterminationDto, FinanceApi, Sla
               @if (form.controls.currencyCode.hasError('pattern')) {
                 <mat-error>Use a three-letter code such as USD</mat-error>
               }
-              <mat-hint>Leave empty for the supplier's own currency</mat-hint>
+              <mat-hint>Defaults to supplier's currency</mat-hint>
             </mat-form-field>
             <mat-form-field appearance="outline">
               <mat-label>Tax</mat-label>

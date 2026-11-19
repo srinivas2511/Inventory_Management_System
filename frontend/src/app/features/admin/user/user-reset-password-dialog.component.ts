@@ -79,7 +79,7 @@ export interface UserResetPasswordData {
           <mat-form-field appearance="outline" class="full">
             <mat-label>Reason</mat-label>
             <input matInput formControlName="reason" maxlength="300" required data-testid="reset-reason" />
-            <mat-hint>Kept in the audit trail. The password is never recorded.</mat-hint>
+            <mat-hint>Kept in audit log; password not stored.</mat-hint>
           </mat-form-field>
           <mat-checkbox formControlName="chooseOwn" data-testid="reset-own"
             >I will choose the password myself</mat-checkbox
