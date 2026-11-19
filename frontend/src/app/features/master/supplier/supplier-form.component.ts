@@ -306,6 +306,7 @@ export class SupplierFormComponent implements OnInit {
     this.lookupApi.paymentTerms().subscribe((list) =>
       this.paymentTerms.set(list.filter((pt) => pt.active))
     );
+    this.lookupApi.materials().subscribe((list) => this.allMaterials.set(list));
     if (this.supplier) {
       this.form.patchValue({
         ...this.supplier,
@@ -315,7 +316,6 @@ export class SupplierFormComponent implements OnInit {
       });
       this.form.controls.supplierCode.disable();
       this.loadApproved();
-      this.lookupApi.materials().subscribe((list) => this.allMaterials.set(list));
     }
   }
 

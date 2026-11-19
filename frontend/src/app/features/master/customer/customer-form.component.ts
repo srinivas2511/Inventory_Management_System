@@ -432,11 +432,11 @@ export class CustomerFormComponent implements OnInit {
   private readonly dialogRef = inject(MatDialogRef<CustomerFormComponent>);
 
   ngOnInit(): void {
+    this.lookupApi.products().subscribe((list) => this.allProducts.set(list));
     if (this.customer) {
       this.form.patchValue(this.customer);
       this.form.controls.customerCode.disable();
       this.loadApproved();
-      this.lookupApi.products().subscribe((list) => this.allProducts.set(list));
     }
   }
 
