@@ -142,8 +142,7 @@ const SKIP = new HttpContext().set(SKIP_ERROR_TOAST, true);
         }
       </form>
 
-      @if (material()) {
-        <mat-accordion class="panels">
+      <mat-accordion class="panels">
 
           <mat-expansion-panel>
             <mat-expansion-panel-header>
@@ -190,7 +189,7 @@ const SKIP = new HttpContext().set(SKIP_ERROR_TOAST, true);
                 <mat-label>1 alt = N base</mat-label>
                 <input matInput type="number" formControlName="factorToBase" />
               </mat-form-field>
-              <button mat-flat-button color="primary" type="submit" [disabled]="convSaving()">Add</button>
+              <button mat-flat-button color="primary" type="submit" [disabled]="convSaving() || !material()">Add</button>
             </form>
             @if (convError()) { <p class="form-error mat-body-2">{{ convError() }}</p> }
           </mat-expansion-panel>
@@ -225,7 +224,7 @@ const SKIP = new HttpContext().set(SKIP_ERROR_TOAST, true);
               @if (purchError()) { <p class="form-error mat-body-2">{{ purchError() }}</p> }
             </form>
             <div class="purch-actions">
-              <button mat-flat-button color="primary" (click)="savePurchasing()" [disabled]="purchSaving()">
+              <button mat-flat-button color="primary" (click)="savePurchasing()" [disabled]="purchSaving() || !material()">
                 @if (purchSaving()) { <mat-spinner diameter="18" /> } @else { Save }
               </button>
             </div>
@@ -300,7 +299,7 @@ const SKIP = new HttpContext().set(SKIP_ERROR_TOAST, true);
                 <mat-label>Lead Time (days)</mat-label>
                 <input matInput type="number" formControlName="leadTimeDays" />
               </mat-form-field>
-              <button mat-flat-button color="primary" type="submit" [disabled]="vendorSaving()">Add</button>
+              <button mat-flat-button color="primary" type="submit" [disabled]="vendorSaving() || !material()">Add</button>
             </form>
             @if (vendorError()) { <p class="form-error mat-body-2">{{ vendorError() }}</p> }
           </mat-expansion-panel>
@@ -309,18 +308,25 @@ const SKIP = new HttpContext().set(SKIP_ERROR_TOAST, true);
             <mat-expansion-panel-header>
               <mat-panel-title>Comments</mat-panel-title>
             </mat-expansion-panel-header>
-            <app-comments-panel [entityType]="'MATERIAL'" [entityId]="material()?.id || 0"></app-comments-panel>
+            @if (material()) {
+              <app-comments-panel [entityType]="'MATERIAL'" [entityId]="material()!.id"></app-comments-panel>
+            } @else {
+              <p class="empty-hint mat-body-2">Save the material first to add comments.</p>
+            }
           </mat-expansion-panel>
 
           <mat-expansion-panel>
             <mat-expansion-panel-header>
               <mat-panel-title>Attachments</mat-panel-title>
             </mat-expansion-panel-header>
-            <app-attachments-panel [entityType]="'MATERIAL'" [entityId]="material()?.id || 0"></app-attachments-panel>
+            @if (material()) {
+              <app-attachments-panel [entityType]="'MATERIAL'" [entityId]="material()!.id"></app-attachments-panel>
+            } @else {
+              <p class="empty-hint mat-body-2">Save the material first to upload attachments.</p>
+            }
           </mat-expansion-panel>
 
         </mat-accordion>
-      }
     </mat-dialog-content>
     <mat-dialog-actions align="end">
       @if (material()) {
