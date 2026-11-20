@@ -117,6 +117,10 @@ export const routes: Routes = [
         loadComponent: () => import('./features/inventory/stock-ledger.component').then((m) => m.StockLedgerComponent),
       },
       {
+        path: 'inventory/batch-tracking',
+        redirectTo: 'inventory/batches',
+      },
+      {
         path: 'inventory/batches',
         title: 'Batch Tracking',
         canActivate: [permissionGuard('INVENTORY_VIEW')],
