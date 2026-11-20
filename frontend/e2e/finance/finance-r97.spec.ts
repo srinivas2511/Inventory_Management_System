@@ -211,8 +211,8 @@ test.describe.serial('R9-7 finance features (UI)', () => {
       const d = dialog(p);
       await fill(d, 'Amount to credit, before tax', 10000);
       await fill(d, 'Reason', 'Damaged in transit');
-      await expect(d.getByTestId('tax-reversal')).toContainText('Tax reversed 1,800.00');
-      await expect(d.getByTestId('tax-reversal')).toContainText('credit total 11,800.00');
+      await expect(d.getByTestId('tax-reversal')).toContainText('Tax 1,800.00 reversed');
+      await expect(d.getByTestId('tax-reversal')).toContainText('total 11,800.00');
       await d.getByRole('button', { name: 'Create credit note' }).click();
       await expectToast(p, /created: it needs approval by another user/);
 

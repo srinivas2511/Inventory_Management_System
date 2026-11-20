@@ -144,6 +144,7 @@ test.describe('Master data created through the UI', () => {
     await typeInto(p.getByTestId('materialType'), 'WIRE');
     await p.getByTestId('uom').click();
     await p.getByRole('option').first().click();
+    await typeInto(p.getByTestId('minStock'), -1);
     await d.getByRole('button', { name: 'Save' }).click();
     await expect(d, 'the dialog stays open while the form is incomplete').toBeVisible();
     await expect(
@@ -189,10 +190,10 @@ test.describe('Opening balance and transfers (UAT STK-04, STK-05)', () => {
     await typeInto(p.getByTestId('materialType'), 'WIRE');
     await p.getByTestId('uom').click();
     await p.getByRole('option').first().click();
-    await fill(d, 'Min stock', 10);
-    await fill(d, 'Reorder level', 20);
-    await fill(d, 'Max stock', 500);
-    await fill(d, 'Standard cost (₹)', 85);
+    await fill(d, 'Min Stock', 10);
+    await fill(d, 'Reorder Level', 20);
+    await fill(d, 'Max Stock', 500);
+    await fill(d, 'Standard Cost (₹)', 85);
     await d.getByRole('button', { name: 'Save' }).click();
     await expect(d).toBeHidden();
     const mat = (await admin().list<any>(`/api/materials?q=${code}&size=20`)).find((m) => m.materialCode === code);
