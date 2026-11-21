@@ -39,6 +39,16 @@ describe('PaymentTermsComponent', () => {
     expect(req.request.body['netDays']).toBe(60);
     expect(req.request.body['code']).toBeUndefined();
     expect(req.request.body['dueDays']).toBeUndefined();
-    req.flush({ id: 99, termCode: 'QA-60', code: 'QA-60', name: 'Net 60', netDays: 60, dueDays: 60, discountPct: null, discountDays: null, active: true });
+    req.flush({
+      id: 99,
+      termCode: 'QA-60',
+      code: 'QA-60',
+      name: 'Net 60',
+      netDays: 60,
+      dueDays: 60,
+      discountPct: null,
+      discountDays: null,
+      active: true,
+    });
   });
 });

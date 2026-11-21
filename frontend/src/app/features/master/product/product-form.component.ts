@@ -385,7 +385,9 @@ export class ProductFormComponent implements OnInit {
 
   protected removeCustomer(customerId: number): void {
     if (!this.product) return;
-    const ids = this.approvedCustomers().filter((c) => c.id !== customerId).map((c) => c.id);
+    const ids = this.approvedCustomers()
+      .filter((c) => c.id !== customerId)
+      .map((c) => c.id);
     this.api.setCustomers(this.product.id, ids).subscribe(() => this.loadApprovedCustomers());
   }
 
@@ -397,7 +399,9 @@ export class ProductFormComponent implements OnInit {
 
   protected removeMaterial(materialId: number): void {
     if (!this.product) return;
-    const ids = this.linkedMaterials().filter((m) => m.id !== materialId).map((m) => m.id);
+    const ids = this.linkedMaterials()
+      .filter((m) => m.id !== materialId)
+      .map((m) => m.id);
     this.api.setMaterials(this.product.id, ids).subscribe(() => this.loadLinkedMaterials());
   }
 

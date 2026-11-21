@@ -76,7 +76,13 @@ class OperationApi {
       <h2 class="mat-h2">Operations</h2>
     </div>
 
-    <form *appHasPermission="'MASTERDATA_MANAGE'" class="edit-form" [formGroup]="form" (ngSubmit)="save()" data-testid="op-form">
+    <form
+      *appHasPermission="'MASTERDATA_MANAGE'"
+      class="edit-form"
+      [formGroup]="form"
+      (ngSubmit)="save()"
+      data-testid="op-form"
+    >
       <h3 class="mat-h3 full">{{ editing() ? 'Edit: ' + editing()!.code : 'New Operation' }}</h3>
 
       <mat-form-field appearance="outline">
@@ -165,7 +171,12 @@ class OperationApi {
             <mat-icon>edit</mat-icon>
           </button>
           @if (r.active) {
-            <button mat-icon-button aria-label="Deactivate" (click)="deactivate(r)" *appHasPermission="'MASTERDATA_MANAGE'">
+            <button
+              mat-icon-button
+              aria-label="Deactivate"
+              (click)="deactivate(r)"
+              *appHasPermission="'MASTERDATA_MANAGE'"
+            >
               <mat-icon>block</mat-icon>
             </button>
           }
@@ -175,14 +186,41 @@ class OperationApi {
       <tr mat-row *matRowDef="let row; columns: columns"></tr>
     </table>
   `,
-  styles: [`
-    .page-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 16px 0; }
-    .edit-form { display: flex; flex-wrap: wrap; gap: 12px; padding: 16px; background: var(--mdc-filled-text-field-container-color, #f5f5f5); border-radius: 4px; margin: 16px; }
-    .full { width: 100%; }
-    .wide { flex: 2; min-width: 200px; }
-    .form-actions { display: flex; gap: 8px; align-items: center; }
-    table { width: calc(100% - 32px); margin: 0 16px; }
-  `],
+  styles: [
+    `
+      .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 16px 0;
+      }
+      .edit-form {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        padding: 16px;
+        background: var(--mdc-filled-text-field-container-color, #f5f5f5);
+        border-radius: 4px;
+        margin: 16px;
+      }
+      .full {
+        width: 100%;
+      }
+      .wide {
+        flex: 2;
+        min-width: 200px;
+      }
+      .form-actions {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      table {
+        width: calc(100% - 32px);
+        margin: 0 16px;
+      }
+    `,
+  ],
 })
 export class OperationsComponent implements OnInit {
   protected readonly columns = ['code', 'name', 'stdTime', 'setupTime', 'inspection', 'active', 'actions'];
@@ -243,9 +281,7 @@ export class OperationsComponent implements OnInit {
       setupTimeMin: v.setupTimeMin ?? 0,
       isInspection: v.isInspection ?? false,
     };
-    const call = this.editing()
-      ? this.api.update(this.editing()!.id, req)
-      : this.api.create(req);
+    const call = this.editing() ? this.api.update(this.editing()!.id, req) : this.api.create(req);
     call.subscribe({
       next: () => {
         this.snack.open('Saved', 'OK', { duration: 2000 });

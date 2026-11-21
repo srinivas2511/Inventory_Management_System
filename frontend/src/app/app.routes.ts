@@ -79,8 +79,7 @@ export const routes: Routes = [
         path: 'master/operations',
         title: 'Operations',
         canActivate: [permissionGuard('MASTERDATA_MANAGE')],
-        loadComponent: () =>
-          import('./features/engineering/operations.component').then((m) => m.OperationsComponent),
+        loadComponent: () => import('./features/engineering/operations.component').then((m) => m.OperationsComponent),
       },
       {
         path: 'procurement/vendor-types',
@@ -93,8 +92,7 @@ export const routes: Routes = [
         path: 'hrm/operators',
         title: 'Operators',
         canActivate: [permissionGuard('OPERATOR_VIEW')],
-        loadComponent: () =>
-          import('./features/hrm/operators.component').then((m) => m.OperatorsComponent),
+        loadComponent: () => import('./features/hrm/operators.component').then((m) => m.OperatorsComponent),
       },
       {
         path: 'warehouse/warehouses',

@@ -16,10 +16,7 @@ describe('VendorTypesComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [VendorTypesComponent],
-      providers: [
-        provideNoopAnimations(),
-        { provide: VendorTypeApi, useValue: mockApi },
-      ],
+      providers: [provideNoopAnimations(), { provide: VendorTypeApi, useValue: mockApi }],
     }).compileComponents();
     fixture = TestBed.createComponent(VendorTypesComponent);
     fixture.detectChanges();

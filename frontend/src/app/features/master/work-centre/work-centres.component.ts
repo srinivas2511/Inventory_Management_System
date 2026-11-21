@@ -29,7 +29,13 @@ import { WorkCentreApi, WorkCentreDto } from './work-centre.api';
       <h2 class="mat-h2">Work Centres</h2>
     </div>
 
-    <form *appHasPermission="'WORK_CENTRE_MANAGE'" class="edit-form" [formGroup]="form" (ngSubmit)="save()" data-testid="wc-form">
+    <form
+      *appHasPermission="'WORK_CENTRE_MANAGE'"
+      class="edit-form"
+      [formGroup]="form"
+      (ngSubmit)="save()"
+      data-testid="wc-form"
+    >
       <h3 class="mat-h3 full">{{ editing() ? 'Edit: ' + editing()!.code : 'New Work Centre' }}</h3>
       <mat-form-field appearance="outline">
         <mat-label>Code</mat-label>
@@ -91,14 +97,42 @@ import { WorkCentreApi, WorkCentreDto } from './work-centre.api';
       <tr mat-row *matRowDef="let row; columns: columns"></tr>
     </table>
   `,
-  styles: [`
-    .page-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 16px 0; }
-    .edit-form { display: flex; flex-wrap: wrap; gap: 12px; padding: 16px; background: var(--mdc-filled-text-field-container-color, #f5f5f5); border-radius: 4px; margin: 16px; }
-    .full { width: 100%; }
-    .wide { flex: 2; min-width: 200px; }
-    .form-actions { display: flex; gap: 8px; align-items: center; }
-    table { width: 100%; margin: 0 16px; width: calc(100% - 32px); }
-  `],
+  styles: [
+    `
+      .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 16px 0;
+      }
+      .edit-form {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        padding: 16px;
+        background: var(--mdc-filled-text-field-container-color, #f5f5f5);
+        border-radius: 4px;
+        margin: 16px;
+      }
+      .full {
+        width: 100%;
+      }
+      .wide {
+        flex: 2;
+        min-width: 200px;
+      }
+      .form-actions {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      table {
+        width: 100%;
+        margin: 0 16px;
+        width: calc(100% - 32px);
+      }
+    `,
+  ],
 })
 export class WorkCentresComponent implements OnInit {
   protected readonly columns = ['code', 'name', 'description', 'status', 'actions'];
@@ -139,10 +173,14 @@ export class WorkCentresComponent implements OnInit {
     if (this.form.invalid) return;
     this.saving.set(true);
     const v = this.form.getRawValue();
-    const req = { code: v.code!, name: v.name!, description: v.description || null, active: v.active ?? true, version: this.editing()?.version ?? null };
-    const call = this.editing()
-      ? this.api.update(this.editing()!.id, req)
-      : this.api.create(req);
+    const req = {
+      code: v.code!,
+      name: v.name!,
+      description: v.description || null,
+      active: v.active ?? true,
+      version: this.editing()?.version ?? null,
+    };
+    const call = this.editing() ? this.api.update(this.editing()!.id, req) : this.api.create(req);
     call.subscribe({
       next: () => {
         this.snack.open('Saved', 'OK', { duration: 2000 });

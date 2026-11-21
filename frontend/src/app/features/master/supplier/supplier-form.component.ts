@@ -44,10 +44,17 @@ const PAN_PATTERN = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
         <mat-tab-group>
           <mat-tab label="Details">
             <div class="tab-pad">
-              <ng-container [ngTemplateOutlet]="detailsForm" [ngTemplateOutletContext]="{id:'sup-form'}"></ng-container>
+              <ng-container
+                [ngTemplateOutlet]="detailsForm"
+                [ngTemplateOutletContext]="{ id: 'sup-form' }"
+              ></ng-container>
               <div class="tab-actions">
                 <button mat-flat-button color="primary" form="sup-form" type="submit" [disabled]="saving()">
-                  @if (saving()) { <mat-spinner diameter="18" /> } @else { Save }
+                  @if (saving()) {
+                    <mat-spinner diameter="18" />
+                  } @else {
+                    Save
+                  }
                 </button>
               </div>
             </div>
@@ -58,8 +65,11 @@ const PAN_PATTERN = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
               <p class="mat-body-2 hint">Materials this supplier is approved to supply.</p>
               <mat-chip-set aria-label="Approved materials">
                 @for (m of approvedMaterials(); track m.id) {
-                  <mat-chip [removable]="true" (removed)="removeApprovedMaterial(m.id)"
-                            aria-label="Remove {{ m.name }}">
+                  <mat-chip
+                    [removable]="true"
+                    (removed)="removeApprovedMaterial(m.id)"
+                    aria-label="Remove {{ m.name }}"
+                  >
                     {{ m.code }} — {{ m.name }}
                     <mat-icon matChipRemove>cancel</mat-icon>
                   </mat-chip>
@@ -77,8 +87,14 @@ const PAN_PATTERN = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
                     }
                   </mat-select>
                 </mat-form-field>
-                <button mat-flat-button color="primary" (click)="addApprovedMaterial()"
-                        [disabled]="!selectedMaterialId || approvedSaving()">Add</button>
+                <button
+                  mat-flat-button
+                  color="primary"
+                  (click)="addApprovedMaterial()"
+                  [disabled]="!selectedMaterialId || approvedSaving()"
+                >
+                  Add
+                </button>
               </div>
               @if (approvedError()) {
                 <p class="form-error mat-body-2">{{ approvedError() }}</p>
@@ -99,7 +115,7 @@ const PAN_PATTERN = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
           </mat-tab>
         </mat-tab-group>
       } @else {
-        <ng-container [ngTemplateOutlet]="detailsForm" [ngTemplateOutletContext]="{id:'sup-form'}"></ng-container>
+        <ng-container [ngTemplateOutlet]="detailsForm" [ngTemplateOutletContext]="{ id: 'sup-form' }"></ng-container>
       }
     </mat-dialog-content>
     <mat-dialog-actions align="end">
@@ -108,19 +124,21 @@ const PAN_PATTERN = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
       } @else {
         <button mat-button mat-dialog-close>Cancel</button>
         <button mat-flat-button color="primary" form="sup-form" type="submit" [disabled]="saving()">
-          @if (saving()) { <mat-spinner diameter="18" /> } @else { Save }
+          @if (saving()) {
+            <mat-spinner diameter="18" />
+          } @else {
+            Save
+          }
         </button>
       }
     </mat-dialog-actions>
 
     <ng-template #detailsForm let-id="id">
       <form [formGroup]="form" [id]="id" (ngSubmit)="save()" novalidate class="form-grid">
-
         <!-- Row 1: Code (auto) + Name -->
         <mat-form-field appearance="outline">
           <mat-label>Code</mat-label>
-          <input matInput formControlName="supplierCode"
-                 [placeholder]="supplier ? '' : 'Auto-generated'" />
+          <input matInput formControlName="supplierCode" [placeholder]="supplier ? '' : 'Auto-generated'" />
           @if (!supplier) {
             <mat-hint>Leave blank to auto-generate</mat-hint>
           }
@@ -162,8 +180,7 @@ const PAN_PATTERN = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
         <!-- Row 4: PAN + Vendor Type -->
         <mat-form-field appearance="outline">
           <mat-label>PAN</mat-label>
-          <input matInput formControlName="pan" maxlength="10"
-                 style="text-transform:uppercase" />
+          <input matInput formControlName="pan" maxlength="10" style="text-transform:uppercase" />
           @if (form.controls.pan.hasError('pattern') && form.controls.pan.touched) {
             <mat-error>Invalid PAN (e.g. ABCDE1234F)</mat-error>
           }
@@ -184,8 +201,11 @@ const PAN_PATTERN = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
           <mat-select formControlName="paymentTermsId">
             <mat-option [value]="null">— Select —</mat-option>
             @for (pt of paymentTerms(); track pt.id) {
-              <mat-option [value]="pt.id">{{ pt.name }}
-                @if (pt.netDays > 0) { ({{ pt.netDays }} days) }
+              <mat-option [value]="pt.id"
+                >{{ pt.name }}
+                @if (pt.netDays > 0) {
+                  ({{ pt.netDays }} days)
+                }
               </mat-option>
             }
           </mat-select>
@@ -238,8 +258,12 @@ const PAN_PATTERN = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
         gap: 0 12px;
         padding: 8px 0;
       }
-      .form-grid mat-form-field { width: 100%; }
-      .full-span { grid-column: 1 / -1; }
+      .form-grid mat-form-field {
+        width: 100%;
+      }
+      .full-span {
+        grid-column: 1 / -1;
+      }
       .section-label {
         grid-column: 1 / -1;
         font-size: 12px;
@@ -253,12 +277,31 @@ const PAN_PATTERN = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
         color: var(--mat-warn-color, #f44336);
         grid-column: 1 / -1;
       }
-      .tab-pad { padding: 16px 0 8px; }
-      .tab-actions { display: flex; justify-content: flex-end; margin-top: 8px; }
-      .hint { color: rgba(0, 0, 0, 0.6); margin-bottom: 12px; }
-      .empty-hint { color: rgba(0, 0, 0, 0.6); margin: 8px 0; }
-      .inline-add-form { display: flex; align-items: center; gap: 12px; margin-top: 16px; }
-      .add-select { flex: 1; }
+      .tab-pad {
+        padding: 16px 0 8px;
+      }
+      .tab-actions {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 8px;
+      }
+      .hint {
+        color: rgba(0, 0, 0, 0.6);
+        margin-bottom: 12px;
+      }
+      .empty-hint {
+        color: rgba(0, 0, 0, 0.6);
+        margin: 8px 0;
+      }
+      .inline-add-form {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-top: 16px;
+      }
+      .add-select {
+        flex: 1;
+      }
     `,
   ],
 })
@@ -303,9 +346,7 @@ export class SupplierFormComponent implements OnInit {
 
   ngOnInit(): void {
     this.lookupApi.vendorTypes().subscribe((list) => this.vendorTypes.set(list));
-    this.lookupApi.paymentTerms().subscribe((list) =>
-      this.paymentTerms.set(list.filter((pt) => pt.active))
-    );
+    this.lookupApi.paymentTerms().subscribe((list) => this.paymentTerms.set(list.filter((pt) => pt.active)));
     this.lookupApi.materials().subscribe((list) => this.allMaterials.set(list));
     if (this.supplier) {
       this.form.patchValue({

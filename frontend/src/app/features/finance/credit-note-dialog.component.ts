@@ -61,7 +61,10 @@ export interface CreditNoteDialogData {
               <mat-error>Enter an amount greater than zero</mat-error>
             }
             @if (reversedTax() !== null) {
-              <mat-hint data-testid="tax-reversal">Tax {{ reversedTax() | number: '1.2-2' }} reversed · total {{ creditTotal() | number: '1.2-2' }}</mat-hint>
+              <mat-hint data-testid="tax-reversal"
+                >Tax {{ reversedTax() | number: '1.2-2' }} reversed · total
+                {{ creditTotal() | number: '1.2-2' }}</mat-hint
+              >
             }
           </mat-form-field>
         </div>

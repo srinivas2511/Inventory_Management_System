@@ -154,8 +154,10 @@ export class MaterialApi {
   }
 
   getPurchasingInfo(materialId: number, context?: HttpContext): Observable<PurchasingInfoDto> {
-    return this.http.get<PurchasingInfoDto>(`${this.base}/api/materials/${materialId}/purchasing-info`,
-      context ? { context } : {});
+    return this.http.get<PurchasingInfoDto>(
+      `${this.base}/api/materials/${materialId}/purchasing-info`,
+      context ? { context } : {},
+    );
   }
 
   savePurchasingInfo(materialId: number, req: SavePurchasingInfoRequest): Observable<PurchasingInfoDto> {
@@ -163,8 +165,10 @@ export class MaterialApi {
   }
 
   listVendorMappings(materialId: number, context?: HttpContext): Observable<ItemVendorMappingDto[]> {
-    return this.http.get<ItemVendorMappingDto[]>(`${this.base}/api/materials/${materialId}/vendor-mappings`,
-      context ? { context } : {});
+    return this.http.get<ItemVendorMappingDto[]>(
+      `${this.base}/api/materials/${materialId}/vendor-mappings`,
+      context ? { context } : {},
+    );
   }
 
   addVendorMapping(materialId: number, req: SaveVendorMappingRequest): Observable<ItemVendorMappingDto> {

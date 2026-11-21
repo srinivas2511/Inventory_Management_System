@@ -48,7 +48,8 @@ export function switchedUrl(href: string, toBase: string): string {
           (change)="navigate(loc)"
           [attr.lang]="loc.code"
           [matTooltip]="devTooltip(loc)"
-          matTooltipPosition="below">
+          matTooltipPosition="below"
+        >
           {{ loc.label }}
         </mat-button-toggle>
       }

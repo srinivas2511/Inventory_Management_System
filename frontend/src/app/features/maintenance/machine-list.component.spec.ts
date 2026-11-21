@@ -16,17 +16,14 @@ describe('MachineListComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [MachineListComponent, HttpClientTestingModule],
-      providers: [
-        provideNoopAnimations(),
-        { provide: LookupApi, useValue: mockLookup },
-      ],
+      providers: [provideNoopAnimations(), { provide: LookupApi, useValue: mockLookup }],
     }).compileComponents();
     fixture = TestBed.createComponent(MachineListComponent);
     http = TestBed.inject(HttpTestingController);
     fixture.detectChanges();
-    http.expectOne('/api/machines').flush([
-      { id: 1, code: 'M-001', name: 'Lathe 1', status: 'AVAILABLE', active: true, workCentreId: 1 },
-    ]);
+    http
+      .expectOne('/api/machines')
+      .flush([{ id: 1, code: 'M-001', name: 'Lathe 1', status: 'AVAILABLE', active: true, workCentreId: 1 }]);
     fixture.detectChanges();
   });
 

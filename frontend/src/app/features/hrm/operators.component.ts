@@ -63,15 +63,32 @@ export interface OperatorDto {
     <mat-dialog-actions align="end">
       <button mat-button mat-dialog-close>Cancel</button>
       <button mat-flat-button color="primary" form="op-form" type="submit" [disabled]="saving()">
-        @if (saving()) { <mat-spinner diameter="18" /> } @else { Save }
+        @if (saving()) {
+          <mat-spinner diameter="18" />
+        } @else {
+          Save
+        }
       </button>
     </mat-dialog-actions>
   `,
-  styles: [`
-    .op-form { display: flex; flex-direction: column; gap: 4px; padding: 8px 0; min-width: 320px; }
-    .full { width: 100%; }
-    .err { color: #f44336; margin-top: 4px; }
-  `],
+  styles: [
+    `
+      .op-form {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        padding: 8px 0;
+        min-width: 320px;
+      }
+      .full {
+        width: 100%;
+      }
+      .err {
+        color: #f44336;
+        margin-top: 4px;
+      }
+    `,
+  ],
 })
 export class OperatorFormDialogComponent implements OnInit {
   protected readonly operator = inject<OperatorDto | null>(MAT_DIALOG_DATA);
@@ -98,7 +115,10 @@ export class OperatorFormDialogComponent implements OnInit {
   }
 
   save(): void {
-    if (this.form.invalid) { this.form.markAllAsTouched(); return; }
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
     this.saving.set(true);
     const v = this.form.getRawValue();
     const req = { operatorCode: v.operatorCode, fullName: v.fullName, active: v.active };
@@ -106,8 +126,14 @@ export class OperatorFormDialogComponent implements OnInit {
       ? this.http.put<OperatorDto>(`/api/hrm/operators/${this.operator.id}`, req)
       : this.http.post<OperatorDto>('/api/hrm/operators', req);
     obs.subscribe({
-      next: () => { this.saving.set(false); this.dialogRef.close(true); },
-      error: (err) => { this.saving.set(false); this.error.set(err?.error?.message ?? 'Save failed.'); },
+      next: () => {
+        this.saving.set(false);
+        this.dialogRef.close(true);
+      },
+      error: (err) => {
+        this.saving.set(false);
+        this.error.set(err?.error?.message ?? 'Save failed.');
+      },
     });
   }
 }
@@ -117,13 +143,7 @@ export class OperatorFormDialogComponent implements OnInit {
 @Component({
   selector: 'app-operators',
   standalone: true,
-  imports: [
-    MatTableModule,
-    MatProgressSpinnerModule,
-    MatIconModule,
-    MatButtonModule,
-    MatTooltipModule,
-  ],
+  imports: [MatTableModule, MatProgressSpinnerModule, MatIconModule, MatButtonModule, MatTooltipModule],
   template: `
     <div class="page-header">
       <h2 class="mat-h2">Operators</h2>
@@ -180,37 +200,69 @@ export class OperatorFormDialogComponent implements OnInit {
       }
     }
   `,
-  styles: [`
-    .page-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 16px 0; }
-    .loading-center { display: flex; justify-content: center; padding: 48px; }
-    table { width: 100%; }
-    .empty { padding: 24px 16px; color: #666; }
-  `],
+  styles: [
+    `
+      .page-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 16px 0;
+      }
+      .loading-center {
+        display: flex;
+        justify-content: center;
+        padding: 48px;
+      }
+      table {
+        width: 100%;
+      }
+      .empty {
+        padding: 24px 16px;
+        color: #666;
+      }
+    `,
+  ],
 })
 export class OperatorsComponent implements OnInit {
-  protected readonly columns = ['operatorCode', 'employeeCode', 'fullName', 'designation', 'department', 'status', 'actions'];
+  protected readonly columns = [
+    'operatorCode',
+    'employeeCode',
+    'fullName',
+    'designation',
+    'department',
+    'status',
+    'actions',
+  ];
   protected readonly rows = signal<OperatorDto[]>([]);
   protected readonly loading = signal(false);
 
   private readonly http = inject(HttpClient);
   private readonly dialog = inject(MatDialog);
 
-  ngOnInit(): void { this.load(); }
+  ngOnInit(): void {
+    this.load();
+  }
 
   private load(): void {
     this.loading.set(true);
     this.http.get<OperatorDto[]>('/api/hrm/operators').subscribe({
-      next: (data) => { this.rows.set(data); this.loading.set(false); },
+      next: (data) => {
+        this.rows.set(data);
+        this.loading.set(false);
+      },
       error: () => this.loading.set(false),
     });
   }
 
   openDialog(operator: OperatorDto | null): void {
-    this.dialog.open(OperatorFormDialogComponent, {
-      data: operator,
-      width: '420px',
-    }).afterClosed().subscribe((saved) => {
-      if (saved) this.load();
-    });
+    this.dialog
+      .open(OperatorFormDialogComponent, {
+        data: operator,
+        width: '420px',
+      })
+      .afterClosed()
+      .subscribe((saved) => {
+        if (saved) this.load();
+      });
   }
 }

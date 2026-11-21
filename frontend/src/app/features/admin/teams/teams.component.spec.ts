@@ -38,6 +38,16 @@ describe('TeamsComponent', () => {
     expect(req.request.body['teamCode']).toBe('QA-TEAM-01');
     expect(req.request.body['name']).toBe('QA Testing Team');
     expect(req.request.body['code']).toBeUndefined();
-    req.flush({ id: 1, code: 'QA-TEAM-01', name: 'QA Testing Team', description: null, teamType: 'FUNCTIONAL', active: true, members: [], notificationSettings: null, moduleAccess: null });
+    req.flush({
+      id: 1,
+      code: 'QA-TEAM-01',
+      name: 'QA Testing Team',
+      description: null,
+      teamType: 'FUNCTIONAL',
+      active: true,
+      members: [],
+      notificationSettings: null,
+      moduleAccess: null,
+    });
   });
 });

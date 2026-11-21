@@ -31,7 +31,13 @@ describe('TransportersComponent', () => {
 
     const comp = fixture.componentInstance;
     comp.startCreate();
-    comp.form.setValue({ code: 'QA-TRP-001', name: 'QA Logistics Pvt Ltd', gstin: '29AAQCQ5344R1ZW', phone: '9876543210', email: null });
+    comp.form.setValue({
+      code: 'QA-TRP-001',
+      name: 'QA Logistics Pvt Ltd',
+      gstin: '29AAQCQ5344R1ZW',
+      phone: '9876543210',
+      email: null,
+    });
     comp.save();
 
     const req = backend.expectOne((r) => r.method === 'POST' && r.url === '/api/admin/transporters');
@@ -40,6 +46,17 @@ describe('TransportersComponent', () => {
     expect(req.request.body['contact']).toBe('9876543210');
     expect(req.request.body['code']).toBeUndefined();
     expect(req.request.body['gstin']).toBeUndefined();
-    req.flush({ id: 1, code: 'QA-TRP-001', transporterCode: 'QA-TRP-001', name: 'QA Logistics Pvt Ltd', gstin: '29AAQCQ5344R1ZW', gstTransporterId: '29AAQCQ5344R1ZW', contact: '9876543210', phone: null, email: null, active: true });
+    req.flush({
+      id: 1,
+      code: 'QA-TRP-001',
+      transporterCode: 'QA-TRP-001',
+      name: 'QA Logistics Pvt Ltd',
+      gstin: '29AAQCQ5344R1ZW',
+      gstTransporterId: '29AAQCQ5344R1ZW',
+      contact: '9876543210',
+      phone: null,
+      email: null,
+      active: true,
+    });
   });
 });

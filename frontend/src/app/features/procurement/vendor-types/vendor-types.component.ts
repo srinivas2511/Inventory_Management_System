@@ -29,7 +29,13 @@ import { VendorTypeApi, VendorTypeDto } from './vendor-type.api';
       <h2 class="mat-h2">Vendor Types</h2>
     </div>
 
-    <form *appHasPermission="'VENDOR_TYPE_MANAGE'" class="edit-form" [formGroup]="form" (ngSubmit)="save()" data-testid="vt-form">
+    <form
+      *appHasPermission="'VENDOR_TYPE_MANAGE'"
+      class="edit-form"
+      [formGroup]="form"
+      (ngSubmit)="save()"
+      data-testid="vt-form"
+    >
       <h3 class="mat-h3 full">{{ editing() ? 'Edit: ' + editing()!.code : 'New Vendor Type' }}</h3>
       <mat-form-field appearance="outline">
         <mat-label>Code</mat-label>
@@ -83,14 +89,41 @@ import { VendorTypeApi, VendorTypeDto } from './vendor-type.api';
       <tr mat-row *matRowDef="let row; columns: columns"></tr>
     </table>
   `,
-  styles: [`
-    .page-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 16px 0; }
-    .edit-form { display: flex; flex-wrap: wrap; gap: 12px; padding: 16px; background: var(--mdc-filled-text-field-container-color, #f5f5f5); border-radius: 4px; margin: 16px; }
-    .full { width: 100%; }
-    .wide { flex: 2; min-width: 200px; }
-    .form-actions { display: flex; gap: 8px; align-items: center; }
-    table { width: calc(100% - 32px); margin: 0 16px; }
-  `],
+  styles: [
+    `
+      .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 16px 0;
+      }
+      .edit-form {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        padding: 16px;
+        background: var(--mdc-filled-text-field-container-color, #f5f5f5);
+        border-radius: 4px;
+        margin: 16px;
+      }
+      .full {
+        width: 100%;
+      }
+      .wide {
+        flex: 2;
+        min-width: 200px;
+      }
+      .form-actions {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      table {
+        width: calc(100% - 32px);
+        margin: 0 16px;
+      }
+    `,
+  ],
 })
 export class VendorTypesComponent implements OnInit {
   protected readonly columns = ['code', 'description', 'status', 'actions'];
@@ -130,10 +163,13 @@ export class VendorTypesComponent implements OnInit {
     if (this.form.invalid) return;
     this.saving.set(true);
     const v = this.form.getRawValue();
-    const req = { code: v.code!, description: v.description!, active: v.active ?? true, version: this.editing()?.version ?? null };
-    const call = this.editing()
-      ? this.api.update(this.editing()!.id, req)
-      : this.api.create(req);
+    const req = {
+      code: v.code!,
+      description: v.description!,
+      active: v.active ?? true,
+      version: this.editing()?.version ?? null,
+    };
+    const call = this.editing() ? this.api.update(this.editing()!.id, req) : this.api.create(req);
     call.subscribe({
       next: () => {
         this.snack.open('Saved', 'OK', { duration: 2000 });

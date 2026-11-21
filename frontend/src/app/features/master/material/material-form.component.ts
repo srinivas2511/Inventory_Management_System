@@ -48,13 +48,15 @@ const SKIP = new HttpContext().set(SKIP_ERROR_TOAST, true);
     <h2 mat-dialog-title>{{ material() ? 'Edit Material' : 'New Material' }}</h2>
     <mat-dialog-content>
       <form [formGroup]="form" id="material-form" (ngSubmit)="save()" novalidate class="form-grid">
-
         <mat-form-field appearance="outline">
           <mat-label>Code</mat-label>
-          <input matInput formControlName="materialCode"
-                 [placeholder]="material() ? '' : 'Auto-generated'"
-                 [readonly]="!!material()"
-                 data-testid="code" />
+          <input
+            matInput
+            formControlName="materialCode"
+            [placeholder]="material() ? '' : 'Auto-generated'"
+            [readonly]="!!material()"
+            data-testid="code"
+          />
           @if (!material()) {
             <mat-hint>Leave blank to auto-generate</mat-hint>
           }
@@ -140,197 +142,224 @@ const SKIP = new HttpContext().set(SKIP_ERROR_TOAST, true);
         @if (material()) {
           <div class="save-row full-span">
             <button mat-flat-button color="primary" type="submit" [disabled]="saving()">
-              @if (saving()) { <mat-spinner diameter="18" /> } @else { Save }
+              @if (saving()) {
+                <mat-spinner diameter="18" />
+              } @else {
+                Save
+              }
             </button>
           </div>
         }
       </form>
 
       <mat-accordion class="panels">
+        <mat-expansion-panel>
+          <mat-expansion-panel-header>
+            <mat-panel-title>UOM Conversions</mat-panel-title>
+          </mat-expansion-panel-header>
+          <table mat-table [dataSource]="conversions()" class="full-table">
+            <ng-container matColumnDef="baseUom">
+              <th mat-header-cell *matHeaderCellDef>Base UOM</th>
+              <td mat-cell *matCellDef="let r">{{ r.baseUom }}</td>
+            </ng-container>
+            <ng-container matColumnDef="altUom">
+              <th mat-header-cell *matHeaderCellDef>Alt UOM</th>
+              <td mat-cell *matCellDef="let r">{{ r.altUom }}</td>
+            </ng-container>
+            <ng-container matColumnDef="factor">
+              <th mat-header-cell *matHeaderCellDef>1 alt = N base</th>
+              <td mat-cell *matCellDef="let r">{{ r.factorToBase }}</td>
+            </ng-container>
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef></th>
+              <td mat-cell *matCellDef="let r">
+                <button
+                  mat-icon-button
+                  color="warn"
+                  aria-label="Remove conversion"
+                  (click)="removeConversion(r.altUom)"
+                >
+                  <mat-icon aria-hidden="true">delete</mat-icon>
+                </button>
+              </td>
+            </ng-container>
+            <tr mat-header-row *matHeaderRowDef="convColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: convColumns"></tr>
+          </table>
+          @if (conversions().length === 0) {
+            <p class="empty-hint mat-body-2">No alternate UOMs defined.</p>
+          }
+          <form [formGroup]="convForm" (ngSubmit)="addConversion()" novalidate class="inline-add-form">
+            <mat-form-field appearance="outline">
+              <mat-label>Alt UOM</mat-label>
+              <mat-select formControlName="altUom">
+                @for (u of uoms(); track u.code) {
+                  <mat-option [value]="u.code">{{ u.name }} ({{ u.code }})</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>1 alt = N base</mat-label>
+              <input matInput type="number" formControlName="factorToBase" />
+            </mat-form-field>
+            <button mat-flat-button color="primary" type="submit" [disabled]="convSaving() || !material()">Add</button>
+          </form>
+          @if (convError()) {
+            <p class="form-error mat-body-2">{{ convError() }}</p>
+          }
+        </mat-expansion-panel>
 
-          <mat-expansion-panel>
-            <mat-expansion-panel-header>
-              <mat-panel-title>UOM Conversions</mat-panel-title>
-            </mat-expansion-panel-header>
-            <table mat-table [dataSource]="conversions()" class="full-table">
-              <ng-container matColumnDef="baseUom">
-                <th mat-header-cell *matHeaderCellDef>Base UOM</th>
-                <td mat-cell *matCellDef="let r">{{ r.baseUom }}</td>
-              </ng-container>
-              <ng-container matColumnDef="altUom">
-                <th mat-header-cell *matHeaderCellDef>Alt UOM</th>
-                <td mat-cell *matCellDef="let r">{{ r.altUom }}</td>
-              </ng-container>
-              <ng-container matColumnDef="factor">
-                <th mat-header-cell *matHeaderCellDef>1 alt = N base</th>
-                <td mat-cell *matCellDef="let r">{{ r.factorToBase }}</td>
-              </ng-container>
-              <ng-container matColumnDef="actions">
-                <th mat-header-cell *matHeaderCellDef></th>
-                <td mat-cell *matCellDef="let r">
-                  <button mat-icon-button color="warn" aria-label="Remove conversion"
-                          (click)="removeConversion(r.altUom)">
-                    <mat-icon aria-hidden="true">delete</mat-icon>
-                  </button>
-                </td>
-              </ng-container>
-              <tr mat-header-row *matHeaderRowDef="convColumns"></tr>
-              <tr mat-row *matRowDef="let row; columns: convColumns"></tr>
-            </table>
-            @if (conversions().length === 0) {
-              <p class="empty-hint mat-body-2">No alternate UOMs defined.</p>
+        <mat-expansion-panel>
+          <mat-expansion-panel-header>
+            <mat-panel-title>Purchasing</mat-panel-title>
+          </mat-expansion-panel-header>
+          <form [formGroup]="purchForm" novalidate class="form-grid purch-grid">
+            <mat-form-field appearance="outline">
+              <mat-label>Purchase UOM</mat-label>
+              <mat-select formControlName="purchaseUom">
+                <mat-option [value]="null">— none —</mat-option>
+                @for (u of uoms(); track u.code) {
+                  <mat-option [value]="u.code">{{ u.name }} ({{ u.code }})</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Tax code</mat-label>
+              <input matInput formControlName="purchaseTaxCode" />
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="full-span">
+              <mat-label>Preferred supplier</mat-label>
+              <mat-select formControlName="preferredSupplierId">
+                <mat-option [value]="null">— none —</mat-option>
+                @for (s of suppliers(); track s.id) {
+                  <mat-option [value]="s.id">{{ s.name }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            @if (purchError()) {
+              <p class="form-error mat-body-2">{{ purchError() }}</p>
             }
-            <form [formGroup]="convForm" (ngSubmit)="addConversion()" novalidate class="inline-add-form">
-              <mat-form-field appearance="outline">
-                <mat-label>Alt UOM</mat-label>
-                <mat-select formControlName="altUom">
-                  @for (u of uoms(); track u.code) {
-                    <mat-option [value]="u.code">{{ u.name }} ({{ u.code }})</mat-option>
-                  }
-                </mat-select>
-              </mat-form-field>
-              <mat-form-field appearance="outline">
-                <mat-label>1 alt = N base</mat-label>
-                <input matInput type="number" formControlName="factorToBase" />
-              </mat-form-field>
-              <button mat-flat-button color="primary" type="submit" [disabled]="convSaving() || !material()">Add</button>
-            </form>
-            @if (convError()) { <p class="form-error mat-body-2">{{ convError() }}</p> }
-          </mat-expansion-panel>
+          </form>
+          <div class="purch-actions">
+            <button
+              mat-flat-button
+              color="primary"
+              (click)="savePurchasing()"
+              [disabled]="purchSaving() || !material()"
+            >
+              @if (purchSaving()) {
+                <mat-spinner diameter="18" />
+              } @else {
+                Save
+              }
+            </button>
+          </div>
+        </mat-expansion-panel>
 
-          <mat-expansion-panel>
-            <mat-expansion-panel-header>
-              <mat-panel-title>Purchasing</mat-panel-title>
-            </mat-expansion-panel-header>
-            <form [formGroup]="purchForm" novalidate class="form-grid purch-grid">
-              <mat-form-field appearance="outline">
-                <mat-label>Purchase UOM</mat-label>
-                <mat-select formControlName="purchaseUom">
-                  <mat-option [value]="null">— none —</mat-option>
-                  @for (u of uoms(); track u.code) {
-                    <mat-option [value]="u.code">{{ u.name }} ({{ u.code }})</mat-option>
-                  }
-                </mat-select>
-              </mat-form-field>
-              <mat-form-field appearance="outline">
-                <mat-label>Tax code</mat-label>
-                <input matInput formControlName="purchaseTaxCode" />
-              </mat-form-field>
-              <mat-form-field appearance="outline" class="full-span">
-                <mat-label>Preferred supplier</mat-label>
-                <mat-select formControlName="preferredSupplierId">
-                  <mat-option [value]="null">— none —</mat-option>
-                  @for (s of suppliers(); track s.id) {
-                    <mat-option [value]="s.id">{{ s.name }}</mat-option>
-                  }
-                </mat-select>
-              </mat-form-field>
-              @if (purchError()) { <p class="form-error mat-body-2">{{ purchError() }}</p> }
-            </form>
-            <div class="purch-actions">
-              <button mat-flat-button color="primary" (click)="savePurchasing()" [disabled]="purchSaving() || !material()">
-                @if (purchSaving()) { <mat-spinner diameter="18" /> } @else { Save }
-              </button>
-            </div>
-          </mat-expansion-panel>
+        <mat-expansion-panel>
+          <mat-expansion-panel-header>
+            <mat-panel-title>Vendors</mat-panel-title>
+          </mat-expansion-panel-header>
+          <table mat-table [dataSource]="vendorMappings()" class="full-table">
+            <ng-container matColumnDef="supplier">
+              <th mat-header-cell *matHeaderCellDef>Supplier</th>
+              <td mat-cell *matCellDef="let r">{{ r.supplierName }}</td>
+            </ng-container>
+            <ng-container matColumnDef="supplierCode">
+              <th mat-header-cell *matHeaderCellDef>Supplier Item Code</th>
+              <td mat-cell *matCellDef="let r">{{ r.supplierItemCode }}</td>
+            </ng-container>
+            <ng-container matColumnDef="lastPrice">
+              <th mat-header-cell *matHeaderCellDef>Last Price</th>
+              <td mat-cell *matCellDef="let r">{{ r.lastPrice }}</td>
+            </ng-container>
+            <ng-container matColumnDef="moq">
+              <th mat-header-cell *matHeaderCellDef>MOQ</th>
+              <td mat-cell *matCellDef="let r">{{ r.moq }}</td>
+            </ng-container>
+            <ng-container matColumnDef="leadTime">
+              <th mat-header-cell *matHeaderCellDef>Lead Time (days)</th>
+              <td mat-cell *matCellDef="let r">{{ r.leadTimeDays }}</td>
+            </ng-container>
+            <ng-container matColumnDef="preferred">
+              <th mat-header-cell *matHeaderCellDef>Preferred</th>
+              <td mat-cell *matCellDef="let r">{{ r.preferred ? 'Yes' : 'No' }}</td>
+            </ng-container>
+            <ng-container matColumnDef="vendorActions">
+              <th mat-header-cell *matHeaderCellDef></th>
+              <td mat-cell *matCellDef="let r">
+                <button
+                  mat-icon-button
+                  color="warn"
+                  aria-label="Remove vendor mapping"
+                  (click)="removeVendorMapping(r)"
+                >
+                  <mat-icon aria-hidden="true">delete</mat-icon>
+                </button>
+              </td>
+            </ng-container>
+            <tr mat-header-row *matHeaderRowDef="vendorCols"></tr>
+            <tr mat-row *matRowDef="let row; columns: vendorCols"></tr>
+          </table>
+          @if (vendorMappings().length === 0) {
+            <p class="empty-hint mat-body-2">No vendor mappings defined.</p>
+          }
+          <form [formGroup]="vendorForm" (ngSubmit)="addVendorMapping()" novalidate class="inline-add-form">
+            <mat-form-field appearance="outline">
+              <mat-label>Supplier</mat-label>
+              <mat-select formControlName="supplierId">
+                @for (s of suppliers(); track s.id) {
+                  <mat-option [value]="s.id">{{ s.name }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Supplier Item Code</mat-label>
+              <input matInput formControlName="supplierItemCode" />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Last Price</mat-label>
+              <input matInput type="number" formControlName="lastPrice" />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>MOQ</mat-label>
+              <input matInput type="number" formControlName="moq" />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Lead Time (days)</mat-label>
+              <input matInput type="number" formControlName="leadTimeDays" />
+            </mat-form-field>
+            <button mat-flat-button color="primary" type="submit" [disabled]="vendorSaving() || !material()">
+              Add
+            </button>
+          </form>
+          @if (vendorError()) {
+            <p class="form-error mat-body-2">{{ vendorError() }}</p>
+          }
+        </mat-expansion-panel>
 
-          <mat-expansion-panel>
-            <mat-expansion-panel-header>
-              <mat-panel-title>Vendors</mat-panel-title>
-            </mat-expansion-panel-header>
-            <table mat-table [dataSource]="vendorMappings()" class="full-table">
-              <ng-container matColumnDef="supplier">
-                <th mat-header-cell *matHeaderCellDef>Supplier</th>
-                <td mat-cell *matCellDef="let r">{{ r.supplierName }}</td>
-              </ng-container>
-              <ng-container matColumnDef="supplierCode">
-                <th mat-header-cell *matHeaderCellDef>Supplier Item Code</th>
-                <td mat-cell *matCellDef="let r">{{ r.supplierItemCode }}</td>
-              </ng-container>
-              <ng-container matColumnDef="lastPrice">
-                <th mat-header-cell *matHeaderCellDef>Last Price</th>
-                <td mat-cell *matCellDef="let r">{{ r.lastPrice }}</td>
-              </ng-container>
-              <ng-container matColumnDef="moq">
-                <th mat-header-cell *matHeaderCellDef>MOQ</th>
-                <td mat-cell *matCellDef="let r">{{ r.moq }}</td>
-              </ng-container>
-              <ng-container matColumnDef="leadTime">
-                <th mat-header-cell *matHeaderCellDef>Lead Time (days)</th>
-                <td mat-cell *matCellDef="let r">{{ r.leadTimeDays }}</td>
-              </ng-container>
-              <ng-container matColumnDef="preferred">
-                <th mat-header-cell *matHeaderCellDef>Preferred</th>
-                <td mat-cell *matCellDef="let r">{{ r.preferred ? 'Yes' : 'No' }}</td>
-              </ng-container>
-              <ng-container matColumnDef="vendorActions">
-                <th mat-header-cell *matHeaderCellDef></th>
-                <td mat-cell *matCellDef="let r">
-                  <button mat-icon-button color="warn" aria-label="Remove vendor mapping"
-                          (click)="removeVendorMapping(r)">
-                    <mat-icon aria-hidden="true">delete</mat-icon>
-                  </button>
-                </td>
-              </ng-container>
-              <tr mat-header-row *matHeaderRowDef="vendorCols"></tr>
-              <tr mat-row *matRowDef="let row; columns: vendorCols"></tr>
-            </table>
-            @if (vendorMappings().length === 0) {
-              <p class="empty-hint mat-body-2">No vendor mappings defined.</p>
-            }
-            <form [formGroup]="vendorForm" (ngSubmit)="addVendorMapping()" novalidate class="inline-add-form">
-              <mat-form-field appearance="outline">
-                <mat-label>Supplier</mat-label>
-                <mat-select formControlName="supplierId">
-                  @for (s of suppliers(); track s.id) {
-                    <mat-option [value]="s.id">{{ s.name }}</mat-option>
-                  }
-                </mat-select>
-              </mat-form-field>
-              <mat-form-field appearance="outline">
-                <mat-label>Supplier Item Code</mat-label>
-                <input matInput formControlName="supplierItemCode" />
-              </mat-form-field>
-              <mat-form-field appearance="outline">
-                <mat-label>Last Price</mat-label>
-                <input matInput type="number" formControlName="lastPrice" />
-              </mat-form-field>
-              <mat-form-field appearance="outline">
-                <mat-label>MOQ</mat-label>
-                <input matInput type="number" formControlName="moq" />
-              </mat-form-field>
-              <mat-form-field appearance="outline">
-                <mat-label>Lead Time (days)</mat-label>
-                <input matInput type="number" formControlName="leadTimeDays" />
-              </mat-form-field>
-              <button mat-flat-button color="primary" type="submit" [disabled]="vendorSaving() || !material()">Add</button>
-            </form>
-            @if (vendorError()) { <p class="form-error mat-body-2">{{ vendorError() }}</p> }
-          </mat-expansion-panel>
+        <mat-expansion-panel>
+          <mat-expansion-panel-header>
+            <mat-panel-title>Comments</mat-panel-title>
+          </mat-expansion-panel-header>
+          @if (material()) {
+            <app-comments-panel [entityType]="'MATERIAL'" [entityId]="material()!.id"></app-comments-panel>
+          } @else {
+            <p class="empty-hint mat-body-2">Save the material first to add comments.</p>
+          }
+        </mat-expansion-panel>
 
-          <mat-expansion-panel>
-            <mat-expansion-panel-header>
-              <mat-panel-title>Comments</mat-panel-title>
-            </mat-expansion-panel-header>
-            @if (material()) {
-              <app-comments-panel [entityType]="'MATERIAL'" [entityId]="material()!.id"></app-comments-panel>
-            } @else {
-              <p class="empty-hint mat-body-2">Save the material first to add comments.</p>
-            }
-          </mat-expansion-panel>
-
-          <mat-expansion-panel>
-            <mat-expansion-panel-header>
-              <mat-panel-title>Attachments</mat-panel-title>
-            </mat-expansion-panel-header>
-            @if (material()) {
-              <app-attachments-panel [entityType]="'MATERIAL'" [entityId]="material()!.id"></app-attachments-panel>
-            } @else {
-              <p class="empty-hint mat-body-2">Save the material first to upload attachments.</p>
-            }
-          </mat-expansion-panel>
-
-        </mat-accordion>
+        <mat-expansion-panel>
+          <mat-expansion-panel-header>
+            <mat-panel-title>Attachments</mat-panel-title>
+          </mat-expansion-panel-header>
+          @if (material()) {
+            <app-attachments-panel [entityType]="'MATERIAL'" [entityId]="material()!.id"></app-attachments-panel>
+          } @else {
+            <p class="empty-hint mat-body-2">Save the material first to upload attachments.</p>
+          }
+        </mat-expansion-panel>
+      </mat-accordion>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
       @if (material()) {
@@ -338,7 +367,11 @@ const SKIP = new HttpContext().set(SKIP_ERROR_TOAST, true);
       } @else {
         <button mat-button (click)="close()">Cancel</button>
         <button mat-flat-button color="primary" type="button" (click)="save()" [disabled]="saving()">
-          @if (saving()) { <mat-spinner diameter="18" /> } @else { Save }
+          @if (saving()) {
+            <mat-spinner diameter="18" />
+          } @else {
+            Save
+          }
         </button>
       }
     </mat-dialog-actions>
@@ -351,8 +384,12 @@ const SKIP = new HttpContext().set(SKIP_ERROR_TOAST, true);
         gap: 0 12px;
         padding: 8px 0;
       }
-      .form-grid mat-form-field { width: 100%; }
-      .full-span { grid-column: 1 / -1; }
+      .form-grid mat-form-field {
+        width: 100%;
+      }
+      .full-span {
+        grid-column: 1 / -1;
+      }
       .form-error {
         color: var(--mat-warn-color, #f44336);
         grid-column: 1 / -1;
@@ -362,7 +399,9 @@ const SKIP = new HttpContext().set(SKIP_ERROR_TOAST, true);
         justify-content: flex-end;
         padding: 4px 0 8px;
       }
-      .panels { margin-top: 8px; }
+      .panels {
+        margin-top: 8px;
+      }
       .purch-grid {
         padding: 8px 0 0;
       }
@@ -371,7 +410,9 @@ const SKIP = new HttpContext().set(SKIP_ERROR_TOAST, true);
         justify-content: flex-end;
         padding: 8px 0;
       }
-      .full-table { width: 100%; }
+      .full-table {
+        width: 100%;
+      }
       .empty-hint {
         color: rgba(0, 0, 0, 0.6);
         margin: 8px 0;
@@ -391,9 +432,7 @@ const SKIP = new HttpContext().set(SKIP_ERROR_TOAST, true);
   ],
 })
 export class MaterialFormComponent implements OnInit {
-  protected readonly material = signal<MaterialDto | undefined>(
-    inject<MaterialDto | undefined>(MAT_DIALOG_DATA),
-  );
+  protected readonly material = signal<MaterialDto | undefined>(inject<MaterialDto | undefined>(MAT_DIALOG_DATA));
   protected readonly uoms = signal<UomDto[]>([]);
   protected readonly saving = signal(false);
   protected readonly errorMessage = signal('');
@@ -438,7 +477,13 @@ export class MaterialFormComponent implements OnInit {
   // vendor mappings
   protected readonly vendorMappings = signal<ItemVendorMappingDto[]>([]);
   protected readonly vendorCols = [
-    'supplier', 'supplierCode', 'lastPrice', 'moq', 'leadTime', 'preferred', 'vendorActions',
+    'supplier',
+    'supplierCode',
+    'lastPrice',
+    'moq',
+    'leadTime',
+    'preferred',
+    'vendorActions',
   ];
   protected readonly vendorSaving = signal(false);
   protected readonly vendorError = signal('');

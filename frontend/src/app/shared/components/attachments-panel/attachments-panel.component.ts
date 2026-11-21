@@ -115,7 +115,9 @@ export class AttachmentsPanelComponent implements OnInit {
 
   private loadAttachments(): void {
     this.http
-      .get<AttachmentDto[]>(`/api/attachments?entityType=${this.entityType}&entityId=${this.entityId}`, { context: SKIP })
+      .get<AttachmentDto[]>(`/api/attachments?entityType=${this.entityType}&entityId=${this.entityId}`, {
+        context: SKIP,
+      })
       .subscribe({
         next: (list) => this.attachments.set(list),
         // eslint-disable-next-line @typescript-eslint/no-empty-function

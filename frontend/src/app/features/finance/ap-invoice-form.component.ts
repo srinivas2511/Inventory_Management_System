@@ -117,7 +117,10 @@ import { ApInvoiceCreateRequest, ApInvoiceDto, DeterminationDto, FinanceApi, Sla
                 <mat-error>Choose the goods receipt this invoice bills</mat-error>
               }
               @if (selected(); as r) {
-                <mat-hint>Received {{ r.receivedValue | number: '1.2-2' }} · invoiced {{ r.invoicedValue | number: '1.2-2' }}</mat-hint>
+                <mat-hint
+                  >Received {{ r.receivedValue | number: '1.2-2' }} · invoiced
+                  {{ r.invoicedValue | number: '1.2-2' }}</mat-hint
+                >
               } @else if (form.controls.supplierId.value && !loadingReceipts() && receipts().length === 0) {
                 <mat-hint>No open receipt found for this supplier.</mat-hint>
               }

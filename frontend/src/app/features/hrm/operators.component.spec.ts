@@ -16,9 +16,11 @@ describe('OperatorsComponent', () => {
     fixture = TestBed.createComponent(OperatorsComponent);
     http = TestBed.inject(HttpTestingController);
     fixture.detectChanges();
-    http.expectOne('/api/hrm/operators').flush([
-      { id: 1, employeeCode: 'EMP-001', fullName: 'Alice Smith', operatorCode: 'OP-001', active: true, version: 0 },
-    ]);
+    http
+      .expectOne('/api/hrm/operators')
+      .flush([
+        { id: 1, employeeCode: 'EMP-001', fullName: 'Alice Smith', operatorCode: 'OP-001', active: true, version: 0 },
+      ]);
     fixture.detectChanges();
   });
 
@@ -79,7 +81,17 @@ describe('OperatorFormDialogComponent — edit', () => {
       imports: [OperatorFormDialogComponent, HttpClientTestingModule],
       providers: [
         provideNoopAnimations(),
-        { provide: MAT_DIALOG_DATA, useValue: { id: 1, employeeCode: 'EMP-001', fullName: 'Alice Smith', operatorCode: 'OP-001', active: true, version: 0 } },
+        {
+          provide: MAT_DIALOG_DATA,
+          useValue: {
+            id: 1,
+            employeeCode: 'EMP-001',
+            fullName: 'Alice Smith',
+            operatorCode: 'OP-001',
+            active: true,
+            version: 0,
+          },
+        },
         { provide: MatDialogRef, useValue: { close: jasmine.createSpy('close') } },
       ],
     }).compileComponents();

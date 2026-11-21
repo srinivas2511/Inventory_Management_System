@@ -210,19 +210,23 @@ export class CommentsPanelComponent implements OnInit {
   }
 
   private loadComments(): void {
-    this.http.get<CommentDto[]>(`/api/comments?entityType=${this.entityType}&entityId=${this.entityId}`, { context: SKIP }).subscribe({
-      next: (list) => this.comments.set(list),
-      // eslint-disable-next-line @typescript-eslint/no-empty-function
-      error: () => {},
-    });
+    this.http
+      .get<CommentDto[]>(`/api/comments?entityType=${this.entityType}&entityId=${this.entityId}`, { context: SKIP })
+      .subscribe({
+        next: (list) => this.comments.set(list),
+        // eslint-disable-next-line @typescript-eslint/no-empty-function
+        error: () => {},
+      });
   }
 
   private loadReminders(): void {
-    this.http.get<ReminderDto[]>(`/api/reminders?entityType=${this.entityType}&entityId=${this.entityId}`, { context: SKIP }).subscribe({
-      next: (list) => this.reminders.set(list),
-      // eslint-disable-next-line @typescript-eslint/no-empty-function
-      error: () => {},
-    });
+    this.http
+      .get<ReminderDto[]>(`/api/reminders?entityType=${this.entityType}&entityId=${this.entityId}`, { context: SKIP })
+      .subscribe({
+        next: (list) => this.reminders.set(list),
+        // eslint-disable-next-line @typescript-eslint/no-empty-function
+        error: () => {},
+      });
   }
 
   protected addComment(): void {

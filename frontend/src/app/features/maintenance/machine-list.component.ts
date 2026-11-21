@@ -56,7 +56,13 @@ export interface SaveMachineRequest {
       <h2 class="mat-h2">Machines</h2>
     </div>
 
-    <form *appHasPermission="'MACHINE_MANAGE'" class="edit-form" [formGroup]="form" (ngSubmit)="save()" data-testid="machine-form">
+    <form
+      *appHasPermission="'MACHINE_MANAGE'"
+      class="edit-form"
+      [formGroup]="form"
+      (ngSubmit)="save()"
+      data-testid="machine-form"
+    >
       <h3 class="mat-h3 full">{{ editing() ? 'Edit: ' + editing()!.code : 'New Machine' }}</h3>
       <mat-form-field appearance="outline">
         <mat-label>Code</mat-label>
@@ -144,15 +150,44 @@ export interface SaveMachineRequest {
       </table>
     }
   `,
-  styles: [`
-    .page-header { display: flex; align-items: center; padding: 16px 16px 0; }
-    .edit-form { display: flex; flex-wrap: wrap; gap: 12px; padding: 16px; background: var(--mdc-filled-text-field-container-color, #f5f5f5); border-radius: 4px; margin: 16px; }
-    .full { width: 100%; }
-    .wide { flex: 2; min-width: 200px; }
-    .form-actions { display: flex; gap: 8px; align-items: center; }
-    .loading-center { display: flex; justify-content: center; padding: 48px; }
-    table { width: 100%; }
-  `],
+  styles: [
+    `
+      .page-header {
+        display: flex;
+        align-items: center;
+        padding: 16px 16px 0;
+      }
+      .edit-form {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        padding: 16px;
+        background: var(--mdc-filled-text-field-container-color, #f5f5f5);
+        border-radius: 4px;
+        margin: 16px;
+      }
+      .full {
+        width: 100%;
+      }
+      .wide {
+        flex: 2;
+        min-width: 200px;
+      }
+      .form-actions {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      .loading-center {
+        display: flex;
+        justify-content: center;
+        padding: 48px;
+      }
+      table {
+        width: 100%;
+      }
+    `,
+  ],
 })
 export class MachineListComponent implements OnInit {
   protected readonly columns = ['code', 'name', 'description', 'type', 'workCentre', 'status', 'actions'];
@@ -184,7 +219,10 @@ export class MachineListComponent implements OnInit {
   private load(): void {
     this.loading.set(true);
     this.http.get<MachineDto[]>('/api/machines').subscribe({
-      next: (data) => { this.rows.set(data); this.loading.set(false); },
+      next: (data) => {
+        this.rows.set(data);
+        this.loading.set(false);
+      },
       error: () => this.loading.set(false),
     });
   }
@@ -198,8 +236,11 @@ export class MachineListComponent implements OnInit {
   protected edit(m: MachineDto): void {
     this.editing.set(m);
     this.form.patchValue({
-      code: m.code, name: m.name, description: m.description ?? '',
-      machineType: m.machineType ?? '', productionLine: m.productionLine ?? '',
+      code: m.code,
+      name: m.name,
+      description: m.description ?? '',
+      machineType: m.machineType ?? '',
+      productionLine: m.productionLine ?? '',
       workCentreId: m.workCentreId ?? null,
     });
   }
