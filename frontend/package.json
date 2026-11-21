@@ -12,6 +12,8 @@
     "build:localize": "ng build --configuration production --localize",
     "build:hi": "ng build --configuration hi",
     "build:kn": "ng build --configuration kn",
+    "serve:hi": "ng serve --configuration=hi --proxy-config proxy.conf.json",
+    "serve:kn": "ng serve --configuration=kn --proxy-config proxy.conf.json",
     "format": "prettier --write \"src/**/*.{ts,html,scss,json}\"",
     "format:check": "prettier --check \"src/**/*.{ts,html,scss,json}\"",
     "lint": "ng lint",

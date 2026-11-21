@@ -1,7 +1,8 @@
 import { DOCUMENT } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { Component, inject, isDevMode } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 export interface LocaleOption {
   code: string;
@@ -38,11 +39,16 @@ export function switchedUrl(href: string, toBase: string): string {
 @Component({
   selector: 'app-locale-switcher',
   standalone: true,
-  imports: [MatButtonModule, MatButtonToggleModule],
+  imports: [MatButtonModule, MatButtonToggleModule, MatTooltipModule],
   template: `
     <mat-button-toggle-group [value]="current" aria-label="Select language" class="locale-group">
       @for (loc of locales; track loc.code) {
-        <mat-button-toggle [value]="loc.code" (change)="navigate(loc)" [attr.lang]="loc.code">
+        <mat-button-toggle
+          [value]="loc.code"
+          (change)="navigate(loc)"
+          [attr.lang]="loc.code"
+          [matTooltip]="devTooltip(loc)"
+          matTooltipPosition="below">
           {{ loc.label }}
         </mat-button-toggle>
       }
@@ -71,9 +77,18 @@ export class LocaleSwitcherComponent {
   private readonly doc = inject(DOCUMENT);
   protected readonly locales = LOCALES;
   protected readonly current = activeLocale(this.doc.location.pathname);
+  protected readonly isDev = isDevMode();
+
+  /** In dev mode, show a tooltip explaining how to serve a locale build. */
+  protected devTooltip(loc: LocaleOption): string {
+    if (!this.isDev || loc.code === this.current) return '';
+    const script = loc.code === 'en-IN' ? 'start' : `serve:${loc.code}`;
+    return `Dev mode: run "npm run ${script}" to test this locale`;
+  }
 
   protected navigate(loc: LocaleOption): void {
     if (loc.code === this.current) return;
+    if (this.isDev) return; // Dev server serves one locale; use npm run serve:<locale>
     this.doc.location.href = switchedUrl(this.doc.location.href, loc.base);
   }
 }

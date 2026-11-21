@@ -1,4 +1,6 @@
-import { activeLocale, switchedUrl } from './locale-switcher.component';
+import { LocaleSwitcherComponent, activeLocale, switchedUrl } from './locale-switcher.component';
+import { TestBed } from '@angular/core/testing';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 
 describe('activeLocale', () => {
   it('returns en-IN for root path', () => {
@@ -57,5 +59,34 @@ describe('switchedUrl', () => {
   it('preserves query string when switching', () => {
     const result = switchedUrl(`${origin}/hi/reports?year=2026`, '/kn/');
     expect(result).toBe(`${origin}/kn/reports?year=2026`);
+  });
+});
+
+describe('LocaleSwitcherComponent.devTooltip', () => {
+  it('returns empty string for the current locale in dev mode', () => {
+    TestBed.configureTestingModule({
+      imports: [LocaleSwitcherComponent],
+      providers: [provideNoopAnimations()],
+    });
+    const fixture = TestBed.createComponent(LocaleSwitcherComponent);
+    const comp = fixture.componentInstance;
+    // The current locale for a plain /dashboard path is en-IN
+    const enLocale = { code: 'en-IN', label: 'EN', base: '/' };
+    expect(comp['devTooltip'](enLocale)).toBe('');
+  });
+
+  it('returns a helpful command for a non-current locale in dev mode', () => {
+    TestBed.configureTestingModule({
+      imports: [LocaleSwitcherComponent],
+      providers: [provideNoopAnimations()],
+    });
+    const fixture = TestBed.createComponent(LocaleSwitcherComponent);
+    const comp = fixture.componentInstance;
+    if (!comp['isDev']) {
+      pending('skipped in production build');
+      return;
+    }
+    const hiLocale = { code: 'hi', label: 'हिं', base: '/hi/' };
+    expect(comp['devTooltip'](hiLocale)).toContain('npm run serve:hi');
   });
 });
