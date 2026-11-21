@@ -16,7 +16,6 @@ import { AppConfigService } from '../config/app-config.service';
 import { LoadingService } from '../http/loading.service';
 import { ModuleStore } from '../modules/module.store';
 import { NotificationBellComponent } from '../../features/notifications/notification-bell.component';
-import { LocaleSwitcherComponent } from '../../shared/components/locale-switcher.component';
 import { visibleGroups } from './nav.config';
 
 @Component({
@@ -34,7 +33,6 @@ import { visibleGroups } from './nav.config';
     MatMenuModule,
     MatProgressBarModule,
     NotificationBellComponent,
-    LocaleSwitcherComponent,
   ],
   templateUrl: './shell.component.html',
   styleUrl: './shell.component.scss',

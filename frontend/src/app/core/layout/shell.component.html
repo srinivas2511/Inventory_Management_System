@@ -10,7 +10,6 @@
   </button>
   <span class="app-name">{{ appName }}</span>
   <span class="spacer"></span>
-  <app-locale-switcher />
   @if (session.isLoggedIn()) {
     <app-notification-bell />
     <button mat-button [matMenuTriggerFor]="userMenu" data-testid="user-menu-trigger">
