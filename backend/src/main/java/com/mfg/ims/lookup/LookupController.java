@@ -35,13 +35,13 @@ public class LookupController {
     }
 
     @GetMapping("/suppliers")
-    @PreAuthorize("hasAnyAuthority('PURCHASE_CREATE','PURCHASE_VIEW','SUPPLIER_MANAGE','MASTERDATA_MANAGE','AP_MANAGE')")
+    @PreAuthorize("hasAnyAuthority('PURCHASE_CREATE','PURCHASE_VIEW','SUPPLIER_MANAGE','MASTERDATA_MANAGE','AP_MANAGE','TDS_MANAGE')")
     public List<Option> suppliers(@RequestParam(required = false) String q) {
         return service.suppliers(q);
     }
 
     @GetMapping("/customers")
-    @PreAuthorize("hasAnyAuthority('SALES_CREATE','SALES_VIEW','CUSTOMER_MANAGE','MASTERDATA_MANAGE','AR_MANAGE')")
+    @PreAuthorize("hasAnyAuthority('SALES_CREATE','SALES_VIEW','CUSTOMER_MANAGE','MASTERDATA_MANAGE','AR_MANAGE','TDS_MANAGE')")
     public List<Option> customers(@RequestParam(required = false) String q) {
         return service.customers(q);
     }

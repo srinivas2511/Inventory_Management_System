@@ -33,6 +33,12 @@ public class TdsEntryController {
         return service.create(req, actor.id());
     }
 
+    @GetMapping("/sections")
+    @PreAuthorize("hasAuthority('TDS_MANAGE')")
+    public List<TdsSectionDto> sections() {
+        return service.listSections();
+    }
+
     @GetMapping("/summary")
     @PreAuthorize("hasAuthority('TDS_MANAGE')")
     public List<TdsSummaryDto> summary() {

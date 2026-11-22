@@ -51,6 +51,13 @@ public class TdsEntryService {
         return toDto(entry);
     }
 
+    public List<TdsSectionDto> listSections() {
+        return sectionRepo.findAll().stream()
+                .sorted(java.util.Comparator.comparing(TdsSection::getSection))
+                .map(s -> new TdsSectionDto(s.getId(), s.getSection(), s.getDescription(), s.getRate()))
+                .toList();
+    }
+
     public List<TdsSummaryDto> summary() {
         List<TdsEntry> all = entryRepo.findByCompanyIdOrderByDeductionDateDesc(1L);
         Map<String, List<TdsEntry>> bySection = all.stream()
